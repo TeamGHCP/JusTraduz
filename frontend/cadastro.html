@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cadastro — JusTraduz</title>
+  <link rel="icon" href="assets/img/logo.png" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <div class="auth-wrap">
+    <div class="auth-card" style="max-width:520px;">
+      <div class="logo"><a href="index.html"><img src="assets/img/logo.png" alt="JusTraduz" /></a></div>
+      <h1>Crie sua conta</h1>
+      <p class="subtitle">Comece a entender seus documentos hoje mesmo</p>
+
+<form action="backend/public/index.php/registrar" method="post">
+        <div class="form-group">
+          <label for=\"tipo\">Tipo de conta</label>
+          <select id="tipo" name="tipo" class="form-control" onchange="toggleOab()">
+            <option value="cliente">Cliente (usuário comum)</option>
+            <option value="advogado">Advogado</option>
+            <option value="estagiario">Estagiário</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="nome">Nome completo</label>
+          <input type="text" id="nome" name="nome" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" class="form-control" required />
+        </div>
+
+        <div id="oab-block" style="display:none;">
+          <div class="row" style="gap:14px;">
+            <div class="form-group" style="flex:1;">
+              <label for="inscricao">Número da OAB</label>
+              <input type="text" id="inscricao" name="inscricao" class="form-control" />
+            </div>
+            <div class="form-group" style="width:100px;">
+              <label for="oab_uf">UF</label>
+              <select id="oab_uf" name="oab_uf" class="form-control">
+                <option value="">--</option>
+                <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
+                <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
+                <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
+                <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+                <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
+                <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
+                <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
+                <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+                <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="gap:14px;">
+          <div class="form-group" style="flex:1; min-width:200px;">
+            <label for="senha">Senha</label>
+            <input type="password" id="senha" name="senha" class="form-control" required />
+          </div>
+          <div class="form-group" style="flex:1; min-width:200px;">
+            <label for="senha2">Confirmar senha</label>
+            <input type="password" id="senha2" name="senha2" class="form-control" required />
+          </div>
+        </div>
+
+        <div class="form-group" style="font-size:13px; color:var(--text-muted); grayish-color;">
+          <label style="display:flex; gap:8px; align-items:flex-start;">
+            <input type="checkbox" required style="margin-top:3px;" />
+            <span>Li e aceito os <a href="termos.html">Termos de Uso</a> e a <a href="privacidade.html">Política de Privacidade</a>.</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+      </form>
+
+      <p class="auth-footer">
+        Já tem uma conta? <a href="login.html">Entrar</a>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // CORRIGIDO: Tratamento dinâmico do bloco OAB baseado no tipo selecionado
+    function toggleOab(){
+      var tipo = document.getElementById('tipo').value;
+      var bloco = document.getElementById('oab-block');
+      var inputInscricao = document.getElementById('inscricao');
+      
+      if(tipo === 'advogado' || tipo === 'estagiario'){
+        bloco.style.display = 'block';
+        inputInscricao.setAttribute('required', 'required');
+      } else {
+        bloco.style.display = 'none';
+        inputInscricao.removeAttribute('required');
+        inputInscricao.value = '';
+      }
+    }
+    // Executa ao carregar a página para garantir o estado correto inicial
+    window.onload = toggleOab;
+  </script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Solicitar Ajuda — JusTraduz</title>
+  <link rel="icon" href="assets/img/logo.png" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+  <div class="dash">
+    <aside class="sidebar">
+      <div class="brand"><img src="assets/img/logo.png" alt="JusTraduz" /></div>
+      <h4>Menu</h4>
+      <ul>
+        <li><a href="dashboard-cliente.html">🏠 Início</a></li>
+        <li><a href="dashboard-cliente.html">📤 Enviar Documento</a></li>
+        <li><a href="solicitar-ajuda.html" class="active">🆘 Solicitar ajuda</a></li>
+        <li><a href="acompanhar-solicitacoes.html">📋 Minhas solicitações</a></li>
+        <li><a href="chat.html">💬 Conversas</a></li>
+      </ul>
+      <h4>Conta</h4>
+      <ul>
+        <li><a href="perfil.html">⚙️ Meu Perfil</a></li>
+        <li><a href="login.html">🚪 Sair</a></li>
+      </ul>
+    </aside>
+
+    <main class="dash-main">
+      <div class="dash-header">
+        <div>
+          <h1>Solicitar Ajuda Especializada</h1>
+          <p class="card-sub">Conte com advogados ou estagiários para tirar dúvidas e acompanhar seu caso.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <form action="#" method="post">
+          <div class="form-group">
+            <label>Como você prefere ser atendido?</label>
+            <div class="grid grid-2" style="margin-top:8px">
+              <label class="card" style="cursor:pointer; padding:14px">
+                <input type="radio" name="tipo" value="aberta" checked /> <strong>Solicitação aberta</strong>
+                <p class="card-sub" style="margin-top:6px">Qualquer advogado disponível poderá aceitar seu caso. O primeiro a aceitar será associado.</p>
+              </label>
+              <label class="card" style="cursor:pointer; padding:14px">
+                <input type="radio" name="tipo" value="especifico" /> <strong>Escolher um advogado específico</strong>
+                <p class="card-sub" style="margin-top:6px">Você seleciona o profissional que deseja contatar diretamente.</p>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Assunto</label>
+            <input type="text" class="form-control" placeholder="Ex.: Notificação extrajudicial recebida" required />
+          </div>
+
+          <div class="form-group">
+            <label>Área do Direito</label>
+            <select class="form-control">
+              <option>Civil</option>
+              <option>Trabalhista</option>
+              <option>Família</option>
+              <option>Consumidor</option>
+              <option>Previdenciário</option>
+              <option>Tributário</option>
+              <option>Criminal</option>
+              <option>Outro</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Descreva sua dúvida ou situação</label>
+            <textarea class="form-control" rows="5" placeholder="Conte com detalhes o que aconteceu..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Anexar documento (opcional)</label>
+            <input type="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp" />
+            <p class="card-sub" style="margin-top:6px">Formatos: PDF, PNG, JPEG, WebP — até 50 MB</p>
+          </div>
+
+          <div class="alert alert-info">
+            ℹ️ Sua solicitação ficará visível em <a href="acompanhar-solicitacoes.html">Minhas solicitações</a>. Você será notificado quando um profissional aceitar.
+          </div>
+
+          <div style="display:flex; gap:10px; justify-content:flex-end">
+            <a href="dashboard-cliente.html" class="btn btn-ghost">Cancelar</a>
+            <button type="submit" class="btn btn-primary">Enviar solicitação</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
