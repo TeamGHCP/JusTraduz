@@ -1,19 +1,29 @@
+<?php
+session_start();
+
+// Se não for admin, tchau!
+if (!isset($_SESSION['logado']) || $_SESSION['tipo'] !== 'admin') {
+    header("Location: ../login.html");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Painel do Administrador — JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="icon" href="../assets/img/logo.png" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
 </head>
 <body>
   <div class="dash">
     <aside class="sidebar">
-      <div class="brand"><img src="assets/img/logo.png" alt="JusTraduz" /></div>
+      <div class="brand"><img src="../assets/img/logo.png" alt="JusTraduz" /></div>
       <h4>Administração</h4>
       <ul>
-        <li><a href="dashboard-admin.html" class="active">📊 Visão geral</a></li>
+        <li><a href="../admin/dashboard-admin.php" class="active">📊 Visão geral</a></li>
         <li><a href="#">👥 Usuários (clientes)</a></li>
         <li><a href="#">👨‍⚖️ Advogados</a></li>
         <li><a href="#">🎓 Estagiários</a></li>
@@ -26,20 +36,23 @@
       <ul>
         <li><a href="#">⚙️ Configurações</a></li>
         <li><a href="#">📜 Logs</a></li>
-        <li><a href="login.html">🚪 Sair</a></li>
+        <li><a href="../login.html">🚪 Sair</a></li>
       </ul>
     </aside>
 
     <main class="dash-main">
       <div class="dash-header">
         <div>
-          <h1>Painel do Administrador</h1>
+          <h1>Olá, <?= htmlspecialchars($_SESSION['nome']); ?> 👨‍💻</h1>
           <p class="card-sub">Visão geral da plataforma JusTraduz</p>
         </div>
-        <div class="user"><span>Admin</span><div class="avatar" style="background:var(--navy)">A</div></div>
-      </div>
-
-      <div class="grid grid-4" style="margin-bottom:24px">
+        <div class="user">
+          <span>Admin</span>
+          <div class="avatar" style="background:var(--navy)">
+            <?= mb_substr(htmlspecialchars($_SESSION['nome']), 0, 1); ?>
+          </div>
+        </div>
+      </div> <div class="grid grid-4" style="margin-bottom:24px">
         <div class="stat"><div class="label">Usuários ativos</div><div class="value">1.248</div></div>
         <div class="stat"><div class="label">Advogados</div><div class="value accent">37</div></div>
         <div class="stat"><div class="label">Documentos processados</div><div class="value">5.612</div></div>

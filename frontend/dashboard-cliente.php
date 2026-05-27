@@ -1,4 +1,14 @@
+<?php
+session_start();
 
+if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
+    header("Location: login.html");
+    exit();
+}
+
+$nome_usuario = $_SESSION['nome'];
+
+?>
 
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -35,17 +45,17 @@
     <!-- Main -->
     <main class="dash-main">
       <div class="dash-header">
-        
-        <h1>Olá,  👋</h1>
+  
+        <h1>Olá, <?= htmlspecialchars($nome_usuario); ?> 👋</h1>
+
         <div class="user">
           <span>Cliente</span>
-          <div class="avatar">M</div>
+          <div class="avatar"><?= mb_substr(htmlspecialchars($nome_usuario), 0, 1); ?></div>
         </div>
       </div>
-
       <div class="alert alert-warn">
         ⚠️ Lembrete: a IA do JusTraduz <strong>não substitui</strong> a orientação de um advogado.
-      </div>
+      </div> 
 
       <!-- Stats -->
       <div class="grid grid-3" style="margin-bottom:28px;">

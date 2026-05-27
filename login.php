@@ -4,8 +4,8 @@ require_once "backend/app/config/database.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $email = $_POST['email'] ?? '';
-    $senha = $_POST['senha'] ?? '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
+    $senha = isset($_POST['senha']) ? trim($_POST['senha']) : '';
 
     if (!$email || !$senha) {
         header("Location: frontend/login.html?erro=campos");
@@ -28,12 +28,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Redireciona conforme tipo de usuário
         switch ($usuario['tipo']) {
+            case 'admin':
+                header("Location: frontend/admin/dashboard-admin.php");
+                break;
             case 'advogado':
+                header("Location: frontend/dashboard-advogado.php");
+                break;
             case 'estagiario':
-                header("Location: frontend/dashboard-advogado.html");
+                header("Location: frontend/dashboard-estagiario.php");
                 break;
             default: // cliente
-                header("Location: frontend/dashboard-cliente.html");
+                header("Location: frontend/dashboard-cliente.php");
                 break;
         }
         exit();

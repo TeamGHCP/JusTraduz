@@ -1,3 +1,15 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
+    header("Location: login.html");
+    exit();
+}
+
+$nome_usuario = $_SESSION['nome'];
+
+?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -41,8 +53,8 @@
       <div class="dash-header">
         <h1>Painel do Advogado</h1>
         <div class="user">
-          <span>Dr. Carlos Andrade — OAB/SP 123.456 <span class="badge badge-success">Ativo</span></span>
-          <div class="avatar" style="background:var(--navy);">C</div>
+          <span>Dr. <?= htmlspecialchars($nome_usuario); ?> — OAB/SP 123.456 <span class="badge badge-success">Ativo</span></span>
+          <div class="avatar" style="background:var(--navy);"><?= mb_substr(htmlspecialchars($nome_usuario), 0, 1); ?></div>
         </div>
       </div>
 

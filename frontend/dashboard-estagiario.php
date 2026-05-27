@@ -1,3 +1,15 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
+    header("Location: login.html");
+    exit();
+}
+
+$nome_usuario = $_SESSION['nome'];
+
+?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -28,10 +40,10 @@
     <main class="dash-main">
       <div class="dash-header">
         <div>
-          <h1>Olá, Pedro 👋</h1>
+          <h1>Olá, <?= htmlspecialchars($nome_usuario); ?> 👋</h1>
           <p class="card-sub">Estagiário · Suporte a dúvidas simples</p>
         </div>
-        <div class="user"><span>Estagiário</span><div class="avatar">P</div></div>
+        <div class="user"><span>Estagiário</span><div class="avatar"><?= mb_substr(htmlspecialchars($nome_usuario), 0, 1); ?></div></div>
       </div>
 
       <div class="alert alert-warn">
