@@ -1,0 +1,10 @@
+
+# Seed — contém credenciais
+seed.php
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/

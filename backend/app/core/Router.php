@@ -1,0 +1,56 @@
+<?php
+
+class Router
+{
+    private array $routes = [];
+
+    // Registra uma rota GET
+    public function get(string $path, string $controller, string $method): void
+    {
+        $this->routes[] = [
+            'method'     => 'GET',
+            'path'       => $path,
+            'controller' => $controller,
+            'action'     => $method,
+        ];
+    }
+
+    // Registra uma rota POST
+    public function post(string $path, string $controller, string $method): void
+    {
+        $this->routes[] = [
+            'method'     => 'POST',
+            'path'       => $path,
+            'controller' => $controller,
+            'action'     => $method,
+        ];
+    }
+
+    // Executa a rota correspondente à requisição atual
+    public function dispatch(): void
+    {
+        $method = strtoupper($_SERVER['REQUEST_METHOD']);
+        $uri    = $_GET['rota'] ?? '/';
+
+        foreach ($this->routes as $route) {
+            if ($route['method'] === $method && $route['path'] === $uri) {
+                $controllerFile = dirname(__DIR__) . '/controllers/' . $route['controller'] . '.php';
+
+                if (!file_exists($controllerFile)) {
+                    http_response_code(500);
+                    die("Controller {$route['controller']} não encontrado.");
+                }
+
+                require_once $controllerFile;
+
+                $controller = new $route['controller']();
+                $action = $route['action'];
+                $controller->$action();
+                return;
+            }
+        }
+
+        http_response_code(404);
+        die("Rota não encontrada: $method $uri");
+    }
+}

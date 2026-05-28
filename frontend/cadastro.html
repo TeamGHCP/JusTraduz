@@ -11,13 +11,18 @@
 
   <div class="auth-wrap">
     <div class="auth-card" style="max-width:520px;">
-      <div class="logo"><a href="index.html"><img src="assets/img/logo.png" alt="JusTraduz" /></a></div>
+
+      <div class="logo">
+        <a href="index.html"><img src="assets/img/logo.png" alt="JusTraduz" /></a>
+      </div>
+
       <h1>Crie sua conta</h1>
       <p class="subtitle">Comece a entender seus documentos hoje mesmo</p>
 
-<form action="../registrar.php" method="post">
+      <form action="../backend/public/index.php?rota=/auth/registrar" method="post">
+
         <div class="form-group">
-          <label for=\"tipo\">Tipo de conta</label>
+          <label for="tipo">Tipo de conta</label>
           <select id="tipo" name="tipo" class="form-control" onchange="toggleOab()">
             <option value="cliente">Cliente (usuário comum)</option>
             <option value="advogado">Advogado</option>
@@ -45,15 +50,15 @@
               <label for="oab_uf">UF</label>
               <select id="oab_uf" name="oab_uf" class="form-control">
                 <option value="">--</option>
-                <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
-                <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
-                <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
-                <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
-                <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
-                <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
-                <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
-                <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
-                <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+                <option>AC</option><option>AL</option><option>AP</option>
+                <option>AM</option><option>BA</option><option>CE</option>
+                <option>DF</option><option>ES</option><option>GO</option>
+                <option>MA</option><option>MT</option><option>MS</option>
+                <option>MG</option><option>PA</option><option>PB</option>
+                <option>PR</option><option>PE</option><option>PI</option>
+                <option>RJ</option><option>RN</option><option>RS</option>
+                <option>RO</option><option>RR</option><option>SC</option>
+                <option>SP</option><option>SE</option><option>TO</option>
               </select>
             </div>
           </div>
@@ -70,40 +75,75 @@
           </div>
         </div>
 
-        <div class="form-group" style="font-size:13px; color:var(--text-muted); grayish-color;?">
+        <div class="form-group" style="font-size:13px; color:var(--text-muted);">
           <label style="display:flex; gap:8px; align-items:flex-start;">
             <input type="checkbox" required style="margin-top:3px;" />
             <span>Li e aceito os <a href="termos.html">Termos de Uso</a> e a <a href="privacidade.html">Política de Privacidade</a>.</span>
           </label>
         </div>
 
+        <div id="msg-erro" class="alert alert-erro" style="display:none; margin-bottom:16px;"></div>
+
         <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
+
       </form>
 
       <p class="auth-footer">
         Já tem uma conta? <a href="login.html">Entrar</a>
       </p>
+
     </div>
   </div>
 
   <script>
-    // CORRIGIDO: Tratamento dinâmico do bloco OAB baseado no tipo selecionado
-    function toggleOab(){
-      var tipo = document.getElementById('tipo').value;
-      var bloco = document.getElementById('oab-block');
-      var inputInscricao = document.getElementById('inscricao');
-      
-      if(tipo === 'advogado' || tipo === 'estagiario'){
+    function toggleOab() {
+      const tipo       = document.getElementById('tipo').value;
+      const bloco      = document.getElementById('oab-block');
+      const inscricao  = document.getElementById('inscricao');
+
+      if (tipo === 'advogado' || tipo === 'estagiario') {
         bloco.style.display = 'block';
-        inputInscricao.setAttribute('required', 'required');
+        inscricao.setAttribute('required', 'required');
       } else {
         bloco.style.display = 'none';
-        inputInscricao.removeAttribute('required');
-        inputInscricao.value = '';
+        inscricao.removeAttribute('required');
+        inscricao.value = '';
       }
     }
-    // Executa ao carregar a página para garantir o estado correto inicial
-    window.onload = toggleOab;
+
+    function mostrarMensagem(el, texto, tipo) {
+      el.textContent  = texto;
+      el.style.display = 'block';
+
+      if (tipo === 'sucesso') {
+        el.style.background = 'rgba(32,184,154,.12)';
+        el.style.color      = 'var(--teal-dark)';
+        el.style.border     = '1px solid rgba(32,184,154,.3)';
+      } else {
+        el.style.background = 'rgba(224,86,86,.12)';
+        el.style.color      = 'var(--danger)';
+        el.style.border     = '1px solid rgba(224,86,86,.3)';
+      }
+
+      setTimeout(() => {
+        el.style.transition = 'opacity 0.5s';
+        el.style.opacity    = '0';
+        setTimeout(() => el.style.display = 'none', 500);
+      }, 5000);
+    }
+
+    window.onload = function () {
+      toggleOab();
+
+      const params = new URLSearchParams(window.location.search);
+      const erro   = params.get('erro');
+      const el     = document.getElementById('msg-erro');
+
+      if (erro) mostrarMensagem(el, erro, 'erro');
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+    };
   </script>
+
 </body>
 </html>

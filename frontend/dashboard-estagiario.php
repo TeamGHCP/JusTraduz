@@ -1,10 +1,8 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
-    header("Location: login.html");
-    exit();
-}
+require_once "../backend/app/middlewares/AuthMiddleware.php";
+AuthMiddleware::verificar('estagiario');
 
 $nome_usuario = $_SESSION['nome'];
 

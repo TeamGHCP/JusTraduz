@@ -11,19 +11,26 @@
 
   <div class="auth-wrap">
     <div class="auth-card">
-      <div class="logo"><a href="index.html"><img src="assets/img/logo.png" alt="JusTraduz" /></a></div>
+
+      <div class="logo">
+        <a href="index.html"><img src="assets/img/logo.png" alt="JusTraduz" /></a>
+      </div>
+
       <h1>Bem-vindo de volta</h1>
       <p class="subtitle">Entre com suas credenciais para continuar</p>
 
-      <form action="../login.php" method="post">
+      <form action="../backend/public/index.php?rota=/auth/login" method="post">
+
         <div class="form-group">
           <label for="email">E-mail</label>
-          <input type="email" id="email" name="email" class="form-control" placeholder="voce@exemplo.com" required />
+          <input type="email" id="email" name="email" class="form-control"
+            placeholder="voce@exemplo.com" required />
         </div>
 
         <div class="form-group">
           <label for="senha">Senha</label>
-          <input type="password" id="senha" name="senha" class="form-control" placeholder="••••••••" required />
+          <input type="password" id="senha" name="senha" class="form-control"
+            placeholder="••••••••" required />
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; font-size:14px;">
@@ -33,14 +40,58 @@
           <a href="#">Esqueci a senha</a>
         </div>
 
+        <div id="msg-erro" style="
+          display:none;
+          border-radius: var(--radius);
+          padding: 10px 14px;
+          font-size: 14px;
+          margin-bottom: 16px;
+        "></div>
+
         <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+
       </form>
 
       <p class="auth-footer">
         Não tem uma conta? <a href="cadastro.html">Cadastre-se</a>
       </p>
+
     </div>
   </div>
+
+  <script>
+    function mostrarMensagem(el, texto, tipo) {
+      el.textContent   = texto;
+      el.style.display = 'block';
+
+      if (tipo === 'sucesso') {
+        el.style.background = 'rgba(32,184,154,.12)';
+        el.style.color      = 'var(--teal-dark)';
+        el.style.border     = '1px solid rgba(32,184,154,.3)';
+      } else {
+        el.style.background = 'rgba(224,86,86,.12)';
+        el.style.color      = 'var(--danger)';
+        el.style.border     = '1px solid rgba(224,86,86,.3)';
+      }
+
+      setTimeout(() => {
+        el.style.transition = 'opacity 0.5s';
+        el.style.opacity    = '0';
+        setTimeout(() => el.style.display = 'none', 500);
+      }, 5000);
+    }
+
+    const params  = new URLSearchParams(window.location.search);
+    const erro    = params.get('erro');
+    const sucesso = params.get('sucesso');
+    const el      = document.getElementById('msg-erro');
+
+    if (erro)                      mostrarMensagem(el, erro, 'erro');
+    if (sucesso === 'conta_criada') mostrarMensagem(el, 'Conta criada com sucesso! Faça login para continuar.', 'sucesso');
+
+    // Limpa a URL para não reaparecer ao atualizar
+    window.history.replaceState({}, document.title, window.location.pathname);
+  </script>
 
 </body>
 </html>

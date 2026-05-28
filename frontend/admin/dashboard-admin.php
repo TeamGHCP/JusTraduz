@@ -1,11 +1,9 @@
 <?php
 session_start();
 
-// Se não for admin, tchau!
-if (!isset($_SESSION['logado']) || $_SESSION['tipo'] !== 'admin') {
-    header("Location: ../login.html");
-    exit();
-}
+require_once "../../backend/app/middlewares/AuthMiddleware.php";
+AuthMiddleware::verificar('admin');
+
 ?>
 
 <!DOCTYPE html>
@@ -36,10 +34,9 @@ if (!isset($_SESSION['logado']) || $_SESSION['tipo'] !== 'admin') {
       <ul>
         <li><a href="#">⚙️ Configurações</a></li>
         <li><a href="#">📜 Logs</a></li>
-        <li><a href="../login.html">🚪 Sair</a></li>
+        <li><a href="../../backend/public/index.php?rota=/auth/logout">🚪 Sair</a></li>
       </ul>
     </aside>
-
     <main class="dash-main">
       <div class="dash-header">
         <div>
