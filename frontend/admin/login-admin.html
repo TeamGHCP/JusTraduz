@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login administrativo | JusTraduz</title>
+  <link rel="icon" href="../assets/img/logo.png">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <main class="auth-page admin-auth-page">
+    <section class="auth-panel">
+      <a class="auth-brand" href="../index.html">
+        <img src="../assets/img/logo.png" alt="JusTraduz">
+      </a>
+      <div class="auth-card admin-auth-card">
+        <span class="badge badge-info">Área administrativa</span>
+        <h1>Entrar como admin</h1>
+        <p class="subtitle">Acesso separado para gestão de usuários, documentos e solicitações.</p>
+
+        <form class="auth-form" action="../../backend/public/index.php?rota=/auth/admin-login" method="post">
+          <div class="alert" data-auth-alert></div>
+
+          <div class="field">
+            <label for="email">E-mail administrativo</label>
+            <input class="input" type="email" id="email" name="email" placeholder="admin@justraduz.com" required>
+          </div>
+
+          <div class="field">
+            <label for="senha">Senha</label>
+            <input class="input" type="password" id="senha" name="senha" placeholder="Senha do admin" required>
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit">Entrar no admin</button>
+        </form>
+
+        <p class="auth-footer">Login de usuários comuns: <a href="../login.html">entrar no JusTraduz</a></p>
+      </div>
+    </section>
+
+    <aside class="auth-art admin-auth-art" aria-label="Administração JusTraduz">
+      <div class="auth-art-inner">
+        <div class="auth-art-logo">
+          <img src="../assets/img/logo.png" alt="JusTraduz">
+        </div>
+        <h2>Painel separado para operação da plataforma.</h2>
+        <p>Use esta entrada apenas para contas administrativas autorizadas.</p>
+      </div>
+    </aside>
+  </main>
+
+  <script src="../assets/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+@media (max-width: 980px) {
+  .nav-links,
+  .nav-actions {
+    display: none;
+  }
+
+  .mobile-toggle {
+    display: inline-grid;
+    place-items: center;
+  }
+
+  .site-header.is-open .nav-links,
+  .site-header.is-open .nav-actions {
+    display: flex;
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    flex-direction: column;
+    align-items: stretch;
+    background: #fff;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-sm);
+    padding: 16px;
+  }
+
+  .site-header.is-open .nav-links {
+    top: 70px;
+  }
+
+  .site-header.is-open .nav-actions {
+    top: 220px;
+  }
+
+  .hero-grid,
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .doc-view,
+  .doc-view-wide,
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding-top: 54px;
+  }
+
+  .hero-card {
+    min-height: 280px;
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: relative;
+    height: auto;
+  }
+
+  .chat-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-hero,
+  .admin-filter {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-hero-actions {
+    justify-content: flex-start;
+  }
+
+  .chat-list {
+    max-height: 260px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .auth-page {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-art {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    width: min(100% - 28px, 1150px);
+  }
+
+  .app-main {
+    padding: 22px 16px 34px;
+  }
+
+  .topbar,
+  .footer-row,
+  .auth-extra {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .message {
+    max-width: 88%;
+  }
+}

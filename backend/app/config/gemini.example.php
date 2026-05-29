@@ -1,0 +1,6 @@
+<?php
+
+return [
+    'GEMINI_API_KEY' => 'cole_sua_chave_aqui',
+    'GEMINI_MODEL' => 'gemini-2.5-flash',
+];

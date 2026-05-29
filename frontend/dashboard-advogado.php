@@ -1,163 +1,171 @@
 <?php
-session_start();
+require_once __DIR__ . '/app/bootstrap.php';
+require_role(['advogado']);
 
-require_once "../backend/app/middlewares/AuthMiddleware.php";
-AuthMiddleware::verificar('advogado');
+$userId = current_user_id();
+$assignedCount = count_query($pdo, 'SELECT COUNT(*) FROM cases WHERE advogado_id = ?', [$userId]);
+$openCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE advogado_id IS NULL AND status = 'aberto'");
+$taskCount = count_query($pdo, 'SELECT COUNT(*) FROM tasks t INNER JOIN cases c ON c.id = t.case_id WHERE c.advogado_id = ?', [$userId]);
+$messageCount = count_query($pdo, 'SELECT COUNT(*) FROM messages m INNER JOIN cases c ON c.id = m.case_id WHERE c.advogado_id = ?', [$userId]);
+$documentCount = count_query($pdo, 'SELECT COUNT(DISTINCT d.id) FROM documents d INNER JOIN cases c ON c.cliente_id = d.user_id WHERE c.advogado_id = ?', [$userId]);
 
-$nome_usuario = $_SESSION['nome'];
-
+$openCases = fetch_all($pdo, "SELECT c.id, c.titulo, c.prioridade, c.created_at, u.nome AS cliente FROM cases c INNER JOIN users u ON u.id = c.cliente_id WHERE c.advogado_id IS NULL AND c.status = 'aberto' ORDER BY c.created_at ASC LIMIT 8");
+$assignedCases = fetch_all($pdo, 'SELECT c.id, c.titulo, c.status, c.created_at, u.nome AS cliente FROM cases c INNER JOIN users u ON u.id = c.cliente_id WHERE c.advogado_id = ? ORDER BY c.created_at DESC LIMIT 8', [$userId]);
+$recentDocuments = fetch_all(
+    $pdo,
+    'SELECT DISTINCT d.id, d.nome_arquivo, d.tipo_arquivo, d.created_at, u.nome AS cliente
+     FROM documents d
+     INNER JOIN users u ON u.id = d.user_id
+     INNER JOIN cases c ON c.cliente_id = d.user_id
+     WHERE c.advogado_id = ?
+     ORDER BY d.created_at DESC
+     LIMIT 8',
+    [$userId]
+);
+$tasks = fetch_all(
+    $pdo,
+    'SELECT t.titulo, t.status, t.created_at, c.titulo AS caso
+     FROM tasks t
+     INNER JOIN cases c ON c.id = t.case_id
+     WHERE c.advogado_id = ?
+     ORDER BY t.created_at DESC
+     LIMIT 8',
+    [$userId]
+);
 ?>
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Painel do Advogado — JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard do advogado | JusTraduz</title>
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+  <div class="app-shell">
+    <?php render_sidebar('advogado', 'dashboard-advogado.php'); ?>
 
-  <div class="dash">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="brand"><img src="assets/img/logo.png" alt="JusTraduz" /></div>
+    <main class="app-main">
+      <?php render_topbar('Área do advogado', 'Gerencie solicitações, documentos, tarefas e conversas com clientes.', current_user_name()); ?>
 
-      <h4>Atendimento</h4>
-      <ul>
-        <li><a href="#" class="active">🏠 Visão geral</a></li>
-        <li><a href="#">📂 Meus casos</a></li>
-        <li><a href="#">🆕 Solicitações abertas</a></li>
-        <li><a href="#">💬 Conversas</a></li>
-      </ul>
+      <section class="grid grid-4">
+        <?= stat_card('Casos atribuídos', $assignedCount, 'case') ?>
+        <?= stat_card('Solicitações abertas', $openCount, 'help') ?>
+        <?= stat_card('Documentos', $documentCount, 'file') ?>
+        <?= stat_card('Mensagens', $messageCount, 'chat') ?>
+      </section>
 
-      <h4>Gestão</h4>
-      <ul>
-        <li><a href="#">✅ Tarefas</a></li>
-        <li><a href="#">📅 Agenda / Audiências</a></li>
-        <li><a href="#">📄 Documentos</a></li>
-      </ul>
-
-      <h4>Conta</h4>
-      <ul>
-        <li><a href="#">⚙️ Configurações</a></li>
-        <li><a href="../backend/public/index.php?rota=/auth/logout">🚪 Sair</a></li>
-      </ul>
-    </aside>
-
-    <!-- Main -->
-    <main class="dash-main">
-      <div class="dash-header">
-        <h1>Painel do Advogado</h1>
-        <div class="user">
-          <span>Dr. <?= htmlspecialchars($nome_usuario); ?> — OAB/SP 123.456 <span class="badge badge-success">Ativo</span></span>
-          <div class="avatar" style="background:var(--navy);"><?= mb_substr(htmlspecialchars($nome_usuario), 0, 1); ?></div>
+      <section class="dash-section">
+        <div class="dash-section-title"><h2>Ações rápidas</h2></div>
+        <div class="form-actions">
+          <a class="btn btn-primary" href="acompanhar-solicitacoes.php"><?= icon_svg('case') ?> Ver casos</a>
+          <a class="btn btn-soft" href="visualizar-documento.php"><?= icon_svg('file') ?> Documentos</a>
+          <a class="btn btn-outline" href="chat.php"><?= icon_svg('chat') ?> Abrir chat</a>
         </div>
-      </div>
+      </section>
 
-      <!-- Stats -->
-      <div class="grid grid-4" style="margin-bottom:28px;">
-        <div class="stat">
-          <div class="label">Casos ativos</div>
-          <div class="value">8</div>
-        </div>
-        <div class="stat">
-          <div class="label">Aguardando atendimento</div>
-          <div class="value accent">3</div>
-        </div>
-        <div class="stat">
-          <div class="label">Solicitações abertas</div>
-          <div class="value">5</div>
-        </div>
-        <div class="stat">
-          <div class="label">Audiências (semana)</div>
-          <div class="value">2</div>
-        </div>
-      </div>
+      <section class="dash-section">
+        <div class="dash-section-title"><h2>Solicitações abertas</h2></div>
+        <?php if (!$openCases): ?>
+          <?= empty_state('Nenhuma solicitação aberta no momento.') ?>
+        <?php else: ?>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Cliente</th><th>Assunto</th><th>Prioridade</th><th>Criada em</th><th>Ação</th></tr></thead>
+              <tbody>
+                <?php foreach ($openCases as $case): ?>
+                  <tr>
+                    <td><?= e($case['cliente']) ?></td>
+                    <td><?= e($case['titulo']) ?></td>
+                    <td><?= e($case['prioridade']) ?></td>
+                    <td><?= e(date('d/m/Y H:i', strtotime($case['created_at']))) ?></td>
+                    <td><a href="../backend/public/index.php?rota=/cases/accept&id=<?= (int) $case['id'] ?>">Aceitar</a></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
+      </section>
 
-      <!-- Solicitações abertas -->
-      <div class="card" style="margin-bottom:24px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-          <div class="card-title" style="margin:0;">Solicitações abertas</div>
-          <a href="#" class="btn btn-ghost btn-sm">Ver todas →</a>
-        </div>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Assunto</th>
-              <th>Prioridade</th>
-              <th>Recebida</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Ana Souza</td>
-              <td>Dúvida sobre intimação trabalhista</td>
-              <td><span class="badge badge-danger">Alta</span></td>
-              <td>há 12 min</td>
-              <td><a href="#" class="btn btn-primary btn-sm">Aceitar caso</a></td>
-            </tr>
-            <tr>
-              <td>João Lima</td>
-              <td>Revisão de contrato de locação</td>
-              <td><span class="badge badge-info">Média</span></td>
-              <td>há 2 h</td>
-              <td><a href="#" class="btn btn-primary btn-sm">Aceitar caso</a></td>
-            </tr>
-            <tr>
-              <td>Lúcia Mendes</td>
-              <td>Orientação sobre processo de família</td>
-              <td><span class="badge badge-info">Média</span></td>
-              <td>ontem</td>
-              <td><a href="#" class="btn btn-primary btn-sm">Aceitar caso</a></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <section class="dash-section">
+        <div class="dash-section-title"><h2>Meus casos</h2></div>
+        <?php if (!$assignedCases): ?>
+          <?= empty_state('Você ainda não possui casos atribuídos.') ?>
+        <?php else: ?>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Caso</th><th>Cliente</th><th>Status</th><th>Criado em</th><th>Ação</th></tr></thead>
+              <tbody>
+                <?php foreach ($assignedCases as $case): ?>
+                  <tr>
+                    <td><?= e($case['titulo']) ?></td>
+                    <td><?= e($case['cliente']) ?></td>
+                    <td><?= e($case['status']) ?></td>
+                    <td><?= e(date('d/m/Y H:i', strtotime($case['created_at']))) ?></td>
+                    <td><a href="chat.php?case_id=<?= (int) $case['id'] ?>">Abrir chat</a></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
+      </section>
 
-      <!-- Casos do advogado -->
-      <div class="card">
-        <div class="card-title" style="margin-bottom:14px;">Meus casos</div>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Caso</th>
-              <th>Status</th>
-              <th>Atualizado</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Maria Costa</td>
-              <td>Defesa em ação de cobrança</td>
-              <td><span class="badge badge-warning">Em andamento</span></td>
-              <td>hoje</td>
-              <td><a href="#" class="btn btn-outline btn-sm">Abrir</a></td>
-            </tr>
-            <tr>
-              <td>Roberto Silva</td>
-              <td>Consulta — rescisão trabalhista</td>
-              <td><span class="badge badge-info">Aguardando</span></td>
-              <td>23/05</td>
-              <td><a href="#" class="btn btn-outline btn-sm">Abrir</a></td>
-            </tr>
-            <tr>
-              <td>Patricia Reis</td>
-              <td>Inventário extrajudicial</td>
-              <td><span class="badge badge-success">Finalizado</span></td>
-              <td>15/05</td>
-              <td><a href="#" class="btn btn-ghost btn-sm">Ver</a></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <section class="dash-section">
+        <div class="dash-section-title">
+          <h2>Documentos dos meus clientes</h2>
+          <a class="btn btn-soft btn-sm" href="visualizar-documento.php">Ver todos</a>
+        </div>
+        <?php if (!$recentDocuments): ?>
+          <?= empty_state('Nenhum documento disponível nos seus casos.') ?>
+        <?php else: ?>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th>Enviado em</th><th>Ação</th></tr></thead>
+              <tbody>
+                <?php foreach ($recentDocuments as $document): ?>
+                  <tr>
+                    <td><?= e($document['cliente']) ?></td>
+                    <td><?= e($document['nome_arquivo']) ?></td>
+                    <td><?= e(strtoupper($document['tipo_arquivo'] ?? '')) ?></td>
+                    <td><?= e(date('d/m/Y H:i', strtotime($document['created_at']))) ?></td>
+                    <td><a href="visualizar-documento.php?id=<?= (int) $document['id'] ?>">Abrir documento</a></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
+      </section>
+
+      <section class="dash-section">
+        <div class="dash-section-title">
+          <h2>Tarefas</h2>
+          <span class="badge badge-info"><?= e((string) $taskCount) ?> tarefas</span>
+        </div>
+        <?php if (!$tasks): ?>
+          <?= empty_state('Nenhuma tarefa cadastrada para seus casos.') ?>
+        <?php else: ?>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Tarefa</th><th>Caso</th><th>Status</th><th>Criada em</th></tr></thead>
+              <tbody>
+                <?php foreach ($tasks as $task): ?>
+                  <tr>
+                    <td><?= e($task['titulo']) ?></td>
+                    <td><?= e($task['caso']) ?></td>
+                    <td><?= e($task['status']) ?></td>
+                    <td><?= e(date('d/m/Y H:i', strtotime($task['created_at']))) ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
+      </section>
     </main>
   </div>
-
 </body>
 </html>
