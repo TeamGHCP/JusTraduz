@@ -1,53 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Termos de Uso — JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png" />
-  <link rel="stylesheet" href="assets/css/style.css" />
-  <style>
-    .legal-container {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 30px;
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      color: var(--text);
-      line-height: 1.6;
-    }
-    .legal-container h1 { color: var(--navy); margin-bottom: 20px; font-size: 28px; }
-    .legal-container h2 { color: var(--navy); margin-top: 24px; margin-bottom: 12px; font-size: 20px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-    .legal-container p { margin-bottom: 14px; font-size: 15px; color: #334155; }
-    .legal-container ul { margin-bottom: 14px; padding-left: 20px; }
-    .legal-container li { margin-bottom: 6px; font-size: 15px; color: #334155; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Termos de Uso | JusTraduz</title>
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body style="background: var(--bg);">
-
-  <div class="legal-container">
-    <div style="margin-bottom: 20px;">
-      <a href="cadastro.html" style="color: var(--teal); text-decoration: none; font-size: 14px;">← Voltar para o Cadastro</a>
+<body>
+  <header class="site-header" data-site-header>
+    <div class="container nav-bar">
+      <a class="brand" href="index.html"><img src="assets/img/logo.png" alt="JusTraduz"></a>
+      <nav class="nav-links"><a href="index.html#sobre">Sobre</a><a href="index.html#recursos">Recursos</a><a href="login.html">Entrar</a></nav>
+      <button class="mobile-toggle" type="button" data-nav-toggle aria-label="Abrir menu">
+        <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
     </div>
-    
-    <h1>Termos e Condições de Uso</h1>
-    <p>Última atualização: Maio de 2026</p>
-
-    <p>Bem-vindo ao JusTraduz. Ao se cadastrar e utilizar nossa plataforma, você concorda expressamente com os termos e condições descritos abaixo.</p>
-
-    <h2>1. Objeto do Sistema</h2>
-    <p>O JusTraduz é uma plataforma tecnológica que utiliza Inteligência Artificial para realizar a leitura, extração de texto e simplificação da linguagem de documentos jurídicos (tradução do "juridiquês" para linguagem acessível).</p>
-
-    <h2>2. Limitação de Responsabilidade (Aviso Importante)</h2>
-    <p><strong>O JusTraduz não presta consultoria jurídica e não substitui, em hipótese alguma, a atuação de um advogado ou estagiário de direito habilitado.</strong> As análises geradas pela Inteligência Artificial servem apenas para fins informativos e de entendimento básico. Decisões legais devem sempre ser validadas por profissionais da área.</p>
-    
-    <h2>3. Cadastro de Advogados e Estagiários</h2>
-    <p>Os usuários que se cadastrarem nas modalidades profissionais declaram possuir inscrição válida e regular perante a Ordem dos Advogados do Brasil (OAB). O JusTraduz utiliza rotinas automatizadas de verificação junto ao Cadastro Nacional dos Advogados (CNA). Contas com dados falsos ou inscrições inativas serão banidas imediatamente.</p>
-
-    <h2>4. Uso Aceitável</h2>
-    <p>Você se compromete a não utilizar a plataforma para fins ilícitos, não realizar engenharia reversa nos módulos de Inteligência Artificial e não fazer uploads de arquivos corrompidos ou que contenham códigos maliciosos.</p>
-  </div>
-
+  </header>
+  <main class="container legal-page">
+    <h1>Termos de Uso</h1>
+    <p>Estes termos organizam o uso do JusTraduz, uma plataforma de apoio à compreensão de documentos jurídicos e conexão com profissionais.</p>
+    <h2>Uso da análise automática</h2>
+    <p>A análise por IA tem caráter informativo e não substitui orientação jurídica profissional. Sempre que houver dúvida relevante, procure um advogado.</p>
+    <h2>Responsabilidades do usuário</h2>
+    <p>O usuário deve enviar apenas documentos que tem autorização para tratar, manter seus dados atualizados e respeitar as regras de convivência no chat.</p>
+    <h2>Profissionais</h2>
+    <p>Advogados devem fornecer dados verdadeiros e poderão passar por validação de situação cadastral junto à OAB.</p>
+  </main>
+  <script src="assets/js/main.js"></script>
 </body>
 </html>

@@ -1,149 +1,103 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cadastro — JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cadastro | JusTraduz</title>
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+  <main class="auth-page">
+    <section class="auth-panel">
+      <a class="auth-brand" href="index.html">
+        <img src="assets/img/logo.png" alt="JusTraduz">
+      </a>
+      <div class="auth-card">
+        <h1>Crie sua conta</h1>
+        <p class="subtitle">Escolha seu perfil e comece a usar o JusTraduz.</p>
 
-  <div class="auth-wrap">
-    <div class="auth-card" style="max-width:520px;">
+        <form class="auth-form" action="../backend/public/index.php?rota=/auth/registrar" method="post">
+          <div class="alert" data-auth-alert></div>
 
-      <div class="logo">
-        <a href="index.html"><img src="assets/img/logo.png" alt="JusTraduz" /></a>
-      </div>
+          <div class="field">
+            <label for="tipo">Tipo de conta</label>
+            <select class="select" id="tipo" name="tipo" data-account-type>
+              <option value="cliente">Cliente</option>
+              <option value="advogado">Advogado</option>
+              <option value="estagiario">Estagiário</option>
+            </select>
+          </div>
 
-      <h1>Crie sua conta</h1>
-      <p class="subtitle">Comece a entender seus documentos hoje mesmo</p>
+          <div class="field">
+            <label for="nome">Nome completo</label>
+            <input class="input" type="text" id="nome" name="nome" required>
+          </div>
 
-      <form action="../backend/public/index.php?rota=/auth/registrar" method="post">
+          <div class="field">
+            <label for="email">E-mail</label>
+            <input class="input" type="email" id="email" name="email" required>
+          </div>
 
-        <div class="form-group">
-          <label for="tipo">Tipo de conta</label>
-          <select id="tipo" name="tipo" class="form-control" onchange="toggleOab()">
-            <option value="cliente">Cliente (usuário comum)</option>
-            <option value="advogado">Advogado</option>
-            <option value="estagiario">Estagiário</option>
-          </select>
-        </div>
+          <div class="field">
+            <label for="telefone">Telefone</label>
+            <input class="input" type="tel" id="telefone" name="telefone" placeholder="(00) 00000-0000" maxlength="25" required>
+          </div>
 
-        <div class="form-group">
-          <label for="nome">Nome completo</label>
-          <input type="text" id="nome" name="nome" class="form-control" required />
-        </div>
-
-        <div class="form-group">
-          <label for="email">E-mail</label>
-          <input type="email" id="email" name="email" class="form-control" required />
-        </div>
-
-        <div id="oab-block" style="display:none;">
-          <div class="row" style="gap:14px;">
-            <div class="form-group" style="flex:1;">
+          <div class="form-grid oab-fields" data-oab-fields>
+            <div class="field">
               <label for="inscricao">Número da OAB</label>
-              <input type="text" id="inscricao" name="inscricao" class="form-control" />
+              <input class="input" type="text" id="inscricao" name="inscricao" inputmode="numeric">
             </div>
-            <div class="form-group" style="width:100px;">
+            <div class="field">
               <label for="oab_uf">UF</label>
-              <select id="oab_uf" name="oab_uf" class="form-control">
-                <option value="">--</option>
-                <option>AC</option><option>AL</option><option>AP</option>
-                <option>AM</option><option>BA</option><option>CE</option>
-                <option>DF</option><option>ES</option><option>GO</option>
-                <option>MA</option><option>MT</option><option>MS</option>
-                <option>MG</option><option>PA</option><option>PB</option>
-                <option>PR</option><option>PE</option><option>PI</option>
-                <option>RJ</option><option>RN</option><option>RS</option>
-                <option>RO</option><option>RR</option><option>SC</option>
+              <select class="select" id="oab_uf" name="oab_uf">
+                <option value="">Selecione</option>
+                <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+                <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+                <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+                <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+                <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
                 <option>SP</option><option>SE</option><option>TO</option>
               </select>
             </div>
           </div>
-        </div>
 
-        <div class="row" style="gap:14px;">
-          <div class="form-group" style="flex:1; min-width:200px;">
-            <label for="senha">Senha</label>
-            <input type="password" id="senha" name="senha" class="form-control" required />
+          <div class="form-grid">
+            <div class="field">
+              <label for="senha">Senha</label>
+              <input class="input" type="password" id="senha" name="senha" minlength="6" required>
+            </div>
+            <div class="field">
+              <label for="senha2">Confirmar senha</label>
+              <input class="input" type="password" id="senha2" name="senha2" minlength="6" required>
+            </div>
           </div>
-          <div class="form-group" style="flex:1; min-width:200px;">
-            <label for="senha2">Confirmar senha</label>
-            <input type="password" id="senha2" name="senha2" class="form-control" required />
-          </div>
-        </div>
 
-        <div class="form-group" style="font-size:13px; color:var(--text-muted);">
-          <label style="display:flex; gap:8px; align-items:flex-start;">
-            <input type="checkbox" required style="margin-top:3px;" />
+          <label class="checkline">
+            <input type="checkbox" required>
             <span>Li e aceito os <a href="termos.html">Termos de Uso</a> e a <a href="privacidade.html">Política de Privacidade</a>.</span>
           </label>
+
+          <button class="btn btn-primary btn-block" type="submit">Cadastrar</button>
+        </form>
+
+        <p class="auth-footer">Já tem uma conta? <a href="login.html">Entrar</a></p>
+      </div>
+    </section>
+
+    <aside class="auth-art" aria-label="Cadastro JusTraduz">
+      <div class="auth-art-inner">
+        <div class="auth-art-logo">
+          <img src="assets/img/logo.png" alt="JusTraduz">
         </div>
+        <h2>Perfis separados para cada jornada.</h2>
+        <p>Clientes enviam documentos, profissionais acompanham casos e administradores gerenciam a plataforma.</p>
+      </div>
+    </aside>
+  </main>
 
-        <div id="msg-erro" class="alert alert-erro" style="display:none; margin-bottom:16px;"></div>
-
-        <button type="submit" class="btn btn-primary btn-block">Criar conta</button>
-
-      </form>
-
-      <p class="auth-footer">
-        Já tem uma conta? <a href="login.html">Entrar</a>
-      </p>
-
-    </div>
-  </div>
-
-  <script>
-    function toggleOab() {
-      const tipo       = document.getElementById('tipo').value;
-      const bloco      = document.getElementById('oab-block');
-      const inscricao  = document.getElementById('inscricao');
-
-      if (tipo === 'advogado' || tipo === 'estagiario') {
-        bloco.style.display = 'block';
-        inscricao.setAttribute('required', 'required');
-      } else {
-        bloco.style.display = 'none';
-        inscricao.removeAttribute('required');
-        inscricao.value = '';
-      }
-    }
-
-    function mostrarMensagem(el, texto, tipo) {
-      el.textContent  = texto;
-      el.style.display = 'block';
-
-      if (tipo === 'sucesso') {
-        el.style.background = 'rgba(32,184,154,.12)';
-        el.style.color      = 'var(--teal-dark)';
-        el.style.border     = '1px solid rgba(32,184,154,.3)';
-      } else {
-        el.style.background = 'rgba(224,86,86,.12)';
-        el.style.color      = 'var(--danger)';
-        el.style.border     = '1px solid rgba(224,86,86,.3)';
-      }
-
-      setTimeout(() => {
-        el.style.transition = 'opacity 0.5s';
-        el.style.opacity    = '0';
-        setTimeout(() => el.style.display = 'none', 500);
-      }, 5000);
-    }
-
-    window.onload = function () {
-      toggleOab();
-
-      const params = new URLSearchParams(window.location.search);
-      const erro   = params.get('erro');
-      const el     = document.getElementById('msg-erro');
-
-      if (erro) mostrarMensagem(el, erro, 'erro');
-
-      window.history.replaceState({}, document.title, window.location.pathname);
-    };
-  </script>
-
+  <script src="assets/js/auth.js"></script>
 </body>
 </html>

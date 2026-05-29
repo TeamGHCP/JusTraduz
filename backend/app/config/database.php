@@ -4,7 +4,7 @@ $host    = "localhost";
 $dbname  = "justraduz";
 $usuario = "root";
 $senha   = "";
-$port    = "3307";
+$port    = "3306";
 
 try {
     $pdo = new PDO(

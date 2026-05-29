@@ -1,128 +1,82 @@
 <?php
-session_start();
+require_once __DIR__ . '/app/bootstrap.php';
+require_role(['cliente']);
 
-require_once "../backend/app/middlewares/AuthMiddleware.php";
-AuthMiddleware::verificar('cliente');
-
-$nome_usuario = $_SESSION['nome'];
-
+$userId = current_user_id();
+$documentCount = count_query($pdo, 'SELECT COUNT(*) FROM documents WHERE user_id = ?', [$userId]);
+$analysisCount = count_query($pdo, 'SELECT COUNT(*) FROM ai_results ar INNER JOIN documents d ON d.id = ar.document_id WHERE d.user_id = ?', [$userId]);
+$caseCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE cliente_id = ? AND status <> 'finalizado'", [$userId]);
+$messageCount = count_query($pdo, 'SELECT COUNT(*) FROM messages m INNER JOIN cases c ON c.id = m.case_id WHERE c.cliente_id = ?', [$userId]);
+$documents = fetch_all($pdo, 'SELECT id, nome_arquivo, tipo_arquivo, created_at FROM documents WHERE user_id = ? ORDER BY created_at DESC LIMIT 8', [$userId]);
 ?>
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Painel do Cliente — JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard do cliente | JusTraduz</title>
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
+  <div class="app-shell">
+    <?php render_sidebar('cliente', 'dashboard-cliente.php'); ?>
 
-  <div class="dash">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="brand"><img src="assets/img/logo.png" alt="JusTraduz" /></div>
+    <main class="app-main">
+      <?php render_topbar('Olá, ' . current_user_name(), 'Envie documentos, acompanhe análises e peça ajuda especializada.', 'Cliente'); ?>
 
-      <h4>Menu</h4>
-      <ul>
-        <li><a href="#" class="active">🏠 Início</a></li>
-        <li><a href="#">📤 Enviar PDF</a></li>
-        <li><a href="#">📚 Meus documentos</a></li>
-        <li><a href="#">🆘 Solicitar ajuda</a></li>
-        <li><a href="#">💬 Conversas</a></li>
-      </ul>
+      <section class="grid grid-4">
+        <?= stat_card('Documentos', $documentCount, 'file') ?>
+        <?= stat_card('Análises feitas', $analysisCount, 'chart') ?>
+        <?= stat_card('Casos ativos', $caseCount, 'case') ?>
+        <?= stat_card('Mensagens', $messageCount, 'chat') ?>
+      </section>
 
-      <h4>Conta</h4>
-      <ul>
-        <li><a href="#">⚙️ Configurações</a></li>
-        <li><a href="../backend/public/index.php?rota=/auth/logout">🚪 Sair</a></li>
-      </ul>
-    </aside>
-
-    <!-- Main -->
-    <main class="dash-main">
-      <div class="dash-header">
-  
-        <h1>Olá, <?= htmlspecialchars($nome_usuario); ?> 👋</h1>
-
-        <div class="user">
-          <span>Cliente</span>
-          <div class="avatar"><?= mb_substr(htmlspecialchars($nome_usuario), 0, 1); ?></div>
-        </div>
-      </div>
-      <div class="alert alert-warn">
-        ⚠️ Lembrete: a IA do JusTraduz <strong>não substitui</strong> a orientação de um advogado.
-      </div> 
-
-      <!-- Stats -->
-      <div class="grid grid-3" style="margin-bottom:28px;">
-        <div class="stat">
-          <div class="label">PDFs enviados</div>
-          <div class="value">12</div>
-        </div>
-        <div class="stat">
-          <div class="label">Solicitações abertas</div>
-          <div class="value accent">2</div>
-        </div>
-        <div class="stat">
-          <div class="label">Casos em andamento</div>
-          <div class="value">1</div>
-        </div>
-      </div>
-
-      <!-- Upload -->
-      <div class="card" style="margin-bottom:24px;">
-        <div class="card-title">Enviar novo documento</div>
-        <p class="card-sub" style="margin-bottom:16px;">Apenas arquivos PDF. Tamanho máximo: 10 MB.</p>
-        <form action="#" method="post" enctype="multipart/form-data">
-          <div class="form-group">
-            <input type="file" name="arquivo" accept="application/pdf" class="form-control" />
+      <section class="dash-section">
+        <form class="card" action="../backend/public/index.php?rota=/documents/upload" method="post" enctype="multipart/form-data">
+          <div class="dash-section-title">
+            <h2>Novo documento</h2>
+            <span class="badge badge-info">Máx. 50 MB</span>
           </div>
-          <button type="submit" class="btn btn-primary">Analisar com IA</button>
+          <label class="upload-box" data-upload-box>
+            <input class="sr-only" type="file" name="documento" accept=".pdf,.png,.jpg,.jpeg,.webp" data-upload-input required>
+            <?= icon_svg('upload') ?>
+            <strong>Arraste seu arquivo ou clique para selecionar</strong>
+            <p data-file-name>PDF, PNG, JPEG ou WebP</p>
+            <span class="btn btn-primary">Selecionar arquivo</span>
+          </label>
+          <p class="mt-14 text-muted">A análise automática não substitui orientação jurídica profissional.</p>
+          <button class="btn btn-primary mt-16" type="submit">Enviar documento</button>
         </form>
-      </div>
+      </section>
 
-      <!-- Histórico -->
-      <div class="card">
-        <div class="card-title" style="margin-bottom:14px;">Meus documentos recentes</div>
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Arquivo</th>
-              <th>Data</th>
-              <th>Confiança IA</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>intimacao_processo_2025.pdf</td>
-              <td>22/05/2026</td>
-              <td>92%</td>
-              <td><span class="badge badge-success">Traduzido</span></td>
-              <td><a href="#" class="btn btn-outline btn-sm">Ver</a></td>
-            </tr>
-            <tr>
-              <td>contrato_locacao.pdf</td>
-              <td>20/05/2026</td>
-              <td>87%</td>
-              <td><span class="badge badge-success">Traduzido</span></td>
-              <td><a href="#" class="btn btn-outline btn-sm">Ver</a></td>
-            </tr>
-            <tr>
-              <td>sentenca_trabalhista.pdf</td>
-              <td>18/05/2026</td>
-              <td>—</td>
-              <td><span class="badge badge-warning">Processando</span></td>
-              <td><a href="#" class="btn btn-ghost btn-sm">Aguardar</a></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <section class="dash-section">
+        <div class="dash-section-title">
+          <h2>Histórico de documentos</h2>
+          <a class="btn btn-soft btn-sm" href="solicitar-ajuda.php"><?= icon_svg('help') ?> Pedir ajuda</a>
+        </div>
+        <?php if (!$documents): ?>
+          <?= empty_state('Nenhum documento enviado ainda.') ?>
+        <?php else: ?>
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Documento</th><th>Tipo</th><th>Data</th><th>Ação</th></tr></thead>
+              <tbody>
+                <?php foreach ($documents as $document): ?>
+                  <tr>
+                    <td><?= e($document['nome_arquivo']) ?></td>
+                    <td><?= e(strtoupper($document['tipo_arquivo'] ?? '')) ?></td>
+                    <td><?= e(date('d/m/Y H:i', strtotime($document['created_at']))) ?></td>
+                    <td><a href="visualizar-documento.php?id=<?= (int) $document['id'] ?>">Abrir</a></td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          </div>
+        <?php endif; ?>
+      </section>
     </main>
   </div>
-
+  <script src="assets/js/upload.js"></script>
 </body>
 </html>

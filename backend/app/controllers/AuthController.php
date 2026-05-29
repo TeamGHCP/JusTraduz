@@ -3,7 +3,7 @@
 require_once dirname(__DIR__) . '/core/Request.php';
 require_once dirname(__DIR__) . '/core/Response.php';
 
-define('APP_URL', 'http://localhost:9999/justraduz');
+define('APP_URL', '/justraduz');
 
 class AuthController
 {
@@ -29,13 +29,14 @@ class AuthController
         $senha  = $this->request->post('senha', '');
         $senha2 = $this->request->post('senha2', '');
         $tipo   = $this->request->post('tipo', 'cliente');
+        $telefone = trim((string) $this->request->post('telefone', ''));
         $oab    = $this->request->post('inscricao');
         $oab_uf = $this->request->post('oab_uf');
 
         $frontUrl = APP_URL . '/frontend/cadastro.html';
 
         // Validações
-        if (!$nome || !$email || !$senha) {
+        if (!$nome || !$email || !$telefone || !$senha) {
             $this->response->redirectWithError($frontUrl, 'Preencha todos os campos obrigatórios.');
         }
 
@@ -47,8 +48,8 @@ class AuthController
             $this->response->redirectWithError($frontUrl, 'A senha deve ter no mínimo 6 caracteres.');
         }
 
-        if (($tipo === 'advogado' || $tipo === 'estagiario') && !$oab) {
-            $this->response->redirectWithError($frontUrl, 'Número da OAB é obrigatório.');
+        if (($tipo === 'advogado' || $tipo === 'estagiario') && (!$oab || !$oab_uf)) {
+            $this->response->redirectWithError($frontUrl, 'Número da OAB e UF são obrigatórios.');
         }
 
         // Verifica se e-mail já existe
@@ -61,18 +62,30 @@ class AuthController
         // Insere no banco
         $senhaCriptografada = password_hash($senha, PASSWORD_DEFAULT);
 
-        $sql = "INSERT INTO users (nome, email, senha, tipo, oab, oab_uf)
-                VALUES (:nome, :email, :senha, :tipo, :oab, :oab_uf)";
+        $sql = "INSERT INTO users (nome, email, senha, tipo, telefone, oab, oab_uf)
+                VALUES (:nome, :email, :senha, :tipo, :telefone, :oab, :oab_uf)";
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            ':nome'   => $nome,
-            ':email'  => $email,
-            ':senha'  => $senhaCriptografada,
-            ':tipo'   => $tipo,
-            ':oab'    => $oab,
-            ':oab_uf' => $oab_uf,
-        ]);
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                ':nome'   => $nome,
+                ':email'  => $email,
+                ':senha'  => $senhaCriptografada,
+                ':tipo'   => $tipo,
+                ':telefone' => $telefone,
+                ':oab'    => $oab,
+                ':oab_uf' => $oab_uf,
+            ]);
+        } catch (PDOException $e) {
+            if ($e->getCode() === '42S22') {
+                $this->response->redirectWithError(
+                    $frontUrl,
+                    'Banco de dados desatualizado. Execute a migration mysql/migrations/2026_05_29_add_oab_columns.sql.'
+                );
+            }
+
+            throw $e;
+        }
 
         $this->response->redirect(APP_URL . '/frontend/login.html?sucesso=conta_criada');
     }
@@ -116,13 +129,44 @@ class AuthController
         // Redireciona por tipo
         $destinos = [
             'advogado'   => '/frontend/dashboard-advogado.php',
-            'estagiario' => '/frontend/dashboard-advogado.php',
+            'estagiario' => '/frontend/dashboard-estagiario.php',
             'admin'      => '/frontend/admin/dashboard-admin.php',
             'cliente'    => '/frontend/dashboard-cliente.php',
         ];
 
         $destino = $destinos[$usuario['tipo']] ?? '/frontend/dashboard-cliente.php';
         $this->response->redirect(APP_URL . $destino);
+    }
+
+    public function updateProfile(): void
+    {
+        session_start();
+
+        if (empty($_SESSION['logado'])) {
+            $this->response->redirect(APP_URL . '/frontend/login.html?erro=' . urlencode('Faça login para continuar.'));
+        }
+
+        $nome = trim((string) $this->request->post('nome', ''));
+        $email = trim((string) $this->request->post('email', ''));
+        $telefone = trim((string) $this->request->post('telefone', ''));
+
+        if (!$nome || !$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe nome e e-mail válidos.'));
+        }
+
+        $stmt = $this->pdo->prepare('SELECT id FROM users WHERE email = ? AND id <> ?');
+        $stmt->execute([$email, (int) $_SESSION['id']]);
+
+        if ($stmt->fetch()) {
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('E-mail já cadastrado por outro usuário.'));
+        }
+
+        $stmt = $this->pdo->prepare('UPDATE users SET nome = ?, email = ?, telefone = ? WHERE id = ?');
+        $stmt->execute([$nome, $email, $telefone ?: null, (int) $_SESSION['id']]);
+
+        $_SESSION['nome'] = $nome;
+
+        $this->response->redirect(APP_URL . '/frontend/perfil.php?sucesso=' . urlencode('Perfil atualizado.'));
     }
 
     // -------------------------------------------------------

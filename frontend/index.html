@@ -1,110 +1,119 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>JusTraduz — A justiça em linguagem que você entende</title>
-  <link rel="icon" href="assets/img/logo.png" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JusTraduz | A justiça em linguagem simples</title>
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-
-  <!-- Navbar -->
-  <header class="navbar">
-    <div class="container">
-      <a href="index.html" class="logo"><img src="assets/img/logo.png" alt="JusTraduz" /></a>
-      <nav>
-        <ul>
-          <li><a href="#sobre">Sobre</a></li>
-          <li><a href="#recursos">Recursos</a></li>
-          <li><a href="#como-funciona">Como funciona</a></li>
-          <li><a href="login.html" class="btn btn-outline btn-sm">Entrar</a></li>
-          <li><a href="cadastro.html" class="btn btn-primary btn-sm">Cadastrar</a></li>
-        </ul>
+  <header class="site-header" data-site-header>
+    <div class="container nav-bar">
+      <a class="brand" href="index.html" aria-label="JusTraduz">
+        <img src="assets/img/logo.png" alt="JusTraduz">
+      </a>
+      <nav class="nav-links" aria-label="Menu principal">
+        <a href="#sobre">Sobre</a>
+        <a href="#recursos">Recursos</a>
+        <a href="#como-funciona">Como funciona</a>
       </nav>
+      <div class="nav-actions">
+        <a class="btn btn-outline btn-sm" href="login.html">Entrar</a>
+        <a class="btn btn-primary btn-sm" href="cadastro.html">Cadastrar</a>
+      </div>
+      <button class="mobile-toggle" type="button" data-nav-toggle aria-label="Abrir menu">
+        <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
     </div>
   </header>
 
-  <!-- Hero -->
-  <section class="hero">
-    <div class="container">
-      <div>
-        <h1>Entenda documentos jurídicos em <span>linguagem simples</span></h1>
-        <p>Envie um PDF e nossa IA traduz o juridiquês para o português do dia a dia. Se precisar de ajuda, conecte-se com um advogado pelo nosso chat interno.</p>
-        <div class="cta">
-          <a href="cadastro.html" class="btn btn-primary">Começar grátis</a>
-          <a href="#como-funciona" class="btn btn-outline">Como funciona</a>
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <h1>Entenda documentos jurídicos em <span>linguagem simples</span></h1>
+          <p>Envie documentos jurídicos e receba uma explicação clara, resumo objetivo, pontos importantes e indicador de confiança. Quando precisar, conecte-se com profissionais do Direito.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="cadastro.html">Começar grátis</a>
+            <a class="btn btn-outline" href="#como-funciona">Como funciona</a>
+          </div>
+        </div>
+        <div class="hero-card" aria-label="Identidade visual JusTraduz">
+          <img src="assets/img/logo.png" alt="JusTraduz">
         </div>
       </div>
-      <div class="hero-img">
-        <img src="assets/img/logo.png" alt="JusTraduz" />
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Recursos -->
-  <section id="recursos" class="section">
-    <div class="container">
-      <h2>O que o JusTraduz faz por você</h2>
-      <p class="lead">Mais do que traduzir palavras, traduzimos contexto jurídico para você tomar decisões informadas.</p>
-
-      <div class="grid grid-3">
-        <div class="feature">
-          <div class="icon">📄</div>
-          <h3>Tradução de PDFs</h3>
-          <p>Envie qualquer documento jurídico em PDF e receba uma explicação clara, resumo e indicadores de confiabilidade.</p>
+    <section id="recursos" class="page-section">
+      <div class="container">
+        <div class="section-head">
+          <h2>Uma plataforma para entender e agir</h2>
+          <p>O JusTraduz combina IA, histórico de documentos e atendimento jurídico em um fluxo organizado.</p>
         </div>
-        <div class="feature">
-          <div class="icon">⚖️</div>
-          <h3>Advogados verificados</h3>
-          <p>Validamos cada profissional diretamente no CNA da OAB — só advogados ativos podem atender pelo sistema.</p>
-        </div>
-        <div class="feature">
-          <div class="icon">💬</div>
-          <h3>Chat com profissionais</h3>
-          <p>Escolha um advogado ou abra uma solicitação. Converse pelo chat interno e tire suas dúvidas com segurança.</p>
+        <div class="grid grid-3">
+          <article class="card">
+            <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></svg></div>
+            <h3>Tradução por IA</h3>
+            <p>Envie PDF, PNG, JPEG ou WebP e visualize o conteúdo em linguagem simples, com resumo e confiança da análise.</p>
+          </article>
+          <article class="card">
+            <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M5 7h14"/><path d="m6 7-4 7h8z"/><path d="m18 7-4 7h8z"/></svg></div>
+            <h3>Profissionais verificados</h3>
+            <p>Advogados são validados pela integração com a API da OAB antes de serem liberados para atendimento.</p>
+          </article>
+          <article class="card">
+            <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg></div>
+            <h3>Ajuda especializada</h3>
+            <p>Escolha um advogado, abra uma solicitação pública ou converse pelo chat interno do sistema.</p>
+          </article>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Como funciona -->
-  <section id="como-funciona" class="section" style="background:#fff;">
-    <div class="container">
-      <h2>Como funciona</h2>
-      <p class="lead">Em três passos simples você entende seu documento.</p>
-
-      <div class="grid grid-3">
-        <div class="card">
-          <div class="card-title">1. Crie sua conta</div>
-          <p class="card-sub">Cadastro rápido em menos de 1 minuto. Gratuito para uso pessoal.</p>
+    <section id="como-funciona" class="page-section section-white">
+      <div class="container">
+        <div class="section-head">
+          <h2>Como funciona</h2>
+          <p>O caminho principal foi pensado para ser rápido, claro e seguro.</p>
         </div>
-        <div class="card">
-          <div class="card-title">2. Envie seu PDF</div>
-          <p class="card-sub">Faça upload do documento e aguarde a análise da nossa IA.</p>
-        </div>
-        <div class="card">
-          <div class="card-title">3. Entenda e aja</div>
-          <p class="card-sub">Leia a tradução, peça ajuda de um advogado se precisar e acompanhe seu caso.</p>
+        <div class="grid grid-3 steps">
+          <article class="card step-card">
+            <h3>Crie sua conta</h3>
+            <p>Acesse o sistema como cliente, advogado, estagiário ou administrador, com permissões separadas.</p>
+          </article>
+          <article class="card step-card">
+            <h3>Envie o documento</h3>
+            <p>O arquivo fica vinculado ao usuário e passa pelo fluxo de extração de texto e análise por IA.</p>
+          </article>
+          <article class="card step-card">
+            <h3>Solicite ajuda</h3>
+            <p>Se precisar de orientação humana, abra uma solicitação e acompanhe o andamento do caso.</p>
+          </article>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- Sobre -->
-  <section id="sobre" class="section">
-    <div class="container" style="max-width:780px; text-align:center;">
-      <h2>Nossa missão</h2>
-      <p class="lead">O JusTraduz não substitui um advogado. Nosso objetivo é tornar a linguagem jurídica acessível e conectar pessoas a profissionais qualificados, com transparência e segurança.</p>
-      <a href="cadastro.html" class="btn btn-primary">Quero experimentar</a>
-    </div>
-  </section>
+    <section id="sobre" class="page-section">
+      <div class="container">
+        <div class="section-head">
+          <h2>A justiça em linguagem que você entende</h2>
+          <p>O JusTraduz não substitui um advogado. A proposta é tornar documentos jurídicos mais acessíveis e aproximar pessoas de profissionais qualificados.</p>
+        </div>
+        <div class="form-actions justify-center">
+          <a class="btn btn-primary" href="cadastro.html">Criar minha conta</a>
+         </div>
+      </div>
+    </section>
+  </main>
 
-  <footer class="footer">
-    <div class="container">
-      © 2025 JusTraduz — A justiça em linguagem que você entende.
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <span>© <span data-current-year></span> JusTraduz.</span>
+      <span>Privacidade, segurança e linguagem acessível.</span>
     </div>
   </footer>
 
+  <script src="assets/js/main.js"></script>
 </body>
 </html>

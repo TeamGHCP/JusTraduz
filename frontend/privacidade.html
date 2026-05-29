@@ -1,58 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Política de Privacidade — JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png" />
-  <link rel="stylesheet" href="assets/css/style.css" />
-  <style>
-    .legal-container {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 30px;
-      background: #ffffff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      color: var(--text);
-      line-height: 1.6;
-    }
-    .legal-container h1 { color: var(--navy); margin-bottom: 20px; font-size: 28px; }
-    .legal-container h2 { color: var(--navy); margin-top: 24px; margin-bottom: 12px; font-size: 20px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-    .legal-container p { margin-bottom: 14px; font-size: 15px; color: #334155; }
-    .legal-container ul { margin-bottom: 14px; padding-left: 20px; }
-    .legal-container li { margin-bottom: 6px; font-size: 15px; color: #334155; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacidade | JusTraduz</title>
+  <link rel="icon" href="assets/img/logo.png">
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body style="background: var(--bg);">
-
-  <div class="legal-container">
-    <div style="margin-bottom: 20px;">
-      <a href="cadastro.html" style="color: var(--teal); text-decoration: none; font-size: 14px;">← Voltar para o Cadastro</a>
+<body>
+  <header class="site-header" data-site-header>
+    <div class="container nav-bar">
+      <a class="brand" href="index.html"><img src="assets/img/logo.png" alt="JusTraduz"></a>
+      <nav class="nav-links"><a href="index.html#sobre">Sobre</a><a href="index.html#recursos">Recursos</a><a href="login.html">Entrar</a></nav>
+      <button class="mobile-toggle" type="button" data-nav-toggle aria-label="Abrir menu">
+        <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
     </div>
-    
+  </header>
+  <main class="container legal-page">
     <h1>Política de Privacidade</h1>
-    <p>Última atualização: Maio de 2026</p>
-
-    <p>A sua privacidade é uma prioridade absoluta para o JusTraduz. Esta Política explica como coletamos, tratamos, protegemos e armazenamos as suas informações em conformidade com a Lei Geral de Proteção de Dados (LGPD).</p>
-
-    <h2>1. Informações Coletadas</h2>
-    <p>Coletamos dados necessários para a prestação do serviço, incluindo:</p>
-    <ul>
-      <li><strong>Dados de identificação:</strong> Nome completo, endereço de e-mail, senha criptografada e telefone.</li>
-      <li><strong>Dados profissionais (se aplicável):</strong> Número de inscrição e UF da OAB.</li>
-      <li><strong>Documentos enviados:</strong> Arquivos em PDF ou formatos de imagem submetidos para tradução.</li>
-    </ul>
-    
-    <h2>2. Tratamento dos Documentos e Inteligência Artificial</h2>
-    <p>Os documentos enviados pelos usuários são processados exclusivamente de forma automatizada por nossa Inteligência Artificial para fins de extração de texto (OCR) e elaboração de resumos explicativos. O JusTraduz não comercializa, não expõe e não utiliza o conteúdo interno dos seus processos para fins publicitários.</p>
-
-    <h2>3. Compartilhamento de Dados</h2>
-    <p>Seus dados de cadastro nunca serão vendidos a terceiros. O compartilhamento ocorre apenas entre o Cliente e o Advogado/Estagiário de maneira voluntária quando um caso de ajuda ou chat interno é iniciado por opção do próprio usuário.</p>
-
-    <h2>4. Segurança da Informação</h2>
-    <p>Todos os dados trafegam de forma segura, as senhas de acesso são protegidas por algoritmos de hash criptográfico e os arquivos ficam armazenados em diretórios restritos do servidor.</p>
-  </div>
-
+    <p>O JusTraduz trata documentos e mensagens com foco em privacidade, organização e controle de acesso por perfil.</p>
+    <h2>Dados tratados</h2>
+    <p>Podem ser armazenados dados de cadastro, documentos enviados, textos extraídos, resultados de IA, solicitações, mensagens e notificações.</p>
+    <h2>Finalidade</h2>
+    <p>Os dados são usados para autenticação, análise de documentos, histórico, atendimento jurídico e administração da plataforma.</p>
+    <h2>Segurança</h2>
+    <p>O sistema deve aplicar controle de acesso, validação de arquivos, logs de erro e restrições por tipo de usuário.</p>
+  </main>
+  <script src="assets/js/main.js"></script>
 </body>
 </html>
