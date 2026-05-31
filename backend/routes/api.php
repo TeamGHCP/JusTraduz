@@ -7,6 +7,7 @@ $router = new Router();
 $routes = [
     ['POST', '/auth/registrar', 'AuthController', 'registrar'],
     ['POST', '/auth/login', 'AuthController', 'login'],
+    ['GET', '/auth/csrf', 'AuthController', 'csrf'],
     ['POST', '/auth/admin-login', 'AuthController', 'adminLogin'],
     ['POST', '/auth/reset-password', 'AuthController', 'resetPassword'],
     ['GET', '/auth/logout', 'AuthController', 'logout'],

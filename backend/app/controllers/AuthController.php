@@ -190,6 +190,20 @@ class AuthController extends BaseController
     }
 
     // -------------------------------------------------------
+    // GET /auth/csrf
+    // Returns current CSRF token as JSON for frontend injection
+    // -------------------------------------------------------
+    public function csrf(): void
+    {
+        $this->startSession();
+
+        // Ensure token exists
+        $token = CsrfMiddleware::token();
+
+        $this->response->json(['csrf' => $token]);
+    }
+
+    // -------------------------------------------------------
     // POST /auth/admin-login
     // -------------------------------------------------------
     public function adminLogin(): void
