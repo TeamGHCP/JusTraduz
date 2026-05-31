@@ -93,4 +93,28 @@ document.addEventListener("DOMContentLoaded", () => {
   } else if (params.has("sucesso")) {
     showMessage(params.get("sucesso"), "success");
   }
+
+  // Fetch CSRF token from backend and inject into all POST forms
+  async function injectCsrfToForms() {
+    try {
+      const res = await fetch('../backend/public/index.php?rota=/auth/csrf', { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const token = data.csrf;
+      if (!token) return;
+      document.querySelectorAll('form[method="post"]').forEach((form) => {
+        if (!form.querySelector('input[name="_csrf"]')) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = '_csrf';
+          input.value = token;
+          form.appendChild(input);
+        }
+      });
+    } catch (e) {
+      // ignore CSRF injection failures — forms will fail server-side with token error
+    }
+  }
+
+  injectCsrfToForms();
 });
