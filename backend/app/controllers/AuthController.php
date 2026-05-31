@@ -214,6 +214,47 @@ class AuthController extends BaseController
     }
 
     // -------------------------------------------------------
+    // GET /auth/force-logout
+    // Destroys any existing session server-side and expires session cookies.
+    // Returns JSON when requested by fetch (credentials include), otherwise redirects to login page.
+    // -------------------------------------------------------
+    public function forceLogout(): void
+    {
+        $this->startSession();
+
+        $userId = (int) ($_SESSION['id'] ?? 0);
+        if ($userId > 0) {
+            $this->audit->log('auth.force_logout', 'user', $userId, []);
+        }
+
+        // Destroy session
+        session_unset();
+        session_destroy();
+
+        // Expire common session cookies (PHPSESSID and legacy 'session')
+        $domain = $_SERVER['HTTP_HOST'] ?? '';
+        if (is_string($domain) && strpos($domain, ':') !== false) {
+            $domain = explode(':', $domain, 2)[0];
+        }
+
+        // Expire PHPSESSID
+        setcookie('PHPSESSID', '', time() - 3600, '/', $domain ?: '', false, true);
+        // Expire legacy cookie name if present
+        setcookie('session', '', time() - 3600, '/', $domain ?: '', false, true);
+
+        // If requested via fetch/ajax, return JSON. Otherwise redirect to login page.
+        $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (isset($_SERVER['HTTP_ACCEPT']) && str_contains($_SERVER['HTTP_ACCEPT'], 'application/json'));
+
+        if ($isAjax) {
+            $this->response->json(['ok' => true]);
+            return;
+        }
+
+        $this->response->redirect(APP_URL . '/frontend/login.html');
+    }
+
+    // -------------------------------------------------------
     // POST /auth/admin-login
     // -------------------------------------------------------
     public function adminLogin(): void

@@ -110,8 +110,15 @@ document.addEventListener("DOMContentLoaded", () => {
     showMessage(params.get("sucesso"), "success");
   }
 
-  // Fetch CSRF token from backend and inject into all POST forms
-  async function injectCsrfToForms() {
+  // Ensure server session is cleared (force logout) then fetch CSRF token and inject into all POST forms
+  async function ensureCleanSessionAndInjectCsrf() {
+    try {
+      // Call force-logout to remove any server-side session; request JSON to avoid redirects
+      await fetch('../backend/public/index.php?rota=/auth/force-logout', { method: 'GET', headers: { 'Accept': 'application/json' }, credentials: 'include' });
+    } catch (e) {
+      // ignore failures — proceed to fetch CSRF anyway
+    }
+
     try {
       const res = await fetch('../backend/public/index.php?rota=/auth/csrf', { credentials: 'include' });
       if (!res.ok) return;
@@ -132,5 +139,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  injectCsrfToForms();
+  ensureCleanSessionAndInjectCsrf();
 });
