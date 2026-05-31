@@ -31,6 +31,7 @@ $routes = [
     ['POST', '/schedule/slots/update', 'ScheduleController', 'updateSlot'],
     ['POST', '/schedule/book', 'ScheduleController', 'book'],
     ['POST', '/schedule/appointments/update', 'ScheduleController', 'updateAppointment'],
+    ['GET', '/schedule/calendar', 'ScheduleController', 'calendarData'],
 
     ['POST', '/admin/users/status', 'AdminController', 'updateUserStatus'],
     ['POST', '/admin/cases/update', 'AdminController', 'updateCase'],

@@ -193,6 +193,71 @@ class ScheduleController extends BaseController
         $this->response->redirect(app_url('/frontend/agenda.php?sucesso=' . urlencode('Agendamento atualizado.')));
     }
 
+    // -------------------------------------------------------
+    // GET /schedule/calendar
+    // Returns JSON with schedule_slots and appointments between start and end (inclusive)
+    // Params: start=YYYY-MM-DD, end=YYYY-MM-DD, professional_id (optional)
+    // -------------------------------------------------------
+    public function calendarData(): void
+    {
+        // allow anonymous viewing in public pages (clients) but still start session for identity
+        $this->startSession();
+
+        $start = (string) ($this->request->get('start', ''));
+        $end = (string) ($this->request->get('end', ''));
+        $professionalId = (int) ($this->request->get('professional_id', 0));
+
+        // default month range if not provided
+        if ($start === '' || $end === '') {
+            $now = new DateTimeImmutable();
+            $first = $now->modify('first day of this month')->setTime(0, 0, 0);
+            $last = $now->modify('last day of this month')->setTime(23, 59, 59);
+            $start = $first->format('Y-m-d');
+            $end = $last->format('Y-m-d');
+        }
+
+        $startDt = DateTimeImmutable::createFromFormat('Y-m-d', $start);
+        $endDt = DateTimeImmutable::createFromFormat('Y-m-d', $end);
+        if (!$startDt || !$endDt) {
+            $this->response->json(['error' => 'invalid_range'], 400);
+            return;
+        }
+
+        $startStr = $startDt->setTime(0, 0, 0)->format('Y-m-d H:i:s');
+        $endStr = $endDt->setTime(23, 59, 59)->format('Y-m-d H:i:s');
+
+        $params = [$startStr, $endStr];
+        $profWhere = '';
+        if ($professionalId > 0) {
+            $profWhere = ' AND s.professional_id = ?';
+            $params[] = $professionalId;
+        }
+
+        $slots = fetch_all(
+            $this->pdo,
+            'SELECT s.id, s.professional_id, s.starts_at, s.ends_at, s.status, s.titulo, u.nome AS professional_name, u.tipo
+             FROM schedule_slots s
+             INNER JOIN users u ON u.id = s.professional_id
+             WHERE s.starts_at >= ? AND s.ends_at <= ?' . $profWhere . '
+             ORDER BY s.starts_at ASC',
+            $params
+        );
+
+        $appointments = fetch_all(
+            $this->pdo,
+            'SELECT a.id, a.slot_id, a.client_id, a.case_id, a.assunto, a.status, s.starts_at, s.ends_at, s.professional_id, u.nome AS professional_name, cli.nome AS client_name
+             FROM appointments a
+             INNER JOIN schedule_slots s ON s.id = a.slot_id
+             LEFT JOIN users u ON u.id = s.professional_id
+             LEFT JOIN users cli ON cli.id = a.client_id
+             WHERE s.starts_at >= ? AND s.ends_at <= ?' . $profWhere . '
+             ORDER BY s.starts_at ASC',
+            $params
+        );
+
+        $this->response->json(['slots' => $slots, 'appointments' => $appointments]);
+    }
+
     private function requireLogin(): void
     {
         $this->startSession();

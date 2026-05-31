@@ -124,6 +124,14 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
         </form>
       <?php endif; ?>
 
+      <section class="dash-section">
+        <div class="dash-section-title">
+          <h2>Calendário</h2>
+          <span class="badge badge-info">Visualize seu mês e clique para criar horários</span>
+        </div>
+        <div id="calendar" class="card p-16"></div>
+      </section>
+
       <?php if ($type === 'cliente'): ?>
         <section class="dash-section">
           <form class="card admin-filter" method="get">
@@ -275,5 +283,6 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
       </section>
     </main>
   </div>
+  <script src="assets/js/agenda.js"></script>
 </body>
 </html>
