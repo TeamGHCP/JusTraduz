@@ -16,10 +16,17 @@ if ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (!empty($_SERVE
 // Ponto de entrada de todas as requisições do backend
 // Configurações seguras de cookie de sessão (se aplicável)
 $secure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+// Normalize domain for session cookie: strip port if present to avoid "host:port" in Domain attribute
+$domain = $_SERVER['HTTP_HOST'] ?? '';
+// If host includes port, remove it (e.g., 127.0.0.1:8080 -> 127.0.0.1)
+if (is_string($domain) && strpos($domain, ':') !== false) {
+	$domain = explode(':', $domain, 2)[0];
+}
+
 @session_set_cookie_params([
 	'lifetime' => 0,
 	'path' => '/',
-	'domain' => $_SERVER['HTTP_HOST'] ?? '',
+	'domain' => $domain,
 	'secure' => $secure,
 	'httponly' => true,
 	'samesite' => 'Lax',
