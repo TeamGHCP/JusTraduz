@@ -147,17 +147,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function prefillNewSlot(day) {
-    const form = document.querySelector('form[action*="/schedule/slots/create"]');
-    if (!form) return;
+    // open the modal prefilled with the selected day time range
     const y = year; const m = month; const d = day;
     const starts = new Date(y, m - 1, d, 9, 0); // default 09:00
     const ends = new Date(y, m - 1, d, 10, 0);
     const toInputValue = (dt) => dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0') + 'T' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
-    const startsInput = form.querySelector('input[name="starts_at"]');
-    const endsInput = form.querySelector('input[name="ends_at"]');
+    const startsInput = document.getElementById('slot-starts');
+    const endsInput = document.getElementById('slot-ends');
     if (startsInput) startsInput.value = toInputValue(starts);
     if (endsInput) endsInput.value = toInputValue(ends);
-    form.scrollIntoView({behavior: 'smooth', block: 'center'});
+    openCreateModal();
   }
 
   async function render() {
@@ -236,16 +235,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await fetch(url, {
           method: 'POST',
           credentials: 'include',
-          headers: token ? { 'X-CSRF-Token': token } : {},
+          headers: Object.assign({'X-Requested-With': 'XMLHttpRequest'}, token ? { 'X-CSRF-Token': token } : {}),
           body: formData,
         });
-        // ignore response body; refresh calendar
+        const contentType = res.headers.get('Content-Type') || '';
+        if (res.ok && contentType.indexOf('application/json') !== -1) {
+          const j = await res.json();
+          if (j.success) {
+            showModalAlert('Horário salvo com sucesso.', 'success');
+            setTimeout(() => { hideModal(); render(); }, 600);
+            return;
+          }
+          showModalAlert(j.error || 'Erro ao salvar horário.', 'error');
+          return;
+        }
+
+        // fallback: non-json (redirect), attempt to close modal and refresh
         hideModal();
         setTimeout(() => render(), 300);
       } catch (e) {
-        alert('Falha ao salvar horário. Tente novamente.');
+        showModalAlert('Falha ao salvar horário. Tente novamente.', 'error');
       }
     });
+  }
+
+  function showModalAlert(message, type) {
+    const container = document.getElementById('slot-modal-alert');
+    if (!container) return;
+    container.textContent = message;
+    container.className = 'modal-alert ' + (type === 'success' ? 'alert-success' : 'alert-error');
+    container.style.display = 'block';
   }
 
   async function openEditModal(slotId) {

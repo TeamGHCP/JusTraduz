@@ -91,6 +91,7 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
   <title>Agenda | JusTraduz</title>
   <link rel="icon" href="assets/img/logo.png">
   <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/agenda.css">
 </head>
 <body>
   <div class="app-shell">
@@ -140,6 +141,7 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
           <form id="slot-modal-form">
             <?= csrf_input() ?>
             <input type="hidden" name="slot_id" id="slot-modal-id" value="">
+            <div id="slot-modal-alert" style="display:none;margin-bottom:8px;" class="modal-alert"></div>
             <div class="field">
               <label for="slot-starts">Início</label>
               <input id="slot-starts" name="starts_at" type="datetime-local" required class="input">
