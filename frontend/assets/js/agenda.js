@@ -352,22 +352,43 @@ document.addEventListener('DOMContentLoaded', () => {
           body: formData,
         });
         const contentType = res.headers.get('Content-Type') || '';
-        let payload = null;
+        const isJson = contentType.indexOf('application/json') !== -1;
 
-        if (contentType.indexOf('application/json') !== -1) {
-          payload = await res.json();
-        } else {
-          const text = await res.text();
-          payload = { success: res.ok, error: text ? String(text).slice(0, 220) : null };
-        }
+        if (isJson) {
+          const payload = await res.json();
+          if (res.ok && payload && payload.success === true) {
+            showModalAlert('Horário salvo com sucesso.', 'success');
+            setTimeout(() => { hideModal(); render(); }, 600);
+            return;
+          }
 
-        if (res.ok && payload && payload.success !== false) {
-          showModalAlert('Horário salvo com sucesso.', 'success');
-          setTimeout(() => { hideModal(); render(); }, 600);
+          showModalAlert((payload && payload.error) ? payload.error : 'Erro ao salvar horário.', 'error');
           return;
         }
 
-        showModalAlert((payload && payload.error) ? payload.error : 'Erro ao salvar horário.', 'error');
+        // Non-JSON means backend redirected/rendered HTML (commonly validation/auth failure).
+        if (res.redirected && res.url) {
+          try {
+            const u = new URL(res.url, window.location.origin);
+            const erro = u.searchParams.get('erro');
+            if (erro) {
+              showModalAlert(erro, 'error');
+              return;
+            }
+          } catch (e) {
+            // ignore parse issues and fallback below
+          }
+        }
+
+        if (res.ok) {
+          showModalAlert('Servidor não retornou confirmação de criação. Verifique login/OAB/permissão e tente novamente.', 'error');
+          return;
+        }
+
+        const text = await res.text();
+        const fallback = text ? String(text).slice(0, 220) : 'Erro ao salvar horário.';
+        showModalAlert(fallback, 'error');
+        return;
       } catch (e) {
         showModalAlert('Falha ao salvar horário. Tente novamente.', 'error');
       }
