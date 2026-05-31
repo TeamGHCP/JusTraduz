@@ -15,6 +15,8 @@ if ($type === 'cliente') {
 } elseif ($type === 'advogado') {
     $where[] = 'c.advogado_id = ?';
     $params[] = $userId;
+} elseif ($type !== 'admin') {
+    $where[] = '0 = 1';
 }
 
 if (in_array($status, ['pendente', 'em_andamento', 'concluida'], true)) {
@@ -49,7 +51,7 @@ if ($type === 'advogado') {
          ORDER BY c.created_at DESC",
         [$userId]
     );
-} elseif (in_array($type, ['admin', 'estagiario'], true)) {
+} elseif ($type === 'admin') {
     $cases = fetch_all(
         $pdo,
         "SELECT c.id, c.titulo, cli.nome AS cliente
@@ -62,7 +64,7 @@ if ($type === 'advogado') {
     $cases = [];
 }
 
-$canManageTasks = $type !== 'cliente';
+$canManageTasks = in_array($type, ['advogado', 'admin'], true);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -70,7 +72,7 @@ $canManageTasks = $type !== 'cliente';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tarefas | JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png">
+  <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>

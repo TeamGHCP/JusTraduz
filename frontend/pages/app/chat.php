@@ -10,7 +10,7 @@ if ($type === 'cliente') {
     $cases = fetch_all($pdo, 'SELECT c.*, u.nome AS other_name FROM cases c LEFT JOIN users u ON u.id = c.advogado_id WHERE c.cliente_id = ? ORDER BY c.created_at DESC', [$userId]);
 } elseif ($type === 'advogado') {
     $cases = fetch_all($pdo, 'SELECT c.*, u.nome AS other_name FROM cases c INNER JOIN users u ON u.id = c.cliente_id WHERE c.advogado_id = ? ORDER BY c.created_at DESC', [$userId]);
-} elseif (in_array($type, ['admin', 'estagiario'], true)) {
+} elseif ($type === 'admin') {
     $cases = fetch_all(
         $pdo,
         "SELECT c.*, CONCAT(cli.nome, ' / ', COALESCE(adv.nome, 'sem advogado')) AS other_name
@@ -40,7 +40,7 @@ $messages = $caseId ? fetch_all($pdo, 'SELECT m.*, u.nome FROM messages m INNER 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chat | JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png">
+  <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>

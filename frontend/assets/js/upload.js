@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const drop = document.querySelector("[data-upload-box]");
   const input = document.querySelector("[data-upload-input]");
   const fileName = document.querySelector("[data-file-name]");
+  const form = document.querySelector("[data-upload-form]");
+  const submit = document.querySelector("[data-upload-submit]");
 
   if (!drop || !input) return;
 
@@ -29,4 +31,12 @@ document.addEventListener("DOMContentLoaded", () => {
   input.addEventListener("change", () => {
     if (fileName) fileName.textContent = input.files[0]?.name || "Nenhum arquivo selecionado";
   });
+
+  if (form && submit) {
+    form.addEventListener("submit", () => {
+      form.classList.add("is-submitting");
+      submit.disabled = true;
+      submit.textContent = "Enviando e preparando análise...";
+    });
+  }
 });

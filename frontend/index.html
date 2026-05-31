@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JusTraduz | A justiça em linguagem simples</title>
-  <link rel="icon" href="assets/img/logo.png">
+  <title>JusTraduz | Direito em linguagem simples</title>
+  <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -14,9 +14,9 @@
         <img src="assets/img/logo.png" alt="JusTraduz">
       </a>
       <nav class="nav-links" aria-label="Menu principal">
-        <a href="#sobre">Sobre</a>
         <a href="#recursos">Recursos</a>
-        <a href="#como-funciona">Como funciona</a>
+        <a href="#fluxo">Fluxo</a>
+        <a href="#seguranca">Segurança</a>
       </nav>
       <div class="nav-actions">
         <a class="btn btn-outline btn-sm" href="login.html">Entrar</a>
@@ -29,18 +29,49 @@
   </header>
 
   <main>
-    <section class="hero">
-      <div class="container hero-grid">
-        <div class="hero-copy">
-          <h1>Entenda documentos jurídicos em <span>linguagem simples</span></h1>
-          <p>Envie documentos jurídicos, receba uma explicação clara por IA e acompanhe atendimentos com agenda, chat, tarefas e histórico organizado.</p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="cadastro.html">Começar grátis</a>
-            <a class="btn btn-outline" href="#como-funciona">Como funciona</a>
+    <section class="hero product-hero">
+      <div class="container">
+        <div class="hero-copy hero-copy-centered">
+          <span class="hero-kicker">SaaS jurídico com IA, atendimento e auditoria</span>
+          <h1>JusTraduz</h1>
+          <p>Transforme documentos jurídicos complexos em linguagem simples e conecte o cidadão a profissionais qualificados em um fluxo seguro.</p>
+          <div class="hero-actions justify-center">
+            <a class="btn btn-primary" href="cadastro.html">Começar agora</a>
+            <a class="btn btn-outline" href="login.html">Entrar na plataforma</a>
           </div>
         </div>
-        <div class="hero-card" aria-label="Identidade visual JusTraduz">
-          <img src="assets/img/logo.png" alt="JusTraduz">
+
+        <div class="product-preview" aria-label="Prévia do sistema JusTraduz">
+          <div class="product-preview-sidebar">
+            <img src="assets/img/logo.png" alt="JusTraduz">
+            <span class="preview-nav active">Análise</span>
+            <span class="preview-nav">Solicitações</span>
+            <span class="preview-nav">Agenda</span>
+            <span class="preview-nav">Auditoria</span>
+          </div>
+          <div class="product-preview-main">
+            <div class="preview-topline">
+              <div>
+                <span>Documento analisado</span>
+                <strong>Contrato de locação.pdf</strong>
+              </div>
+              <span class="badge badge-success">Confiança 92%</span>
+            </div>
+            <div class="preview-grid">
+              <article class="preview-panel">
+                <span>Resumo objetivo</span>
+                <p>Contrato residencial com multa, reajuste anual e prazo de 30 meses.</p>
+              </article>
+              <article class="preview-panel preview-panel-accent">
+                <span>Linguagem simples</span>
+                <p>Você precisa avisar antes de sair e pode pagar multa se encerrar antes do prazo.</p>
+              </article>
+              <article class="preview-panel">
+                <span>Próximo passo</span>
+                <p>Abrir solicitação e agendar conversa com advogado verificado.</p>
+              </article>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -48,61 +79,52 @@
     <section id="recursos" class="page-section">
       <div class="container">
         <div class="section-head">
-          <h2>Uma plataforma para entender e agir</h2>
-          <p>O JusTraduz combina IA, documentos, agenda e atendimento jurídico em um fluxo único.</p>
+          <h2>Um fluxo completo para entender e agir</h2>
+          <p>Documento, explicação, solicitação, chat, agenda e auditoria no mesmo sistema.</p>
         </div>
         <div class="grid grid-3">
-          <article class="card">
+          <article class="card feature-card">
             <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></svg></div>
             <h3>Análise por IA</h3>
-            <p>Envie PDF, PNG, JPEG ou WebP e visualize resumo, explicação em linguagem simples, pontos relevantes e confiança da análise.</p>
+            <p>Resumo e explicação em português claro, com consentimento explícito antes de processar documentos sensíveis.</p>
           </article>
-          <article class="card">
+          <article class="card feature-card">
             <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M5 7h14"/><path d="m6 7-4 7h8z"/><path d="m18 7-4 7h8z"/></svg></div>
             <h3>Profissionais verificados</h3>
-            <p>Advogados são validados pela integração com a API da OAB antes de serem liberados para atendimento.</p>
+            <p>Cadastro de advogados com OAB/CNA e revisão administrativa para aumentar confiança no atendimento.</p>
           </article>
-          <article class="card">
+          <article class="card feature-card">
             <div class="icon-box"><svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg></div>
-            <h3>Atendimento completo</h3>
-            <p>Abra solicitações, acompanhe tarefas, converse pelo chat e agende horários com advogados ou estagiários disponíveis.</p>
+            <h3>Atendimento rastreável</h3>
+            <p>Solicitações, mensagens, tarefas e agenda com histórico organizado para cliente, advogado e administração.</p>
           </article>
         </div>
       </div>
     </section>
 
-    <section id="como-funciona" class="page-section section-white">
+    <section id="fluxo" class="page-section section-white">
       <div class="container">
         <div class="section-head">
-          <h2>Como funciona</h2>
-          <p>O caminho principal foi pensado para ser rápido, claro e seguro.</p>
+          <h2>Da dúvida ao atendimento</h2>
+          <p>A demo principal deve mostrar esse caminho sem depender de integrações externas ao vivo.</p>
         </div>
-        <div class="grid grid-3 steps">
-          <article class="card step-card">
-            <h3>Crie sua conta</h3>
-            <p>Acesse o sistema como cliente, advogado, estagiário ou administrador, com permissões separadas.</p>
-          </article>
-          <article class="card step-card">
-            <h3>Envie o documento</h3>
-            <p>O arquivo fica vinculado ao usuário e passa pelo fluxo de leitura, resumo e explicação em linguagem simples.</p>
-          </article>
-          <article class="card step-card">
-            <h3>Agende e acompanhe</h3>
-            <p>Se precisar de orientação humana, abra uma solicitação, agende um horário e acompanhe mensagens e tarefas.</p>
-          </article>
+        <div class="grid grid-4 flow-strip">
+          <article class="card step-card"><h3>Enviar</h3><p>O cliente envia PDF ou imagem com controle de permissão.</p></article>
+          <article class="card step-card"><h3>Entender</h3><p>A IA gera resumo, explicação e nível de confiança.</p></article>
+          <article class="card step-card"><h3>Solicitar</h3><p>O caso vira uma demanda acompanhada por status.</p></article>
+          <article class="card step-card"><h3>Agendar</h3><p>O atendimento é marcado com profissional disponível.</p></article>
         </div>
       </div>
     </section>
 
-    <section id="sobre" class="page-section">
+    <section id="seguranca" class="page-section">
       <div class="container">
         <div class="section-head">
-          <h2>A justiça em linguagem que você entende</h2>
-          <p>O JusTraduz não substitui um advogado. A proposta é tornar documentos jurídicos mais acessíveis e aproximar pessoas de profissionais qualificados.</p>
+          <h2>Segurança como argumento de produto</h2>
+          <p>O JusTraduz não substitui advogado. Ele organiza a compreensão inicial, registra consentimentos e mantém trilha de auditoria.</p>
         </div>
         <div class="form-actions justify-center">
           <a class="btn btn-primary" href="cadastro.html">Criar minha conta</a>
-          <a class="btn btn-outline" href="#recursos">Ver recursos</a>
         </div>
       </div>
     </section>
@@ -111,7 +133,7 @@
   <footer class="site-footer">
     <div class="container footer-row">
       <span>© <span data-current-year></span> JusTraduz.</span>
-      <span>Privacidade, segurança e linguagem acessível.</span>
+      <span>Direito em linguagem simples.</span>
     </div>
   </footer>
 

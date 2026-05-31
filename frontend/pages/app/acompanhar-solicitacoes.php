@@ -9,8 +9,10 @@ if ($type === 'cliente') {
     $cases = fetch_all($pdo, 'SELECT c.*, u.nome AS advogado FROM cases c LEFT JOIN users u ON u.id = c.advogado_id WHERE c.cliente_id = ? ORDER BY c.created_at DESC', [$userId]);
 } elseif ($type === 'advogado') {
     $cases = fetch_all($pdo, 'SELECT c.*, u.nome AS cliente FROM cases c INNER JOIN users u ON u.id = c.cliente_id WHERE c.advogado_id = ? OR c.advogado_id IS NULL ORDER BY c.created_at DESC', [$userId]);
-} else {
+} elseif ($type === 'admin') {
     $cases = fetch_all($pdo, 'SELECT c.*, cli.nome AS cliente, adv.nome AS advogado FROM cases c INNER JOIN users cli ON cli.id = c.cliente_id LEFT JOIN users adv ON adv.id = c.advogado_id ORDER BY c.created_at DESC');
+} else {
+    $cases = [];
 }
 ?>
 <!DOCTYPE html>
@@ -19,7 +21,7 @@ if ($type === 'cliente') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Solicitações | JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png">
+  <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -61,7 +63,7 @@ if ($type === 'cliente') {
                         <div class="action-form">
                           <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $case['id'] ?>">Chat</a>
                           <a class="btn btn-soft btn-sm" href="tarefas.php?case_id=<?= (int) $case['id'] ?>">Tarefas</a>
-                          <?php if ($case['status'] !== 'finalizado' && ($type === 'cliente' || !empty($case['advogado_id']) || in_array($type, ['admin', 'estagiario'], true))): ?>
+                          <?php if ($case['status'] !== 'finalizado' && ($type === 'cliente' || !empty($case['advogado_id']) || $type === 'admin')): ?>
                             <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/status')) ?>" method="post">
                               <?= csrf_input() ?>
                               <input type="hidden" name="case_id" value="<?= (int) $case['id'] ?>">

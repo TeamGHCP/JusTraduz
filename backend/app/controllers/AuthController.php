@@ -181,12 +181,12 @@ class AuthController extends BaseController
 
         if (!$usuario) {
             $this->audit->log('auth.login_failed', 'user', null, ['email' => $email, 'reason' => 'not_found']);
-            $this->response->redirectWithError($frontUrl, 'E-mail não encontrado.');
+            $this->response->redirectWithError($frontUrl, 'Credenciais inválidas.');
         }
 
         if (!password_verify($senha, $usuario['senha'])) {
             $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'wrong_password']);
-            $this->response->redirectWithError($frontUrl, 'Senha incorreta.');
+            $this->response->redirectWithError($frontUrl, 'Credenciais inválidas.');
         }
 
         // Cria sessão

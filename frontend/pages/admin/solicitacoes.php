@@ -4,6 +4,9 @@ require_role(['admin']);
 
 $status = $_GET['status'] ?? '';
 $prioridade = $_GET['prioridade'] ?? '';
+$responsavel = $_GET['responsavel'] ?? '';
+$scope = $_GET['scope'] ?? '';
+$q = trim((string) ($_GET['q'] ?? ''));
 $where = [];
 $params = [];
 
@@ -17,6 +20,22 @@ if (in_array($prioridade, ['baixa', 'media', 'alta'], true)) {
     $params[] = $prioridade;
 }
 
+if ($responsavel === 'com') {
+    $where[] = 'c.advogado_id IS NOT NULL';
+} elseif ($responsavel === 'sem') {
+    $where[] = 'c.advogado_id IS NULL';
+}
+
+if ($scope === 'criticas') {
+    $where[] = "(c.status <> 'finalizado' AND (c.prioridade = 'alta' OR c.advogado_id IS NULL OR c.created_at <= DATE_SUB(NOW(), INTERVAL 2 DAY)))";
+}
+
+if ($q !== '') {
+    $where[] = '(c.titulo LIKE ? OR c.descricao LIKE ? OR cli.nome LIKE ? OR adv.nome LIKE ?)';
+    $like = '%' . $q . '%';
+    array_push($params, $like, $like, $like, $like);
+}
+
 $sql = 'SELECT c.id, c.titulo, c.descricao, c.status, c.prioridade, c.created_at, c.advogado_id, cli.nome AS cliente, adv.nome AS advogado
         FROM cases c
         INNER JOIN users cli ON cli.id = c.cliente_id
@@ -24,10 +43,15 @@ $sql = 'SELECT c.id, c.titulo, c.descricao, c.status, c.prioridade, c.created_at
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
-$sql .= ' ORDER BY c.created_at DESC';
+$sql .= " ORDER BY FIELD(c.prioridade, 'alta', 'media', 'baixa'), c.created_at DESC";
 
 $cases = fetch_all($pdo, $sql, $params);
 $lawyers = fetch_all($pdo, "SELECT id, nome FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> '')) ORDER BY nome");
+
+$openCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status = 'aberto'");
+$progressCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status = 'em_andamento'");
+$criticalCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <> 'finalizado' AND prioridade = 'alta'");
+$unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <> 'finalizado' AND advogado_id IS NULL");
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -35,7 +59,7 @@ $lawyers = fetch_all($pdo, "SELECT id, nome FROM users WHERE tipo = 'advogado' A
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Solicitações | Admin JusTraduz</title>
-  <link rel="icon" href="../assets/img/logo.png">
+  <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="../assets/css/style.css">
 </head>
 <body>
@@ -43,9 +67,20 @@ $lawyers = fetch_all($pdo, "SELECT id, nome FROM users WHERE tipo = 'advogado' A
     <?php render_sidebar('admin', 'solicitacoes.php', true); ?>
 
     <main class="app-main">
-      <?php render_topbar('Solicitações', 'Acompanhe a fila de ajuda jurídica e seus responsáveis.', current_user_name()); ?>
+      <?php render_topbar('Solicitações', 'Acompanhe a fila de ajuda jurídica, prioridades e responsáveis.', current_user_name()); ?>
 
-      <form class="card admin-filter" method="get">
+      <section class="grid grid-4">
+        <?= stat_card('Abertas', $openCount, 'help') ?>
+        <?= stat_card('Em andamento', $progressCount, 'case') ?>
+        <?= stat_card('Prioridade alta', $criticalCount, 'shield') ?>
+        <?= stat_card('Sem responsável', $unassignedCount, 'users') ?>
+      </section>
+
+      <form class="card admin-filter admin-filter-requests" method="get">
+        <div class="field">
+          <label for="q">Busca</label>
+          <input class="input" id="q" name="q" value="<?= e($q) ?>" placeholder="Título, descrição, cliente ou advogado">
+        </div>
         <div class="field">
           <label for="status">Status</label>
           <select class="select" id="status" name="status">
@@ -59,9 +94,24 @@ $lawyers = fetch_all($pdo, "SELECT id, nome FROM users WHERE tipo = 'advogado' A
           <label for="prioridade">Prioridade</label>
           <select class="select" id="prioridade" name="prioridade">
             <option value="">Todas</option>
-            <option value="baixa" <?= $prioridade === 'baixa' ? 'selected' : '' ?>>Baixa</option>
-            <option value="media" <?= $prioridade === 'media' ? 'selected' : '' ?>>Média</option>
             <option value="alta" <?= $prioridade === 'alta' ? 'selected' : '' ?>>Alta</option>
+            <option value="media" <?= $prioridade === 'media' ? 'selected' : '' ?>>Média</option>
+            <option value="baixa" <?= $prioridade === 'baixa' ? 'selected' : '' ?>>Baixa</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="responsavel">Responsável</label>
+          <select class="select" id="responsavel" name="responsavel">
+            <option value="">Todos</option>
+            <option value="sem" <?= $responsavel === 'sem' ? 'selected' : '' ?>>Sem responsável</option>
+            <option value="com" <?= $responsavel === 'com' ? 'selected' : '' ?>>Com responsável</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="scope">Visão</label>
+          <select class="select" id="scope" name="scope">
+            <option value="">Completa</option>
+            <option value="criticas" <?= $scope === 'criticas' ? 'selected' : '' ?>>Críticas</option>
           </select>
         </div>
         <div class="form-actions">
@@ -79,7 +129,7 @@ $lawyers = fetch_all($pdo, "SELECT id, nome FROM users WHERE tipo = 'advogado' A
           <?= empty_state('Nenhuma solicitação encontrada para os filtros selecionados.') ?>
         <?php else: ?>
           <div class="table-wrap">
-            <table class="table">
+            <table class="table admin-requests-table">
               <thead><tr><th>Caso</th><th>Cliente</th><th>Responsável</th><th>Prioridade</th><th>Status</th><th>Criado em</th><th>Ação</th></tr></thead>
               <tbody>
                 <?php foreach ($cases as $case): ?>
@@ -87,7 +137,7 @@ $lawyers = fetch_all($pdo, "SELECT id, nome FROM users WHERE tipo = 'advogado' A
                     <td><strong><?= e($case['titulo']) ?></strong><span class="table-subtext"><?= e($case['descricao'] ?: 'Sem descrição') ?></span></td>
                     <td><?= e($case['cliente']) ?></td>
                     <td><?= e($case['advogado'] ?? 'Aguardando responsável') ?></td>
-                    <td><?= e($case['prioridade']) ?></td>
+                    <td><span class="badge <?= $case['prioridade'] === 'alta' ? 'badge-warning' : 'badge-info' ?>"><?= e($case['prioridade']) ?></span></td>
                     <td><span class="badge badge-info"><?= e(status_label($case['status'] ?? '')) ?></span></td>
                     <td><?= e(date('d/m/Y H:i', strtotime($case['created_at']))) ?></td>
                     <td>

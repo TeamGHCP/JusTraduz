@@ -10,7 +10,7 @@ $lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, foto_perfil, oab, 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Advogados | JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png">
+  <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>

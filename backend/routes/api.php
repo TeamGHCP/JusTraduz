@@ -39,6 +39,7 @@ $routes = [
 
     ['POST', '/admin/users/status', 'AdminController', 'updateUserStatus'],
     ['POST', '/admin/cases/update', 'AdminController', 'updateCase'],
+    ['POST', '/admin/professionals/oab', 'AdminController', 'updateProfessionalOab'],
 ];
 
 foreach ($routes as [$method, $path, $controller, $action]) {

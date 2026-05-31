@@ -2,26 +2,29 @@
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_role(['estagiario']);
 
-$messageCount = count_query($pdo, 'SELECT COUNT(*) FROM messages');
-$documentCount = count_query($pdo, 'SELECT COUNT(*) FROM documents');
-$openCaseCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status = 'aberto'");
-$taskCount = count_query($pdo, "SELECT COUNT(*) FROM tasks WHERE status <> 'concluida'");
-$recentCases = fetch_all(
+$userId = current_user_id();
+$futureSlotCount = count_query($pdo, 'SELECT COUNT(*) FROM schedule_slots WHERE professional_id = ? AND starts_at >= NOW()', [$userId]);
+$appointmentCount = count_query(
     $pdo,
-    'SELECT c.id, c.titulo, c.status, c.prioridade, c.created_at, cli.nome AS cliente, adv.nome AS advogado
-     FROM cases c
-     INNER JOIN users cli ON cli.id = c.cliente_id
-     LEFT JOIN users adv ON adv.id = c.advogado_id
-     ORDER BY c.created_at DESC
-     LIMIT 8'
+    'SELECT COUNT(*)
+     FROM appointments a
+     INNER JOIN schedule_slots s ON s.id = a.slot_id
+     WHERE s.professional_id = ?
+     AND a.status = "agendado"',
+    [$userId]
 );
-$recentTasks = fetch_all(
+$freeSlotCount = count_query($pdo, 'SELECT COUNT(*) FROM schedule_slots WHERE professional_id = ? AND status = "livre" AND starts_at >= NOW()', [$userId]);
+$blockedSlotCount = count_query($pdo, 'SELECT COUNT(*) FROM schedule_slots WHERE professional_id = ? AND status = "bloqueado" AND starts_at >= NOW()', [$userId]);
+$appointments = fetch_all(
     $pdo,
-    'SELECT t.id, t.titulo, t.status, c.id AS case_id, c.titulo AS caso
-     FROM tasks t
-     INNER JOIN cases c ON c.id = t.case_id
-     ORDER BY t.created_at DESC
-     LIMIT 8'
+    'SELECT a.id, a.assunto, a.status, s.starts_at, s.ends_at, cli.nome AS cliente
+     FROM appointments a
+     INNER JOIN schedule_slots s ON s.id = a.slot_id
+     INNER JOIN users cli ON cli.id = a.client_id
+     WHERE s.professional_id = ?
+     ORDER BY s.starts_at ASC
+     LIMIT 8',
+    [$userId]
 );
 ?>
 <!DOCTYPE html>
@@ -30,7 +33,7 @@ $recentTasks = fetch_all(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard do estagiário | JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png">
+  <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
@@ -38,35 +41,34 @@ $recentTasks = fetch_all(
     <?php render_sidebar('estagiario', 'dashboard-estagiario.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Área do estagiário', 'Auxilie em dúvidas simples e visualize informações sem alterar dados críticos.', current_user_name()); ?>
+      <?php render_topbar('Área do estagiário', 'Acesso assistivo limitado à própria agenda até existir atribuição formal de casos.', current_user_name()); ?>
 
       <section class="grid grid-4">
-        <?= stat_card('Casos abertos', $openCaseCount, 'case') ?>
-        <?= stat_card('Documentos', $documentCount, 'file') ?>
-        <?= stat_card('Mensagens', $messageCount, 'chat') ?>
-        <?= stat_card('Tarefas ativas', $taskCount, 'check') ?>
+        <?= stat_card('Horários futuros', $futureSlotCount, 'calendar') ?>
+        <?= stat_card('Agendamentos', $appointmentCount, 'case') ?>
+        <?= stat_card('Horários livres', $freeSlotCount, 'check') ?>
+        <?= stat_card('Bloqueados', $blockedSlotCount, 'shield') ?>
       </section>
 
       <section class="dash-section">
         <div class="dash-section-title">
-          <h2>Solicitações recentes</h2>
-          <a class="btn btn-soft btn-sm" href="acompanhar-solicitacoes.php">Ver todas</a>
+          <h2>Meus agendamentos</h2>
+          <a class="btn btn-soft btn-sm" href="agenda.php">Ver agenda</a>
         </div>
-        <?php if (!$recentCases): ?>
-          <?= empty_state('Nenhuma solicitação cadastrada.') ?>
+        <?php if (!$appointments): ?>
+          <?= empty_state('Nenhum agendamento encontrado na sua agenda.') ?>
         <?php else: ?>
           <div class="table-wrap">
             <table class="table">
-              <thead><tr><th>Caso</th><th>Cliente</th><th>Advogado</th><th>Prioridade</th><th>Status</th><th>Ação</th></tr></thead>
+              <thead><tr><th>Assunto</th><th>Cliente</th><th>Quando</th><th>Status</th><th>Ação</th></tr></thead>
               <tbody>
-                <?php foreach ($recentCases as $case): ?>
+                <?php foreach ($appointments as $appointment): ?>
                   <tr>
-                    <td><?= e($case['titulo']) ?></td>
-                    <td><?= e($case['cliente']) ?></td>
-                    <td><?= e($case['advogado'] ?? 'Aguardando') ?></td>
-                    <td><?= e($case['prioridade']) ?></td>
-                    <td><?= e($case['status']) ?></td>
-                    <td><a href="chat.php?case_id=<?= (int) $case['id'] ?>">Chat</a></td>
+                    <td><?= e($appointment['assunto']) ?></td>
+                    <td><?= e($appointment['cliente']) ?></td>
+                    <td><?= e(date('d/m/Y H:i', strtotime($appointment['starts_at']))) ?></td>
+                    <td><?= e(status_label($appointment['status'] ?? '')) ?></td>
+                    <td><a href="agenda.php">Abrir agenda</a></td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>
@@ -77,28 +79,10 @@ $recentTasks = fetch_all(
 
       <section class="dash-section">
         <div class="dash-section-title">
-          <h2>Tarefas recentes</h2>
-          <a class="btn btn-soft btn-sm" href="tarefas.php">Ver tarefas</a>
+          <h2>Permissões</h2>
+          <a class="btn btn-soft btn-sm" href="agenda.php">Gerenciar horários</a>
         </div>
-        <?php if (!$recentTasks): ?>
-          <?= empty_state('Nenhuma tarefa cadastrada.') ?>
-        <?php else: ?>
-          <div class="table-wrap">
-            <table class="table">
-              <thead><tr><th>Tarefa</th><th>Caso</th><th>Status</th><th>Ação</th></tr></thead>
-              <tbody>
-                <?php foreach ($recentTasks as $task): ?>
-                  <tr>
-                    <td><?= e($task['titulo']) ?></td>
-                    <td><?= e($task['caso']) ?></td>
-                    <td><?= e($task['status']) ?></td>
-                    <td><a href="tarefas.php?case_id=<?= (int) $task['case_id'] ?>">Abrir</a></td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        <?php endif; ?>
+        <?= empty_state('Por segurança, estagiários não acessam documentos, chats ou casos de clientes sem uma atribuição formal no sistema.') ?>
       </section>
     </main>
   </div>

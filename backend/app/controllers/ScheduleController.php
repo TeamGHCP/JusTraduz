@@ -291,12 +291,18 @@ class ScheduleController extends BaseController
     // -------------------------------------------------------
     public function calendarData(): void
     {
-        // allow anonymous viewing in public pages (clients) but still start session for identity
         $this->startSession();
+
+        if (empty($_SESSION['logado'])) {
+            $this->response->json(['error' => 'auth_required'], 401);
+            return;
+        }
 
         $start = (string) ($this->request->get('start', ''));
         $end = (string) ($this->request->get('end', ''));
         $professionalId = (int) ($this->request->get('professional_id', 0));
+        $userType = (string) ($_SESSION['tipo'] ?? '');
+        $userId = (int) ($_SESSION['id'] ?? 0);
 
         // default month range if not provided
         if ($start === '' || $end === '') {
@@ -317,39 +323,65 @@ class ScheduleController extends BaseController
         $startStr = $startDt->setTime(0, 0, 0)->format('Y-m-d H:i:s');
         $endStr = $endDt->setTime(23, 59, 59)->format('Y-m-d H:i:s');
 
-        $params = [$startStr, $endStr];
-        $profWhere = '';
-        if ($professionalId > 0) {
-            $profWhere = ' AND s.professional_id = ?';
-            $params[] = $professionalId;
-        }
+        $slotWhere = ['s.starts_at >= ?', 's.ends_at <= ?'];
+        $slotParams = [$startStr, $endStr];
 
-        $slotStatusWhere = '';
-        if (($_SESSION['tipo'] ?? '') === 'cliente') {
-            // clients should only see free slots
-            $slotStatusWhere = " AND s.status = 'livre'";
+        if ($userType === 'cliente') {
+            $slotWhere[] = "s.status = 'livre'";
+            $slotWhere[] = "u.status = 'ativo'";
+            $slotWhere[] = "u.tipo IN ('advogado', 'estagiario')";
+            $slotWhere[] = "(u.oab_verificado = TRUE OR (u.status_cna = 'pendente' AND COALESCE(u.oab, '') <> '' AND COALESCE(u.oab_uf, '') <> ''))";
+
+            if ($professionalId > 0) {
+                $slotWhere[] = 's.professional_id = ?';
+                $slotParams[] = $professionalId;
+            }
+        } elseif ($userType === 'admin') {
+            if ($professionalId > 0) {
+                $slotWhere[] = 's.professional_id = ?';
+                $slotParams[] = $professionalId;
+            }
+        } elseif (in_array($userType, ['advogado', 'estagiario'], true)) {
+            $slotWhere[] = 's.professional_id = ?';
+            $slotParams[] = $userId;
+        } else {
+            $this->response->json(['error' => 'forbidden'], 403);
+            return;
         }
 
         $slots = $this->fetchAll(
             'SELECT s.id, s.professional_id, s.starts_at, s.ends_at, s.status, s.titulo, u.nome AS professional_name, u.tipo
              FROM schedule_slots s
              INNER JOIN users u ON u.id = s.professional_id
-             WHERE s.starts_at >= ? AND s.ends_at <= ?' . $slotStatusWhere . $profWhere . '
+             WHERE ' . implode(' AND ', $slotWhere) . '
              ORDER BY s.starts_at ASC',
-            $params
+            $slotParams
         );
 
         $appointments = [];
-        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
+        if ($userType !== 'cliente') {
+            $appointmentWhere = ['s.starts_at >= ?', 's.ends_at <= ?'];
+            $appointmentParams = [$startStr, $endStr];
+
+            if ($userType === 'admin') {
+                if ($professionalId > 0) {
+                    $appointmentWhere[] = 's.professional_id = ?';
+                    $appointmentParams[] = $professionalId;
+                }
+            } else {
+                $appointmentWhere[] = 's.professional_id = ?';
+                $appointmentParams[] = $userId;
+            }
+
             $appointments = $this->fetchAll(
                 'SELECT a.id, a.slot_id, a.client_id, a.case_id, a.assunto, a.status, s.starts_at, s.ends_at, s.professional_id, u.nome AS professional_name, cli.nome AS client_name
                  FROM appointments a
                  INNER JOIN schedule_slots s ON s.id = a.slot_id
                  LEFT JOIN users u ON u.id = s.professional_id
                  LEFT JOIN users cli ON cli.id = a.client_id
-                 WHERE s.starts_at >= ? AND s.ends_at <= ?' . $profWhere . '
+                 WHERE ' . implode(' AND ', $appointmentWhere) . '
                  ORDER BY s.starts_at ASC',
-                $params
+                $appointmentParams
             );
         }
 

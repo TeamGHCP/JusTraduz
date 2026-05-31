@@ -94,7 +94,8 @@ UPDATE users
 SET
   oab_status = COALESCE(oab_status, status_cna),
   oab_verificado = CASE WHEN status_cna = 'verificado' THEN TRUE ELSE oab_verificado END
-WHERE status_cna IS NOT NULL;
+WHERE id > 0
+  AND status_cna IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS cna_validacao_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,

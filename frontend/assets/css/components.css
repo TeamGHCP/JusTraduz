@@ -239,6 +239,11 @@
   color: var(--warning);
 }
 
+.badge-danger {
+  background: rgba(194, 65, 58, .12);
+  color: var(--danger);
+}
+
 .badge-info {
   background: rgba(47, 95, 152, .11);
   color: var(--info);
@@ -340,6 +345,21 @@
   color: var(--muted);
 }
 
+.inline-empty {
+  display: grid;
+  place-items: center;
+  min-height: 130px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.inline-empty p {
+  margin: 0;
+  color: var(--muted);
+}
+
 .notification-list {
   display: grid;
   gap: 10px;
@@ -410,7 +430,8 @@
   gap: 14px;
 }
 
-.audit-table code {
+.audit-table code,
+.audit-json {
   display: block;
   max-width: 420px;
   max-height: 86px;
@@ -422,4 +443,8 @@
   color: var(--text);
   font-size: 12px;
   white-space: pre-wrap;
+}
+
+.audit-json {
+  margin: 0;
 }

@@ -226,7 +226,7 @@ class CaseController extends BaseController
         $userId = (int) $_SESSION['id'];
         $type = (string) ($_SESSION['tipo'] ?? '');
 
-        if (in_array($type, ['admin', 'estagiario'], true)) {
+        if ($type === 'admin') {
             $stmt = $this->pdo->prepare('SELECT id FROM cases WHERE id = ?');
             $stmt->execute([$caseId]);
         } else {
@@ -282,7 +282,7 @@ class CaseController extends BaseController
         $type = (string) ($_SESSION['tipo'] ?? '');
 
         return match ($type) {
-            'admin', 'estagiario' => true,
+            'admin' => true,
             'advogado' => (int) ($case['advogado_id'] ?? 0) === $userId,
             'cliente' => (int) ($case['cliente_id'] ?? 0) === $userId,
             default => false,

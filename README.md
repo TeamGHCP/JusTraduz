@@ -2,6 +2,25 @@
 
 Sistema PHP/MySQL para envio de documentos, análise em linguagem simples e solicitação de ajuda jurídica.
 
+## Documentação
+
+A documentação de apoio para desenvolvimento, segurança e banca fica em `docs/`:
+
+- `docs/ARQUITETURA.md`
+- `docs/SEGURANCA.md`
+- `docs/ROTAS.md`
+- `docs/requisitos.md`
+- `docs/DEMO.md`
+- `docs/BANCA.md`
+- `docs/CREDENCIAIS_DEMO.md`
+- `docs/ENSAIO_DEMO.md`
+- `docs/PITCH_COMERCIAL.md`
+- `docs/RESPOSTAS_TECNICAS.md`
+- `docs/VIDEO_BACKUP.md`
+- `docs/CHECKLIST_LGPD.md`
+- `docs/SMOKE_TEST.md`
+- `docs/AUDITORIA_PRODUTO_JUSTRADUZ.md`
+
 ## Como rodar localmente
 
 1. Inicie o MySQL pelo XAMPP.
@@ -26,6 +45,14 @@ Copie `database/seed_admin.example.sql`, troque e-mail e hash de senha, e execut
 ```powershell
 C:\xampp\php\php.exe -r "echo password_hash('SENHA_FORTE_AQUI', PASSWORD_DEFAULT);"
 ```
+
+Para uma apresentação com dados prontos, use o seed resetável:
+
+```powershell
+Get-Content database\seed_demo.sql -Raw | & C:\xampp\mysql\bin\mysql.exe -h localhost -u root justraduz
+```
+
+As credenciais ficam em `docs/CREDENCIAIS_DEMO.md`.
 
 5. Inicie o servidor PHP a partir da raiz do projeto usando o roteador local, que bloqueia acesso direto a documentos enviados:
 

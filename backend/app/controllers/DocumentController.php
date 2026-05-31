@@ -321,9 +321,11 @@ class DocumentController extends BaseController
                         AND c.advogado_id = ?
                     )";
             $params = [$documentId, $userId];
-        } else {
+        } elseif ($type === 'admin') {
             $sql = 'SELECT d.* FROM documents d WHERE d.id = ?';
             $params = [$documentId];
+        } else {
+            return null;
         }
 
         $stmt = $this->pdo->prepare($sql);
