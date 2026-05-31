@@ -31,6 +31,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return new Date(normalized);
   }
 
+  function extractDayKey(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    // Prefer direct DB date extraction to avoid browser parse inconsistencies.
+    if (raw.length >= 10) {
+      return raw.slice(0, 10);
+    }
+    const d = parseServerDate(raw);
+    if (isNaN(d.getTime())) return '';
+    return formatDateISO(d);
+  }
+
   async function loadData() {
     const start = formatDateISO(startOfMonth(year, month));
     const end = formatDateISO(endOfMonth(year, month));
@@ -130,9 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function groupByDay(items, dateKey) {
     const map = {};
     items.forEach((it) => {
-      const d = parseServerDate(it[dateKey]);
-      if (isNaN(d.getTime())) return;
-      const key = formatDateISO(d);
+      const key = extractDayKey(it[dateKey]);
+      if (!key) return;
       if (!map[key]) map[key] = [];
       map[key].push(it);
     });
@@ -151,6 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function formatHour(dateValue) {
+    const raw = String(dateValue || '').trim();
+    // Fast path for MySQL DATETIME values.
+    if (raw.length >= 16 && raw.includes(' ')) {
+      return raw.slice(11, 16);
+    }
     const d = parseServerDate(dateValue);
     if (isNaN(d.getTime())) return '--:--';
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -248,7 +264,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = await loadData();
     const slotsByDay = groupByDay(data.slots || [], 'starts_at');
     const apptsByDay = groupByDay(data.appointments || [], 'starts_at');
+    const monthTotal = (data.slots || []).length + (data.appointments || []).length;
     buildCalendarGrid(slotsByDay, apptsByDay);
+    const headerTitle = calendarEl.querySelector('.calendar-controls strong');
+    if (headerTitle) {
+      headerTitle.textContent = `${year}-${String(month).padStart(2, '0')} (${monthTotal} horário(s))`;
+    }
     // initialize modal hooks after render
     initSlotModal();
   }
