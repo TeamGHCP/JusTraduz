@@ -103,7 +103,7 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
       <section class="dash-section">
         <div class="dash-section-title">
           <h2>Calendário</h2>
-          <span class="badge badge-info">Clique em um dia para criar ou editar horários</span>
+          <span class="badge badge-info">Bolinha verde indica horários no dia. Clique nela para ver detalhes.</span>
         </div>
         <div id="calendar" class="card p-16"></div>
       </section>
@@ -145,155 +145,17 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
         </div>
       </div>
 
-      <?php if ($type === 'cliente'): ?>
-        <section class="dash-section">
-          <form class="card admin-filter" method="get">
-            <div class="field">
-              <label for="perfil">Perfil</label>
-              <select class="select" id="perfil" name="perfil">
-                <option value="">Todos</option>
-                <option value="advogado" <?= $roleFilter === 'advogado' ? 'selected' : '' ?>>Advogado</option>
-                <option value="estagiario" <?= $roleFilter === 'estagiario' ? 'selected' : '' ?>>Estagiário</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="professional_id">Profissional</label>
-              <select class="select" id="professional_id" name="professional_id">
-                <option value="">Todos</option>
-                <?php foreach ($professionals as $professional): ?>
-                  <option value="<?= (int) $professional['id'] ?>" <?= $professionalFilter === (int) $professional['id'] ? 'selected' : '' ?>>
-                    <?= e($professional['nome'] . ' - ' . $professional['tipo']) ?>
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="form-actions">
-              <button class="btn btn-primary" type="submit">Filtrar</button>
-              <a class="btn btn-outline" href="agenda.php">Limpar</a>
-            </div>
-          </form>
-        </section>
-
-        <section class="dash-section">
-          <div class="dash-section-title">
-            <h2>Horários livres</h2>
-            <span class="badge badge-info"><?= e((string) count($freeSlots)) ?> disponíveis</span>
+      <!-- Modal para ver horários do dia -->
+      <div id="day-slots-modal" class="modal" style="display:none;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card day-slots-card">
+          <h3 id="day-slots-title">Horários do dia</h3>
+          <div id="day-slots-content" class="day-slots-content"></div>
+          <div class="form-actions">
+            <button type="button" id="day-slots-close" class="btn btn-outline">Fechar</button>
           </div>
-          <?php if (!$freeSlots): ?>
-            <?= empty_state('Nenhum horário livre encontrado para os filtros selecionados.') ?>
-          <?php else: ?>
-            <div class="grid grid-2">
-              <?php foreach ($freeSlots as $slot): ?>
-                <article class="card schedule-card">
-                  <div class="dash-section-title">
-                    <h2><?= e($slot['profissional']) ?></h2>
-                    <span class="badge badge-success"><?= e($slot['tipo']) ?></span>
-                  </div>
-                  <p><strong><?= e(date('d/m/Y H:i', strtotime($slot['starts_at']))) ?></strong> até <?= e(date('H:i', strtotime($slot['ends_at']))) ?></p>
-                  <p class="mt-8 text-muted"><?= $slot['oab'] ? e('OAB/' . $slot['oab_uf'] . ' ' . $slot['oab']) : 'Cadastro ativo' ?></p>
-                  <form class="auth-form mt-16" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/book')) ?>" method="post">
-                    <?= csrf_input() ?>
-                    <input type="hidden" name="slot_id" value="<?= (int) $slot['id'] ?>">
-                    <div class="field">
-                      <label for="assunto_<?= (int) $slot['id'] ?>">Assunto</label>
-                      <input class="input" id="assunto_<?= (int) $slot['id'] ?>" name="assunto" required>
-                    </div>
-                    <div class="field">
-                      <label for="case_id_<?= (int) $slot['id'] ?>">Vincular caso</label>
-                      <select class="select" id="case_id_<?= (int) $slot['id'] ?>" name="case_id">
-                        <option value="">Sem caso vinculado</option>
-                        <?php foreach ($clientsCases as $case): ?>
-                          <option value="<?= (int) $case['id'] ?>"><?= e($case['titulo']) ?></option>
-                        <?php endforeach; ?>
-                      </select>
-                    </div>
-                    <div class="field">
-                      <label for="obs_<?= (int) $slot['id'] ?>">Observações</label>
-                      <textarea class="textarea textarea-sm" id="obs_<?= (int) $slot['id'] ?>" name="observacoes"></textarea>
-                    </div>
-                    <button class="btn btn-primary btn-sm" type="submit"><?= icon_svg('calendar') ?> Agendar</button>
-                  </form>
-                </article>
-              <?php endforeach; ?>
-            </div>
-          <?php endif; ?>
-        </section>
-      <?php endif; ?>
-
-      <section class="dash-section">
-        <div class="dash-section-title">
-          <h2><?= $type === 'cliente' ? 'Meus agendamentos' : 'Agenda e agendamentos' ?></h2>
-          <span class="badge badge-info"><?= e((string) count($appointments)) ?> registros</span>
         </div>
-
-        <?php if (!$appointments): ?>
-          <?= empty_state($type === 'cliente' ? 'Você ainda não possui agendamentos.' : 'Nenhum horário ou agendamento cadastrado.') ?>
-        <?php else: ?>
-          <div class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th><?= $type === 'cliente' ? 'Profissional' : 'Pessoa' ?></th>
-                  <th>Assunto</th>
-                  <th>Caso</th>
-                  <th>Status</th>
-                  <th>Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php foreach ($appointments as $appointment): ?>
-                  <?php $hasAppointment = !empty($appointment['id']); ?>
-                  <tr>
-                    <td>
-                      <strong><?= e(date('d/m/Y H:i', strtotime($appointment['starts_at']))) ?></strong>
-                      <span class="table-subtext">até <?= e(date('H:i', strtotime($appointment['ends_at']))) ?></span>
-                    </td>
-                    <td><?= e($type === 'cliente' ? ($appointment['profissional'] ?? '') : ($appointment['cliente'] ?? ($appointment['profissional'] ?? 'Horário livre'))) ?></td>
-                    <td><?= e($hasAppointment ? $appointment['assunto'] : ($appointment['slot_title'] ?? 'Horário disponível')) ?></td>
-                    <td><?= e($appointment['caso'] ?? 'Sem caso') ?></td>
-                    <td>
-                      <span class="badge <?= ($appointment['status'] ?? $appointment['slot_status'] ?? '') === 'agendado' ? 'badge-warning' : 'badge-info' ?>">
-                        <?= e($appointment['status'] ?? $appointment['slot_status'] ?? 'livre') ?>
-                      </span>
-                    </td>
-                    <td>
-                      <?php if ($hasAppointment && ($appointment['status'] ?? '') === 'agendado'): ?>
-                        <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/appointments/update')) ?>" method="post">
-                          <?= csrf_input() ?>
-                          <input type="hidden" name="appointment_id" value="<?= (int) $appointment['id'] ?>">
-                          <?php if ($type === 'cliente'): ?>
-                            <input type="hidden" name="status" value="cancelado">
-                            <button class="btn btn-outline btn-sm" type="submit">Cancelar</button>
-                          <?php else: ?>
-                            <select class="select select-sm" name="status">
-                              <option value="concluido">Concluir</option>
-                              <option value="cancelado">Cancelar</option>
-                            </select>
-                            <button class="btn btn-soft btn-sm" type="submit">Salvar</button>
-                          <?php endif; ?>
-                        </form>
-                      <?php elseif (!$hasAppointment && $canManageSlots): ?>
-                        <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/slots/update')) ?>" method="post">
-                          <?= csrf_input() ?>
-                          <input type="hidden" name="slot_id" value="<?= (int) $appointment['slot_id'] ?>">
-                          <select class="select select-sm" name="status">
-                            <option value="livre" <?= ($appointment['slot_status'] ?? '') === 'livre' ? 'selected' : '' ?>>Livre</option>
-                            <option value="bloqueado" <?= ($appointment['slot_status'] ?? '') === 'bloqueado' ? 'selected' : '' ?>>Bloqueado</option>
-                          </select>
-                          <button class="btn btn-soft btn-sm" type="submit">Salvar</button>
-                        </form>
-                      <?php else: ?>
-                        <span class="text-muted">Sem ação</span>
-                      <?php endif; ?>
-                    </td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        <?php endif; ?>
-      </section>
+      </div>
     </main>
   </div>
   <script>

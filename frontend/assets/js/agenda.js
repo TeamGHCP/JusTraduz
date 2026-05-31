@@ -68,35 +68,23 @@ document.addEventListener('DOMContentLoaded', () => {
       dayHeader.innerHTML = `<span class="day-num">${day}</span>`;
       cell.appendChild(dayHeader);
 
-      const slotList = document.createElement('div');
-      slotList.className = 'calendar-slot-list';
-
       const slots = slotsByDay[key] || [];
       const appts = apptsByDay[key] || [];
 
-      slots.forEach((s) => {
-        const el = document.createElement('div');
-        el.className = 'calendar-slot ' + (s.status === 'livre' ? 'slot-free' : 'slot-busy');
-        el.innerHTML = `<div class="title">${s.titulo ? escapeHtml(s.titulo) : 'Horário'}</div><div class="time">${new Date(s.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`;
-        el.dataset.slotId = s.id;
-        // attach professional id to allow professionals to open edit modal for their own slots
-        if (s.professional_id) el.dataset.professionalId = s.professional_id;
-        // clients can click free slots to book
-        if (s.status === 'livre') {
-          el.addEventListener('click', () => scrollToBookingForm(s.id));
-        }
-        slotList.appendChild(el);
-      });
-
-      appts.forEach((a) => {
-        const el = document.createElement('div');
-        el.className = 'calendar-appointment';
-        el.textContent = (a.assunto ? a.assunto + ' - ' : '') + new Date(a.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        el.dataset.appointmentId = a.id;
-        slotList.appendChild(el);
-      });
-
-      if (slotList.children.length > 0) cell.appendChild(slotList);
+      const totalItems = slots.length + appts.length;
+      if (totalItems > 0) {
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'day-dot';
+        dot.title = `${totalItems} horário(s) neste dia`;
+        dot.innerHTML = `<span class="day-dot-count">${totalItems}</span>`;
+        dot.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          openDaySlotsModal(d, slots, appts);
+        });
+        cell.appendChild(dot);
+      }
 
       // click day to prefill new slot form (for professionals)
       cell.addEventListener('click', (ev) => {
@@ -151,6 +139,75 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       alert('Formulário de agendamento não encontrado nesta página. Role para baixo para ver horários livres.');
     }
+  }
+
+  function formatHour(dateValue) {
+    return new Date(dateValue).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatDayLabel(dateObj) {
+    return dateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function openDaySlotsModal(dayDate, slots, appts) {
+    const modal = document.getElementById('day-slots-modal');
+    const title = document.getElementById('day-slots-title');
+    const content = document.getElementById('day-slots-content');
+    if (!modal || !title || !content) return;
+
+    title.textContent = 'Horários de ' + formatDayLabel(dayDate);
+
+    const orderedSlots = [...slots].sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+    const orderedAppts = [...appts].sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+
+    if (orderedSlots.length === 0 && orderedAppts.length === 0) {
+      content.innerHTML = '<p class="text-muted">Nenhum horário neste dia.</p>';
+    } else {
+      const rows = [];
+      orderedSlots.forEach((s) => {
+        const canEdit = isProfessional && Number(window.CURRENT_USER_ID) === Number(s.professional_id);
+        rows.push(
+          `<div class="day-slot-row">
+            <div>
+              <div class="day-slot-time">${formatHour(s.starts_at)} - ${formatHour(s.ends_at)}</div>
+              <div class="day-slot-title">${s.titulo ? escapeHtml(s.titulo) : 'Horário'}</div>
+              <div class="day-slot-meta">${s.status === 'livre' ? 'Livre' : 'Ocupado interno'}</div>
+            </div>
+            ${canEdit ? `<button type="button" class="btn btn-soft btn-sm day-slot-edit" data-slot-id="${s.id}">Editar</button>` : ''}
+          </div>`
+        );
+      });
+
+      orderedAppts.forEach((a) => {
+        rows.push(
+          `<div class="day-slot-row day-slot-row-appointment">
+            <div>
+              <div class="day-slot-time">${formatHour(a.starts_at)} - ${formatHour(a.ends_at)}</div>
+              <div class="day-slot-title">${a.assunto ? escapeHtml(a.assunto) : 'Agendamento'}</div>
+              <div class="day-slot-meta">Agendado</div>
+            </div>
+          </div>`
+        );
+      });
+
+      content.innerHTML = rows.join('');
+    }
+
+    content.querySelectorAll('.day-slot-edit').forEach((btn) => {
+      btn.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        const slotId = btn.dataset.slotId;
+        hideDaySlotsModal();
+        openEditModal(slotId);
+      });
+    });
+
+    modal.style.display = 'flex';
+  }
+
+  function hideDaySlotsModal() {
+    const modal = document.getElementById('day-slots-modal');
+    if (modal) modal.style.display = 'none';
   }
 
   function prefillNewSlot(day) {
@@ -223,20 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cancel button
     slotModalCancel?.addEventListener('click', (e) => { e.preventDefault(); hideModal(); });
 
-    // Delegated click handler so it keeps working after calendar re-render
-    calendarEl.addEventListener('click', (ev) => {
-      const slotEl = ev.target && ev.target.closest ? ev.target.closest('.calendar-slot') : null;
-      if (!slotEl) return;
-
-      ev.stopPropagation();
-      const slotId = slotEl.dataset.slotId;
-      const professionalId = slotEl.dataset.professionalId ? Number(slotEl.dataset.professionalId) : null;
-      if (professionalId && window.CURRENT_USER_ID && Number(window.CURRENT_USER_ID) === professionalId) {
-        openEditModal(slotId);
-      } else {
-        scrollToBookingForm(slotId);
-      }
-    });
+    const dayClose = document.getElementById('day-slots-close');
+    dayClose?.addEventListener('click', (e) => { e.preventDefault(); hideDaySlotsModal(); });
 
     slotForm.addEventListener('submit', async (ev) => {
       ev.preventDefault();
