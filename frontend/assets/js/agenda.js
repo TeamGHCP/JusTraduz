@@ -23,6 +23,14 @@ document.addEventListener('DOMContentLoaded', () => {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
+  function parseServerDate(value) {
+    // Normalize MySQL DATETIME (YYYY-MM-DD HH:MM:SS) for robust browser parsing.
+    const raw = String(value || '').trim();
+    if (!raw) return new Date('invalid');
+    const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+    return new Date(normalized);
+  }
+
   async function loadData() {
     const start = formatDateISO(startOfMonth(year, month));
     const end = formatDateISO(endOfMonth(year, month));
@@ -122,7 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function groupByDay(items, dateKey) {
     const map = {};
     items.forEach((it) => {
-      const d = new Date(it[dateKey]);
+      const d = parseServerDate(it[dateKey]);
+      if (isNaN(d.getTime())) return;
       const key = formatDateISO(d);
       if (!map[key]) map[key] = [];
       map[key].push(it);
@@ -142,7 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function formatHour(dateValue) {
-    return new Date(dateValue).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const d = parseServerDate(dateValue);
+    if (isNaN(d.getTime())) return '--:--';
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   function formatDayLabel(dateObj) {
@@ -157,8 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     title.textContent = 'Horários de ' + formatDayLabel(dayDate);
 
-    const orderedSlots = [...slots].sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
-    const orderedAppts = [...appts].sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+    const orderedSlots = [...slots].sort((a, b) => parseServerDate(a.starts_at) - parseServerDate(b.starts_at));
+    const orderedAppts = [...appts].sort((a, b) => parseServerDate(a.starts_at) - parseServerDate(b.starts_at));
 
     if (orderedSlots.length === 0 && orderedAppts.length === 0) {
       content.innerHTML = '<p class="text-muted">Nenhum horário neste dia.</p>';
@@ -351,18 +362,14 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function openEditModal(slotId) {
-    // fetch slot data from calendar API (we already have it in the last loaded data via DOM); try to find element
-    const el = document.querySelector(`.calendar-slot[data-slot-id="${slotId}"]`);
-    if (!el) return;
-    // read times from title text isn't reliable; instead call calendar API single day range and find slot by id
-    // For simplicity, attempt to fetch slot details via calendar endpoint for current month and find slot
+    // Fetch details from calendar endpoint for current month and find slot by id.
     const data = await loadData();
     const allSlots = (data.slots || []);
     const slot = allSlots.find(s => String(s.id) === String(slotId));
     if (!slot) return;
     document.getElementById('slot-modal-id').value = slot.id;
-    const startsDt = new Date(slot.starts_at);
-    const endsDt = new Date(slot.ends_at);
+    const startsDt = parseServerDate(slot.starts_at);
+    const endsDt = parseServerDate(slot.ends_at);
     const pad = (n) => String(n).padStart(2, '0');
     document.getElementById('slot-date').value = `${startsDt.getFullYear()}-${pad(startsDt.getMonth()+1)}-${pad(startsDt.getDate())}`;
     document.getElementById('slot-starts').value = `${pad(startsDt.getHours())}:${pad(startsDt.getMinutes())}`;
