@@ -100,35 +100,10 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
     <main class="app-main">
       <?php render_topbar('Agenda', $type === 'cliente' ? 'Veja horários livres de advogados e estagiários.' : 'Gerencie disponibilidade e acompanhe atendimentos.', current_user_name()); ?>
 
-      <?php if ($canManageSlots): ?>
-        <form class="card auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/slots/create')) ?>" method="post">
-          <?= csrf_input() ?>
-          <div class="dash-section-title">
-            <h2>Novo horário livre</h2>
-            <span class="badge badge-info">Agenda profissional</span>
-          </div>
-          <div class="form-grid">
-            <div class="field">
-              <label for="starts_at">Início</label>
-              <input class="input" id="starts_at" name="starts_at" type="datetime-local" required>
-            </div>
-            <div class="field">
-              <label for="ends_at">Fim</label>
-              <input class="input" id="ends_at" name="ends_at" type="datetime-local" required>
-            </div>
-          </div>
-          <div class="field">
-            <label for="titulo">Título interno</label>
-            <input class="input" id="titulo" name="titulo" placeholder="Atendimento inicial, plantão, revisão de contrato">
-          </div>
-          <button class="btn btn-primary" type="submit"><?= icon_svg('calendar') ?> Adicionar horário</button>
-        </form>
-      <?php endif; ?>
-
       <section class="dash-section">
         <div class="dash-section-title">
           <h2>Calendário</h2>
-          <span class="badge badge-info">Visualize seu mês e clique para criar horários</span>
+          <span class="badge badge-info">Clique em um dia para criar ou editar horários</span>
         </div>
         <div id="calendar" class="card p-16"></div>
       </section>
@@ -141,18 +116,26 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
           <form id="slot-modal-form">
             <?= csrf_input() ?>
             <input type="hidden" name="slot_id" id="slot-modal-id" value="">
+            <input type="hidden" name="slot_date" id="slot-date" value="">
             <div id="slot-modal-alert" style="display:none;margin-bottom:8px;" class="modal-alert"></div>
             <div class="field">
-              <label for="slot-starts">Início</label>
-              <input id="slot-starts" name="starts_at" type="datetime-local" required class="input">
+              <label for="slot-starts">Hora de início</label>
+              <input id="slot-starts" name="starts_time" type="time" required class="input">
             </div>
             <div class="field">
-              <label for="slot-ends">Fim</label>
-              <input id="slot-ends" name="ends_at" type="datetime-local" required class="input">
+              <label for="slot-ends">Hora de fim</label>
+              <input id="slot-ends" name="ends_time" type="time" required class="input">
             </div>
             <div class="field">
               <label for="slot-title">Título</label>
               <input id="slot-title" name="titulo" class="input">
+            </div>
+            <div class="field">
+              <label for="slot-status">Status</label>
+              <select id="slot-status" name="status" class="select">
+                <option value="livre">Livre (visível para cliente)</option>
+                <option value="bloqueado">Ocupado (somente interno)</option>
+              </select>
             </div>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary">Salvar</button>
@@ -313,7 +296,10 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
       </section>
     </main>
   </div>
-  <script>window.CURRENT_USER_ID = <?= (int) current_user_id() ?>;</script>
+  <script>
+    window.CURRENT_USER_ID = <?= (int) current_user_id() ?>;
+    window.CURRENT_USER_TYPE = '<?= e((string) current_user_type()) ?>';
+  </script>
   <script src="assets/js/agenda.js"></script>
 </body>
 </html>

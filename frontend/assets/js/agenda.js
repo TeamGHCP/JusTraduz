@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const calendarEl = document.getElementById('calendar');
   if (!calendarEl) return;
+  const currentUserType = String(window.CURRENT_USER_TYPE || '');
+  const isProfessional = currentUserType === 'advogado' || currentUserType === 'estagiario';
 
   const params = new URLSearchParams(window.location.search);
   const professionalSelect = document.getElementById('professional_id');
@@ -63,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const dayHeader = document.createElement('div');
       dayHeader.className = 'calendar-day-header';
-      dayHeader.textContent = day;
+      dayHeader.innerHTML = `<span class="day-num">${day}</span>`;
       cell.appendChild(dayHeader);
 
       const slotList = document.createElement('div');
@@ -98,9 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // click day to prefill new slot form (for professionals)
       cell.addEventListener('click', (ev) => {
-        // avoid firing when clicking a slot element
-        if (ev.target && (ev.target.classList.contains('calendar-slot') || ev.target.classList.contains('calendar-appointment'))) return;
-        prefillNewSlot(day);
+        // avoid firing when clicking inside slot/appointment elements
+        if (ev.target && ev.target.closest && ev.target.closest('.calendar-slot, .calendar-appointment')) return;
+        if (isProfessional) prefillNewSlot(day);
       });
 
       row.appendChild(cell);
@@ -156,11 +158,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const y = year; const m = month; const d = day;
     const starts = new Date(y, m - 1, d, 9, 0); // default 09:00
     const ends = new Date(y, m - 1, d, 10, 0);
-    const toInputValue = (dt) => dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0') + 'T' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+    const toTimeValue = (dt) => String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+    const toDateValue = (dt) => dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
     const startsInput = document.getElementById('slot-starts');
     const endsInput = document.getElementById('slot-ends');
-    if (startsInput) startsInput.value = toInputValue(starts);
-    if (endsInput) endsInput.value = toInputValue(ends);
+    const dateInput = document.getElementById('slot-date');
+    if (startsInput) startsInput.value = toTimeValue(starts);
+    if (endsInput) endsInput.value = toTimeValue(ends);
+    if (dateInput) dateInput.value = toDateValue(starts);
     openCreateModal();
   }
 
@@ -202,40 +207,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function toDateTimeLocalInput(value) {
-    const d = new Date(value);
-    if (isNaN(d)) return '';
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  }
-
+  let modalInitialized = false;
   function initSlotModal() {
     if (!slotForm) return;
+    if (modalInitialized) return;
+    modalInitialized = true;
 
     // Cancel button
     slotModalCancel?.addEventListener('click', (e) => { e.preventDefault(); hideModal(); });
 
-    // Clicking a slot for professionals opens modal to edit; attach handlers to existing slot elements
-    document.querySelectorAll('.calendar-slot').forEach((el) => {
-      el.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        const slotId = el.dataset.slotId;
-        const professionalId = el.dataset.professionalId ? Number(el.dataset.professionalId) : null;
-        if (professionalId && window.CURRENT_USER_ID && Number(window.CURRENT_USER_ID) === professionalId) {
-          // open edit modal
-          openEditModal(slotId);
-        } else {
-          // otherwise, proceed to booking scroll
-          scrollToBookingForm(slotId);
-        }
-      });
+    // Delegated click handler so it keeps working after calendar re-render
+    calendarEl.addEventListener('click', (ev) => {
+      const slotEl = ev.target && ev.target.closest ? ev.target.closest('.calendar-slot') : null;
+      if (!slotEl) return;
+
+      ev.stopPropagation();
+      const slotId = slotEl.dataset.slotId;
+      const professionalId = slotEl.dataset.professionalId ? Number(slotEl.dataset.professionalId) : null;
+      if (professionalId && window.CURRENT_USER_ID && Number(window.CURRENT_USER_ID) === professionalId) {
+        openEditModal(slotId);
+      } else {
+        scrollToBookingForm(slotId);
+      }
     });
 
     slotForm.addEventListener('submit', async (ev) => {
       ev.preventDefault();
-      const formData = new FormData(slotForm);
-      const slotId = formData.get('slot_id');
-      const url = slotId ? '/backend/public/index.php?rota=/schedule/slots/update' : '/backend/public/index.php?rota=/schedule/slots/create';
+      const raw = new FormData(slotForm);
+      const formData = new FormData();
+
+      const slotId = raw.get('slot_id');
+      const slotDate = String(raw.get('slot_date') || '');
+      const startsTime = String(raw.get('starts_time') || '');
+      const endsTime = String(raw.get('ends_time') || '');
+      const titulo = String(raw.get('titulo') || '');
+      const status = String(raw.get('status') || 'livre');
+
+      if (!slotDate || !startsTime || !endsTime) {
+        showModalAlert('Selecione dia, hora inicial e hora final.', 'error');
+        return;
+      }
+
+      formData.set('slot_id', String(slotId || ''));
+      formData.set('starts_at', `${slotDate}T${startsTime}`);
+      formData.set('ends_at', `${slotDate}T${endsTime}`);
+      formData.set('titulo', titulo);
+      formData.set('status', status);
+
+      const csrf = raw.get('_csrf');
+      if (csrf) formData.set('_csrf', String(csrf));
+
+      const currentSlotId = formData.get('slot_id');
+      const url = currentSlotId ? '/backend/public/index.php?rota=/schedule/slots/update' : '/backend/public/index.php?rota=/schedule/slots/create';
       const token = await fetchCsrf();
       try {
         const res = await fetch(url, {
@@ -278,40 +301,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.querySelector(`.calendar-slot[data-slot-id="${slotId}"]`);
     if (!el) return;
     // read times from title text isn't reliable; instead call calendar API single day range and find slot by id
-    const token = await fetchCsrf();
     // For simplicity, attempt to fetch slot details via calendar endpoint for current month and find slot
     const data = await loadData();
     const allSlots = (data.slots || []);
     const slot = allSlots.find(s => String(s.id) === String(slotId));
     if (!slot) return;
     document.getElementById('slot-modal-id').value = slot.id;
-    document.getElementById('slot-starts').value = toDateTimeLocalInput(slot.starts_at);
-    document.getElementById('slot-ends').value = toDateTimeLocalInput(slot.ends_at);
+    const startsDt = new Date(slot.starts_at);
+    const endsDt = new Date(slot.ends_at);
+    const pad = (n) => String(n).padStart(2, '0');
+    document.getElementById('slot-date').value = `${startsDt.getFullYear()}-${pad(startsDt.getMonth()+1)}-${pad(startsDt.getDate())}`;
+    document.getElementById('slot-starts').value = `${pad(startsDt.getHours())}:${pad(startsDt.getMinutes())}`;
+    document.getElementById('slot-ends').value = `${pad(endsDt.getHours())}:${pad(endsDt.getMinutes())}`;
     document.getElementById('slot-title').value = slot.titulo || '';
+    document.getElementById('slot-status').value = slot.status === 'livre' ? 'livre' : 'bloqueado';
     slotModalTitle.textContent = 'Editar horário';
     showModal();
   }
 
-  // make create modal available via header button if professional
-  (function addCreateButtonIfProfessional(){
-    const createForm = document.querySelector('form[action*="/schedule/slots/create"]');
-    if (!createForm) return;
-    const header = calendarEl.querySelector('.calendar-controls');
-    if (!header) return;
-    const btn = document.createElement('button');
-    btn.className = 'btn btn-primary btn-sm';
-    btn.textContent = 'Novo horário';
-    btn.style.marginLeft = '12px';
-    btn.addEventListener('click', (e) => { e.preventDefault(); openCreateModal(); });
-    header.appendChild(btn);
-  })();
-
   function openCreateModal() {
     // clear fields
     document.getElementById('slot-modal-id').value = '';
-    document.getElementById('slot-starts').value = '';
-    document.getElementById('slot-ends').value = '';
+    document.getElementById('slot-status').value = 'livre';
     document.getElementById('slot-title').value = '';
+    const alertBox = document.getElementById('slot-modal-alert');
+    if (alertBox) alertBox.style.display = 'none';
     slotModalTitle.textContent = 'Novo horário';
     showModal();
   }

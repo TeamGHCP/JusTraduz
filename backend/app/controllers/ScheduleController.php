@@ -27,6 +27,10 @@ class ScheduleController extends BaseController
         $startsAt = $this->parseDateTime((string) $this->request->post('starts_at', ''));
         $endsAt = $this->parseDateTime((string) $this->request->post('ends_at', ''));
         $titulo = trim((string) $this->request->post('titulo', ''));
+        $status = (string) $this->request->post('status', 'livre');
+        if (!in_array($status, ['livre', 'bloqueado'], true)) {
+            $status = 'livre';
+        }
 
         if (!$startsAt || !$endsAt || $endsAt <= $startsAt) {
             $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Informe início e fim válidos.')));
@@ -47,7 +51,7 @@ class ScheduleController extends BaseController
             (int) $_SESSION['id'],
             $startsAt->format('Y-m-d H:i:s'),
             $endsAt->format('Y-m-d H:i:s'),
-            'livre',
+            $status,
             $titulo ?: null,
         ]);
 
@@ -55,6 +59,7 @@ class ScheduleController extends BaseController
         $this->audit->log('schedule.slot_created', 'schedule_slot', $slotId, [
             'starts_at' => $startsAt->format('Y-m-d H:i:s'),
             'ends_at' => $endsAt->format('Y-m-d H:i:s'),
+            'status' => $status,
         ]);
 
         // If request expects JSON (AJAX), return JSON response instead of redirect
@@ -95,6 +100,14 @@ class ScheduleController extends BaseController
             || ($this->request->header('X-Requested-With') === 'XMLHttpRequest');
 
         if ($startsRaw !== '' && $endsRaw !== '') {
+            if ($this->hasActiveAppointment($slotId)) {
+                if ($isAjax) {
+                    $this->response->json(['success' => false, 'error' => 'Horário com agendamento ativo não pode ser editado.'], 409);
+                    return;
+                }
+                $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Horário com agendamento ativo não pode ser editado.')));
+            }
+
             $startsAt = $this->parseDateTime((string) $startsRaw);
             $endsAt = $this->parseDateTime((string) $endsRaw);
 
@@ -114,10 +127,15 @@ class ScheduleController extends BaseController
                 $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Já existe um horário nessa faixa.')));
             }
 
-            $stmt = $this->pdo->prepare('UPDATE schedule_slots SET starts_at = ?, ends_at = ?, titulo = ? WHERE id = ?');
-            $stmt->execute([$startsAt->format('Y-m-d H:i:s'), $endsAt->format('Y-m-d H:i:s'), $titulo ?: null, $slotId]);
+            $status = (string) $this->request->post('status', (string) ($slot['status'] ?? 'livre'));
+            if (!in_array($status, ['livre', 'bloqueado'], true)) {
+                $status = (string) ($slot['status'] ?? 'livre');
+            }
 
-            $this->audit->log('schedule.slot_updated', 'schedule_slot', $slotId, ['starts_at' => $startsAt->format('Y-m-d H:i:s'), 'ends_at' => $endsAt->format('Y-m-d H:i:s')]);
+            $stmt = $this->pdo->prepare('UPDATE schedule_slots SET starts_at = ?, ends_at = ?, titulo = ?, status = ? WHERE id = ?');
+            $stmt->execute([$startsAt->format('Y-m-d H:i:s'), $endsAt->format('Y-m-d H:i:s'), $titulo ?: null, $status, $slotId]);
+
+            $this->audit->log('schedule.slot_updated', 'schedule_slot', $slotId, ['starts_at' => $startsAt->format('Y-m-d H:i:s'), 'ends_at' => $endsAt->format('Y-m-d H:i:s'), 'status' => $status]);
 
             if ($isAjax) {
                 $this->response->json(['success' => true, 'slot_id' => $slotId]);
@@ -308,27 +326,36 @@ class ScheduleController extends BaseController
             $params[] = $professionalId;
         }
 
+        $slotStatusWhere = '';
+        if (($_SESSION['tipo'] ?? '') === 'cliente') {
+            // clients should only see free slots
+            $slotStatusWhere = " AND s.status = 'livre'";
+        }
+
         $slots = fetch_all(
             $this->pdo,
             'SELECT s.id, s.professional_id, s.starts_at, s.ends_at, s.status, s.titulo, u.nome AS professional_name, u.tipo
              FROM schedule_slots s
              INNER JOIN users u ON u.id = s.professional_id
-             WHERE s.starts_at >= ? AND s.ends_at <= ?' . $profWhere . '
+             WHERE s.starts_at >= ? AND s.ends_at <= ?' . $slotStatusWhere . $profWhere . '
              ORDER BY s.starts_at ASC',
             $params
         );
 
-        $appointments = fetch_all(
-            $this->pdo,
-            'SELECT a.id, a.slot_id, a.client_id, a.case_id, a.assunto, a.status, s.starts_at, s.ends_at, s.professional_id, u.nome AS professional_name, cli.nome AS client_name
-             FROM appointments a
-             INNER JOIN schedule_slots s ON s.id = a.slot_id
-             LEFT JOIN users u ON u.id = s.professional_id
-             LEFT JOIN users cli ON cli.id = a.client_id
-             WHERE s.starts_at >= ? AND s.ends_at <= ?' . $profWhere . '
-             ORDER BY s.starts_at ASC',
-            $params
-        );
+        $appointments = [];
+        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
+            $appointments = fetch_all(
+                $this->pdo,
+                'SELECT a.id, a.slot_id, a.client_id, a.case_id, a.assunto, a.status, s.starts_at, s.ends_at, s.professional_id, u.nome AS professional_name, cli.nome AS client_name
+                 FROM appointments a
+                 INNER JOIN schedule_slots s ON s.id = a.slot_id
+                 LEFT JOIN users u ON u.id = s.professional_id
+                 LEFT JOIN users cli ON cli.id = a.client_id
+                 WHERE s.starts_at >= ? AND s.ends_at <= ?' . $profWhere . '
+                 ORDER BY s.starts_at ASC',
+                $params
+            );
+        }
 
         $this->response->json(['slots' => $slots, 'appointments' => $appointments]);
     }
