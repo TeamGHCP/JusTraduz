@@ -23,12 +23,86 @@
   --font: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
 }
 
+:root[data-theme="dark"] {
+  --navy: #e7edf7;
+  --navy-2: #cdd8e8;
+  --teal: #35c8b6;
+  --teal-2: #5ee0d0;
+  --mint: #123a39;
+  --bg: #101722;
+  --surface: #172231;
+  --surface-2: #1d2a3b;
+  --surface-3: #25354a;
+  --line: #314056;
+  --line-strong: #42536a;
+  --text: #e7edf7;
+  --muted: #a5b2c4;
+  --danger: #ff9a94;
+  --warning: #ffc46b;
+  --success: #72dfb7;
+  --info: #9ec7ff;
+  --shadow: 0 22px 48px rgba(0, 0, 0, .28);
+  --shadow-sm: 0 8px 22px rgba(0, 0, 0, .22);
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+html.theme-ready,
+html.theme-ready body,
+html.theme-ready .app-shell,
+html.theme-ready .sidebar,
+html.theme-ready .app-main,
+html.theme-ready .site-header,
+html.theme-ready .card,
+html.theme-ready .stat-card,
+html.theme-ready .table-wrap,
+html.theme-ready .table th,
+html.theme-ready .table td,
+html.theme-ready .input,
+html.theme-ready .select,
+html.theme-ready .textarea,
+html.theme-ready .btn,
+html.theme-ready .badge,
+html.theme-ready .topbar,
+html.theme-ready .user-chip,
+html.theme-ready .side-nav a,
+html.theme-ready .side-nav button,
+html.theme-ready .chat-layout,
+html.theme-ready .chat-list,
+html.theme-ready .chat-panel,
+html.theme-ready .chat-compose,
+html.theme-ready .chat-messages,
+html.theme-ready .message,
+html.theme-ready .modal-card,
+html.theme-ready .calendar-cell {
+  transition:
+    background-color 260ms ease,
+    background 260ms ease,
+    border-color 260ms ease,
+    color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-ready *,
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 body {

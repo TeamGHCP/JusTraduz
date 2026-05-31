@@ -2,7 +2,7 @@
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 
-$lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, oab, oab_uf, oab_status, oab_verificado FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE ORDER BY nome");
+$lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, foto_perfil, oab, oab_uf, oab_status, oab_verificado FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> '')) ORDER BY nome");
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -18,6 +18,9 @@ $lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, oab, oab_uf, oab_s
     <div class="container nav-bar">
       <a class="brand" href="<?= e(dashboard_url()) ?>"><img src="assets/img/logo.png" alt="JusTraduz"></a>
       <nav class="nav-links"><a href="<?= e(dashboard_url()) ?>">Dashboard</a><a href="solicitar-ajuda.php">Solicitar ajuda</a><a href="chat.php">Chat</a></nav>
+      <div class="nav-actions">
+        <?= render_theme_toggle() ?>
+      </div>
       <button class="mobile-toggle" type="button" data-nav-toggle aria-label="Abrir menu">
         <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
       </button>
@@ -34,7 +37,14 @@ $lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, oab, oab_uf, oab_s
       <div class="grid grid-3">
         <?php foreach ($lawyers as $lawyer): ?>
           <article class="card lawyer-card">
-            <div class="lawyer-avatar"><?= e(substr($lawyer['nome'], 0, 1)) ?></div>
+            <?php $lawyerPhotoUrl = !empty($lawyer['foto_perfil']) ? '../' . ltrim((string) $lawyer['foto_perfil'], '/') : ''; ?>
+            <div class="lawyer-avatar">
+              <?php if ($lawyerPhotoUrl): ?>
+                <img src="<?= e($lawyerPhotoUrl) ?>" alt="<?= e($lawyer['nome']) ?>">
+              <?php else: ?>
+                <?= e(substr($lawyer['nome'], 0, 1)) ?>
+              <?php endif; ?>
+            </div>
             <div>
               <h3><?= e($lawyer['nome']) ?></h3>
               <p><?= $lawyer['oab'] ? 'OAB/' . e($lawyer['oab_uf']) . ' ' . e($lawyer['oab']) : 'OAB não informada' ?></p>
@@ -52,6 +62,7 @@ $lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, oab, oab_uf, oab_s
       </div>
     <?php endif; ?>
   </main>
+  <script src="assets/js/theme.js"></script>
   <script src="assets/js/main.js"></script>
 </body>
 </html>

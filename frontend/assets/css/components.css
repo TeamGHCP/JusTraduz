@@ -29,9 +29,19 @@
   background: var(--teal-2);
 }
 
+.btn-success {
+  background: var(--success);
+  color: #fff;
+  box-shadow: 0 10px 18px rgba(20, 123, 93, .18);
+}
+
+.btn-success:hover {
+  background: color-mix(in srgb, var(--success) 84%, #000);
+}
+
 .btn-outline {
   border-color: var(--line-strong);
-  background: #fff;
+  background: var(--surface);
   color: var(--navy);
 }
 
@@ -120,7 +130,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   outline: none;
-  background: #fff;
+  background: var(--surface);
   color: var(--text);
   transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
 }
@@ -238,7 +248,7 @@
   overflow-x: auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--surface);
   box-shadow: var(--shadow-sm);
 }
 
@@ -270,7 +280,7 @@
 }
 
 .table tbody tr:hover {
-  background: #fbfcfe;
+  background: var(--surface-2);
 }
 
 .table a:not(.btn) {
@@ -323,7 +333,7 @@
   place-items: center;
   min-height: 150px;
   text-align: center;
-  background: linear-gradient(180deg, #fff, var(--surface-2));
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
 }
 
 .empty-state p {
@@ -344,7 +354,7 @@
 
 .notification-item.is-unread {
   border-color: rgba(17, 138, 126, .34);
-  background: #f2fbf9;
+  background: var(--mint);
 }
 
 .notification-item p {

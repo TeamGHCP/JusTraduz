@@ -1,4 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const frontendMarker = "/frontend/";
+  const frontendIndex = window.location.pathname.indexOf(frontendMarker);
+  const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";
+  const backendBase = `${appBasePath}/backend/public/index.php`;
+  const backendRoute = (path) => `${backendBase}?rota=${encodeURIComponent(path)}`;
+  let csrfToken = "";
+
   // Defensive: remove any stray `session` cookie left by previous experiments or other apps
   // This helps avoid ambiguous cookies that may cause unexpected auth behavior in local dev.
   function clearCookie(name) {
@@ -50,6 +57,23 @@ document.addEventListener("DOMContentLoaded", () => {
     lookupStatus.className = `oab-lookup-status ${kind ? `is-${kind}` : ""}`;
   }
 
+  async function ensureCsrfToken() {
+    if (csrfToken) return csrfToken;
+
+    const existing = document.querySelector('input[name="_csrf"]');
+    if (existing?.value) {
+      csrfToken = existing.value;
+      return csrfToken;
+    }
+
+    const res = await fetch(backendRoute("/auth/csrf"), { credentials: "include" });
+    if (!res.ok) return "";
+
+    const data = await res.json();
+    csrfToken = data.csrf || "";
+    return csrfToken;
+  }
+
   async function lookupOab() {
     if (!typeSelect || !oabInput || !lookupButton) return;
     const needsOab = ["advogado", "estagiario"].includes(typeSelect.value);
@@ -64,18 +88,30 @@ document.addEventListener("DOMContentLoaded", () => {
     setOabStatus("Consultando CNA...", "loading");
 
     try {
+      const token = await ensureCsrfToken();
       const body = new URLSearchParams({
         tipo: typeSelect.value,
         inscricao,
         oab_uf: ufInput?.value || "",
         nome: nameInput?.value || "",
       });
+      if (token) body.set("_csrf", token);
 
-      const response = await fetch("../backend/public/index.php?rota=/oab/lookup", {
+      const response = await fetch(backendRoute("/oab/lookup"), {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          ...(token ? { "X-CSRF-Token": token } : {}),
+        },
+        credentials: "include",
         body,
       });
+
+      if (response.status === 403) {
+        setOabStatus("Sua sessão expirou. Recarregue a página e tente novamente.", "error");
+        return;
+      }
+
       const data = await response.json();
 
       if (data.verified && data.data) {
@@ -110,20 +146,9 @@ document.addEventListener("DOMContentLoaded", () => {
     showMessage(params.get("sucesso"), "success");
   }
 
-  // Ensure server session is cleared (force logout) then fetch CSRF token and inject into all POST forms
-  async function ensureCleanSessionAndInjectCsrf() {
+  async function injectCsrf() {
     try {
-      // Call force-logout to remove any server-side session; request JSON to avoid redirects
-      await fetch('/backend/public/index.php?rota=/auth/force-logout', { method: 'GET', headers: { 'Accept': 'application/json' }, credentials: 'include' });
-    } catch (e) {
-      // ignore failures — proceed to fetch CSRF anyway
-    }
-
-    try {
-      const res = await fetch('/backend/public/index.php?rota=/auth/csrf', { credentials: 'include' });
-      if (!res.ok) return;
-      const data = await res.json();
-      const token = data.csrf;
+      const token = await ensureCsrfToken();
       if (!token) return;
       document.querySelectorAll('form[method="post"]').forEach((form) => {
         if (!form.querySelector('input[name="_csrf"]')) {
@@ -139,5 +164,5 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  ensureCleanSessionAndInjectCsrf();
+  injectCsrf();
 });

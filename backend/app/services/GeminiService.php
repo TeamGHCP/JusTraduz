@@ -3,6 +3,7 @@
 class GeminiService
 {
     private const MAX_INLINE_BYTES = 19 * 1024 * 1024;
+    private const PROMPT_VERSION = '2026-05-31-document-v1';
     private const SUPPORTED_FILE_MIMES = [
         'application/pdf',
         'image/png',
@@ -28,6 +29,16 @@ class GeminiService
     public function getLastError(): ?string
     {
         return $this->lastError;
+    }
+
+    public function modelName(): string
+    {
+        return $this->model;
+    }
+
+    public static function promptVersion(): string
+    {
+        return self::PROMPT_VERSION;
     }
 
     public function analyzeDocument(string $text): ?array

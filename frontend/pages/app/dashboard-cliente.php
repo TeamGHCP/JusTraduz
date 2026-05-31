@@ -23,7 +23,7 @@ $documents = fetch_all($pdo, 'SELECT id, nome_arquivo, tipo_arquivo, created_at 
     <?php render_sidebar('cliente', 'dashboard-cliente.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Olá, ' . current_user_name(), 'Envie documentos, acompanhe análises e peça ajuda especializada.', 'Cliente'); ?>
+      <?php render_topbar('Olá, ' . current_user_name(), 'Envie documentos, acompanhe análises e peça ajuda especializada.', current_user_name()); ?>
 
       <section class="grid grid-4">
         <?= stat_card('Documentos', $documentCount, 'file') ?>
@@ -33,11 +33,11 @@ $documents = fetch_all($pdo, 'SELECT id, nome_arquivo, tipo_arquivo, created_at 
       </section>
 
       <section class="dash-section">
-        <form class="card" action="../backend/public/index.php?rota=/documents/upload" method="post" enctype="multipart/form-data">
+        <form class="card" action="<?= e(app_url('/backend/public/index.php?rota=/documents/upload')) ?>" method="post" enctype="multipart/form-data">
           <?= csrf_input() ?>
           <div class="dash-section-title">
             <h2>Novo documento</h2>
-            <span class="badge badge-info">Máx. 50 MB</span>
+            <span class="badge badge-success">Máx. 50 MB</span>
           </div>
           <label class="upload-box" data-upload-box>
             <input class="sr-only" type="file" name="documento" accept=".pdf,.png,.jpg,.jpeg,.webp" data-upload-input required>
@@ -45,6 +45,10 @@ $documents = fetch_all($pdo, 'SELECT id, nome_arquivo, tipo_arquivo, created_at 
             <strong>Arraste seu arquivo ou clique para selecionar</strong>
             <p data-file-name>PDF, PNG, JPEG ou WebP</p>
             <span class="btn btn-primary">Selecionar arquivo</span>
+          </label>
+          <label class="checkline mt-14">
+            <input type="checkbox" name="autorizar_ia" value="1">
+            <span>Autorizo enviar este documento para análise automática por IA.</span>
           </label>
           <p class="mt-14 text-muted">A análise automática não substitui orientação jurídica profissional.</p>
           <button class="btn btn-primary mt-16" type="submit">Enviar documento</button>

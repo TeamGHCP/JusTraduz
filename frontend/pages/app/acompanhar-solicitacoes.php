@@ -49,10 +49,14 @@ if ($type === 'cliente') {
                     <td><?= e($case['cliente'] ?? current_user_name()) ?></td>
                     <td><?= e($case['advogado'] ?? 'Aguardando') ?></td>
                     <td><?= e($case['prioridade']) ?></td>
-                    <td><?= e($case['status']) ?></td>
+                    <td><?= e(status_label($case['status'] ?? '')) ?></td>
                     <td>
                       <?php if ($type === 'advogado' && empty($case['advogado_id'])): ?>
-                        <a class="btn btn-primary btn-sm" href="../backend/public/index.php?rota=/cases/accept&id=<?= (int) $case['id'] ?>">Aceitar</a>
+                        <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/accept')) ?>" method="post">
+                          <?= csrf_input() ?>
+                          <input type="hidden" name="case_id" value="<?= (int) $case['id'] ?>">
+                          <button class="btn btn-primary btn-sm" type="submit">Aceitar</button>
+                        </form>
                       <?php else: ?>
                         <div class="action-form">
                           <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $case['id'] ?>">Chat</a>

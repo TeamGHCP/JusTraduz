@@ -1,12 +1,12 @@
 <?php
 
+require_once dirname(__DIR__) . '/support/session.php';
+
 class CsrfMiddleware
 {
     public static function generateToken(): string
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        secure_session_start();
 
         if (empty($_SESSION['_csrf_token'])) {
             $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
@@ -22,9 +22,7 @@ class CsrfMiddleware
 
     public static function validate(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        secure_session_start();
 
         $token = '';
 

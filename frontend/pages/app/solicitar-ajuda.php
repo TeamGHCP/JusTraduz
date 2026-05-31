@@ -2,7 +2,7 @@
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_role(['cliente']);
 
-$lawyers = fetch_all($pdo, "SELECT id, nome, oab, oab_uf FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE ORDER BY nome");
+$lawyers = fetch_all($pdo, "SELECT id, nome, oab, oab_uf FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> '')) ORDER BY nome");
 $selectedLawyerId = (int) ($_GET['advogado_id'] ?? 0);
 ?>
 <!DOCTYPE html>
@@ -19,9 +19,9 @@ $selectedLawyerId = (int) ($_GET['advogado_id'] ?? 0);
     <?php render_sidebar('cliente', 'solicitar-ajuda.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Solicitar ajuda jurídica', 'Escolha um advogado específico ou deixe sua solicitação aberta.', 'Cliente'); ?>
+      <?php render_topbar('Solicitar ajuda jurídica', 'Escolha um advogado específico ou deixe sua solicitação aberta.', current_user_name()); ?>
 
-      <form class="card auth-form" action="../backend/public/index.php?rota=/cases/create" method="post">
+      <form class="card auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/create')) ?>" method="post">
         <?= csrf_input() ?>
         <div class="form-grid">
           <div class="field">

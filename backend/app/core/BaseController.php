@@ -3,6 +3,7 @@
 require_once __DIR__ . '/Request.php';
 require_once __DIR__ . '/Response.php';
 require_once dirname(__DIR__) . '/config/app.php';
+require_once dirname(__DIR__) . '/support/session.php';
 
 if (!defined('APP_URL')) {
     define('APP_URL', app_base_path());
@@ -24,9 +25,7 @@ abstract class BaseController
 
     protected function startSession(): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        secure_session_start();
     }
 
     protected function requireLoggedIn(string $redirectUrl, string $message = 'Faça login para continuar.'): void

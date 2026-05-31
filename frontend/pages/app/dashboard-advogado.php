@@ -80,7 +80,13 @@ $tasks = fetch_all(
                     <td><?= e($case['titulo']) ?></td>
                     <td><?= e($case['prioridade']) ?></td>
                     <td><?= e(date('d/m/Y H:i', strtotime($case['created_at']))) ?></td>
-                    <td><a href="../backend/public/index.php?rota=/cases/accept&id=<?= (int) $case['id'] ?>">Aceitar</a></td>
+                    <td>
+                      <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/accept')) ?>" method="post">
+                        <?= csrf_input() ?>
+                        <input type="hidden" name="case_id" value="<?= (int) $case['id'] ?>">
+                        <button class="btn btn-primary btn-sm" type="submit">Aceitar</button>
+                      </form>
+                    </td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>

@@ -1,6 +1,7 @@
 <?php
 
 require_once dirname(__DIR__) . '/config/app.php';
+require_once dirname(__DIR__) . '/support/session.php';
 
 class AuthMiddleware
 {
@@ -8,9 +9,7 @@ class AuthMiddleware
     // Se passar $tipo, verifica também se o tipo bate
     public static function verificar(string $tipo = null): void
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        secure_session_start();
 
         // Não está logado → vai para o login
         if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {

@@ -38,7 +38,7 @@ class CaseController extends BaseController
         }
 
         if ($advogadoId) {
-            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE id = ? AND tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE");
+            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE id = ? AND tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> ''))");
             $stmt->execute([(int) $advogadoId]);
 
             if (!$stmt->fetch()) {
@@ -78,7 +78,7 @@ class CaseController extends BaseController
             $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login como advogado.')));
         }
 
-        $caseId = (int) $this->request->get('id', 0);
+        $caseId = (int) $this->request->post('case_id', 0);
 
         if ($caseId <= 0) {
             $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Caso inválido.')));
@@ -111,6 +111,10 @@ class CaseController extends BaseController
 
         if ($caseId <= 0 || !in_array($status, ['aberto', 'em_andamento', 'finalizado'], true)) {
             $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Status inválido.')));
+        }
+
+        if (($_SESSION['tipo'] ?? '') === 'estagiario') {
+            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Estagiários não podem alterar status de solicitações.')));
         }
 
         $case = $this->caseById($caseId);

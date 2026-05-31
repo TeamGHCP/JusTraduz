@@ -58,7 +58,7 @@ class AdminController extends BaseController
         }
 
         if ($advogadoId !== null) {
-            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE id = ? AND tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE");
+            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE id = ? AND tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> ''))");
             $stmt->execute([$advogadoId]);
             if (!$stmt->fetch()) {
                 $this->response->redirect(app_url('/frontend/admin/solicitacoes.php?erro=' . urlencode('Advogado inválido ou inativo.')));

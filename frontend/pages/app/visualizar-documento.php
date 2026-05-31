@@ -16,7 +16,7 @@ function document_access_sql(string $type): array
             'EXISTS (
                 SELECT 1 FROM cases c
                 WHERE c.cliente_id = d.user_id
-                AND (c.advogado_id = ? OR c.advogado_id IS NULL)
+                AND c.advogado_id = ?
             )',
             [current_user_id()],
         ];
@@ -52,7 +52,7 @@ if ($documentId) {
     );
 }
 
-$fileUrl = $document ? '../' . ltrim((string) $document['caminho'], '/') : '';
+$fileUrl = $document ? app_url('/backend/public/index.php?rota=/documents/download&id=' . (int) $document['id']) : '';
 $fileType = strtolower((string) ($document['tipo_arquivo'] ?? ''));
 $isPdf = $fileType === 'pdf';
 $isImage = in_array($fileType, ['png', 'jpg', 'jpeg', 'webp'], true);
@@ -71,21 +71,23 @@ $isImage = in_array($fileType, ['png', 'jpg', 'jpeg', 'webp'], true);
     <?php render_sidebar($type, 'visualizar-documento.php'); ?>
 
     <main class="app-main">
-      <header class="topbar">
-        <div>
-          <h1><?= $document ? 'Documento' : 'Documentos' ?></h1>
-          <p><?= $document ? 'Arquivo original, resumo e explicação em linguagem simples quando disponíveis.' : 'Consulte os documentos disponíveis para seu perfil.' ?></p>
-        </div>
-        <?php if ($document && $document['confianca'] !== null): ?>
+      <?php render_topbar(
+          $document ? 'Documento' : 'Documentos',
+          $document ? 'Arquivo original, resumo e explicação em linguagem simples quando disponíveis.' : 'Consulte os documentos disponíveis para seu perfil.',
+          current_user_name()
+      ); ?>
+
+      <?php if ($document && $document['confianca'] !== null): ?>
+        <div class="dash-section-title">
           <span class="badge badge-success">Confiança <?= e((string) $document['confianca']) ?>%</span>
-        <?php endif; ?>
-      </header>
+        </div>
+      <?php endif; ?>
 
       <?php if (!$documentId): ?>
         <section class="dash-section">
           <div class="dash-section-title">
             <h2>Lista de documentos</h2>
-            <span class="badge badge-info"><?= e((string) count($documents)) ?> registros</span>
+            <span class="badge badge-success"><?= e((string) count($documents)) ?> registros</span>
           </div>
           <?php if (!$documents): ?>
             <?= empty_state('Nenhum documento disponível no momento.') ?>
@@ -115,10 +117,21 @@ $isImage = in_array($fileType, ['png', 'jpg', 'jpeg', 'webp'], true);
         <section class="doc-toolbar">
           <a class="btn btn-outline btn-sm" href="visualizar-documento.php"><?= icon_svg('file') ?> Voltar para documentos</a>
           <a class="btn btn-primary btn-sm" href="<?= e($fileUrl) ?>" target="_blank" rel="noopener"><?= icon_svg('folder') ?> Abrir arquivo</a>
+          <?php if (in_array($type, ['cliente', 'admin'], true)): ?>
+            <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/documents/delete')) ?>" method="post" data-confirm-delete="Excluir este documento? Esta ação não pode ser desfeita.">
+              <?= csrf_input() ?>
+              <input type="hidden" name="document_id" value="<?= (int) $document['id'] ?>">
+              <button class="btn btn-outline btn-sm" type="submit"><?= icon_svg('trash') ?> Excluir</button>
+            </form>
+          <?php endif; ?>
           <?php if ($document['texto_extraido'] || $isPdf || $isImage): ?>
             <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/documents/analyze')) ?>" method="post">
               <?= csrf_input() ?>
               <input type="hidden" name="document_id" value="<?= (int) $document['id'] ?>">
+              <label class="checkline checkline-inline">
+                <input type="checkbox" name="autorizar_ia" value="1" required>
+                <span>Autorizo análise por IA</span>
+              </label>
               <button class="btn btn-soft btn-sm" type="submit"><?= icon_svg('chart') ?> <?= $document['resumo'] ? 'Regerar análise com IA' : 'Gerar análise com IA' ?></button>
             </form>
           <?php endif; ?>

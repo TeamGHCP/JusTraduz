@@ -76,7 +76,7 @@ $messages = $caseId ? fetch_all($pdo, 'SELECT m.*, u.nome FROM messages m INNER 
                 <?php endforeach; ?>
               <?php endif; ?>
             </div>
-            <form class="chat-compose" action="../backend/public/index.php?rota=/messages/send" method="post" data-chat-form>
+            <form class="chat-compose" action="<?= e(app_url('/backend/public/index.php?rota=/messages/send')) ?>" method="post" data-chat-form>
               <?= csrf_input() ?>
               <input type="hidden" name="case_id" value="<?= $caseId ?>">
               <input class="input" type="text" name="mensagem" placeholder="Digite sua mensagem" required data-chat-input>

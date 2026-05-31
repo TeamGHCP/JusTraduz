@@ -13,12 +13,27 @@
       <a class="auth-brand" href="index.html"><img src="assets/img/logo.png" alt="JusTraduz"></a>
       <div class="auth-card">
         <h1>Recuperar senha</h1>
-        <p class="subtitle">Informe seu e-mail cadastrado e defina uma nova senha.</p>
+        <p class="subtitle">Receba um código por e-mail e valide antes de criar uma nova senha.</p>
+
         <form class="auth-form" action="../backend/public/index.php?rota=/auth/reset-password" method="post">
+          <input type="hidden" name="acao" value="request_code">
           <div class="alert" data-auth-alert></div>
           <div class="field">
-            <label for="email">E-mail</label>
-            <input class="input" type="email" id="email" name="email" required>
+            <label for="email_solicitar">E-mail</label>
+            <input class="input" type="email" id="email_solicitar" name="email" required>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit">Enviar código</button>
+        </form>
+
+        <form class="auth-form" action="../backend/public/index.php?rota=/auth/reset-password" method="post">
+          <input type="hidden" name="acao" value="confirm_code">
+          <div class="field">
+            <label for="email_confirmar">E-mail</label>
+            <input class="input" type="email" id="email_confirmar" name="email" required>
+          </div>
+          <div class="field">
+            <label for="codigo">Código recebido</label>
+            <input class="input" type="text" id="codigo" name="codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
           </div>
           <div class="form-grid">
             <div class="field">
@@ -30,7 +45,7 @@
               <input class="input" type="password" id="senha2" name="senha2" minlength="6" required>
             </div>
           </div>
-          <button class="btn btn-primary btn-block" type="submit">Atualizar senha</button>
+          <button class="btn btn-primary btn-block" type="submit">Validar código e atualizar senha</button>
         </form>
         <p class="auth-footer"><a href="login.html">Voltar para login</a></p>
       </div>

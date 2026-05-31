@@ -3,10 +3,23 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!calendarEl) return;
   const currentUserType = String(window.CURRENT_USER_TYPE || '');
   const isProfessional = currentUserType === 'advogado' || currentUserType === 'estagiario';
+  const frontendIndex = window.location.pathname.indexOf('/frontend/');
+  const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : '';
+
+  function apiRoute(path, extraParams = {}) {
+    const url = new URL(`${appBasePath}/backend/public/index.php`, window.location.origin);
+    url.searchParams.set('rota', path);
+    Object.entries(extraParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
+    return url.toString();
+  }
 
   const params = new URLSearchParams(window.location.search);
   const professionalSelect = document.getElementById('professional_id');
-  const professionalId = professionalSelect ? Number(professionalSelect.value || 0) : 0;
+  let professionalId = professionalSelect ? Number(professionalSelect.value || 0) : 0;
 
   const now = new Date();
   let year = Number(params.get('year') || now.getFullYear());
@@ -46,13 +59,28 @@ document.addEventListener('DOMContentLoaded', () => {
   async function loadData() {
     const start = formatDateISO(startOfMonth(year, month));
     const end = formatDateISO(endOfMonth(year, month));
-    const url = `/backend/public/index.php?rota=/schedule/calendar&start=${start}&end=${end}` + (professionalId ? `&professional_id=${professionalId}` : '');
+    const url = apiRoute('/schedule/calendar', {
+      start,
+      end,
+      professional_id: professionalId || '',
+    });
     const res = await fetch(url, { credentials: 'include' });
     if (!res.ok) return { slots: [], appointments: [] };
     return await res.json();
   }
 
-  function buildCalendarGrid(slotsByDay, apptsByDay) {
+  if (professionalSelect) {
+    professionalSelect.addEventListener('change', () => {
+      professionalId = Number(professionalSelect.value || 0);
+      render();
+    });
+  }
+
+  function monthLabel(y, m) {
+    return new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  }
+
+  function buildCalendarGrid(slotsByDay, apptsByDay, monthTotal) {
     const first = startOfMonth(year, month);
     const last = endOfMonth(year, month);
     const startWeekDay = first.getDay();
@@ -93,6 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const totalItems = slots.length + appts.length;
       if (totalItems > 0) {
+        cell.classList.add('has-schedule');
+        const countBadge = document.createElement('span');
+        countBadge.className = 'calendar-day-count';
+        countBadge.textContent = `${totalItems} horário${totalItems === 1 ? '' : 's'}`;
+        dayHeader.appendChild(countBadge);
+
         const dot = document.createElement('button');
         dot.type = 'button';
         dot.className = 'day-dot';
@@ -126,7 +160,14 @@ document.addEventListener('DOMContentLoaded', () => {
     calendarEl.innerHTML = '';
     const header = document.createElement('div');
     header.className = 'calendar-controls';
-    header.innerHTML = `<button id="cal-prev" class="btn btn-sm">&lt;</button> <strong>${year}-${String(month).padStart(2, '0')}</strong> <button id="cal-next" class="btn btn-sm">&gt;</button>`;
+    header.innerHTML = `
+      <button id="cal-prev" class="btn btn-sm" type="button">&lt;</button>
+      <div class="calendar-month-summary">
+        <strong>${monthLabel(year, month)}</strong>
+        <span>${monthTotal} horário${monthTotal === 1 ? '' : 's'} cadastrado${monthTotal === 1 ? '' : 's'} no mês</span>
+      </div>
+      <button id="cal-next" class="btn btn-sm" type="button">&gt;</button>
+    `;
     calendarEl.appendChild(header);
     calendarEl.appendChild(table);
 
@@ -265,11 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const slotsByDay = groupByDay(data.slots || [], 'starts_at');
     const apptsByDay = groupByDay(data.appointments || [], 'starts_at');
     const monthTotal = (data.slots || []).length + (data.appointments || []).length;
-    buildCalendarGrid(slotsByDay, apptsByDay);
-    const headerTitle = calendarEl.querySelector('.calendar-controls strong');
-    if (headerTitle) {
-      headerTitle.textContent = `${year}-${String(month).padStart(2, '0')} (${monthTotal} horário(s))`;
-    }
+    buildCalendarGrid(slotsByDay, apptsByDay, monthTotal);
     // initialize modal hooks after render
     initSlotModal();
   }
@@ -294,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchCsrf() {
     try {
-      const r = await fetch('/backend/public/index.php?rota=/auth/csrf', { credentials: 'include' });
+      const r = await fetch(apiRoute('/auth/csrf'), { credentials: 'include' });
       if (!r.ok) return null;
       const j = await r.json();
       return j.csrf || null;
@@ -342,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (csrf) formData.set('_csrf', String(csrf));
 
       const currentSlotId = formData.get('slot_id');
-      const url = currentSlotId ? '/backend/public/index.php?rota=/schedule/slots/update' : '/backend/public/index.php?rota=/schedule/slots/create';
+      const url = apiRoute(currentSlotId ? '/schedule/slots/update' : '/schedule/slots/create');
       const token = await fetchCsrf();
       try {
         const res = await fetch(url, {

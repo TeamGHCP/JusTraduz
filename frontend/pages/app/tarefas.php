@@ -85,7 +85,7 @@ $canManageTasks = $type !== 'cliente';
           <?= csrf_input() ?>
           <div class="dash-section-title">
             <h2>Nova tarefa</h2>
-            <span class="badge badge-info"><?= e((string) count($cases)) ?> casos ativos</span>
+            <span class="badge badge-success"><?= e((string) count($cases)) ?> casos ativos</span>
           </div>
           <?php if (!$cases): ?>
             <p class="text-muted">Nenhum caso ativo disponível para criar tarefas.</p>
@@ -135,7 +135,7 @@ $canManageTasks = $type !== 'cliente';
       <section class="dash-section">
         <div class="dash-section-title">
           <h2>Lista de tarefas</h2>
-          <span class="badge badge-info"><?= e((string) count($tasks)) ?> registros</span>
+          <span class="badge badge-success"><?= e((string) count($tasks)) ?> registros</span>
         </div>
 
         <?php if (!$tasks): ?>
@@ -148,10 +148,10 @@ $canManageTasks = $type !== 'cliente';
                 <?php foreach ($tasks as $task): ?>
                   <tr>
                     <td><strong><?= e($task['titulo']) ?></strong><span class="table-subtext"><?= e($task['descricao'] ?: 'Sem descrição') ?></span></td>
-                    <td><?= e($task['caso']) ?><span class="table-subtext"><?= e($task['case_status']) ?></span></td>
+                    <td><?= e($task['caso']) ?><span class="table-subtext"><?= e(status_label($task['case_status'] ?? '')) ?></span></td>
                     <td><?= e($task['cliente']) ?></td>
                     <td><?= e($task['advogado'] ?? 'Sem advogado') ?></td>
-                    <td><span class="badge <?= $task['status'] === 'concluida' ? 'badge-success' : 'badge-warning' ?>"><?= e($task['status']) ?></span></td>
+                    <td><span class="badge <?= $task['status'] === 'concluida' ? 'badge-success' : 'badge-warning' ?>"><?= e(status_label($task['status'] ?? '')) ?></span></td>
                     <td>
                       <?php if ($canManageTasks): ?>
                         <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/tasks/update')) ?>" method="post">

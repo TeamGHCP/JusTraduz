@@ -21,9 +21,6 @@ class ScheduleController extends BaseController
         $this->requireLogin();
         $this->requireProfessional();
 
-        // TEMP DEBUG: log incoming request and session to help diagnose why slot creation may fail
-        error_log('[DEBUG createSlot] session_id=' . (isset($_SESSION['id']) ? (int) $_SESSION['id'] : 'none') . ' POST_starts=' . ($this->request->post('starts_at', '') ?? '') . ' POST_ends=' . ($this->request->post('ends_at', '') ?? '') . ' REMOTE_ADDR=' . ($_SERVER['REMOTE_ADDR'] ?? ''));
-
         $startsAt = $this->parseDateTime((string) $this->request->post('starts_at', ''));
         $endsAt = $this->parseDateTime((string) $this->request->post('ends_at', ''));
         $titulo = trim((string) $this->request->post('titulo', ''));
@@ -333,8 +330,7 @@ class ScheduleController extends BaseController
             $slotStatusWhere = " AND s.status = 'livre'";
         }
 
-        $slots = fetch_all(
-            $this->pdo,
+        $slots = $this->fetchAll(
             'SELECT s.id, s.professional_id, s.starts_at, s.ends_at, s.status, s.titulo, u.nome AS professional_name, u.tipo
              FROM schedule_slots s
              INNER JOIN users u ON u.id = s.professional_id
@@ -345,8 +341,7 @@ class ScheduleController extends BaseController
 
         $appointments = [];
         if (($_SESSION['tipo'] ?? '') !== 'cliente') {
-            $appointments = fetch_all(
-                $this->pdo,
+            $appointments = $this->fetchAll(
                 'SELECT a.id, a.slot_id, a.client_id, a.case_id, a.assunto, a.status, s.starts_at, s.ends_at, s.professional_id, u.nome AS professional_name, cli.nome AS client_name
                  FROM appointments a
                  INNER JOIN schedule_slots s ON s.id = a.slot_id
@@ -359,6 +354,13 @@ class ScheduleController extends BaseController
         }
 
         $this->response->json(['slots' => $slots, 'appointments' => $appointments]);
+    }
+
+    private function fetchAll(string $sql, array $params = []): array
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
     }
 
     private function requireLogin(): void
@@ -376,11 +378,18 @@ class ScheduleController extends BaseController
             $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Apenas advogados e estagiários gerenciam horários.')));
         }
 
-        $stmt = $this->pdo->prepare('SELECT oab_verificado FROM users WHERE id = ?');
+        $stmt = $this->pdo->prepare(
+            "SELECT oab_verificado, status_cna, oab, oab_uf FROM users WHERE id = ?"
+        );
         $stmt->execute([(int) ($_SESSION['id'] ?? 0)]);
+        $user = $stmt->fetch();
 
-        if ((int) $stmt->fetchColumn() !== 1) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Valide sua inscrição OAB no CNA antes de abrir horários.')));
+        $hasOab = trim((string) ($user['oab'] ?? '')) !== '' && trim((string) ($user['oab_uf'] ?? '')) !== '';
+        $isVerified = (int) ($user['oab_verificado'] ?? 0) === 1;
+        $isPendingBecauseCnaUnavailable = ($user['status_cna'] ?? 'pendente') === 'pendente' && $hasOab;
+
+        if (!$isVerified && !$isPendingBecauseCnaUnavailable) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Informe sua OAB e UF no cadastro para abrir horários.')));
         }
     }
 

@@ -42,7 +42,10 @@ function render_sidebar(string $type, string $active, bool $isAdminPath = false)
       </nav>
       <div class="side-label">Conta</div>
       <nav class="side-nav">
-        <a href="<?= e($logoutPath) ?>"><?= icon_svg('logout') ?><span>Sair</span></a>
+        <form action="<?= e($logoutPath) ?>" method="post">
+          <?= csrf_input() ?>
+          <button type="submit"><?= icon_svg('logout') ?><span>Sair</span></button>
+        </form>
       </nav>
     </aside>
     <?php
@@ -51,21 +54,81 @@ function render_sidebar(string $type, string $active, bool $isAdminPath = false)
 function render_topbar(string $title, string $subtitle, string $roleLabel): void
 {
     $initial = strtoupper(substr(current_user_name(), 0, 1));
+    $photoUrl = current_user_photo_url();
     ?>
     <header class="topbar">
       <div>
         <h1><?= e($title) ?></h1>
         <p><?= e($subtitle) ?></p>
       </div>
-      <div class="user-chip"><span class="avatar"><?= e($initial) ?></span><span><?= e($roleLabel) ?></span></div>
+      <div class="topbar-actions">
+        <?= render_theme_toggle() ?>
+        <div class="user-chip">
+          <span class="avatar">
+            <?php if ($photoUrl): ?>
+              <img src="<?= e($photoUrl) ?>" alt="<?= e(current_user_name()) ?>">
+            <?php else: ?>
+              <?= e($initial) ?>
+            <?php endif; ?>
+          </span>
+          <span><?= e($roleLabel) ?></span>
+        </div>
+      </div>
     </header>
+    <script src="<?= e(theme_asset_path()) ?>" defer></script>
     <?php
     render_query_alert();
+}
+
+function current_user_photo_url(): string
+{
+    static $photoPath = null;
+
+    if ($photoPath === null) {
+        $photoPath = '';
+
+        if (is_logged_in()) {
+            global $pdo;
+            $stmt = $pdo->prepare('SELECT foto_perfil FROM users WHERE id = ?');
+            $stmt->execute([current_user_id()]);
+            $photoPath = (string) ($stmt->fetchColumn() ?: '');
+        }
+    }
+
+    if ($photoPath === '') {
+        return '';
+    }
+
+    $prefix = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') ? '../../' : '../';
+    return $prefix . ltrim($photoPath, '/');
+}
+
+function render_theme_toggle(): string
+{
+    return '<button type="button" class="theme-toggle" data-theme-toggle-button aria-label="Alternar tema" aria-pressed="false">'
+        . '<span class="theme-toggle-track" aria-hidden="true">'
+        . '<span class="theme-toggle-thumb">'
+        . '<span class="theme-toggle-icon theme-toggle-icon-light">' . icon_svg('sun') . '</span>'
+        . '<span class="theme-toggle-icon theme-toggle-icon-dark">' . icon_svg('moon') . '</span>'
+        . '</span>'
+        . '</span>'
+        . '</button>';
+}
+
+function theme_asset_path(): string
+{
+    $script = $_SERVER['SCRIPT_NAME'] ?? '';
+    return str_contains($script, '/frontend/admin/') ? '../assets/js/theme.js' : 'assets/js/theme.js';
 }
 
 function stat_card(string $label, $value, string $icon): string
 {
     return '<div class="stat-card">' . icon_svg($icon) . '<span>' . e($label) . '</span><strong>' . e((string) $value) . '</strong></div>';
+}
+
+function status_label(?string $status): string
+{
+    return str_replace('_', ' ', (string) $status);
 }
 
 function sidebar_brand_href(string $type, bool $isAdminPath): string

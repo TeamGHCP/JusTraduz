@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__DIR__) . '/support/session.php';
+
 class AuditService
 {
     private PDO $pdo;
@@ -32,9 +34,7 @@ class AuditService
 
     private function currentUserId(): ?int
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        secure_session_start();
 
         $id = (int) ($_SESSION['id'] ?? 0);
         return $id > 0 ? $id : null;

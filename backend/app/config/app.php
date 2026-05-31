@@ -1,5 +1,10 @@
 <?php
 
+$appTimezone = getenv('APP_TIMEZONE') ?: 'America/Sao_Paulo';
+if (is_string($appTimezone) && $appTimezone !== '') {
+    date_default_timezone_set($appTimezone);
+}
+
 function app_base_path(): string
 {
     static $basePath = null;

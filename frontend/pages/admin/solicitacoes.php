@@ -27,7 +27,7 @@ if ($where) {
 $sql .= ' ORDER BY c.created_at DESC';
 
 $cases = fetch_all($pdo, $sql, $params);
-$lawyers = fetch_all($pdo, "SELECT id, nome FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE ORDER BY nome");
+$lawyers = fetch_all($pdo, "SELECT id, nome FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> '')) ORDER BY nome");
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -88,7 +88,7 @@ $lawyers = fetch_all($pdo, "SELECT id, nome FROM users WHERE tipo = 'advogado' A
                     <td><?= e($case['cliente']) ?></td>
                     <td><?= e($case['advogado'] ?? 'Aguardando responsável') ?></td>
                     <td><?= e($case['prioridade']) ?></td>
-                    <td><span class="badge badge-info"><?= e($case['status']) ?></span></td>
+                    <td><span class="badge badge-info"><?= e(status_label($case['status'] ?? '')) ?></span></td>
                     <td><?= e(date('d/m/Y H:i', strtotime($case['created_at']))) ?></td>
                     <td>
                       <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/admin/cases/update')) ?>" method="post">

@@ -7,7 +7,7 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(255, 255, 255, .97);
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
   border-bottom: 1px solid var(--line);
   box-shadow: 0 1px 0 rgba(23, 32, 51, .03);
   backdrop-filter: blur(14px);

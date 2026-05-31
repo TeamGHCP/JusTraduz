@@ -5,30 +5,51 @@ Sistema PHP/MySQL para envio de documentos, análise em linguagem simples e soli
 ## Como rodar localmente
 
 1. Inicie o MySQL pelo XAMPP.
-2. Importe o banco:
+2. Copie o arquivo de ambiente:
 
 ```powershell
-C:\xampp\mysql\bin\mysql.exe -h localhost -u root --execute="source C:/Users/djona/Documents/GitHub/JusTraduz/mysql/schema.sql"
+Copy-Item backend\.env.example backend\.env
 ```
 
-3. Inicie o servidor PHP a partir da raiz do projeto:
+Depois ajuste `backend/.env` com banco, SMTP e chaves externas. Não versionar esse arquivo.
+
+3. Importe o banco:
 
 ```powershell
-C:\xampp\php\php.exe -S 127.0.0.1:8080 -t .
+C:\xampp\mysql\bin\mysql.exe -h localhost -u root --execute="source C:/Users/djona/Documents/GitHub/JusTraduz/database/schema.sql"
 ```
 
-4. Acesse:
+4. Crie um usuário administrador local.
+
+Copie `database/seed_admin.example.sql`, troque e-mail e hash de senha, e execute a cópia revisada. Para gerar um hash:
+
+```powershell
+C:\xampp\php\php.exe -r "echo password_hash('SENHA_FORTE_AQUI', PASSWORD_DEFAULT);"
+```
+
+5. Inicie o servidor PHP a partir da raiz do projeto usando o roteador local, que bloqueia acesso direto a documentos enviados:
+
+```powershell
+C:\xampp\php\php.exe -S 127.0.0.1:8080 public-router.php
+```
+
+6. Acesse:
 
 ```text
 http://127.0.0.1:8080/frontend/index.html
 ```
 
+## Variáveis de ambiente
+
+Copie `backend/.env.example` para `backend/.env` e ajuste banco, e-mail e chaves externas. O arquivo `.env` local não deve ser versionado.
+
 ## Acesso admin
 
-```text
-E-mail: admin@justraduz.com
-Senha: admin
-```
+O schema principal não cria administrador com senha padrão. Para ambiente local, copie `database/seed_admin.example.sql`, troque e-mail e hash de senha, e execute o seed revisado.
+
+## Migrações
+
+Em banco existente, aplique as migrations de `database/` na ordem descrita em `database/README.md`.
 
 ## Configuração da IA
 
@@ -46,7 +67,7 @@ backend/app/config/gemini.php
 
 e preencha `GEMINI_API_KEY`.
 
-Depois disso, novos uploads de PDF ou imagem tentam gerar automaticamente:
+Depois disso, uploads de PDF ou imagem só são enviados para IA quando o usuário marca a autorização explícita. A análise gera:
 
 - resumo objetivo;
 - explicação em linguagem simples;
@@ -55,7 +76,7 @@ Depois disso, novos uploads de PDF ou imagem tentam gerar automaticamente:
 Documentos antigos podem ser analisados abrindo o documento e usando o botão `Gerar análise com IA`, ou rodando:
 
 ```powershell
-C:\xampp\php\php.exe backend\scripts\analisar_documentos_gemini.php
+C:\xampp\php\php.exe backend\scripts\analisar_documentos_gemini.php --confirm-ai
 ```
 
 ## Funcionalidades principais

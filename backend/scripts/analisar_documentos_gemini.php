@@ -3,6 +3,12 @@
 require_once dirname(__DIR__) . '/app/config/database.php';
 require_once dirname(__DIR__) . '/app/services/GeminiService.php';
 
+if (!in_array('--confirm-ai', $argv ?? [], true)) {
+    echo "Este script envia documentos sem análise para a IA configurada.\n";
+    echo "Execute novamente com --confirm-ai apenas se houver base legal/consentimento para processar estes documentos.\n";
+    exit(1);
+}
+
 $gemini = new GeminiService();
 
 if (!$gemini->isConfigured()) {
@@ -42,13 +48,25 @@ foreach ($documents as $document) {
         continue;
     }
 
-    $insert = $pdo->prepare('INSERT INTO ai_results (document_id, resumo, explicacao, confianca) VALUES (?, ?, ?, ?)');
-    $insert->execute([
-        (int) $document['id'],
-        $analysis['resumo'],
-        $analysis['explicacao'],
-        $analysis['confianca'],
-    ]);
+    if (ai_results_has_metadata_columns($pdo)) {
+        $insert = $pdo->prepare('INSERT INTO ai_results (document_id, resumo, explicacao, confianca, modelo, prompt_versao) VALUES (?, ?, ?, ?, ?, ?)');
+        $insert->execute([
+            (int) $document['id'],
+            $analysis['resumo'],
+            $analysis['explicacao'],
+            $analysis['confianca'],
+            $gemini->modelName(),
+            GeminiService::promptVersion(),
+        ]);
+    } else {
+        $insert = $pdo->prepare('INSERT INTO ai_results (document_id, resumo, explicacao, confianca) VALUES (?, ?, ?, ?)');
+        $insert->execute([
+            (int) $document['id'],
+            $analysis['resumo'],
+            $analysis['explicacao'],
+            $analysis['confianca'],
+        ]);
+    }
 
     $updated++;
     echo "Documento #{$document['id']}: análise criada.\n";
@@ -62,4 +80,16 @@ function is_extraction_failure(string $text): bool
     return str_contains($text, 'foi poss')
         && str_contains($text, 'extrair texto')
         && str_contains($text, 'pdf');
+}
+
+function ai_results_has_metadata_columns(PDO $pdo): bool
+{
+    static $hasColumns = null;
+    if ($hasColumns !== null) {
+        return $hasColumns;
+    }
+
+    $stmt = $pdo->query("SHOW COLUMNS FROM ai_results WHERE Field IN ('modelo', 'prompt_versao')");
+    $hasColumns = count($stmt->fetchAll()) === 2;
+    return $hasColumns;
 }

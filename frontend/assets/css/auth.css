@@ -64,6 +64,15 @@
   margin-top: 4px;
 }
 
+.checkline-inline {
+  align-items: center;
+  margin: 0;
+}
+
+.checkline-inline input {
+  margin-top: 0;
+}
+
 .auth-footer {
   margin: 22px 0 0;
   color: var(--muted);

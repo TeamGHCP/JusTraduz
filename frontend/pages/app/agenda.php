@@ -12,7 +12,7 @@ $clientsCases = $type === 'cliente'
     : [];
 
 if ($type === 'cliente') {
-    $where = ["s.status = 'livre'", 's.starts_at >= NOW()', "u.status = 'ativo'", "u.tipo IN ('advogado', 'estagiario')", 'u.oab_verificado = TRUE'];
+    $where = ["s.status = 'livre'", 's.starts_at >= NOW()', "u.status = 'ativo'", "u.tipo IN ('advogado', 'estagiario')", "(u.oab_verificado = TRUE OR (u.status_cna = 'pendente' AND COALESCE(u.oab, '') <> '' AND COALESCE(u.oab_uf, '') <> ''))"];
     $params = [];
 
     if ($professionalFilter > 0) {
@@ -79,7 +79,7 @@ if ($type === 'cliente') {
 
 $professionals = fetch_all(
     $pdo,
-    "SELECT id, nome, tipo FROM users WHERE tipo IN ('advogado', 'estagiario') AND status = 'ativo' AND oab_verificado = TRUE ORDER BY tipo, nome"
+    "SELECT id, nome, tipo FROM users WHERE tipo IN ('advogado', 'estagiario') AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> '')) ORDER BY tipo, nome"
 );
 $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
 ?>
@@ -100,10 +100,34 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
     <main class="app-main">
       <?php render_topbar('Agenda', $type === 'cliente' ? 'Veja horários livres de advogados e estagiários.' : 'Gerencie disponibilidade e acompanhe atendimentos.', current_user_name()); ?>
 
+      <?php if ($type === 'cliente'): ?>
+        <section class="dash-section">
+          <form class="agenda-filter" method="get">
+            <div class="field">
+              <label for="professional_id">Advogado ou estagiário</label>
+              <select class="select" id="professional_id" name="professional_id">
+                <option value="">Todos os profissionais</option>
+                <?php foreach ($professionals as $professional): ?>
+                  <option value="<?= (int) $professional['id'] ?>" <?= $professionalFilter === (int) $professional['id'] ? 'selected' : '' ?>>
+                    <?= e($professional['nome']) ?> - <?= e($professional['tipo'] === 'advogado' ? 'Advogado' : 'Estagiário') ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-success" type="submit">Ver agenda</button>
+              <?php if ($professionalFilter > 0): ?>
+                <a class="btn btn-outline" href="agenda.php">Ver todos</a>
+              <?php endif; ?>
+            </div>
+          </form>
+        </section>
+      <?php endif; ?>
+
       <section class="dash-section">
         <div class="dash-section-title">
           <h2>Calendário</h2>
-          <span class="badge badge-info">Bolinha verde indica horários no dia. Clique nela para ver detalhes.</span>
+          <span class="badge badge-success">Bolinha verde indica horários no dia. Clique nela para ver detalhes.</span>
         </div>
         <div id="calendar" class="card p-16"></div>
       </section>
@@ -138,7 +162,7 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
               </select>
             </div>
             <div class="form-actions">
-              <button type="submit" class="btn btn-primary">Salvar</button>
+              <button type="submit" class="btn btn-success">Salvar</button>
               <button type="button" id="slot-modal-cancel" class="btn btn-outline">Cancelar</button>
             </div>
           </form>

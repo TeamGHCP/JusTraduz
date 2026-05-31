@@ -39,6 +39,11 @@
             <input class="input" type="email" id="email" name="email" required>
           </div>
 
+          <div class="field">
+            <label for="telefone">Telefone</label>
+            <input class="input" type="tel" id="telefone" name="telefone" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="(00) 00000-0000">
+          </div>
+
           <div class="form-grid oab-fields" data-oab-fields>
             <div class="field">
               <label for="inscricao">Número da OAB</label>
@@ -97,6 +102,7 @@
     </aside>
   </main>
 
+  <script src="assets/js/phone-mask.js"></script>
   <script src="assets/js/auth.js"></script>
 </body>
 </html>

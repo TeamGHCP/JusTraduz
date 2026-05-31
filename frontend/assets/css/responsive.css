@@ -27,7 +27,7 @@
     right: 20px;
     flex-direction: column;
     align-items: stretch;
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
@@ -150,6 +150,15 @@
 
   .topbar {
     gap: 14px;
+  }
+
+  .topbar-actions,
+  .user-chip {
+    width: 100%;
+  }
+
+  .user-chip {
+    flex: 1;
   }
 
   .form-actions,
