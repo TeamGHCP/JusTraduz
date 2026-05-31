@@ -114,13 +114,13 @@ document.addEventListener("DOMContentLoaded", () => {
   async function ensureCleanSessionAndInjectCsrf() {
     try {
       // Call force-logout to remove any server-side session; request JSON to avoid redirects
-      await fetch('../backend/public/index.php?rota=/auth/force-logout', { method: 'GET', headers: { 'Accept': 'application/json' }, credentials: 'include' });
+      await fetch('/backend/public/index.php?rota=/auth/force-logout', { method: 'GET', headers: { 'Accept': 'application/json' }, credentials: 'include' });
     } catch (e) {
       // ignore failures — proceed to fetch CSRF anyway
     }
 
     try {
-      const res = await fetch('../backend/public/index.php?rota=/auth/csrf', { credentials: 'include' });
+      const res = await fetch('/backend/public/index.php?rota=/auth/csrf', { credentials: 'include' });
       if (!res.ok) return;
       const data = await res.json();
       const token = data.csrf;
