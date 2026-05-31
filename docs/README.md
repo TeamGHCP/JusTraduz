@@ -7,6 +7,7 @@ Este diretório reúne os documentos de apoio técnico, segurança, produto e ap
 - `ARQUITETURA.md`: visão técnica, camadas, módulos e fluxos principais.
 - `SEGURANCA.md`: controles implementados, riscos conhecidos e checklist de produção.
 - `TOPICO_06_SEGURANCA.md`: auditoria tecnica objetiva do topico 6, com achados, riscos e correcoes.
+- `TOPICO_07_DIFERENCIAL_NEGOCIO.md`: posicionamento comercial, pitches, monetizacao e cortes de escopo.
 - `ROTAS.md`: mapa das rotas backend e páginas frontend principais.
 - `requisitos.md`: requisitos funcionais, não funcionais e regras de negócio.
 - `DEMO.md`: roteiro de demonstração manual do produto.
