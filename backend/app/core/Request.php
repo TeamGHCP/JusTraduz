@@ -31,4 +31,11 @@ class Request
     {
         return $this->method() === 'POST';
     }
+
+    // Retorna o valor de um header HTTP (case-insensitive)
+    public function header(string $key, mixed $default = null): mixed
+    {
+        $serverKey = 'HTTP_' . strtoupper(str_replace('-', '_', $key));
+        return $_SERVER[$serverKey] ?? $default;
+    }
 }

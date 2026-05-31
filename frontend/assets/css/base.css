@@ -1,22 +1,49 @@
 :root {
-  --navy: #101d3a;
-  --navy-2: #17294f;
-  --teal: #25b8a4;
-  --teal-2: #35cdb9;
-  --mint: #eaf8f6;
-  --bg: #f5f7fb;
+  --navy: #172033;
+  --navy-2: #24324a;
+  --teal: #118a7e;
+  --teal-2: #0f766d;
+  --mint: #e8f6f4;
+  --bg: #f4f6f9;
   --surface: #ffffff;
   --surface-2: #f8fafc;
-  --line: #dfe6ef;
-  --text: #15213b;
-  --muted: #627089;
-  --danger: #d94b4b;
-  --warning: #d6932f;
-  --success: #1f9d7a;
-  --shadow: 0 18px 45px rgba(16, 29, 58, .10);
-  --shadow-sm: 0 8px 24px rgba(16, 29, 58, .07);
+  --surface-3: #eef3f8;
+  --line: #d9e1ea;
+  --line-strong: #c6d1dd;
+  --text: #172033;
+  --muted: #657286;
+  --danger: #c2413a;
+  --warning: #a86716;
+  --success: #147b5d;
+  --info: #2f5f98;
+  --shadow: 0 22px 48px rgba(23, 32, 51, .12);
+  --shadow-sm: 0 8px 22px rgba(23, 32, 51, .07);
   --radius: 8px;
+  --radius-sm: 6px;
   --font: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+:root[data-theme="dark"] {
+  --navy: #e7edf7;
+  --navy-2: #cdd8e8;
+  --teal: #35c8b6;
+  --teal-2: #5ee0d0;
+  --mint: #123a39;
+  --bg: #101722;
+  --surface: #172231;
+  --surface-2: #1d2a3b;
+  --surface-3: #25354a;
+  --line: #314056;
+  --line-strong: #42536a;
+  --text: #e7edf7;
+  --muted: #a5b2c4;
+  --danger: #ff9a94;
+  --warning: #ffc46b;
+  --success: #72dfb7;
+  --info: #9ec7ff;
+  --shadow: 0 22px 48px rgba(0, 0, 0, .28);
+  --shadow-sm: 0 8px 22px rgba(0, 0, 0, .22);
+  color-scheme: dark;
 }
 
 * {
@@ -27,13 +54,66 @@ html {
   scroll-behavior: smooth;
 }
 
+html.theme-ready,
+html.theme-ready body,
+html.theme-ready .app-shell,
+html.theme-ready .sidebar,
+html.theme-ready .app-main,
+html.theme-ready .site-header,
+html.theme-ready .card,
+html.theme-ready .stat-card,
+html.theme-ready .table-wrap,
+html.theme-ready .table th,
+html.theme-ready .table td,
+html.theme-ready .input,
+html.theme-ready .select,
+html.theme-ready .textarea,
+html.theme-ready .btn,
+html.theme-ready .badge,
+html.theme-ready .topbar,
+html.theme-ready .user-chip,
+html.theme-ready .side-nav a,
+html.theme-ready .side-nav button,
+html.theme-ready .chat-layout,
+html.theme-ready .chat-list,
+html.theme-ready .chat-panel,
+html.theme-ready .chat-compose,
+html.theme-ready .chat-messages,
+html.theme-ready .message,
+html.theme-ready .modal-card,
+html.theme-ready .calendar-cell {
+  transition:
+    background-color 260ms ease,
+    background 260ms ease,
+    border-color 260ms ease,
+    color 260ms ease,
+    box-shadow 260ms ease;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+  animation-timing-function: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-ready *,
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
 body {
   margin: 0;
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
+  font-size: 15px;
   line-height: 1.55;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -55,6 +135,15 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+:focus-visible {
+  outline: 3px solid rgba(17, 138, 126, .24);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: rgba(17, 138, 126, .18);
 }
 
 .sr-only {

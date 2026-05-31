@@ -1,6 +1,11 @@
 
 # Seed — contém credenciais
 seed.php
+backend/.env
+backend/app/config/gemini.php
+backend/storage/documents/*
+!backend/storage/documents/.htaccess
+backend/storage/profile_photos/
 
 # Sistema operacional
 .DS_Store
