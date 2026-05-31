@@ -6,28 +6,39 @@ require_once dirname(__DIR__) . '/app/services/GeminiService.php';
 $gemini = new GeminiService();
 
 if (!$gemini->isConfigured()) {
-    echo "Configure GEMINI_API_KEY como variável de ambiente ou copie backend/app/config/gemini.example.php para gemini.php.\n";
-    exit(1);
+    throw new RuntimeException("Configure GEMINI_API_KEY como variável de ambiente ou copie backend/app/config/gemini.example.php para gemini.php.");
 }
 
 $stmt = $pdo->query(
-    "SELECT d.id, d.texto_extraido
+    "SELECT d.id, d.caminho, d.texto_extraido
      FROM documents d
      LEFT JOIN ai_results ar ON ar.document_id = d.id
-     WHERE d.texto_extraido IS NOT NULL
-     AND d.texto_extraido <> ''
-     AND d.texto_extraido NOT LIKE 'Não foi possível extrair texto selecionável%'
-     AND ar.id IS NULL"
+     WHERE ar.id IS NULL"
 );
 
 $documents = $stmt->fetchAll();
 $updated = 0;
 
 foreach ($documents as $document) {
-    $analysis = $gemini->analyzeDocument((string) $document['texto_extraido']);
+    $text = (string) ($document['texto_extraido'] ?? '');
+    if (is_extraction_failure($text)) {
+        $text = '';
+    }
+
+    $path = dirname(__DIR__, 2) . '/' . ltrim(str_replace('\\', '/', (string) $document['caminho']), '/');
+    $mime = is_file($path) ? (mime_content_type($path) ?: '') : '';
+
+    if (is_file($path) && GeminiService::isSupportedFileMime($mime)) {
+        $analysis = $gemini->analyzeDocumentFile($path, $mime, $text);
+    } elseif (trim($text) !== '') {
+        $analysis = $gemini->analyzeDocument($text);
+    } else {
+        echo "Documento #{$document['id']}: sem arquivo ou texto analisável.\n";
+        continue;
+    }
 
     if (!$analysis) {
-        echo "Documento #{$document['id']}: análise não gerada.\n";
+        echo "Documento #{$document['id']}: análise não gerada. " . ($gemini->getLastError() ?: 'Sem detalhes.') . "\n";
         continue;
     }
 
@@ -44,3 +55,11 @@ foreach ($documents as $document) {
 }
 
 echo "Finalizado. {$updated} documento(s) analisado(s).\n";
+
+function is_extraction_failure(string $text): bool
+{
+    $text = mb_strtolower($text);
+    return str_contains($text, 'foi poss')
+        && str_contains($text, 'extrair texto')
+        && str_contains($text, 'pdf');
+}

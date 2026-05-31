@@ -1,101 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Minhas Solicitações — JusTraduz</title>
-  <link rel="icon" href="assets/img/logo.png" />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0; url=acompanhar-solicitacoes.php">
+  <title>Redirecionando | JusTraduz</title>
+  <script>location.replace("acompanhar-solicitacoes.php" + location.search);</script>
 </head>
 <body>
-  <div class="dash">
-    <aside class="sidebar">
-      <div class="brand"><img src="assets/img/logo.png" alt="JusTraduz" /></div>
-      <h4>Menu</h4>
-      <ul>
-        <li><a href="dashboard-cliente.html">🏠 Início</a></li>
-        <li><a href="lista-advogados.html">👨‍⚖️ Advogados</a></li>
-        <li><a href="solicitar-ajuda.html">🆘 Solicitar ajuda</a></li>
-        <li><a href="acompanhar-solicitacoes.html" class="active">📋 Minhas solicitações</a></li>
-        <li><a href="chat.html">💬 Conversas</a></li>
-      </ul>
-      <h4>Conta</h4>
-      <ul>
-        <li><a href="perfil.html">⚙️ Meu Perfil</a></li>
-        <li><a href="login.html">🚪 Sair</a></li>
-      </ul>
-    </aside>
-
-    <main class="dash-main">
-      <div class="dash-header">
-        <div>
-          <h1>Minhas Solicitações</h1>
-          <p class="card-sub">Acompanhe o status dos atendimentos solicitados.</p>
-        </div>
-        <a href="solicitar-ajuda.html" class="btn btn-primary">+ Nova solicitação</a>
-      </div>
-
-      <div class="grid grid-4" style="margin-bottom:24px">
-        <div class="stat"><div class="label">Em aberto</div><div class="value">2</div></div>
-        <div class="stat"><div class="label">Em atendimento</div><div class="value accent">3</div></div>
-        <div class="stat"><div class="label">Concluídas</div><div class="value">5</div></div>
-        <div class="stat"><div class="label">Total</div><div class="value">10</div></div>
-      </div>
-
-      <div class="card" style="padding:0; overflow:hidden">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Assunto</th>
-              <th>Área</th>
-              <th>Profissional</th>
-              <th>Status</th>
-              <th>Data</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>#1042</td>
-              <td>Notificação extrajudicial</td>
-              <td>Civil</td>
-              <td>Dr. João Ribeiro</td>
-              <td><span class="badge badge-success">Em atendimento</span></td>
-              <td>22/05/2026</td>
-              <td><a href="chat.html" class="btn btn-outline btn-sm">Abrir</a></td>
-            </tr>
-            <tr>
-              <td>#1041</td>
-              <td>Dúvida sobre rescisão</td>
-              <td>Trabalhista</td>
-              <td>—</td>
-              <td><span class="badge badge-warning">Aguardando</span></td>
-              <td>20/05/2026</td>
-              <td><a href="#" class="btn btn-outline btn-sm">Detalhes</a></td>
-            </tr>
-            <tr>
-              <td>#1038</td>
-              <td>Revisão de contrato</td>
-              <td>Consumidor</td>
-              <td>Dra. Ana Martins</td>
-              <td><span class="badge badge-info">Concluída</span></td>
-              <td>15/05/2026</td>
-              <td><a href="#" class="btn btn-outline btn-sm">Ver</a></td>
-            </tr>
-            <tr>
-              <td>#1035</td>
-              <td>Cobrança indevida</td>
-              <td>Consumidor</td>
-              <td>—</td>
-              <td><span class="badge badge-warning">Aguardando</span></td>
-              <td>12/05/2026</td>
-              <td><a href="#" class="btn btn-outline btn-sm">Detalhes</a></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </main>
-  </div>
+  <a href="acompanhar-solicitacoes.php">Abrir solicitações</a>
 </body>
 </html>

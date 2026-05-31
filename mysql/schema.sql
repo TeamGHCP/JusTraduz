@@ -15,9 +15,13 @@ CREATE TABLE IF NOT EXISTS users (
     -- 🔥 Ajustado para 'oab' para facilitar mapeamento com a API Python
     oab VARCHAR(20),
     oab_uf VARCHAR(10),
-    oab_status VARCHAR(50),
-    oab_parametro TEXT,
-    oab_verificado BOOLEAN DEFAULT FALSE,
+    oab_tipo VARCHAR(50),
+    status_cna ENUM('pendente', 'verificado', 'invalido', 'nao_encontrado') DEFAULT 'pendente',
+    cna_validado_em DATETIME NULL,
+    cna_origem VARCHAR(50) NULL,
+    cna_payload_cache TEXT NULL,
+    cna_ultimo_erro TEXT NULL,
+    cna_tentativas INT DEFAULT 0,
     
     telefone VARCHAR(25),
     status ENUM('ativo','inativo') DEFAULT 'ativo',
@@ -83,6 +87,39 @@ CREATE TABLE IF NOT EXISTS tasks (
     FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8mb4;
 
+-- agenda de profissionais
+CREATE TABLE IF NOT EXISTS schedule_slots (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    professional_id INT NOT NULL,
+    starts_at DATETIME NOT NULL,
+    ends_at DATETIME NOT NULL,
+    status ENUM('livre', 'ocupado', 'bloqueado') DEFAULT 'livre',
+    titulo VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (professional_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_schedule_professional (professional_id, starts_at),
+    INDEX idx_schedule_status (status, starts_at)
+) DEFAULT CHARSET=utf8mb4;
+
+-- agendamentos feitos por clientes
+CREATE TABLE IF NOT EXISTS appointments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slot_id INT NOT NULL,
+    client_id INT NOT NULL,
+    case_id INT NULL,
+    assunto VARCHAR(255) NOT NULL,
+    observacoes TEXT,
+    status ENUM('agendado', 'cancelado', 'concluido') DEFAULT 'agendado',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (slot_id) REFERENCES schedule_slots(id) ON DELETE CASCADE,
+    FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE SET NULL,
+    INDEX idx_appointments_client (client_id, created_at),
+    INDEX idx_appointments_status (status, created_at)
+) DEFAULT CHARSET=utf8mb4;
+
 -- notificações (CORRIGIDO: Sintaxe finalizada e fechamento correto)
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -93,6 +130,23 @@ CREATE TABLE IF NOT EXISTS notifications (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8mb4;
 
+-- auditoria do sistema
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(80),
+    entity_id INT NULL,
+    details JSON NULL,
+    ip_address VARCHAR(45),
+    user_agent VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_audit_action (action, created_at),
+    INDEX idx_audit_user (user_id, created_at),
+    INDEX idx_audit_entity (entity_type, entity_id)
+) DEFAULT CHARSET=utf8mb4;
+
 -- admin padrÃ£o
 -- E-mail: admin@justraduz.com
 -- Senha: admin
@@ -101,3 +155,21 @@ SELECT 'Administrador', 'admin@justraduz.com', '$2y$10$gFuTy/IWe/Z/o/fcrZ6y1eYq4
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE email = 'admin@justraduz.com'
 );
+
+-- tabela de log cna
+CREATE TABLE IF NOT EXISTS cna_validacao_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    profissional_id INT NOT NULL,
+    admin_id INT NULL,
+    acao VARCHAR(100) NOT NULL,
+    status_anterior VARCHAR(50),
+    status_novo VARCHAR(50),
+    origem VARCHAR(50),
+    mensagem TEXT,
+    erro_resumido TEXT,
+    justificativa TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (profissional_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+

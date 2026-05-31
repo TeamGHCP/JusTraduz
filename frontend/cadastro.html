@@ -45,9 +45,9 @@
               <input class="input" type="text" id="inscricao" name="inscricao" inputmode="numeric">
             </div>
             <div class="field">
-              <label for="oab_uf">UF</label>
+              <label for="oab_uf">UF da inscrição</label>
               <select class="select" id="oab_uf" name="oab_uf">
-                <option value="">Selecione</option>
+                <option value="">Buscar no CNA</option>
                 <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
                 <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
                 <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
@@ -56,6 +56,10 @@
                 <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
                 <option>SP</option><option>SE</option><option>TO</option>
               </select>
+            </div>
+            <div class="oab-lookup-row">
+              <button class="btn btn-soft btn-sm" type="button" data-oab-lookup>Buscar no CNA</button>
+              <span class="oab-lookup-status" data-oab-status></span>
             </div>
           </div>
 

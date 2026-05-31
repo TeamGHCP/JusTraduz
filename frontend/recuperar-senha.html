@@ -13,13 +13,24 @@
       <a class="auth-brand" href="index.html"><img src="assets/img/logo.png" alt="JusTraduz"></a>
       <div class="auth-card">
         <h1>Recuperar senha</h1>
-        <p class="subtitle">Informe seu e-mail para receber as instruções quando o backend de recuperação estiver ativo.</p>
-        <form class="auth-form" action="#" method="post">
+        <p class="subtitle">Informe seu e-mail cadastrado e defina uma nova senha.</p>
+        <form class="auth-form" action="../backend/public/index.php?rota=/auth/reset-password" method="post">
+          <div class="alert" data-auth-alert></div>
           <div class="field">
             <label for="email">E-mail</label>
             <input class="input" type="email" id="email" name="email" required>
           </div>
-          <button class="btn btn-primary btn-block" type="submit">Enviar instruções</button>
+          <div class="form-grid">
+            <div class="field">
+              <label for="senha">Nova senha</label>
+              <input class="input" type="password" id="senha" name="senha" minlength="6" required>
+            </div>
+            <div class="field">
+              <label for="senha2">Confirmar senha</label>
+              <input class="input" type="password" id="senha2" name="senha2" minlength="6" required>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit">Atualizar senha</button>
         </form>
         <p class="auth-footer"><a href="login.html">Voltar para login</a></p>
       </div>
@@ -28,9 +39,10 @@
       <div class="auth-art-inner">
         <div class="auth-art-logo"><img src="assets/img/logo.png" alt="JusTraduz"></div>
         <h2>Acesso seguro ao seu histórico jurídico.</h2>
-        <p>A recuperação de senha será integrada ao backend com validação e expiração de token.</p>
+        <p>Depois da atualização, use a nova senha para acessar seus documentos e conversas.</p>
       </div>
     </aside>
   </main>
+  <script src="assets/js/auth.js"></script>
 </body>
 </html>

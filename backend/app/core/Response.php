@@ -5,20 +5,23 @@ class Response
     // Redireciona para uma URL
     public function redirect(string $url): void
     {
-        header("Location: $url");
-        exit();
+        // Lança uma exceção de redirect para ser tratada pelo handler global
+        require_once dirname(__DIR__) . '/core/RedirectException.php';
+        throw new RedirectException($url, 302);
     }
 
     // Redireciona com uma mensagem de erro na URL
     public function redirectWithError(string $url, string $erro): void
     {
-        $this->redirect("$url?erro=" . urlencode($erro));
+        $separator = str_contains($url, '?') ? '&' : '?';
+        $this->redirect($url . $separator . 'erro=' . urlencode($erro));
     }
 
     // Redireciona com uma mensagem de sucesso na URL
     public function redirectWithSuccess(string $url, string $msg): void
     {
-        $this->redirect("$url?sucesso=" . urlencode($msg));
+        $separator = str_contains($url, '?') ? '&' : '?';
+        $this->redirect($url . $separator . 'sucesso=' . urlencode($msg));
     }
 
     // Retorna JSON (para APIs)
@@ -27,6 +30,6 @@ class Response
         http_response_code($status);
         header('Content-Type: application/json');
         echo json_encode($data);
-        exit();
+        return;
     }
 }

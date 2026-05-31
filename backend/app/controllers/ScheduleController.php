@@ -1,0 +1,313 @@
+<?php
+
+require_once dirname(__DIR__) . '/core/BaseController.php';
+require_once dirname(__DIR__) . '/services/AuditService.php';
+require_once dirname(__DIR__) . '/services/NotificationService.php';
+
+class ScheduleController extends BaseController
+{
+    private AuditService $audit;
+    private NotificationService $notifications;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->audit = new AuditService($this->pdo);
+        $this->notifications = new NotificationService($this->pdo);
+    }
+
+    public function createSlot(): void
+    {
+        $this->requireLogin();
+        $this->requireProfessional();
+
+        $startsAt = $this->parseDateTime((string) $this->request->post('starts_at', ''));
+        $endsAt = $this->parseDateTime((string) $this->request->post('ends_at', ''));
+        $titulo = trim((string) $this->request->post('titulo', ''));
+
+        if (!$startsAt || !$endsAt || $endsAt <= $startsAt) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Informe início e fim válidos.')));
+        }
+
+        if ($startsAt < new DateTimeImmutable('-5 minutes')) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Não é possível criar horário no passado.')));
+        }
+
+        if ($this->hasOverlap((int) $_SESSION['id'], $startsAt, $endsAt)) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Já existe um horário nessa faixa.')));
+        }
+
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo) VALUES (?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([
+            (int) $_SESSION['id'],
+            $startsAt->format('Y-m-d H:i:s'),
+            $endsAt->format('Y-m-d H:i:s'),
+            'livre',
+            $titulo ?: null,
+        ]);
+
+        $slotId = (int) $this->pdo->lastInsertId();
+        $this->audit->log('schedule.slot_created', 'schedule_slot', $slotId, [
+            'starts_at' => $startsAt->format('Y-m-d H:i:s'),
+            'ends_at' => $endsAt->format('Y-m-d H:i:s'),
+        ]);
+
+        $this->response->redirect(app_url('/frontend/agenda.php?sucesso=' . urlencode('Horário criado na agenda.')));
+    }
+
+    public function updateSlot(): void
+    {
+        $this->requireLogin();
+
+        $slotId = (int) $this->request->post('slot_id', 0);
+        $status = (string) $this->request->post('status', '');
+
+        if ($slotId <= 0 || !in_array($status, ['livre', 'bloqueado'], true)) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Dados inválidos do horário.')));
+        }
+
+        $slot = $this->slotById($slotId);
+        if (!$slot || !$this->canManageSlot($slot)) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Horário indisponível para seu perfil.')));
+        }
+
+        if ($this->hasActiveAppointment($slotId)) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Horários com agendamento ativo não podem ser bloqueados/liberados manualmente.')));
+        }
+
+        $stmt = $this->pdo->prepare('UPDATE schedule_slots SET status = ? WHERE id = ?');
+        $stmt->execute([$status, $slotId]);
+
+        $this->audit->log('schedule.slot_updated', 'schedule_slot', $slotId, ['status' => $status]);
+        $this->response->redirect(app_url('/frontend/agenda.php?sucesso=' . urlencode('Horário atualizado.')));
+    }
+
+    public function book(): void
+    {
+        $this->requireLogin();
+
+        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Apenas clientes podem agendar atendimentos.')));
+        }
+
+        $slotId = (int) $this->request->post('slot_id', 0);
+        $caseId = $this->request->post('case_id', '');
+        $caseId = $caseId === '' ? null : (int) $caseId;
+        $assunto = trim((string) $this->request->post('assunto', ''));
+        $observacoes = trim((string) $this->request->post('observacoes', ''));
+
+        if ($slotId <= 0 || $assunto === '') {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Escolha um horário e informe o assunto.')));
+        }
+
+        $slot = $this->slotById($slotId);
+        if (!$slot || $slot['status'] !== 'livre' || new DateTimeImmutable($slot['starts_at']) < new DateTimeImmutable()) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Este horário não está mais livre.')));
+        }
+
+        if (!in_array($slot['tipo'], ['advogado', 'estagiario'], true)) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Profissional inválido para agenda.')));
+        }
+
+        if ($caseId !== null && !$this->caseBelongsToClient($caseId, (int) $_SESSION['id'])) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Caso inválido para seu usuário.')));
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare("UPDATE schedule_slots SET status = 'ocupado' WHERE id = ? AND status = 'livre'");
+            $stmt->execute([$slotId]);
+
+            if ($stmt->rowCount() === 0) {
+                $this->pdo->rollBack();
+                $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Este horário acabou de ser reservado.')));
+            }
+
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO appointments (slot_id, client_id, case_id, assunto, observacoes) VALUES (?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([$slotId, (int) $_SESSION['id'], $caseId, $assunto, $observacoes ?: null]);
+            $appointmentId = (int) $this->pdo->lastInsertId();
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+
+        $this->notifications->notify((int) $slot['professional_id'], 'Novo agendamento em sua agenda: ' . $assunto);
+        $this->notifications->notify((int) $_SESSION['id'], 'Agendamento confirmado com ' . (string) $slot['professional_name'] . '.');
+        $this->notifications->notifyMany($this->notifications->activeAdmins(), 'Novo agendamento criado: ' . $assunto);
+        $this->audit->log('schedule.appointment_booked', 'appointment', $appointmentId, [
+            'slot_id' => $slotId,
+            'professional_id' => (int) $slot['professional_id'],
+            'case_id' => $caseId,
+        ]);
+
+        $this->response->redirect(app_url('/frontend/agenda.php?sucesso=' . urlencode('Atendimento agendado.')));
+    }
+
+    public function updateAppointment(): void
+    {
+        $this->requireLogin();
+
+        $appointmentId = (int) $this->request->post('appointment_id', 0);
+        $status = (string) $this->request->post('status', '');
+
+        if ($appointmentId <= 0 || !in_array($status, ['cancelado', 'concluido'], true)) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Dados inválidos do agendamento.')));
+        }
+
+        $appointment = $this->appointmentById($appointmentId);
+        if (!$appointment || !$this->canManageAppointment($appointment, $status)) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Agendamento indisponível para seu perfil.')));
+        }
+
+        if (($appointment['status'] ?? '') !== 'agendado') {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Apenas agendamentos ativos podem ser atualizados.')));
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare('UPDATE appointments SET status = ? WHERE id = ?');
+            $stmt->execute([$status, $appointmentId]);
+
+            if ($status === 'cancelado') {
+                $stmt = $this->pdo->prepare("UPDATE schedule_slots SET status = 'livre' WHERE id = ? AND starts_at > NOW()");
+                $stmt->execute([(int) $appointment['slot_id']]);
+            }
+
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+
+        $this->notifications->notifyMany(
+            [(int) $appointment['client_id'], (int) $appointment['professional_id']],
+            'Agendamento "' . (string) $appointment['assunto'] . '" atualizado para: ' . $status
+        );
+        $this->audit->log('schedule.appointment_updated', 'appointment', $appointmentId, ['status' => $status]);
+
+        $this->response->redirect(app_url('/frontend/agenda.php?sucesso=' . urlencode('Agendamento atualizado.')));
+    }
+
+    private function requireLogin(): void
+    {
+        $this->startSession();
+
+        if (empty($_SESSION['logado'])) {
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para continuar.')));
+        }
+    }
+
+    private function requireProfessional(): void
+    {
+        if (!in_array($_SESSION['tipo'] ?? '', ['advogado', 'estagiario'], true)) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Apenas advogados e estagiários gerenciam horários.')));
+        }
+
+        $stmt = $this->pdo->prepare('SELECT oab_verificado FROM users WHERE id = ?');
+        $stmt->execute([(int) ($_SESSION['id'] ?? 0)]);
+
+        if ((int) $stmt->fetchColumn() !== 1) {
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Valide sua inscrição OAB no CNA antes de abrir horários.')));
+        }
+    }
+
+    private function parseDateTime(string $value): ?DateTimeImmutable
+    {
+        if (trim($value) === '') {
+            return null;
+        }
+
+        try {
+            return new DateTimeImmutable(str_replace('T', ' ', $value));
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function hasOverlap(int $professionalId, DateTimeImmutable $startsAt, DateTimeImmutable $endsAt): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM schedule_slots
+             WHERE professional_id = ?
+             AND status <> "bloqueado"
+             AND starts_at < ?
+             AND ends_at > ?'
+        );
+        $stmt->execute([$professionalId, $endsAt->format('Y-m-d H:i:s'), $startsAt->format('Y-m-d H:i:s')]);
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    private function slotById(int $slotId): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT s.*, u.nome AS professional_name, u.tipo
+             FROM schedule_slots s
+             INNER JOIN users u ON u.id = s.professional_id
+             WHERE s.id = ?'
+        );
+        $stmt->execute([$slotId]);
+        $slot = $stmt->fetch();
+
+        return $slot ?: null;
+    }
+
+    private function appointmentById(int $appointmentId): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT a.*, s.professional_id, s.starts_at, s.ends_at
+             FROM appointments a
+             INNER JOIN schedule_slots s ON s.id = a.slot_id
+             WHERE a.id = ?'
+        );
+        $stmt->execute([$appointmentId]);
+        $appointment = $stmt->fetch();
+
+        return $appointment ?: null;
+    }
+
+    private function hasActiveAppointment(int $slotId): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM appointments WHERE slot_id = ? AND status = 'agendado'");
+        $stmt->execute([$slotId]);
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    private function caseBelongsToClient(int $caseId, int $clientId): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT COUNT(*) FROM cases WHERE id = ? AND cliente_id = ?');
+        $stmt->execute([$caseId, $clientId]);
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    private function canManageSlot(array $slot): bool
+    {
+        $type = (string) ($_SESSION['tipo'] ?? '');
+        $userId = (int) ($_SESSION['id'] ?? 0);
+        return $type === 'admin' || (int) $slot['professional_id'] === $userId;
+    }
+
+    private function canManageAppointment(array $appointment, string $newStatus): bool
+    {
+        $type = (string) ($_SESSION['tipo'] ?? '');
+        $userId = (int) ($_SESSION['id'] ?? 0);
+
+        if ($type === 'admin') {
+            return true;
+        }
+
+        if ($type === 'cliente') {
+            return (int) $appointment['client_id'] === $userId && $newStatus === 'cancelado';
+        }
+
+        if (in_array($type, ['advogado', 'estagiario'], true)) {
+            return (int) $appointment['professional_id'] === $userId;
+        }
+
+        return false;
+    }
+}

@@ -38,7 +38,17 @@ class Router
 
                 if (!file_exists($controllerFile)) {
                     http_response_code(500);
-                    die("Controller {$route['controller']} não encontrado.");
+                    echo "Controller {$route['controller']} não encontrado.";
+                    return;
+                }
+
+                // Validar CSRF para requisições POST (exige token em _csrf ou cabeçalho X-CSRF-Token)
+                if ($method === 'POST') {
+                    $csrfFile = dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
+                    if (file_exists($csrfFile)) {
+                        require_once $csrfFile;
+                        CsrfMiddleware::validate();
+                    }
                 }
 
                 require_once $controllerFile;
@@ -51,6 +61,7 @@ class Router
         }
 
         http_response_code(404);
-        die("Rota não encontrada: $method $uri");
+        echo "Rota não encontrada.";
+        return;
     }
 }
