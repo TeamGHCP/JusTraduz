@@ -28,20 +28,30 @@ class ScheduleController extends BaseController
         $endsAt = $this->parseDateTime((string) $this->request->post('ends_at', ''));
         $titulo = trim((string) $this->request->post('titulo', ''));
         $status = (string) $this->request->post('status', 'livre');
+        $isAjax = $this->isAjaxRequest();
         if (!in_array($status, ['livre', 'bloqueado'], true)) {
             $status = 'livre';
         }
 
         if (!$startsAt || !$endsAt || $endsAt <= $startsAt) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Informe início e fim válidos.')));
+            $this->respondSlotError($isAjax, 'Informe início e fim válidos.', 400);
+            return;
+        }
+
+        $today = (new DateTimeImmutable('today'))->setTime(0, 0, 0);
+        if ($startsAt->setTime(0, 0, 0) < $today) {
+            $this->respondSlotError($isAjax, 'Não é possível criar horário em dia passado.', 422);
+            return;
         }
 
         if ($startsAt < new DateTimeImmutable('-5 minutes')) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Não é possível criar horário no passado.')));
+            $this->respondSlotError($isAjax, 'Não é possível criar horário no passado.', 422);
+            return;
         }
 
         if ($this->hasOverlap((int) $_SESSION['id'], $startsAt, $endsAt)) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Já existe um horário nessa faixa.')));
+            $this->respondSlotError($isAjax, 'Já existe um horário nessa faixa.', 409);
+            return;
         }
 
         $stmt = $this->pdo->prepare(
@@ -62,11 +72,6 @@ class ScheduleController extends BaseController
             'status' => $status,
         ]);
 
-        // If request expects JSON (AJAX), return JSON response instead of redirect
-        $isAjax = (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
-            || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
-            || ($this->request->header('X-Requested-With') === 'XMLHttpRequest');
-
         if ($isAjax) {
             $this->response->json(['success' => true, 'slot_id' => $slotId]);
             return;
@@ -79,15 +84,19 @@ class ScheduleController extends BaseController
     {
         $this->requireLogin();
 
+        $isAjax = $this->isAjaxRequest();
+
         $slotId = (int) $this->request->post('slot_id', 0);
 
         if ($slotId <= 0) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Dados inválidos do horário.')));
+            $this->respondSlotError($isAjax, 'Dados inválidos do horário.', 400);
+            return;
         }
 
         $slot = $this->slotById($slotId);
         if (!$slot || !$this->canManageSlot($slot)) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Horário indisponível para seu perfil.')));
+            $this->respondSlotError($isAjax, 'Horário indisponível para seu perfil.', 403);
+            return;
         }
 
         // If starts_at provided, treat as edit of slot (start/end/title)
@@ -95,36 +104,34 @@ class ScheduleController extends BaseController
         $endsRaw = $this->request->post('ends_at', '');
         $titulo = trim((string) $this->request->post('titulo', ''));
 
-        $isAjax = (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
-            || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
-            || ($this->request->header('X-Requested-With') === 'XMLHttpRequest');
-
         if ($startsRaw !== '' && $endsRaw !== '') {
             if ($this->hasActiveAppointment($slotId)) {
-                if ($isAjax) {
-                    $this->response->json(['success' => false, 'error' => 'Horário com agendamento ativo não pode ser editado.'], 409);
-                    return;
-                }
-                $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Horário com agendamento ativo não pode ser editado.')));
+                $this->respondSlotError($isAjax, 'Horário com agendamento ativo não pode ser editado.', 409);
+                return;
             }
 
             $startsAt = $this->parseDateTime((string) $startsRaw);
             $endsAt = $this->parseDateTime((string) $endsRaw);
 
             if (!$startsAt || !$endsAt || $endsAt <= $startsAt) {
-                if ($isAjax) {
-                    $this->response->json(['success' => false, 'error' => 'início e fim inválidos'], 400);
-                    return;
-                }
-                $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Informe início e fim válidos.')));
+                $this->respondSlotError($isAjax, 'Informe início e fim válidos.', 400);
+                return;
+            }
+
+            $today = (new DateTimeImmutable('today'))->setTime(0, 0, 0);
+            if ($startsAt->setTime(0, 0, 0) < $today) {
+                $this->respondSlotError($isAjax, 'Não é possível editar para dia passado.', 422);
+                return;
+            }
+
+            if ($startsAt < new DateTimeImmutable('-5 minutes')) {
+                $this->respondSlotError($isAjax, 'Não é possível editar para horário no passado.', 422);
+                return;
             }
 
             if ($this->hasOverlap((int) $_SESSION['id'], $startsAt, $endsAt, $slotId)) {
-                if ($isAjax) {
-                    $this->response->json(['success' => false, 'error' => 'Já existe um horário nessa faixa.'], 409);
-                    return;
-                }
-                $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Já existe um horário nessa faixa.')));
+                $this->respondSlotError($isAjax, 'Já existe um horário nessa faixa.', 409);
+                return;
             }
 
             $status = (string) $this->request->post('status', (string) ($slot['status'] ?? 'livre'));
@@ -149,19 +156,13 @@ class ScheduleController extends BaseController
         // fallback: status update (block/unblock)
         $status = (string) $this->request->post('status', '');
         if (!in_array($status, ['livre', 'bloqueado'], true)) {
-            if ($isAjax) {
-                $this->response->json(['success' => false, 'error' => 'status inválido'], 400);
-                return;
-            }
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Dados inválidos do horário.')));
+            $this->respondSlotError($isAjax, 'Dados inválidos do horário.', 400);
+            return;
         }
 
         if ($this->hasActiveAppointment($slotId)) {
-            if ($isAjax) {
-                $this->response->json(['success' => false, 'error' => 'Horário com agendamento não pode ser alterado'], 409);
-                return;
-            }
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Horários com agendamento ativo não podem ser bloqueados/liberados manualmente.')));
+            $this->respondSlotError($isAjax, 'Horários com agendamento ativo não podem ser bloqueados/liberados manualmente.', 409);
+            return;
         }
 
         $stmt = $this->pdo->prepare('UPDATE schedule_slots SET status = ? WHERE id = ?');
@@ -396,17 +397,38 @@ class ScheduleController extends BaseController
         }
     }
 
-    private function hasOverlap(int $professionalId, DateTimeImmutable $startsAt, DateTimeImmutable $endsAt): bool
+    private function hasOverlap(int $professionalId, DateTimeImmutable $startsAt, DateTimeImmutable $endsAt, ?int $excludeSlotId = null): bool
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT COUNT(*) FROM schedule_slots
+        $sql = 'SELECT COUNT(*) FROM schedule_slots
              WHERE professional_id = ?
              AND status <> "bloqueado"
              AND starts_at < ?
-             AND ends_at > ?'
-        );
-        $stmt->execute([$professionalId, $endsAt->format('Y-m-d H:i:s'), $startsAt->format('Y-m-d H:i:s')]);
+             AND ends_at > ?';
+        $params = [$professionalId, $endsAt->format('Y-m-d H:i:s'), $startsAt->format('Y-m-d H:i:s')];
+        if ($excludeSlotId !== null) {
+            $sql .= ' AND id <> ?';
+            $params[] = $excludeSlotId;
+        }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
         return (int) $stmt->fetchColumn() > 0;
+    }
+
+    private function isAjaxRequest(): bool
+    {
+        return (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower((string) $_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
+            || (isset($_SERVER['HTTP_ACCEPT']) && strpos((string) $_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+            || ((string) $this->request->header('X-Requested-With') === 'XMLHttpRequest');
+    }
+
+    private function respondSlotError(bool $isAjax, string $message, int $statusCode = 400): void
+    {
+        if ($isAjax) {
+            $this->response->json(['success' => false, 'error' => $message], $statusCode);
+            return;
+        }
+
+        $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode($message)));
     }
 
     private function slotById(int $slotId): ?array
