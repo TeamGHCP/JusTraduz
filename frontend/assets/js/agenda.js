@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
       slots.forEach((s) => {
         const el = document.createElement('div');
         el.className = 'calendar-slot ' + (s.status === 'livre' ? 'slot-free' : 'slot-busy');
-        el.textContent = (s.titulo ? s.titulo + ' - ' : '') + new Date(s.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        el.innerHTML = `<div class="title">${s.titulo ? escapeHtml(s.titulo) : 'Horário'}</div><div class="time">${new Date(s.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>`;
         el.dataset.slotId = s.id;
         // attach professional id to allow professionals to open edit modal for their own slots
         if (s.professional_id) el.dataset.professionalId = s.professional_id;
@@ -122,6 +122,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('cal-prev').addEventListener('click', () => { if (month === 1) { year--; month = 12; } else { month--; } render(); });
     document.getElementById('cal-next').addEventListener('click', () => { if (month === 12) { year++; month = 1; } else { month++; } render(); });
+  }
+
+  // simple text escape for insertion into innerHTML
+  function escapeHtml(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   function groupByDay(items, dateKey) {
@@ -178,7 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showModal() {
     if (!slotModal) return;
-    slotModal.style.display = 'block';
+    // use flex so the modal centers via CSS (.modal uses display:flex)
+    slotModal.style.display = 'flex';
   }
   function hideModal() {
     if (!slotModal) return;
