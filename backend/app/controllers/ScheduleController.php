@@ -21,6 +21,9 @@ class ScheduleController extends BaseController
         $this->requireLogin();
         $this->requireProfessional();
 
+        // TEMP DEBUG: log incoming request and session to help diagnose why slot creation may fail
+        error_log('[DEBUG createSlot] session_id=' . (isset($_SESSION['id']) ? (int) $_SESSION['id'] : 'none') . ' POST_starts=' . ($this->request->post('starts_at', '') ?? '') . ' POST_ends=' . ($this->request->post('ends_at', '') ?? '') . ' REMOTE_ADDR=' . ($_SERVER['REMOTE_ADDR'] ?? ''));
+
         $startsAt = $this->parseDateTime((string) $this->request->post('starts_at', ''));
         $endsAt = $this->parseDateTime((string) $this->request->post('ends_at', ''));
         $titulo = trim((string) $this->request->post('titulo', ''));

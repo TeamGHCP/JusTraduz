@@ -77,6 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
         el.className = 'calendar-slot ' + (s.status === 'livre' ? 'slot-free' : 'slot-busy');
         el.textContent = (s.titulo ? s.titulo + ' - ' : '') + new Date(s.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         el.dataset.slotId = s.id;
+        // attach professional id to allow professionals to open edit modal for their own slots
+        if (s.professional_id) el.dataset.professionalId = s.professional_id;
         // clients can click free slots to book
         if (s.status === 'livre') {
           el.addEventListener('click', () => scrollToBookingForm(s.id));
