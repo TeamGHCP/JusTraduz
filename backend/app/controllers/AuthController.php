@@ -144,8 +144,8 @@ class AuthController extends BaseController
 
         // Diagnostic logging: record whether email/senha were present (do NOT log password value)
         try {
-            $hasEmail = $this->request->hasPost('email');
-            $hasSenha = $this->request->hasPost('senha');
+            $hasEmail = isset($_POST['email']) && $_POST['email'] !== '';
+            $hasSenha = isset($_POST['senha']) && $_POST['senha'] !== '';
             $cookieList = $_COOKIE ?? [];
             error_log("[AUTH DEBUG] login attempt - hasEmail=" . ($hasEmail ? '1' : '0') . ", hasSenha=" . ($hasSenha ? '1' : '0') . ", cookies=" . json_encode(array_keys($cookieList)));
         } catch (Throwable $e) {

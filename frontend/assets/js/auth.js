@@ -1,4 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Defensive: remove any stray `session` cookie left by previous experiments or other apps
+  // This helps avoid ambiguous cookies that may cause unexpected auth behavior in local dev.
+  function clearCookie(name) {
+    try {
+      // expire for current host
+      document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      // expire for root domain (if present)
+      const host = window.location.hostname;
+      document.cookie = name + '=; Path=/; Domain=' + host + '; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  clearCookie('session');
+
   const typeSelect = document.querySelector("[data-account-type]");
   const oabFields = document.querySelector("[data-oab-fields]");
   const oabInput = document.querySelector("[name='inscricao']");
