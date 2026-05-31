@@ -158,6 +158,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const y = year; const m = month; const d = day;
     const starts = new Date(y, m - 1, d, 9, 0); // default 09:00
     const ends = new Date(y, m - 1, d, 10, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const clickedDay = new Date(y, m - 1, d, 0, 0, 0);
+    if (clickedDay < today) {
+      showModalAlert('Não é possível criar horário em dia passado.', 'error');
+      return;
+    }
     const toTimeValue = (dt) => String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
     const toDateValue = (dt) => dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
     const startsInput = document.getElementById('slot-starts');
@@ -268,20 +275,22 @@ document.addEventListener('DOMContentLoaded', () => {
           body: formData,
         });
         const contentType = res.headers.get('Content-Type') || '';
-        if (res.ok && contentType.indexOf('application/json') !== -1) {
-          const j = await res.json();
-          if (j.success) {
-            showModalAlert('Horário salvo com sucesso.', 'success');
-            setTimeout(() => { hideModal(); render(); }, 600);
-            return;
-          }
-          showModalAlert(j.error || 'Erro ao salvar horário.', 'error');
+        let payload = null;
+
+        if (contentType.indexOf('application/json') !== -1) {
+          payload = await res.json();
+        } else {
+          const text = await res.text();
+          payload = { success: res.ok, error: text ? String(text).slice(0, 220) : null };
+        }
+
+        if (res.ok && payload && payload.success !== false) {
+          showModalAlert('Horário salvo com sucesso.', 'success');
+          setTimeout(() => { hideModal(); render(); }, 600);
           return;
         }
 
-        // fallback: non-json (redirect), attempt to close modal and refresh
-        hideModal();
-        setTimeout(() => render(), 300);
+        showModalAlert((payload && payload.error) ? payload.error : 'Erro ao salvar horário.', 'error');
       } catch (e) {
         showModalAlert('Falha ao salvar horário. Tente novamente.', 'error');
       }
