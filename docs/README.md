@@ -9,6 +9,7 @@ Este diretório reúne os documentos de apoio técnico, segurança, produto e ap
 - `TOPICO_06_SEGURANCA.md`: auditoria tecnica objetiva do topico 6, com achados, riscos e correcoes.
 - `TOPICO_07_DIFERENCIAL_NEGOCIO.md`: posicionamento comercial, pitches, monetizacao e cortes de escopo.
 - `TOPICO_08_PRONTO_PARA_APRESENTAR.md`: checklist de banca, dados fake, roteiro e prevencao de erro ao vivo.
+- `TOPICO_09_POTENCIAL_COMERCIAL.md`: avaliacao SaaS, MVP, premium, riscos e matriz de funcionalidades.
 - `ROTAS.md`: mapa das rotas backend e páginas frontend principais.
 - `requisitos.md`: requisitos funcionais, não funcionais e regras de negócio.
 - `DEMO.md`: roteiro de demonstração manual do produto.
