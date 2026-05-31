@@ -163,6 +163,130 @@ document.addEventListener('DOMContentLoaded', () => {
     const slotsByDay = groupByDay(data.slots || [], 'starts_at');
     const apptsByDay = groupByDay(data.appointments || [], 'starts_at');
     buildCalendarGrid(slotsByDay, apptsByDay);
+    // initialize modal hooks after render
+    initSlotModal();
+  }
+
+  // -----------------------
+  // Modal: create/edit slot via AJAX
+  // -----------------------
+  const slotModal = document.getElementById('slot-modal');
+  const slotForm = document.getElementById('slot-modal-form');
+  const slotModalTitle = document.getElementById('slot-modal-title');
+  const slotModalCancel = document.getElementById('slot-modal-cancel');
+
+  function showModal() {
+    if (!slotModal) return;
+    slotModal.style.display = 'block';
+  }
+  function hideModal() {
+    if (!slotModal) return;
+    slotModal.style.display = 'none';
+  }
+
+  async function fetchCsrf() {
+    try {
+      const r = await fetch('/backend/public/index.php?rota=/auth/csrf', { credentials: 'include' });
+      if (!r.ok) return null;
+      const j = await r.json();
+      return j.csrf || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function toDateTimeLocalInput(value) {
+    const d = new Date(value);
+    if (isNaN(d)) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function initSlotModal() {
+    if (!slotForm) return;
+
+    // Cancel button
+    slotModalCancel?.addEventListener('click', (e) => { e.preventDefault(); hideModal(); });
+
+    // Clicking a slot for professionals opens modal to edit; attach handlers to existing slot elements
+    document.querySelectorAll('.calendar-slot').forEach((el) => {
+      el.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const slotId = el.dataset.slotId;
+        const professionalId = el.dataset.professionalId ? Number(el.dataset.professionalId) : null;
+        if (professionalId && window.CURRENT_USER_ID && Number(window.CURRENT_USER_ID) === professionalId) {
+          // open edit modal
+          openEditModal(slotId);
+        } else {
+          // otherwise, proceed to booking scroll
+          scrollToBookingForm(slotId);
+        }
+      });
+    });
+
+    slotForm.addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const formData = new FormData(slotForm);
+      const slotId = formData.get('slot_id');
+      const url = slotId ? '/backend/public/index.php?rota=/schedule/slots/update' : '/backend/public/index.php?rota=/schedule/slots/create';
+      const token = await fetchCsrf();
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          credentials: 'include',
+          headers: token ? { 'X-CSRF-Token': token } : {},
+          body: formData,
+        });
+        // ignore response body; refresh calendar
+        hideModal();
+        setTimeout(() => render(), 300);
+      } catch (e) {
+        alert('Falha ao salvar horário. Tente novamente.');
+      }
+    });
+  }
+
+  async function openEditModal(slotId) {
+    // fetch slot data from calendar API (we already have it in the last loaded data via DOM); try to find element
+    const el = document.querySelector(`.calendar-slot[data-slot-id="${slotId}"]`);
+    if (!el) return;
+    // read times from title text isn't reliable; instead call calendar API single day range and find slot by id
+    const token = await fetchCsrf();
+    // For simplicity, attempt to fetch slot details via calendar endpoint for current month and find slot
+    const data = await loadData();
+    const allSlots = (data.slots || []);
+    const slot = allSlots.find(s => String(s.id) === String(slotId));
+    if (!slot) return;
+    document.getElementById('slot-modal-id').value = slot.id;
+    document.getElementById('slot-starts').value = toDateTimeLocalInput(slot.starts_at);
+    document.getElementById('slot-ends').value = toDateTimeLocalInput(slot.ends_at);
+    document.getElementById('slot-title').value = slot.titulo || '';
+    slotModalTitle.textContent = 'Editar horário';
+    showModal();
+  }
+
+  // make create modal available via header button if professional
+  (function addCreateButtonIfProfessional(){
+    const createForm = document.querySelector('form[action*="/schedule/slots/create"]');
+    if (!createForm) return;
+    const header = calendarEl.querySelector('.calendar-controls');
+    if (!header) return;
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary btn-sm';
+    btn.textContent = 'Novo horário';
+    btn.style.marginLeft = '12px';
+    btn.addEventListener('click', (e) => { e.preventDefault(); openCreateModal(); });
+    header.appendChild(btn);
+  })();
+
+  function openCreateModal() {
+    // clear fields
+    document.getElementById('slot-modal-id').value = '';
+    document.getElementById('slot-starts').value = '';
+    document.getElementById('slot-ends').value = '';
+    document.getElementById('slot-title').value = '';
+    slotModalTitle.textContent = 'Novo horário';
+    showModal();
   }
 
   render();

@@ -132,6 +132,34 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
         <div id="calendar" class="card p-16"></div>
       </section>
 
+      <!-- Modal para criar/editar horário -->
+      <div id="slot-modal" class="modal" style="display:none;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-card">
+          <h3 id="slot-modal-title">Novo horário</h3>
+          <form id="slot-modal-form">
+            <?= csrf_input() ?>
+            <input type="hidden" name="slot_id" id="slot-modal-id" value="">
+            <div class="field">
+              <label for="slot-starts">Início</label>
+              <input id="slot-starts" name="starts_at" type="datetime-local" required class="input">
+            </div>
+            <div class="field">
+              <label for="slot-ends">Fim</label>
+              <input id="slot-ends" name="ends_at" type="datetime-local" required class="input">
+            </div>
+            <div class="field">
+              <label for="slot-title">Título</label>
+              <input id="slot-title" name="titulo" class="input">
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Salvar</button>
+              <button type="button" id="slot-modal-cancel" class="btn btn-outline">Cancelar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
       <?php if ($type === 'cliente'): ?>
         <section class="dash-section">
           <form class="card admin-filter" method="get">
@@ -283,6 +311,7 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
       </section>
     </main>
   </div>
+  <script>window.CURRENT_USER_ID = <?= (int) current_user_id() ?>;</script>
   <script src="assets/js/agenda.js"></script>
 </body>
 </html>
