@@ -4,7 +4,7 @@ Data da auditoria: 31/05/2026
 Meta de apresentação: 07/07/2026  
 Escopo analisado: PHP, MySQL, frontend HTML/CSS/JS/PHP, rotas, banco, uploads, IA, OAB/CNA, agenda, chat, admin, documentação e potencial comercial.
 
-Observação sobre SmartCart: não encontrei o projeto SmartCart no workspace `c:\xampp\htdocs`. A comparação abaixo considera o SmartCart como referência de projeto acadêmico/comercial de e-commerce, isto é, um sistema mais comum, fácil de explicar e geralmente mais visual, mas menos diferenciado como produto.
+Observação sobre comparação: a análise abaixo compara o JusTraduz com um e-commerce acadêmico/comercial comum, isto é, um sistema com catálogo, carrinho, checkout, pedidos e admin. A referência é propositalmente genérica para avaliar o JusTraduz contra um tipo de projeto comum, fácil de explicar e geralmente mais visual, mas menos diferenciado como produto.
 
 ## Correções aplicadas - Parte 1 Segurança
 
@@ -74,7 +74,7 @@ O JusTraduz não é só mais uma aplicação CRUD. Ele já tem base real de prod
 
 O problema é que a maturidade está irregular. O backend tem decisões boas, mas ainda mistura regra de negócio nas páginas e controllers. O frontend tem uma identidade consistente, porém ainda parece "sistema funcional bonito o bastante", não SaaS jurídico premium. O admin existe, mas ainda não transmite operação de plataforma em tempo real. A documentação principal ajuda a rodar, mas `docs/` está praticamente vazio.
 
-Veredito brutal: o JusTraduz tem mais potencial que o SmartCart, mas não pode ir para banca com fluxo quebrado, dados vazios, admin raso e risco de agenda/documentos expostos. Se o objetivo é superar, parem de adicionar enfeite e foquem em: fluxo de demo impecável, admin convincente, segurança básica comprovável e visual de produto.
+Veredito brutal: o JusTraduz tem mais potencial que um e-commerce comum, mas não pode ir para banca com fluxo quebrado, dados vazios, admin raso e risco de agenda/documentos expostos. Se o objetivo é superar esse tipo de projeto, parem de adicionar enfeite e foquem em: fluxo de demo impecável, admin convincente, segurança básica comprovável e visual de produto.
 
 ## 1.1. O que está fraco, amador ou arriscado
 
@@ -387,7 +387,7 @@ O admin atual é funcional, mas ainda não parece uma central de SaaS. Ele mostr
 4. Tabelas com filtros e ações rápidas abaixo.
 5. Rodapé interno com health checks e versão do sistema.
 
-Para superar SmartCart, o admin precisa vender maturidade: auditoria, validação profissional, IA com consentimento e gestão de documentos sensíveis. Um e-commerce comum dificilmente mostra isso.
+Para superar um e-commerce comum, o admin precisa vender maturidade: auditoria, validação profissional, IA com consentimento e gestão de documentos sensíveis. Um e-commerce comum dificilmente mostra isso.
 
 ## 8. Documentação
 
@@ -479,7 +479,7 @@ database/
 
 ## 10. Diferencial de negócio
 
-JusTraduz resolve uma dor real: pessoas recebem documentos jurídicos e não entendem o que estão lendo. SmartCart/e-commerce resolve uma dor comum, mas muito repetida em trabalhos acadêmicos: comprar, vender e administrar produtos. O JusTraduz é mais nichado, mais memorável e mais fácil de defender como inovação.
+JusTraduz resolve uma dor real: pessoas recebem documentos jurídicos e não entendem o que estão lendo. Um e-commerce comum resolve uma dor conhecida, mas muito repetida em trabalhos acadêmicos: comprar, vender e administrar produtos. O JusTraduz é mais nichado, mais memorável e mais fácil de defender como inovação.
 
 Posicionamento recomendado:
 
@@ -640,21 +640,21 @@ Versão premium:
 | Tema escuro | Baixo | Baixa | P3 | Baixo |
 | Estagiário separado | Médio | Média | P3 | Baixo/médio |
 
-## 13. Comparação JusTraduz vs SmartCart
+## 13. Comparação JusTraduz vs e-commerce comum
 
 | Critério | Quem vence hoje | Por quê | O que o JusTraduz precisa melhorar | Prioridade | Esforço |
 |---|---|---|---|---:|---:|
-| Frontend | SmartCart, se estiver mais polido | E-commerce costuma ser visualmente simples de vender; JusTraduz ainda parece operacional | Landing com prints reais, análise como tela hero, admin mais bonito | P1 | Médio |
+| Frontend | E-commerce comum, se estiver mais polido | E-commerce costuma ser visualmente simples de vender; JusTraduz ainda parece operacional | Landing com prints reais, análise como tela hero, admin mais bonito | P1 | Médio |
 | Quantidade de telas | JusTraduz | Tem cliente, advogado, admin, agenda, chat, docs, auditoria | Remover duplicadas e deixar fluxo claro | P1 | Baixo |
 | Backend | JusTraduz | Tem IA, OAB, auditoria, permissões, uploads | Policies, testes, proteger agenda, models/services | P1 | Médio/alto |
-| Admin/dashboard | Empate/SmartCart | JusTraduz tem admin, mas ainda raso visualmente | Métricas, gráficos, profissionais pendentes, alertas | P1 | Médio |
-| Documentação | SmartCart, se tiver docs completos | `docs/` do JusTraduz está vazio | Criar docs formais e roteiro de banca | P1 | Baixo/médio |
+| Admin/dashboard | Empate/e-commerce comum | JusTraduz tem admin, mas ainda raso visualmente | Métricas, gráficos, profissionais pendentes, alertas | P1 | Médio |
+| Documentação | E-commerce comum, se tiver docs completos | `docs/` do JusTraduz está vazio | Criar docs formais e roteiro de banca | P1 | Baixo/médio |
 | Segurança | JusTraduz em intenção; risco em execução | Tem CSRF, sessão, audit, upload; mas há endpoint e permissões amplas | Corrigir agenda, estagiário, `.env`, LGPD | P1 | Médio |
 | Diferencial de negócio | JusTraduz | Problema mais nichado e memorável | Posicionamento comercial forte e demo consistente | P1 | Baixo |
-| Pronto para apresentar | SmartCart se estiver estável; JusTraduz se corrigir fluxo | JusTraduz tem mais pontos de falha | Seed, roteiro, evitar integrações ao vivo | P1 | Médio |
+| Pronto para apresentar | E-commerce comum se estiver estável; JusTraduz se corrigir fluxo | JusTraduz tem mais pontos de falha | Seed, roteiro, evitar integrações ao vivo | P1 | Médio |
 | Potencial comercial | JusTraduz | Legaltech + IA + atendimento é mais vendável que e-commerce genérico | Compliance, cobrança, multiempresa, suporte | P2 | Alto |
 
-Conclusão: JusTraduz vence em ideia, escopo e diferenciação. SmartCart vence se estiver mais simples, estável e bonito. Para superar, o JusTraduz precisa parecer menos "trabalho escolar ambicioso" e mais "produto jurídico com fluxo confiável".
+Conclusão: JusTraduz vence em ideia, escopo e diferenciação. Um e-commerce comum vence se estiver mais simples, estável e bonito. Para superar, o JusTraduz precisa parecer menos "trabalho escolar ambicioso" e mais "produto jurídico com fluxo confiável".
 
 ## 14. Plano de ação até 07/07/2026
 
@@ -674,7 +674,7 @@ Conclusão: JusTraduz vence em ideia, escopo e diferenciação. SmartCart vence 
 
 | Tarefa | Prioridade | Responsável ideal | Dificuldade | Tempo | Impacto | Risco se não fizer |
 |---|---:|---|---:|---:|---:|---|
-| Redesenhar landing com print real do produto | P1 | Frontend/UI | Média | 8h | Muito alto | SmartCart parece mais comercial |
+| Redesenhar landing com print real do produto | P1 | Frontend/UI | Média | 8h | Muito alto | Um e-commerce comum parece mais comercial |
 | Polir tela de análise de documento | P1 | Frontend/UI | Média | 8h | Muito alto | Diferencial fica escondido |
 | Melhorar dashboard cliente como jornada guiada | P1 | Frontend/UI | Média | 6h | Alto | Usuário não entende fluxo |
 | Melhorar dashboard advogado com fila e prioridades | P1 | Frontend/UI | Média | 6h | Alto | Profissional parece genérico |
@@ -686,7 +686,7 @@ Conclusão: JusTraduz vence em ideia, escopo e diferenciação. SmartCart vence 
 | Tarefa | Prioridade | Responsável ideal | Dificuldade | Tempo | Impacto | Risco se não fizer |
 |---|---:|---|---:|---:|---:|---|
 | Adicionar cards: clientes, advogados, pendentes, docs analisados | P1 | Fullstack | Baixa | 3h | Alto | Admin raso |
-| Criar gráficos simples com CSS/JS ou dados renderizados | P1 | Frontend | Média | 6h | Alto | Visual perde para SmartCart |
+| Criar gráficos simples com CSS/JS ou dados renderizados | P1 | Frontend | Média | 6h | Alto | Visual perde para um e-commerce comum |
 | Criar gestão de profissionais/OAB | P1 | Fullstack | Média | 8h | Muito alto | Diferencial não aparece |
 | Adicionar filtros em documentos/admin | P2 | Fullstack | Média | 4h | Médio | Operação parece limitada |
 | Melhorar auditoria com severidade e JSON legível | P2 | Fullstack | Média | 4h | Alto | Logs parecem crus |

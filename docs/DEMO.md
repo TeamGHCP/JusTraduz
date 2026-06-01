@@ -175,7 +175,7 @@ Em `Auditoria`:
 9. Advogado.
 10. Admin.
 11. Segurança/LGPD.
-12. Comparação com SmartCart/e-commerce.
+12. Comparação com um e-commerce comum.
 13. Próximos passos.
 
 ## Frases-chave

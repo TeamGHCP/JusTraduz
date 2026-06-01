@@ -5,7 +5,7 @@ Objetivo: analisar o JusTraduz como produto comercial, nao apenas como sistema e
 
 ## Diagnostico brutal
 
-O JusTraduz tem uma ideia mais forte que um e-commerce comum porque resolve uma dor especifica, sensivel e memoravel: pessoas recebem documentos juridicos e nao entendem o que aquilo significa. SmartCart/e-commerce e facil de explicar, mas e comum demais. JusTraduz e mais dificil de executar, porem muito mais defensavel como inovacao.
+O JusTraduz tem uma ideia mais forte que um e-commerce comum porque resolve uma dor especifica, sensivel e memoravel: pessoas recebem documentos juridicos e nao entendem o que aquilo significa. Um e-commerce e facil de explicar, mas e comum demais. JusTraduz e mais dificil de executar, porem muito mais defensavel como inovacao.
 
 O risco comercial e prometer "solucao juridica" demais. O posicionamento correto nao e substituir advogado; e traduzir o juridiquês, organizar o atendimento e conectar a pessoa a profissional qualificado.
 
