@@ -11,7 +11,7 @@ $lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, foto_perfil, oab, 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Advogados | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-2">
 </head>
 <body>
   <header class="site-header" data-site-header>
@@ -62,7 +62,7 @@ $lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, foto_perfil, oab, 
       </div>
     <?php endif; ?>
   </main>
-  <script src="assets/js/theme.js"></script>
+  <script src="assets/js/theme.js?v=theme-slow-2"></script>
   <script src="assets/js/main.js"></script>
 </body>
 </html>

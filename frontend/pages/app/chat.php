@@ -41,7 +41,7 @@ $messages = $caseId ? fetch_all($pdo, 'SELECT m.*, u.nome FROM messages m INNER 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Chat | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-2">
 </head>
 <body>
   <div class="app-shell">

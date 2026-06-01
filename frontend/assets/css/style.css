@@ -1,7 +1,7 @@
-@import url("./base.css");
+@import url("./base.css?v=theme-slow-2");
 @import url("./layout.css");
 @import url("./components.css");
 @import url("./auth.css");
-@import url("./dashboard.css");
+@import url("./dashboard.css?v=theme-slow-2");
 @import url("./pages.css");
 @import url("./responsive.css");

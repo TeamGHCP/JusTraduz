@@ -17,16 +17,8 @@
     });
   }
 
-  function setTheme(theme, animated) {
+  function setTheme(theme) {
     localStorage.setItem(storageKey, theme);
-
-    if (animated && document.startViewTransition && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.startViewTransition(() => {
-        applyTheme(theme);
-      });
-      return;
-    }
-
     applyTheme(theme);
   }
 
@@ -41,7 +33,7 @@
     document.querySelectorAll('[data-theme-toggle-button]').forEach((button) => {
       button.addEventListener('click', () => {
         const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-        setTheme(theme, true);
+        setTheme(theme);
       });
     });
   });

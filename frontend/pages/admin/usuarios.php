@@ -99,7 +99,7 @@ $pendingProfessionalTotal = count_query(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Usuários | Admin JusTraduz</title>
   <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/style.css?v=theme-slow-2">
 </head>
 <body>
   <div class="app-shell admin-shell">

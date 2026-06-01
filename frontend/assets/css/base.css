@@ -83,16 +83,16 @@ html.theme-ready .message,
 html.theme-ready .modal-card,
 html.theme-ready .calendar-cell {
   transition:
-    background-color 260ms ease,
-    background 260ms ease,
-    border-color 260ms ease,
-    color 260ms ease,
-    box-shadow 260ms ease;
+    background-color 820ms ease,
+    background 820ms ease,
+    border-color 820ms ease,
+    color 820ms ease,
+    box-shadow 820ms ease;
 }
 
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 260ms;
+  animation-duration: 820ms;
   animation-timing-function: ease;
 }
 

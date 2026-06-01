@@ -118,7 +118,8 @@ function render_theme_toggle(): string
 function theme_asset_path(): string
 {
     $script = $_SERVER['SCRIPT_NAME'] ?? '';
-    return str_contains($script, '/frontend/admin/') ? '../assets/js/theme.js' : 'assets/js/theme.js';
+    $path = str_contains($script, '/frontend/admin/') ? '../assets/js/theme.js' : 'assets/js/theme.js';
+    return $path . '?v=theme-slow-2';
 }
 
 function stat_card(string $label, $value, string $icon): string
