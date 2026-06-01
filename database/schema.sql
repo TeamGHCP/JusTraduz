@@ -34,6 +34,9 @@ CREATE TABLE IF NOT EXISTS users (
     
     telefone VARCHAR(25),
     foto_perfil VARCHAR(255),
+    google_sub VARCHAR(255) UNIQUE,
+    google_picture VARCHAR(255),
+    google_linked_at DATETIME NULL,
     status ENUM('ativo','inativo') DEFAULT 'ativo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_users_tipo_status (tipo, status)

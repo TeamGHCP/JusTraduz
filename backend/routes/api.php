@@ -7,6 +7,8 @@ $router = new Router();
 $routes = [
     ['POST', '/auth/registrar', 'AuthController', 'registrar'],
     ['POST', '/auth/login', 'AuthController', 'login'],
+    ['GET', '/auth/google', 'AuthController', 'googleRedirect'],
+    ['GET', '/auth/google/callback', 'AuthController', 'googleCallback'],
     ['GET', '/auth/csrf', 'AuthController', 'csrf'],
     ['POST', '/auth/force-logout', 'AuthController', 'forceLogout'],
     ['POST', '/auth/admin-login', 'AuthController', 'adminLogin'],

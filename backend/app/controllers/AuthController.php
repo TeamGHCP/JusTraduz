@@ -2,6 +2,7 @@
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
+require_once dirname(__DIR__) . '/services/GoogleOAuthService.php';
 require_once dirname(__DIR__) . '/services/MailerService.php';
 require_once dirname(__DIR__) . '/services/OabService.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
@@ -209,6 +210,78 @@ class AuthController extends BaseController
 
         $destino = $destinos[$usuario['tipo']] ?? '/frontend/dashboard-cliente.php';
         $this->response->redirect(APP_URL . $destino);
+    }
+
+    // -------------------------------------------------------
+    // GET /auth/google
+    // -------------------------------------------------------
+    public function googleRedirect(): void
+    {
+        $this->startSession();
+
+        $google = new GoogleOAuthService();
+        $frontUrl = APP_URL . '/frontend/login.html';
+
+        if (!$google->isConfigured()) {
+            $this->response->redirectWithError($frontUrl, 'Login com Google não configurado.');
+        }
+
+        $state = bin2hex(random_bytes(32));
+        $nonce = bin2hex(random_bytes(32));
+
+        $_SESSION['google_oauth_state'] = $state;
+        $_SESSION['google_oauth_nonce'] = $nonce;
+
+        $this->response->redirect($google->authorizationUrl($this->googleRedirectUri(), $state, $nonce));
+    }
+
+    // -------------------------------------------------------
+    // GET /auth/google/callback
+    // -------------------------------------------------------
+    public function googleCallback(): void
+    {
+        $this->startSession();
+
+        $frontUrl = APP_URL . '/frontend/login.html';
+        $state = (string) ($_GET['state'] ?? '');
+        $code = (string) ($_GET['code'] ?? '');
+        $expectedState = (string) ($_SESSION['google_oauth_state'] ?? '');
+        $expectedNonce = (string) ($_SESSION['google_oauth_nonce'] ?? '');
+
+        unset($_SESSION['google_oauth_state'], $_SESSION['google_oauth_nonce']);
+
+        if (!empty($_GET['error'])) {
+            $this->response->redirectWithError($frontUrl, 'Login com Google cancelado ou recusado.');
+        }
+
+        if ($state === '' || $code === '' || $expectedState === '' || !hash_equals($expectedState, $state)) {
+            $this->response->redirectWithError($frontUrl, 'Sessão Google inválida. Tente novamente.');
+        }
+
+        try {
+            $google = new GoogleOAuthService();
+            if (!$google->isConfigured()) {
+                $this->response->redirectWithError($frontUrl, 'Login com Google não configurado.');
+            }
+
+            $token = $google->fetchToken($code, $this->googleRedirectUri());
+            $claims = $google->validateIdToken((string) ($token['id_token'] ?? ''), $expectedNonce);
+            $usuario = $this->findOrCreateGoogleUser($claims);
+            $this->signInUser($usuario);
+            $this->audit->log('auth.google_login', 'user', (int) $usuario['id'], ['email' => $usuario['email'] ?? null]);
+            $this->response->redirect(APP_URL . $this->dashboardPathFor((string) $usuario['tipo']));
+        } catch (PDOException $e) {
+            if ($e->getCode() === '42S22') {
+                $this->response->redirectWithError($frontUrl, 'Banco desatualizado. Execute a migration do login Google.');
+            }
+
+            throw $e;
+        } catch (RedirectException $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            error_log('Google OAuth error: ' . $e->getMessage());
+            $this->response->redirectWithError($frontUrl, 'Não foi possível entrar com Google agora.');
+        }
     }
 
     // -------------------------------------------------------
@@ -726,6 +799,103 @@ class AuthController extends BaseController
             . "Este código expira em 15 minutos. Se você não solicitou a recuperação, ignore este e-mail.\n";
 
         return (new MailerService())->send($email, $subject, $message);
+    }
+
+    private function findOrCreateGoogleUser(array $claims): array
+    {
+        $googleSub = (string) $claims['sub'];
+        $email = strtolower(trim((string) $claims['email']));
+        $nome = trim((string) ($claims['name'] ?? ''));
+        $picture = trim((string) ($claims['picture'] ?? ''));
+
+        if ($nome === '') {
+            $nome = explode('@', $email)[0] ?: 'Usuário Google';
+        }
+
+        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo FROM users WHERE google_sub = ? AND status = 'ativo' LIMIT 1");
+        $stmt->execute([$googleSub]);
+        $usuario = $stmt->fetch();
+
+        if ($usuario) {
+            $this->updateGoogleProfile((int) $usuario['id'], $googleSub, $picture);
+            return $usuario;
+        }
+
+        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo FROM users WHERE email = ? AND status = 'ativo' LIMIT 1");
+        $stmt->execute([$email]);
+        $usuario = $stmt->fetch();
+
+        if ($usuario) {
+            $this->updateGoogleProfile((int) $usuario['id'], $googleSub, $picture);
+            return $usuario;
+        }
+
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO users (nome, email, senha, tipo, google_sub, google_picture, google_linked_at, status)
+             VALUES (?, ?, ?, 'cliente', ?, ?, NOW(), 'ativo')"
+        );
+        $stmt->execute([
+            mb_substr($nome, 0, 100),
+            $email,
+            password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
+            $googleSub,
+            $picture !== '' ? mb_substr($picture, 0, 255) : null,
+        ]);
+
+        $userId = (int) $this->pdo->lastInsertId();
+        $this->audit->log('auth.google_register', 'user', $userId, ['email' => $email]);
+
+        return [
+            'id' => $userId,
+            'nome' => mb_substr($nome, 0, 100),
+            'email' => $email,
+            'tipo' => 'cliente',
+        ];
+    }
+
+    private function updateGoogleProfile(int $userId, string $googleSub, string $picture): void
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE users
+             SET google_sub = ?, google_picture = ?, google_linked_at = COALESCE(google_linked_at, NOW())
+             WHERE id = ?'
+        );
+        $stmt->execute([$googleSub, $picture !== '' ? mb_substr($picture, 0, 255) : null, $userId]);
+    }
+
+    private function signInUser(array $usuario): void
+    {
+        session_regenerate_id(true);
+        $_SESSION['id'] = $usuario['id'];
+        $_SESSION['nome'] = $usuario['nome'];
+        $_SESSION['tipo'] = $usuario['tipo'];
+        $_SESSION['logado'] = true;
+        CsrfMiddleware::generateToken();
+    }
+
+    private function dashboardPathFor(string $tipo): string
+    {
+        $destinos = [
+            'advogado' => '/frontend/dashboard-advogado.php',
+            'estagiario' => '/frontend/dashboard-estagiario.php',
+            'admin' => '/frontend/admin/dashboard-admin.php',
+            'cliente' => '/frontend/dashboard-cliente.php',
+        ];
+
+        return $destinos[$tipo] ?? '/frontend/dashboard-cliente.php';
+    }
+
+    private function googleRedirectUri(): string
+    {
+        $scheme = 'http';
+        if ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
+            $scheme = 'https';
+        }
+
+        $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
+
+        return $scheme . '://' . $host . app_url('/backend/public/index.php') . '?rota=/auth/google/callback';
     }
 
     private function logCnaValidation(
