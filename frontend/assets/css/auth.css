@@ -118,15 +118,9 @@
 }
 
 .google-mark {
-  display: inline-grid;
-  place-items: center;
   width: 22px;
   height: 22px;
-  border-radius: 50%;
-  color: #fff;
-  background: #4285f4;
-  font-size: 14px;
-  font-weight: 900;
+  flex: 0 0 22px;
 }
 
 .auth-admin-link {
