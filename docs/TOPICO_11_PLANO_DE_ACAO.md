@@ -1,11 +1,11 @@
 # Topico 11 - Plano de acao ate 07/07/2026
 
 Data: 31/05/2026  
-Meta: tornar o JusTraduz superior ao SmartCart na banca e mais proximo de um produto comercial real.
+Meta: tornar o JusTraduz superior a um e-commerce comum na banca e mais proximo de um produto comercial real.
 
 ## Diagnostico geral
 
-O JusTraduz tem mais potencial que o SmartCart, mas tambem tem mais lugares para quebrar. A estrategia correta nao e adicionar mais funcionalidades. E estabilizar o fluxo principal, polir as telas de valor, blindar seguranca basica, preparar banco demo e ensaiar a apresentacao.
+O JusTraduz tem mais potencial que um e-commerce comum, mas tambem tem mais lugares para quebrar. A estrategia correta nao e adicionar mais funcionalidades. E estabilizar o fluxo principal, polir as telas de valor, blindar seguranca basica, preparar banco demo e ensaiar a apresentacao.
 
 Se a equipe tentar melhorar tudo ao mesmo tempo, vai chegar em 07/07 com muita tela incompleta. O foco precisa ser brutal: documento, analise simples, atendimento, agenda, admin, OAB, auditoria e pitch.
 
@@ -46,7 +46,7 @@ Periodo sugerido: 06/06 a 16/06.
 
 | Tarefa | Prioridade | Responsavel ideal | Dificuldade | Tempo estimado | Impacto | Risco se nao fizer |
 |---|---:|---|---:|---:|---:|---|
-| Polir landing com produto real | P1 | Frontend/UI | Media | 6h | Alto | SmartCart parece mais comercial. |
+| Polir landing com produto real | P1 | Frontend/UI | Media | 6h | Alto | Um e-commerce comum pode parecer mais comercial. |
 | Transformar analise em tela estrela | P1 | Frontend/UI | Media | 8h | Muito alto | Diferencial fica escondido. |
 | Melhorar dashboard cliente como jornada | P1 | Frontend/UI | Media | 5h | Alto | Usuario nao entende proximo passo. |
 | Melhorar dashboard advogado com fila | P1 | Frontend/UI | Media | 5h | Alto | Atendimento parece generico. |
@@ -186,7 +186,7 @@ Periodo sugerido: 04/07 a 07/07.
 
 ## Plano final
 
-Para superar o SmartCart ate 07/07, o JusTraduz precisa vencer em tres frentes:
+Para superar um e-commerce comum ate 07/07, o JusTraduz precisa vencer em tres frentes:
 
 1. Valor: mostrar documento juridico virando linguagem simples.
 2. Confianca: mostrar advogado validado, seguranca, consentimento e auditoria.

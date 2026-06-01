@@ -10,7 +10,7 @@ Este diretório reúne os documentos de apoio técnico, segurança, produto e ap
 - `TOPICO_07_DIFERENCIAL_NEGOCIO.md`: posicionamento comercial, pitches, monetizacao e cortes de escopo.
 - `TOPICO_08_PRONTO_PARA_APRESENTAR.md`: checklist de banca, dados fake, roteiro e prevencao de erro ao vivo.
 - `TOPICO_09_POTENCIAL_COMERCIAL.md`: avaliacao SaaS, MVP, premium, riscos e matriz de funcionalidades.
-- `TOPICO_10_COMPARACAO_SMARTCART.md`: comparacao direta entre JusTraduz e SmartCart por criterio.
+- `TOPICO_10_COMPARACAO_ECOMMERCE.md`: comparacao direta entre JusTraduz e um e-commerce comum por criterio.
 - `TOPICO_11_PLANO_DE_ACAO.md`: plano priorizado ate 07/07/2026 com fases, responsaveis e checklists finais.
 - `ROTAS.md`: mapa das rotas backend e páginas frontend principais.
 - `requisitos.md`: requisitos funcionais, não funcionais e regras de negócio.
