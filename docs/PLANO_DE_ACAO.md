@@ -1,4 +1,4 @@
-# Topico 11 - Plano de acao ate 07/07/2026
+# Plano de ação até 07/07/2026
 
 Data: 31/05/2026  
 Meta: tornar o JusTraduz superior a um e-commerce comum na banca e mais proximo de um produto comercial real.

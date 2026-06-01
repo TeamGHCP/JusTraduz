@@ -1,4 +1,4 @@
-# Topico 8 - Pronto para apresentar
+# Pronto para apresentar
 
 Data: 31/05/2026  
 Objetivo: avaliar se o JusTraduz aguenta uma apresentacao de banca e definir uma demo segura ate 07/07/2026.
