@@ -1,4 +1,4 @@
-# Topico 7 - Diferencial de negocio
+# Diferencial de negócio
 
 Data: 31/05/2026  
 Objetivo: analisar o JusTraduz como produto comercial, nao apenas como sistema escolar.

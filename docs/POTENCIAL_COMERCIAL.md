@@ -1,4 +1,4 @@
-# Topico 9 - Potencial comercial
+# Potencial comercial
 
 Data: 31/05/2026  
 Objetivo: avaliar se o JusTraduz pode virar SaaS e qual caminho realista existe entre projeto academico e produto vendavel.

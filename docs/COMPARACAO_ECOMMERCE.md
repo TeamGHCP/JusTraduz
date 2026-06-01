@@ -1,4 +1,4 @@
-# Topico 10 - Comparacao direta JusTraduz vs e-commerce
+# Comparação direta JusTraduz vs e-commerce
 
 Data: 31/05/2026  
 Referencia: comparacao com um e-commerce academico/comercial comum, com catalogo, carrinho, checkout, pedidos e admin.
@@ -15,7 +15,7 @@ JusTraduz vence em ideia, escopo e potencial comercial. Um e-commerce comum prov
 | Quantidade de telas | JusTraduz | Tem cliente, advogado, admin, documentos, casos, chat, agenda, auditoria e OAB. | Explicar wrappers/telas duplicadas e conduzir demo por fluxo claro. | P2 | Baixo |
 | Backend | JusTraduz | Tem IA, OAB/CNA, upload, auditoria, permissoes, agenda e chat. | Criar policies/regras centralizadas e testes de permissao. | P1 | Medio/alto |
 | Admin/dashboard | JusTraduz se polido; empate se raso | JusTraduz tem admin operacional mais rico que e-commerce comum. | Mostrar metricas, graficos, fila OAB, casos criticos e auditoria. | P1 | Medio |
-| Documentacao | JusTraduz, apos os docs novos | Agora ha docs de seguranca, demo, banca, pitch e topicos 6 a 11. | Manter README enxuto e docs atualizados com execucao real. | P1 | Baixo |
+| Documentacao | JusTraduz, apos os docs novos | Agora ha docs de seguranca, demo, banca, pitch e temas 6 a 11. | Manter README enxuto e docs atualizados com execucao real. | P1 | Baixo |
 | Seguranca | JusTraduz em proposta; risco se `.env` ou permissao falharem | Tem CSRF, sessao, prepared statements, upload validado, auditoria e controle por perfil. | Remover `.env` do Git, testar acesso anonimo e proteger uploads. | P0/P1 | Baixo/medio |
 | Diferencial de negocio | JusTraduz | Legaltech + IA + atendimento juridico e mais memoravel que e-commerce. | Evitar prometer substituicao de advogado e focar linguagem simples. | P1 | Baixo |
 | Pronto para apresentar | E-commerce comum se estiver estavel; JusTraduz se seguir roteiro | E-commerce tem menos integracoes para quebrar. JusTraduz tem mais valor, mas mais risco. | Seed demo, video backup e demo sem dependencias externas ao vivo. | P1 | Medio |
@@ -59,7 +59,7 @@ Como o JusTraduz supera: seed demo completo, graficos simples, fila OAB e indica
 
 Vencedor hoje: JusTraduz.
 
-Motivo: a documentacao agora cobre arquitetura, seguranca, rotas, demo, banca, pitch, LGPD e topicos especificos. Isso ajuda muito na defesa tecnica.
+Motivo: a documentacao agora cobre arquitetura, seguranca, rotas, demo, banca, pitch, LGPD e temas especificos. Isso ajuda muito na defesa tecnica.
 
 Como manter vantagem: nao deixar docs mentirem. Tudo que for falado precisa bater com o sistema.
 
