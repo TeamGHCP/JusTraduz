@@ -887,6 +887,11 @@ class AuthController extends BaseController
 
     private function googleRedirectUri(): string
     {
+        $configuredUri = $this->envValue('GOOGLE_REDIRECT_URI');
+        if ($configuredUri !== '') {
+            return $configuredUri;
+        }
+
         $scheme = 'http';
         if ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
             || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
@@ -896,6 +901,21 @@ class AuthController extends BaseController
         $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
         return $scheme . '://' . $host . app_url('/backend/public/index.php') . '?rota=/auth/google/callback';
+    }
+
+    private function envValue(string $key): string
+    {
+        $value = getenv($key);
+        if ($value !== false) {
+            return trim((string) $value);
+        }
+
+        $env = [];
+        if (function_exists('database_env_values')) {
+            $env = database_env_values(dirname(__DIR__, 2) . '/.env');
+        }
+
+        return trim((string) ($env[$key] ?? ''));
     }
 
     private function logCnaValidation(
