@@ -70,7 +70,7 @@ $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (fl
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Documentos | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
 </head>
 <body>
   <div class="app-shell">

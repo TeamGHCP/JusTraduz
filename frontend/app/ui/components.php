@@ -119,7 +119,7 @@ function theme_asset_path(): string
 {
     $script = $_SERVER['SCRIPT_NAME'] ?? '';
     $path = str_contains($script, '/frontend/admin/') ? '../assets/js/theme.js' : 'assets/js/theme.js';
-    return $path . '?v=theme-slow-2';
+    return $path . '?v=theme-slow-3';
 }
 
 function stat_card(string $label, $value, string $icon): string

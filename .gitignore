@@ -16,9 +16,26 @@ backend/storage/profile_photos/
 backend/storage/message-attachments/*
 !backend/storage/message-attachments/.htaccess
 
+# Dependências
+vendor/
+node_modules/
+frontend/node_modules/
+backend/vendor/
+
+# Logs, cache e temporários
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
+
 # Sistema operacional
 .DS_Store
 Thumbs.db
 
-# VS Code
+# IDEs
 .vscode/
+.idea/

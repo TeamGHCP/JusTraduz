@@ -12,7 +12,7 @@ $selectedLawyerId = (int) ($_GET['advogado_id'] ?? 0);
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Solicitar ajuda | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
 </head>
 <body>
   <div class="app-shell">

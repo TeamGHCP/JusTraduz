@@ -29,13 +29,21 @@ Para habilitar o login com Google em ambiente local:
 3. Em `Origens JavaScript autorizadas`, adicione:
 
 ```text
-http://localhost:9999
+http://localhost:9999 
+
+ou
+
+http://localhost:8080
 ```
 
 4. Em `URIs de redirecionamento autorizados`, adicione exatamente:
 
 ```text
 http://localhost:9999/JusTraduz/backend/public/index.php?rota=/auth/google/callback
+
+ou
+
+http://localhost:8080/JusTraduz/backend/public/index.php?rota=/auth/google/callback
 ```
 
 5. No arquivo `backend/.env`, configure:
@@ -43,13 +51,19 @@ http://localhost:9999/JusTraduz/backend/public/index.php?rota=/auth/google/callb
 ```env
 GOOGLE_CLIENT_ID=seu_client_id
 GOOGLE_CLIENT_SECRET=seu_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:9999/JusTraduz/backend/public/index.php?rota=/auth/google/callback
+GOOGLE_REDIRECT_URI=http://localhost:9999/JusTraduz/ backend/public/index.php?rota=/auth/google/callback
+
+ou 
+
+http://localhost:8080/JusTraduz/ backend/public/index.php?rota=/auth/google/callback
 ```
 
 6. Rode o sistema pelo mesmo host e porta configurados no Google Cloud:
 
 ```text
-http://localhost:9999/JusTraduz/frontend/index.html
+http://localhost:9999/JusTraduz/frontend/index.html 
+
+http://localhost:8080/JusTraduz/frontend/index.html
 ```
 
 O `GOOGLE_REDIRECT_URI` precisa ser idêntico à URI cadastrada no Google Cloud. Se a porta, protocolo (`http`/`https`) ou caminho mudar, atualize os dois lugares.

@@ -23,6 +23,29 @@
   --font: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
 }
 
+:root[data-theme="dark"] {
+  --navy: #eef4ff;
+  --navy-2: #cbd8ea;
+  --teal: #2dd4bf;
+  --teal-2: #5eead4;
+  --mint: #123c3a;
+  --bg: #0f1724;
+  --surface: #182233;
+  --surface-2: #121b2a;
+  --surface-3: #223047;
+  --line: #2d3b52;
+  --line-strong: #40516c;
+  --text: #e8eef7;
+  --muted: #a9b5c7;
+  --danger: #f87171;
+  --warning: #fbbf24;
+  --success: #34d399;
+  --info: #93c5fd;
+  --shadow: 0 22px 48px rgba(0, 0, 0, .32);
+  --shadow-sm: 0 8px 22px rgba(0, 0, 0, .22);
+  color-scheme: dark;
+}
+
 * {
   box-sizing: border-box;
 }

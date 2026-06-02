@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const codeForm = document.querySelector('[data-password-code-form]');
   const resetForm = document.querySelector('[data-password-reset-form]');
   const codeInput = document.querySelector('#profile_password_code');
+  const codeHint = document.querySelector('[data-password-code-hint]');
+  const resetSubmit = document.querySelector('[data-password-reset-submit]');
 
   if (!modal || !openButton || !codeForm || !resetForm) return;
 
@@ -32,6 +34,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     resetForm.reset();
+  }
+
+  function setResetReady(ready) {
+    if (resetSubmit) resetSubmit.disabled = !ready;
+    if (codeHint) {
+      codeHint.textContent = ready
+        ? 'Código enviado. Informe os 6 dígitos recebidos e escolha a nova senha.'
+        : 'Envie o código para habilitar a atualização da senha.';
+      codeHint.classList.toggle('is-ready', ready);
+    }
+  }
+
+  function syncCsrfToken(token) {
+    if (!token) return;
+    document.querySelectorAll('input[name="_csrf"]').forEach((input) => {
+      input.value = token;
+    });
   }
 
   async function postForm(form) {
@@ -66,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const data = await postForm(form);
       showMessage(data.message, 'success');
+      syncCsrfToken(data.csrf);
       onSuccess?.();
     } catch (error) {
       showMessage(error.message, 'error');
@@ -78,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   openButton.addEventListener('click', () => setOpen(true));
+  setResetReady(false);
 
   closeButtons.forEach((button) => {
     button.addEventListener('click', () => setOpen(false));
@@ -98,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
   codeForm.addEventListener('submit', (event) => {
     event.preventDefault();
     handleSubmit(codeForm, 'Enviando código...', () => {
+      setResetReady(true);
       codeInput?.focus();
     });
   });
@@ -106,6 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     event.preventDefault();
     handleSubmit(resetForm, 'Validando código...', () => {
       resetForm.reset();
+      setResetReady(false);
       setTimeout(() => setOpen(false), 1100);
     });
   });

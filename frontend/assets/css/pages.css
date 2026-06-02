@@ -170,7 +170,8 @@
   min-height: 190px;
 }
 
-.steps {
+.steps,
+.flow-strip {
   counter-reset: step;
 }
 
@@ -455,6 +456,17 @@
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
+}
+
+.profile-password-step {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.profile-password-step.is-ready {
+  color: var(--teal-2);
 }
 
 body.has-modal-open {

@@ -719,7 +719,11 @@ class AuthController extends BaseController
         CsrfMiddleware::generateToken();
 
         $this->audit->log('profile.password_reset', 'user', (int) $reset['user_id'], ['email' => $reset['email']]);
-        $this->response->json(['success' => true, 'message' => 'Senha atualizada com sucesso.']);
+        $this->response->json([
+            'success' => true,
+            'message' => 'Senha atualizada com sucesso.',
+            'csrf' => CsrfMiddleware::token(),
+        ]);
     }
 
     private function sendPasswordResetCode(string $email, string $frontUrl): void

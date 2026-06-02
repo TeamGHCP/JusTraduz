@@ -13,7 +13,7 @@ $photoUrl = !empty($user['foto_perfil']) ? '../' . ltrim((string) $user['foto_pe
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Perfil | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
 </head>
 <body>
   <div class="app-shell">
@@ -78,11 +78,12 @@ $photoUrl = !empty($user['foto_perfil']) ? '../' . ltrim((string) $user['foto_pe
 
           <form class="auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/profile/password-code')) ?>" method="post" data-password-code-form>
             <?= csrf_input() ?>
-            <button class="btn btn-primary" type="submit"><?= icon_svg('mail') ?> Enviar código</button>
+            <button class="btn btn-primary btn-block" type="submit"><?= icon_svg('mail') ?> Enviar código</button>
           </form>
 
           <form class="auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/profile/password-reset')) ?>" method="post" data-password-reset-form>
             <?= csrf_input() ?>
+            <p class="profile-password-step" data-password-code-hint>Envie o código para habilitar a atualização da senha.</p>
             <div class="field">
               <label for="profile_password_code">Código recebido</label>
               <input class="input" id="profile_password_code" name="codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
@@ -98,7 +99,7 @@ $photoUrl = !empty($user['foto_perfil']) ? '../' . ltrim((string) $user['foto_pe
               </div>
             </div>
             <div class="form-actions">
-              <button class="btn btn-primary" type="submit"><?= icon_svg('lock') ?> Atualizar senha</button>
+              <button class="btn btn-primary" type="submit" data-password-reset-submit disabled><?= icon_svg('lock') ?> Atualizar senha</button>
               <button class="btn btn-outline" type="button" data-password-modal-close>Cancelar</button>
             </div>
           </form>
