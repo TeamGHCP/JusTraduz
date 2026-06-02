@@ -33,6 +33,19 @@ if ($caseId && !in_array($caseId, $allowedCaseIds, true)) {
 }
 
 $messages = $caseId ? fetch_all($pdo, 'SELECT m.*, u.nome FROM messages m INNER JOIN users u ON u.id = m.sender_id WHERE m.case_id = ? ORDER BY m.created_at ASC', [$caseId]) : [];
+
+function chat_file_size(?int $bytes): string
+{
+    if (!$bytes || $bytes <= 0) {
+        return '';
+    }
+
+    if ($bytes >= 1024 * 1024) {
+        return number_format($bytes / (1024 * 1024), 1, ',', '.') . ' MB';
+    }
+
+    return number_format($bytes / 1024, 1, ',', '.') . ' KB';
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -71,15 +84,38 @@ $messages = $caseId ? fetch_all($pdo, 'SELECT m.*, u.nome FROM messages m INNER 
                 <?php foreach ($messages as $message): ?>
                   <div class="message <?= (int) $message['sender_id'] === $userId ? 'out' : '' ?>">
                     <strong><?= e($message['nome']) ?></strong><br>
-                    <?= nl2br(e($message['mensagem'])) ?>
+                    <?php if ((string) ($message['mensagem'] ?? '') !== ''): ?>
+                      <?= nl2br(e($message['mensagem'])) ?>
+                    <?php endif; ?>
+                    <?php if (!empty($message['attachment_path'])): ?>
+                      <?php
+                        $attachmentUrl = app_url('/backend/public/index.php?rota=/messages/attachment&id=' . (int) $message['id']);
+                        $attachmentSize = chat_file_size(isset($message['attachment_size']) ? (int) $message['attachment_size'] : null);
+                      ?>
+                      <a class="message-attachment" href="<?= e($attachmentUrl) ?>" target="_blank" rel="noopener">
+                        <?= icon_svg('paperclip') ?>
+                        <span>
+                          <strong><?= e($message['attachment_original_name'] ?? 'Anexo') ?></strong>
+                          <?php if ($attachmentSize !== ''): ?><small><?= e($attachmentSize) ?></small><?php endif; ?>
+                        </span>
+                      </a>
+                    <?php endif; ?>
                   </div>
                 <?php endforeach; ?>
               <?php endif; ?>
             </div>
-            <form class="chat-compose" action="<?= e(app_url('/backend/public/index.php?rota=/messages/send')) ?>" method="post" data-chat-form>
+            <form class="chat-compose" action="<?= e(app_url('/backend/public/index.php?rota=/messages/send')) ?>" method="post" enctype="multipart/form-data" data-chat-form>
               <?= csrf_input() ?>
               <input type="hidden" name="case_id" value="<?= $caseId ?>">
-              <input class="input" type="text" name="mensagem" placeholder="Digite sua mensagem" required data-chat-input>
+              <label class="btn btn-outline chat-attach-btn" title="Anexar arquivo">
+                <?= icon_svg('paperclip') ?>
+                <span>Anexar</span>
+                <input type="file" name="anexo" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx" data-chat-file>
+              </label>
+              <div class="chat-input-stack">
+                <input class="input" type="text" name="mensagem" placeholder="Digite sua mensagem" data-chat-input>
+                <span class="chat-file-name" data-chat-file-name></span>
+              </div>
               <button class="btn btn-primary" type="submit"><?= icon_svg('mail') ?> Enviar</button>
             </form>
           </div>

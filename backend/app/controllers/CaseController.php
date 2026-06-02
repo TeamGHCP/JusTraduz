@@ -6,6 +6,19 @@ require_once dirname(__DIR__) . '/services/NotificationService.php';
 
 class CaseController extends BaseController
 {
+    private const MESSAGE_ATTACHMENT_MAX_SIZE = 25 * 1024 * 1024;
+    private const MESSAGE_ATTACHMENT_ALLOWED_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'txt', 'doc', 'docx'];
+    private const MESSAGE_ATTACHMENT_ALLOWED_MIMES = [
+        'application/pdf',
+        'image/png',
+        'image/jpeg',
+        'image/webp',
+        'text/plain',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/zip',
+    ];
+
     private NotificationService $notifications;
     private AuditService $audit;
 
@@ -218,8 +231,10 @@ class CaseController extends BaseController
 
         $caseId = (int) $this->request->post('case_id', 0);
         $message = trim((string) $this->request->post('mensagem', ''));
+        $file = $_FILES['anexo'] ?? null;
+        $hasAttachment = is_array($file) && (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE);
 
-        if ($caseId <= 0 || !$message) {
+        if ($caseId <= 0 || ($message === '' && !$hasAttachment)) {
             $this->response->redirect(app_url('/frontend/chat.php?erro=' . urlencode('Mensagem inválida.')));
         }
 
@@ -240,17 +255,90 @@ class CaseController extends BaseController
             $this->response->redirect(app_url('/frontend/chat.php?erro=' . urlencode('Você não tem acesso a este caso.')));
         }
 
-        $stmt = $this->pdo->prepare('INSERT INTO messages (case_id, sender_id, mensagem) VALUES (?, ?, ?)');
-        $stmt->execute([$caseId, $userId, $message]);
+        $attachment = $hasAttachment ? $this->storeMessageAttachment($caseId, $userId, $file) : null;
+
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO messages (case_id, sender_id, mensagem, attachment_original_name, attachment_path, attachment_mime, attachment_size)
+             VALUES (?, ?, ?, ?, ?, ?, ?)'
+        );
+        $stmt->execute([
+            $caseId,
+            $userId,
+            $message,
+            $attachment['original_name'] ?? null,
+            $attachment['path'] ?? null,
+            $attachment['mime'] ?? null,
+            $attachment['size'] ?? null,
+        ]);
+        $messageId = (int) $this->pdo->lastInsertId();
 
         $case = $this->caseById($caseId);
         if ($case) {
             $recipients = array_diff($this->notifications->caseParticipantIds($caseId), [$userId]);
-            $this->notifications->notifyMany($recipients, 'Nova mensagem no caso: ' . (string) $case['titulo']);
+            $notificationText = $attachment
+                ? 'Nova mensagem com anexo no caso: ' . (string) $case['titulo']
+                : 'Nova mensagem no caso: ' . (string) $case['titulo'];
+            $this->notifications->notifyMany($recipients, $notificationText);
         }
-        $this->audit->log('message.send', 'case', $caseId, ['sender_id' => $userId]);
+        $this->audit->log('message.send', 'case', $caseId, [
+            'sender_id' => $userId,
+            'message_id' => $messageId,
+            'has_attachment' => (bool) $attachment,
+            'attachment_name' => $attachment['original_name'] ?? null,
+        ]);
 
         $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId));
+    }
+
+    public function downloadAttachment(): void
+    {
+        $this->startSession();
+
+        if (empty($_SESSION['logado'])) {
+            http_response_code(401);
+            echo 'Faca login para acessar este anexo.';
+            return;
+        }
+
+        $messageId = (int) $this->request->get('id', 0);
+        if ($messageId <= 0) {
+            http_response_code(400);
+            echo 'Anexo invalido.';
+            return;
+        }
+
+        $message = $this->messageById($messageId);
+        $userId = (int) ($_SESSION['id'] ?? 0);
+        $type = (string) ($_SESSION['tipo'] ?? '');
+
+        if (
+            !$message
+            || empty($message['attachment_path'])
+            || !$this->canAccessCaseId((int) $message['case_id'], $userId, $type)
+        ) {
+            http_response_code(404);
+            echo 'Anexo nao encontrado ou indisponivel para seu perfil.';
+            return;
+        }
+
+        $absolutePath = $this->messageAttachmentPath($message);
+        if ($absolutePath === null || !is_file($absolutePath) || !is_readable($absolutePath)) {
+            http_response_code(404);
+            echo 'Arquivo nao encontrado.';
+            return;
+        }
+
+        $mime = (string) ($message['attachment_mime'] ?: (mime_content_type($absolutePath) ?: 'application/octet-stream'));
+        $filename = $this->safeAttachmentName((string) ($message['attachment_original_name'] ?? ('anexo-' . $messageId)));
+        $disposition = $this->request->get('download', '') === '1' ? 'attachment' : 'inline';
+
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: private, no-store, max-age=0');
+        header('Content-Type: ' . $mime);
+        header('Content-Length: ' . (string) filesize($absolutePath));
+        header('Content-Disposition: ' . $disposition . '; filename="' . addcslashes($filename, "\\\"") . '"');
+
+        readfile($absolutePath);
     }
 
     private function caseById(int $caseId): ?array
@@ -260,6 +348,15 @@ class CaseController extends BaseController
         $case = $stmt->fetch();
 
         return $case ?: null;
+    }
+
+    private function messageById(int $messageId): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM messages WHERE id = ?');
+        $stmt->execute([$messageId]);
+        $message = $stmt->fetch();
+
+        return $message ?: null;
     }
 
     private function taskById(int $taskId): ?array
@@ -287,5 +384,83 @@ class CaseController extends BaseController
             'cliente' => (int) ($case['cliente_id'] ?? 0) === $userId,
             default => false,
         };
+    }
+
+    private function canAccessCaseId(int $caseId, int $userId, string $type): bool
+    {
+        if ($type === 'admin') {
+            $stmt = $this->pdo->prepare('SELECT id FROM cases WHERE id = ?');
+            $stmt->execute([$caseId]);
+        } else {
+            $stmt = $this->pdo->prepare(
+                'SELECT id FROM cases WHERE id = ? AND (cliente_id = ? OR advogado_id = ?)'
+            );
+            $stmt->execute([$caseId, $userId, $userId]);
+        }
+
+        return (bool) $stmt->fetch();
+    }
+
+    private function storeMessageAttachment(int $caseId, int $userId, array $file): array
+    {
+        $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($error !== UPLOAD_ERR_OK) {
+            $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Anexo invalido ou nao enviado.')));
+        }
+
+        $size = (int) ($file['size'] ?? 0);
+        if ($size <= 0 || $size > self::MESSAGE_ATTACHMENT_MAX_SIZE) {
+            $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('O anexo deve ter no maximo 25 MB.')));
+        }
+
+        $originalName = (string) ($file['name'] ?? 'anexo');
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $tmpName = (string) ($file['tmp_name'] ?? '');
+        $mime = $tmpName !== '' && is_file($tmpName) ? (mime_content_type($tmpName) ?: '') : '';
+
+        if (!in_array($extension, self::MESSAGE_ATTACHMENT_ALLOWED_EXTENSIONS, true) || !in_array($mime, self::MESSAGE_ATTACHMENT_ALLOWED_MIMES, true)) {
+            $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Formato de anexo nao permitido.')));
+        }
+
+        $storageDir = dirname(__DIR__, 2) . '/storage/message-attachments/' . $caseId;
+        if (!is_dir($storageDir)) {
+            mkdir($storageDir, 0775, true);
+        }
+
+        $safeName = bin2hex(random_bytes(12)) . '.' . $extension;
+        $destination = $storageDir . '/' . $safeName;
+
+        if (!move_uploaded_file($tmpName, $destination)) {
+            $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Nao foi possivel salvar o anexo.')));
+        }
+
+        return [
+            'original_name' => $this->safeAttachmentName($originalName),
+            'path' => 'backend/storage/message-attachments/' . $caseId . '/' . $safeName,
+            'mime' => $mime,
+            'size' => $size,
+        ];
+    }
+
+    private function messageAttachmentPath(array $message): ?string
+    {
+        $projectRoot = dirname(__DIR__, 3);
+        $storageRoot = realpath($projectRoot . '/backend/storage/message-attachments');
+        $relativePath = ltrim(str_replace('\\', '/', (string) ($message['attachment_path'] ?? '')), '/');
+        $absolutePath = realpath($projectRoot . '/' . $relativePath);
+        $storageRoot = $storageRoot ? rtrim($storageRoot, "\\/") . DIRECTORY_SEPARATOR : false;
+        $absolutePrefix = $absolutePath ? rtrim(dirname($absolutePath), "\\/") . DIRECTORY_SEPARATOR : false;
+
+        if (!$storageRoot || !$absolutePath || !$absolutePrefix || !str_starts_with($absolutePrefix, $storageRoot)) {
+            return null;
+        }
+
+        return $absolutePath;
+    }
+
+    private function safeAttachmentName(string $filename): string
+    {
+        $filename = trim(preg_replace('/[^\w.\- ]+/u', '_', $filename) ?? '');
+        return $filename !== '' ? $filename : 'anexo';
     }
 }

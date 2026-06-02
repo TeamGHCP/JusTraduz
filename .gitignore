@@ -13,6 +13,8 @@ backend/storage/documents/*
 !backend/storage/documents/demo/*.png
 !backend/storage/documents/.htaccess
 backend/storage/profile_photos/
+backend/storage/message-attachments/*
+!backend/storage/message-attachments/.htaccess
 
 # Sistema operacional
 .DS_Store

@@ -89,6 +89,10 @@ CREATE TABLE IF NOT EXISTS messages (
     case_id INT NOT NULL,
     sender_id INT NOT NULL,
     mensagem TEXT NOT NULL,
+    attachment_original_name VARCHAR(255) NULL,
+    attachment_path VARCHAR(255) NULL,
+    attachment_mime VARCHAR(120) NULL,
+    attachment_size INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE

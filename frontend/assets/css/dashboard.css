@@ -508,10 +508,41 @@
 .chat-compose {
   display: flex;
   flex: 0 0 auto;
+  align-items: flex-start;
   gap: 10px;
   border-top: 1px solid var(--line);
   border-bottom: 0;
   background: var(--surface);
+}
+
+.chat-input-stack {
+  display: grid;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 5px;
+}
+
+.chat-attach-btn {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.chat-attach-btn input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chat-file-name {
+  min-height: 16px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chat-messages {
@@ -540,6 +571,50 @@
   background: var(--teal);
   border-color: var(--teal);
   color: #fff;
+}
+
+.message-attachment {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 9px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--navy);
+}
+
+.message-attachment span {
+  min-width: 0;
+}
+
+.message-attachment strong,
+.message-attachment small {
+  display: block;
+}
+
+.message-attachment strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: inherit;
+}
+
+.message-attachment small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.message.out .message-attachment {
+  border-color: rgba(255, 255, 255, .35);
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+}
+
+.message.out .message-attachment small {
+  color: rgba(255, 255, 255, .78);
 }
 
 .admin-shell .sidebar {

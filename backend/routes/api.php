@@ -30,6 +30,7 @@ $routes = [
     ['POST', '/tasks/create', 'CaseController', 'createTask'],
     ['POST', '/tasks/update', 'CaseController', 'updateTask'],
     ['POST', '/messages/send', 'CaseController', 'sendMessage'],
+    ['GET', '/messages/attachment', 'CaseController', 'downloadAttachment'],
 
     ['POST', '/notifications/read', 'NotificationController', 'markRead'],
 

@@ -228,6 +228,10 @@
     width: 100%;
   }
 
+  .chat-input-stack {
+    width: 100%;
+  }
+
   .product-preview-main,
   .product-preview-sidebar {
     padding: 16px;
