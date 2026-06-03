@@ -1,6 +1,7 @@
 
 # Seed — contém credenciais
 seed.php
+database/seed_admin.local.sql
 .env
 .env.*
 !.env.example

@@ -84,3 +84,18 @@ Get-Content database\seed_demo.sql -Raw | & C:\xampp\mysql\bin\mysql.exe -h loca
 O seed é resetável e recria apenas contas com e-mail `@justraduz.demo`.
 
 Credenciais e roteiro ficam em `docs/CREDENCIAIS_DEMO.md` e `docs/DEMO.md`.
+
+## Admin local
+
+Para criar ou atualizar o admin local, importe:
+
+```powershell
+Get-Content database\seed_admin.local.sql -Raw | & C:\xampp\mysql\bin\mysql.exe -h localhost -u root justraduz
+```
+
+Credenciais locais:
+
+```text
+E-mail: admin@justraduz.local
+Senha: Admin@2026!
+```

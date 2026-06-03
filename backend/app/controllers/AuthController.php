@@ -25,10 +25,10 @@ class AuthController extends BaseController
     public function registrar(): void
     {
         $nome   = trim((string) $this->request->post('nome', ''));
-        $email  = trim((string) $this->request->post('email', ''));
+        $email  = $this->normalizeEmail((string) $this->request->post('email', ''));
         $telefone = trim((string) $this->request->post('telefone', ''));
-        $senha  = $this->request->post('senha', '');
-        $senha2 = $this->request->post('senha2', '');
+        $senha  = trim((string) $this->request->post('senha', ''));
+        $senha2 = trim((string) $this->request->post('senha2', ''));
         $tipo   = (string) $this->request->post('tipo', 'cliente');
         $oab    = preg_replace('/\D+/', '', (string) $this->request->post('inscricao', ''));
         $oab_uf = strtoupper(trim((string) $this->request->post('oab_uf', '')));
@@ -161,8 +161,8 @@ class AuthController extends BaseController
     {
         $this->startSession();
 
-        $email = $this->request->post('email', '');
-        $senha = $this->request->post('senha', '');
+        $email = $this->normalizeEmail((string) $this->request->post('email', ''));
+        $senha = trim((string) $this->request->post('senha', ''));
 
         $frontUrl = APP_URL . '/frontend/login.html';
 
@@ -313,21 +313,7 @@ class AuthController extends BaseController
         }
 
         // Destroy session
-        session_unset();
-        session_destroy();
-
-        // Expire common session cookies (PHPSESSID and legacy 'session')
-        $domain = $_SERVER['HTTP_HOST'] ?? '';
-        if (is_string($domain) && strpos($domain, ':') !== false) {
-            $domain = explode(':', $domain, 2)[0];
-        }
-
-        setcookie('PHPSESSID', '', time() - 3600, '/', '', false, true);
-        setcookie('session', '', time() - 3600, '/', '', false, true);
-        if ($domain !== '') {
-            setcookie('PHPSESSID', '', time() - 3600, '/', $domain, false, true);
-            setcookie('session', '', time() - 3600, '/', $domain, false, true);
-        }
+        $this->destroySessionCookies();
 
         // If requested via fetch/ajax, return JSON. Otherwise redirect to login page.
         $isAjax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
@@ -348,8 +334,8 @@ class AuthController extends BaseController
     {
         $this->startSession();
 
-        $email = $this->request->post('email', '');
-        $senha = $this->request->post('senha', '');
+        $email = $this->normalizeEmail((string) $this->request->post('email', ''));
+        $senha = trim((string) $this->request->post('senha', ''));
 
         $frontUrl = APP_URL . '/frontend/admin/login-admin.html';
 
@@ -392,11 +378,11 @@ class AuthController extends BaseController
         }
 
         $nome = trim((string) $this->request->post('nome', ''));
-        $email = trim((string) $this->request->post('email', ''));
+        $email = $this->normalizeEmail((string) $this->request->post('email', ''));
         $telefone = trim((string) $this->request->post('telefone', ''));
-        $senhaAtual = (string) $this->request->post('senha_atual', '');
-        $novaSenha = (string) $this->request->post('nova_senha', '');
-        $novaSenha2 = (string) $this->request->post('nova_senha2', '');
+        $senhaAtual = trim((string) $this->request->post('senha_atual', ''));
+        $novaSenha = trim((string) $this->request->post('nova_senha', ''));
+        $novaSenha2 = trim((string) $this->request->post('nova_senha2', ''));
         $passwordUpdated = false;
 
         if (!$nome || !$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -427,8 +413,7 @@ class AuthController extends BaseController
                 $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Senha atual incorreta.'));
             }
 
-            $stmt = $this->pdo->prepare('UPDATE users SET senha = ? WHERE id = ?');
-            $stmt->execute([password_hash($novaSenha, PASSWORD_DEFAULT), (int) $_SESSION['id']]);
+            $this->updateUserPassword((int) $_SESSION['id'], $novaSenha);
             $passwordUpdated = true;
         }
 
@@ -534,7 +519,7 @@ class AuthController extends BaseController
     public function resetPassword(): void
     {
         $action = (string) $this->request->post('acao', 'confirm_code');
-        $email = trim((string) $this->request->post('email', ''));
+        $email = $this->normalizeEmail((string) $this->request->post('email', ''));
         $frontUrl = APP_URL . '/frontend/recuperar-senha.html';
 
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -547,8 +532,8 @@ class AuthController extends BaseController
         }
 
         $codigo = preg_replace('/\D+/', '', (string) $this->request->post('codigo', '')) ?? '';
-        $senha = (string) $this->request->post('senha', '');
-        $senha2 = (string) $this->request->post('senha2', '');
+        $senha = trim((string) $this->request->post('senha', ''));
+        $senha2 = trim((string) $this->request->post('senha2', ''));
 
         if (strlen($codigo) !== 6) {
             $this->response->redirectWithError($frontUrl, 'Informe o código de 6 dígitos enviado por e-mail.');
@@ -592,8 +577,7 @@ class AuthController extends BaseController
 
         $this->pdo->beginTransaction();
         try {
-            $stmt = $this->pdo->prepare('UPDATE users SET senha = ? WHERE id = ?');
-            $stmt->execute([password_hash($senha, PASSWORD_DEFAULT), (int) $reset['user_id']]);
+            $this->updateUserPassword((int) $reset['user_id'], $senha);
 
             $stmt = $this->pdo->prepare('UPDATE password_reset_codes SET used_at = NOW() WHERE id = ?');
             $stmt->execute([(int) $reset['reset_id']]);
@@ -651,8 +635,8 @@ class AuthController extends BaseController
         }
 
         $codigo = preg_replace('/\D+/', '', (string) $this->request->post('codigo', '')) ?? '';
-        $senha = (string) $this->request->post('senha', '');
-        $senha2 = (string) $this->request->post('senha2', '');
+        $senha = trim((string) $this->request->post('senha', ''));
+        $senha2 = trim((string) $this->request->post('senha2', ''));
 
         if (strlen($codigo) !== 6) {
             $this->response->json(['success' => false, 'message' => 'Informe o código de 6 dígitos enviado por e-mail.'], 422);
@@ -702,8 +686,7 @@ class AuthController extends BaseController
 
         $this->pdo->beginTransaction();
         try {
-            $stmt = $this->pdo->prepare('UPDATE users SET senha = ? WHERE id = ?');
-            $stmt->execute([password_hash($senha, PASSWORD_DEFAULT), (int) $reset['user_id']]);
+            $this->updateUserPassword((int) $reset['user_id'], $senha);
 
             $stmt = $this->pdo->prepare('UPDATE password_reset_codes SET used_at = NOW() WHERE id = ?');
             $stmt->execute([(int) $reset['reset_id']]);
@@ -714,15 +697,12 @@ class AuthController extends BaseController
             throw $e;
         }
 
-        session_regenerate_id(true);
-        unset($_SESSION['_csrf_token']);
-        CsrfMiddleware::generateToken();
-
         $this->audit->log('profile.password_reset', 'user', (int) $reset['user_id'], ['email' => $reset['email']]);
+        $this->destroySessionCookies();
         $this->response->json([
             'success' => true,
-            'message' => 'Senha atualizada com sucesso.',
-            'csrf' => CsrfMiddleware::token(),
+            'message' => 'Senha atualizada com sucesso. Entre novamente com a nova senha.',
+            'redirect' => APP_URL . '/frontend/login.html?sucesso=' . urlencode('Senha atualizada. Entre com a nova senha.'),
         ]);
     }
 
@@ -793,6 +773,39 @@ class AuthController extends BaseController
         $stmt->execute([$userId, $email]);
 
         return (int) $stmt->fetchColumn() >= 3;
+    }
+
+    private function normalizeEmail(string $email): string
+    {
+        return strtolower(trim($email));
+    }
+
+    private function updateUserPassword(int $userId, string $plainPassword): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE users SET senha = ? WHERE id = ? AND status = 'ativo'");
+        $stmt->execute([password_hash($plainPassword, PASSWORD_DEFAULT), $userId]);
+
+        if ($stmt->rowCount() !== 1) {
+            throw new RuntimeException('Não foi possível atualizar a senha da conta ativa.');
+        }
+    }
+
+    private function destroySessionCookies(): void
+    {
+        session_unset();
+        session_destroy();
+
+        $domain = $_SERVER['HTTP_HOST'] ?? '';
+        if (is_string($domain) && strpos($domain, ':') !== false) {
+            $domain = explode(':', $domain, 2)[0];
+        }
+
+        setcookie('PHPSESSID', '', time() - 3600, '/', '', false, true);
+        setcookie('session', '', time() - 3600, '/', '', false, true);
+        if ($domain !== '') {
+            setcookie('PHPSESSID', '', time() - 3600, '/', $domain, false, true);
+            setcookie('session', '', time() - 3600, '/', $domain, false, true);
+        }
     }
 
     private function sendPasswordResetEmail(string $email, string $name, string $code): bool
@@ -951,8 +964,7 @@ class AuthController extends BaseController
         if ($userId > 0) {
             $this->audit->log('auth.logout', 'user', $userId);
         }
-        session_unset();
-        session_destroy();
+        $this->destroySessionCookies();
 
         $this->response->redirect(APP_URL . '/frontend/login.html');
     }

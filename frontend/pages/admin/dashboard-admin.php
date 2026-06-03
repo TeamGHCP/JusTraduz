@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
+require_once PROJECT_ROOT_PATH . '/backend/app/services/GeminiService.php';
 require_role(['admin']);
 
 function admin_percent(int $value, int $max): int
@@ -178,10 +179,10 @@ $recentAudit = fetch_all(
      LIMIT 6'
 );
 
-$geminiConfig = require dirname(__DIR__, 3) . '/backend/app/config/gemini.php';
+$geminiService = new GeminiService();
 $healthChecks = [
     ['label' => 'Banco de dados', 'status' => 'ok', 'detail' => 'Conexão ativa'],
-    ['label' => 'Gemini', 'status' => !empty($geminiConfig['GEMINI_API_KEY']) ? 'ok' : 'warning', 'detail' => !empty($geminiConfig['GEMINI_API_KEY']) ? 'Chave configurada' : 'Chave ausente'],
+    ['label' => 'Gemini', 'status' => $geminiService->isConfigured() ? 'ok' : 'warning', 'detail' => $geminiService->isConfigured() ? 'Chave configurada' : 'Chave ausente'],
     ['label' => 'Auditoria', 'status' => 'ok', 'detail' => $recentAudit ? 'Eventos registrados' : 'Sem eventos recentes'],
     ['label' => 'CNA/OAB', 'status' => $pendingProfessionalCount > 0 ? 'warning' : 'ok', 'detail' => $pendingProfessionalCount > 0 ? $pendingProfessionalCount . ' pendência(s)' : 'Sem fila pendente'],
 ];

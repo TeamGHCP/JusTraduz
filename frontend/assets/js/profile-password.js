@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await postForm(form);
       showMessage(data.message, 'success');
       syncCsrfToken(data.csrf);
-      onSuccess?.();
+      onSuccess?.(data);
     } catch (error) {
       showMessage(error.message, 'error');
     } finally {
@@ -126,9 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   resetForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    handleSubmit(resetForm, 'Validando código...', () => {
+    handleSubmit(resetForm, 'Validando código...', (data) => {
       resetForm.reset();
       setResetReady(false);
+      if (data.redirect) {
+        setTimeout(() => {
+          window.location.href = data.redirect;
+        }, 900);
+        return;
+      }
       setTimeout(() => setOpen(false), 1100);
     });
   });
