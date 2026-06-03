@@ -7,100 +7,10 @@ USE justraduz;
 
 SET @demo_password_hash = '$2y$10$hRRLMod1YrVw5/JlfV2Oh.FRaeW0iADWX4ioRcoRYy3OzrSvarWI.';
 
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_users;
-CREATE TEMPORARY TABLE tmp_demo_users (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_users
-SELECT id FROM users
-WHERE email IN (
-    'cliente@justraduz.demo',
-    'cliente2@justraduz.demo',
-    'advogado@justraduz.demo',
-    'estagiario@justraduz.demo',
-    'pendente@justraduz.demo'
-);
 
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_cases;
-CREATE TEMPORARY TABLE tmp_demo_cases (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_cases
-SELECT id FROM cases
-WHERE cliente_id IN (SELECT id FROM tmp_demo_users)
-   OR advogado_id IN (SELECT id FROM tmp_demo_users);
+-- Limpeza demo removida: o banco/tabelas serão recriados antes de rodar este seed.
 
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_documents;
-CREATE TEMPORARY TABLE tmp_demo_documents (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_documents
-SELECT id FROM documents
-WHERE user_id IN (SELECT id FROM tmp_demo_users)
-   OR caminho LIKE 'backend/storage/documents/demo/%';
 
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_slots;
-CREATE TEMPORARY TABLE tmp_demo_slots (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_slots
-SELECT id FROM schedule_slots
-WHERE professional_id IN (SELECT id FROM tmp_demo_users);
-
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_appointments;
-CREATE TEMPORARY TABLE tmp_demo_appointments (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_appointments
-SELECT id FROM appointments
-WHERE client_id IN (SELECT id FROM tmp_demo_users)
-   OR case_id IN (SELECT id FROM tmp_demo_cases)
-   OR slot_id IN (SELECT id FROM tmp_demo_slots);
-
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_messages;
-CREATE TEMPORARY TABLE tmp_demo_messages (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_messages
-SELECT id FROM messages
-WHERE case_id IN (SELECT id FROM tmp_demo_cases)
-   OR sender_id IN (SELECT id FROM tmp_demo_users);
-
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_tasks;
-CREATE TEMPORARY TABLE tmp_demo_tasks (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_tasks
-SELECT id FROM tasks
-WHERE case_id IN (SELECT id FROM tmp_demo_cases);
-
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_notifications;
-CREATE TEMPORARY TABLE tmp_demo_notifications (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_notifications
-SELECT id FROM notifications
-WHERE user_id IN (SELECT id FROM tmp_demo_users);
-
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_ai_results;
-CREATE TEMPORARY TABLE tmp_demo_ai_results (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_ai_results
-SELECT id FROM ai_results
-WHERE document_id IN (SELECT id FROM tmp_demo_documents);
-
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_audit;
-CREATE TEMPORARY TABLE tmp_demo_audit (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_audit
-SELECT id FROM audit_logs
-WHERE user_id IN (SELECT id FROM tmp_demo_users)
-   OR (entity_type = 'user' AND entity_id IN (SELECT id FROM tmp_demo_users))
-   OR (entity_type = 'document' AND entity_id IN (SELECT id FROM tmp_demo_documents))
-   OR (entity_type = 'case' AND entity_id IN (SELECT id FROM tmp_demo_cases))
-   OR (entity_type = 'schedule_slot' AND entity_id IN (SELECT id FROM tmp_demo_slots))
-   OR (entity_type = 'appointment' AND entity_id IN (SELECT id FROM tmp_demo_appointments));
-
-DROP TEMPORARY TABLE IF EXISTS tmp_demo_cna_logs;
-CREATE TEMPORARY TABLE tmp_demo_cna_logs (id INT PRIMARY KEY);
-INSERT INTO tmp_demo_cna_logs
-SELECT id FROM cna_validacao_logs
-WHERE profissional_id IN (SELECT id FROM tmp_demo_users)
-   OR admin_id IN (SELECT id FROM tmp_demo_users);
-
-DELETE target FROM audit_logs AS target INNER JOIN tmp_demo_audit AS tmp ON target.id = tmp.id;
-DELETE target FROM cna_validacao_logs AS target INNER JOIN tmp_demo_cna_logs AS tmp ON target.id = tmp.id;
-DELETE target FROM notifications AS target INNER JOIN tmp_demo_notifications AS tmp ON target.id = tmp.id;
-DELETE target FROM messages AS target INNER JOIN tmp_demo_messages AS tmp ON target.id = tmp.id;
-DELETE target FROM tasks AS target INNER JOIN tmp_demo_tasks AS tmp ON target.id = tmp.id;
-DELETE target FROM appointments AS target INNER JOIN tmp_demo_appointments AS tmp ON target.id = tmp.id;
-DELETE target FROM ai_results AS target INNER JOIN tmp_demo_ai_results AS tmp ON target.id = tmp.id;
-DELETE target FROM documents AS target INNER JOIN tmp_demo_documents AS tmp ON target.id = tmp.id;
-DELETE target FROM schedule_slots AS target INNER JOIN tmp_demo_slots AS tmp ON target.id = tmp.id;
-DELETE target FROM cases AS target INNER JOIN tmp_demo_cases AS tmp ON target.id = tmp.id;
-DELETE target FROM users AS target INNER JOIN tmp_demo_users AS tmp ON target.id = tmp.id;
 
 INSERT INTO users
     (nome, email, senha, tipo, telefone, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna, cna_validado_em, cna_origem, cna_tentativas, status, created_at)
