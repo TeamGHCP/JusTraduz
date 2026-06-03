@@ -12,7 +12,6 @@ CREATE TEMPORARY TABLE tmp_demo_users (id INT PRIMARY KEY);
 INSERT INTO tmp_demo_users
 SELECT id FROM users
 WHERE email IN (
-    'admin@justraduz.demo',
     'cliente@justraduz.demo',
     'cliente2@justraduz.demo',
     'advogado@justraduz.demo',
@@ -91,29 +90,26 @@ SELECT id FROM cna_validacao_logs
 WHERE profissional_id IN (SELECT id FROM tmp_demo_users)
    OR admin_id IN (SELECT id FROM tmp_demo_users);
 
-DELETE FROM audit_logs WHERE id IN (SELECT id FROM tmp_demo_audit);
-DELETE FROM cna_validacao_logs WHERE id IN (SELECT id FROM tmp_demo_cna_logs);
-DELETE FROM notifications WHERE id IN (SELECT id FROM tmp_demo_notifications);
-DELETE FROM messages WHERE id IN (SELECT id FROM tmp_demo_messages);
-DELETE FROM tasks WHERE id IN (SELECT id FROM tmp_demo_tasks);
-DELETE FROM appointments WHERE id IN (SELECT id FROM tmp_demo_appointments);
-DELETE FROM ai_results WHERE id IN (SELECT id FROM tmp_demo_ai_results);
-DELETE FROM documents WHERE id IN (SELECT id FROM tmp_demo_documents);
-DELETE FROM schedule_slots WHERE id IN (SELECT id FROM tmp_demo_slots);
-DELETE FROM cases WHERE id IN (SELECT id FROM tmp_demo_cases);
-DELETE FROM users WHERE id IN (SELECT id FROM tmp_demo_users);
+DELETE target FROM audit_logs AS target INNER JOIN tmp_demo_audit AS tmp ON target.id = tmp.id;
+DELETE target FROM cna_validacao_logs AS target INNER JOIN tmp_demo_cna_logs AS tmp ON target.id = tmp.id;
+DELETE target FROM notifications AS target INNER JOIN tmp_demo_notifications AS tmp ON target.id = tmp.id;
+DELETE target FROM messages AS target INNER JOIN tmp_demo_messages AS tmp ON target.id = tmp.id;
+DELETE target FROM tasks AS target INNER JOIN tmp_demo_tasks AS tmp ON target.id = tmp.id;
+DELETE target FROM appointments AS target INNER JOIN tmp_demo_appointments AS tmp ON target.id = tmp.id;
+DELETE target FROM ai_results AS target INNER JOIN tmp_demo_ai_results AS tmp ON target.id = tmp.id;
+DELETE target FROM documents AS target INNER JOIN tmp_demo_documents AS tmp ON target.id = tmp.id;
+DELETE target FROM schedule_slots AS target INNER JOIN tmp_demo_slots AS tmp ON target.id = tmp.id;
+DELETE target FROM cases AS target INNER JOIN tmp_demo_cases AS tmp ON target.id = tmp.id;
+DELETE target FROM users AS target INNER JOIN tmp_demo_users AS tmp ON target.id = tmp.id;
 
 INSERT INTO users
     (nome, email, senha, tipo, telefone, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna, cna_validado_em, cna_origem, cna_tentativas, status, created_at)
-VALUES
-    ('Admin Demo', 'admin@justraduz.demo', @demo_password_hash, 'admin', '(11) 90000-0000', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
-    ('Carla Cliente Demo', 'cliente@justraduz.demo', @demo_password_hash, 'cliente', '(11) 91111-1111', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 10 DAY)),
+VALUES    ('Carla Cliente Demo', 'cliente@justraduz.demo', @demo_password_hash, 'cliente', '(11) 91111-1111', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 10 DAY)),
     ('Bruno Cliente Demo', 'cliente2@justraduz.demo', @demo_password_hash, 'cliente', '(21) 92222-2222', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 9 DAY)),
     ('Dra. Marina Costa', 'advogado@justraduz.demo', @demo_password_hash, 'advogado', '(31) 93333-3333', '123456', 'SP', 'Validado manualmente pela administracao.', 'demo-advogado-123456-sp', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 8 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 8 DAY)),
     ('Lucas Estagiario Demo', 'estagiario@justraduz.demo', @demo_password_hash, 'estagiario', '(41) 94444-4444', '654321', 'RJ', 'Validado manualmente pela administracao.', 'demo-estagiario-654321-rj', TRUE, 'estagiario', 'verificado', DATE_SUB(NOW(), INTERVAL 7 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 7 DAY)),
     ('Dr. Rafael Pendente', 'pendente@justraduz.demo', @demo_password_hash, 'advogado', '(51) 95555-5555', '778899', 'MG', 'Pendente: validacao automatica do CNA indisponivel', NULL, FALSE, 'advogado', 'pendente', NULL, 'fallback', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 2 DAY));
 
-SELECT id INTO @admin_id FROM users WHERE email = 'admin@justraduz.demo';
 SELECT id INTO @cliente_id FROM users WHERE email = 'cliente@justraduz.demo';
 SELECT id INTO @cliente2_id FROM users WHERE email = 'cliente2@justraduz.demo';
 SELECT id INTO @advogado_id FROM users WHERE email = 'advogado@justraduz.demo';
@@ -198,14 +194,13 @@ INSERT INTO notifications (user_id, mensagem, lida, created_at)
 VALUES
     (@cliente_id, 'Documento notificação-extrajudicial-demo.png analisado com IA.', FALSE, DATE_SUB(NOW(), INTERVAL 4 DAY)),
     (@cliente_id, 'Atendimento agendado com Dra. Marina Costa.', FALSE, DATE_SUB(NOW(), INTERVAL 12 HOUR)),
-    (@advogado_id, 'Novo caso de prioridade alta atribuido.', FALSE, DATE_SUB(NOW(), INTERVAL 3 DAY)),
-    (@admin_id, 'Profissional pendente aguardando validacao OAB/CNA.', FALSE, DATE_SUB(NOW(), INTERVAL 2 DAY));
+    (@advogado_id, 'Novo caso de prioridade alta atribuido.', FALSE, DATE_SUB(NOW(), INTERVAL 3 DAY));
 
 INSERT INTO cna_validacao_logs
     (profissional_id, admin_id, acao, status_anterior, status_novo, origem, mensagem, justificativa, created_at)
 VALUES
-    (@advogado_id, @admin_id, 'admin_approve', 'pendente', 'verificado', 'admin_manual', 'Validado manualmente pela administracao.', 'Seed demo para apresentacao.', DATE_SUB(NOW(), INTERVAL 8 DAY)),
-    (@estagiario_id, @admin_id, 'admin_approve', 'pendente', 'verificado', 'admin_manual', 'Validado manualmente pela administracao.', 'Seed demo para apresentacao.', DATE_SUB(NOW(), INTERVAL 7 DAY)),
+    (@advogado_id, NULL, 'validacao_demo', 'pendente', 'verificado', 'demo_seed', 'Validado automaticamente pelo seed demo.', 'Seed demo para apresentacao.', DATE_SUB(NOW(), INTERVAL 8 DAY)),
+    (@estagiario_id, NULL, 'validacao_demo', 'pendente', 'verificado', 'demo_seed', 'Validado automaticamente pelo seed demo.', 'Seed demo para apresentacao.', DATE_SUB(NOW(), INTERVAL 7 DAY)),
     (@pendente_id, NULL, 'cadastro', NULL, 'pendente', 'fallback', 'Pendente: validacao automatica do CNA indisponivel', NULL, DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 INSERT INTO audit_logs
@@ -214,10 +209,7 @@ VALUES
     (@cliente_id, 'document.upload', 'document', @doc1_id, JSON_OBJECT('nome_arquivo', 'notificacao-extrajudicial-demo.png', 'analysis_generated', true), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 4 DAY)),
     (@cliente_id, 'document.analyze', 'document', @doc1_id, JSON_OBJECT('analysis_generated', true, 'model', 'gemini-2.5-flash'), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 4 DAY)),
     (@cliente_id, 'case.create', 'case', @case1_id, JSON_OBJECT('prioridade', 'alta', 'advogado_id', @advogado_id), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 3 DAY)),
-    (@advogado_id, 'message.send', 'case', @case1_id, JSON_OBJECT('sender_id', @advogado_id), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 2 DAY)),
-    (@admin_id, 'admin.professional_oab_approve', 'user', @advogado_id, JSON_OBJECT('status_anterior', 'pendente', 'status_novo', 'verificado'), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 8 DAY)),
-    (@admin_id, 'admin.case_update', 'case', @case1_id, JSON_OBJECT('status', 'em_andamento', 'prioridade', 'alta', 'advogado_id', @advogado_id), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 3 DAY)),
-    (@cliente_id, 'schedule.appointment_booked', 'appointment', @appointment_id, JSON_OBJECT('case_id', @case1_id, 'professional_id', @advogado_id), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 12 HOUR)),
+    (@advogado_id, 'message.send', 'case', @case1_id, JSON_OBJECT('sender_id', @advogado_id), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 2 DAY)),    (@cliente_id, 'schedule.appointment_booked', 'appointment', @appointment_id, JSON_OBJECT('case_id', @case1_id, 'professional_id', @advogado_id), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 12 HOUR)),
     (NULL, 'auth.login_failed', 'user', NULL, JSON_OBJECT('email', 'tentativa@demo.local', 'reason', 'wrong_password'), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 2 HOUR));
 
 SELECT 'Seed demo aplicado. Senha das contas: Demo@2026!' AS resultado;
