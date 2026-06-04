@@ -263,4 +263,33 @@
     min-height: 420px;
     height: 420px;
   }
+
+  .attachment-modal {
+    padding: 10px;
+  }
+
+  .attachment-dialog {
+    height: calc(100vh - 20px);
+  }
+
+  .attachment-dialog-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .attachment-dialog-head h2 {
+    max-width: calc(100vw - 52px);
+  }
+
+  .attachment-dialog-actions {
+    width: 100%;
+  }
+
+  .attachment-dialog-actions .btn {
+    width: auto;
+  }
+
+  .attachment-preview {
+    padding: 8px;
+  }
 }

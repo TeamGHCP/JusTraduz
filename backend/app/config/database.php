@@ -37,7 +37,7 @@ if (!function_exists('database_connection')) {
         $dbname = getenv('DB_NAME') ?: ($env['DB_NAME'] ?? 'justraduz');
         $usuario = getenv('DB_USER') ?: ($env['DB_USER'] ?? 'root');
         $senha = getenv('DB_PASS') ?: ($env['DB_PASS'] ?? '');
-        $port = getenv('DB_PORT') ?: ($env['DB_PORT'] ?? '3307');
+        $port = getenv('DB_PORT') ?: ($env['DB_PORT'] ?? '3306');
 
         try {
             $connection = new PDO(
