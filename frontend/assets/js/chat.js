@@ -59,8 +59,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   messages.addEventListener("click", (event) => {
+    if (event.target.closest(".attachment-download")) return;
+
     const trigger = event.target.closest("[data-attachment-url]");
-    if (!trigger || trigger.disabled) return;
+    if (!trigger) return;
+    openAttachmentPreview(trigger);
+  });
+
+  messages.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+
+    const trigger = event.target.closest("[data-attachment-url]");
+    if (!trigger) return;
+
+    event.preventDefault();
     openAttachmentPreview(trigger);
   });
 

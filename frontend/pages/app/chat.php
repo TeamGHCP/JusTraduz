@@ -111,26 +111,22 @@ function chat_attachment_preview_type(?string $mime, ?string $filename): string
                         $attachmentSize = chat_file_size(isset($message['attachment_size']) ? (int) $message['attachment_size'] : null);
                         $previewType = chat_attachment_preview_type($message['attachment_mime'] ?? null, $attachmentName);
                       ?>
-                      <div class="message-attachment">
-                        <button
-                          class="attachment-preview-trigger"
-                          type="button"
+                      <div
+                        class="message-attachment <?= $previewType !== '' ? 'is-previewable' : '' ?>"
+                        <?= $previewType !== '' ? 'role="button" tabindex="0"' : '' ?>
+                        <?= $previewType !== '' ? 'aria-label="Visualizar anexo ' . e($attachmentName) . '"' : '' ?>
+                        <?php if ($previewType !== ''): ?>
                           data-attachment-url="<?= e($attachmentUrl) ?>"
                           data-attachment-name="<?= e($attachmentName) ?>"
                           data-attachment-type="<?= e($previewType) ?>"
-                          <?= $previewType === '' ? 'disabled' : '' ?>
-                          title="<?= $previewType === '' ? 'Preview indisponível para este formato' : 'Visualizar anexo' ?>"
-                        >
-                          <?= icon_svg($previewType === '' ? 'paperclip' : 'eye') ?>
-                        </button>
+                          title="Clique para visualizar"
+                        <?php endif; ?>
+                      >
+                        <?= icon_svg('paperclip') ?>
                         <span>
                           <strong><?= e($attachmentName) ?></strong>
                           <?php if ($attachmentSize !== ''): ?><small><?= e($attachmentSize) ?></small><?php endif; ?>
                         </span>
-                        <a class="attachment-download" href="<?= e($downloadUrl) ?>" title="Baixar anexo">
-                          <?= icon_svg('download') ?>
-                          <span>Baixar</span>
-                        </a>
                       </div>
                     <?php endif; ?>
                   </div>

@@ -585,6 +585,23 @@
   color: var(--navy);
 }
 
+.message-attachment.is-previewable {
+  cursor: pointer;
+  transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+.message-attachment.is-previewable:hover,
+.message-attachment.is-previewable:focus-visible {
+  border-color: var(--teal);
+  background: color-mix(in srgb, var(--surface) 82%, var(--mint));
+  box-shadow: 0 0 0 3px rgba(17, 138, 126, .12);
+  outline: 0;
+}
+
+.message-attachment.is-previewable:active {
+  transform: translateY(1px);
+}
+
 .message-attachment span {
   flex: 1 1 auto;
   min-width: 0;
@@ -608,7 +625,6 @@
   font-size: 12px;
 }
 
-.attachment-preview-trigger,
 .attachment-download {
   display: inline-flex;
   align-items: center;
@@ -625,14 +641,8 @@
   cursor: pointer;
 }
 
-.attachment-preview-trigger:hover,
 .attachment-download:hover {
   background: color-mix(in srgb, currentColor 10%, transparent);
-}
-
-.attachment-preview-trigger:disabled {
-  cursor: not-allowed;
-  opacity: .56;
 }
 
 .attachment-download {
@@ -650,6 +660,13 @@
   border-color: rgba(255, 255, 255, .35);
   background: rgba(255, 255, 255, .12);
   color: #fff;
+}
+
+.message.out .message-attachment.is-previewable:hover,
+.message.out .message-attachment.is-previewable:focus-visible {
+  border-color: rgba(255, 255, 255, .78);
+  background: rgba(255, 255, 255, .20);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .18);
 }
 
 .message.out .message-attachment small {
