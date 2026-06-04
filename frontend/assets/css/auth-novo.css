@@ -1,0 +1,273 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.auth-switch-page {
+  height: 100vh;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+  overflow: hidden;
+  background: #f4f8f8;
+}
+
+.auth-switch-page .auth-panel {
+  height: 100vh;
+  min-height: 100vh;
+  width: 50vw;
+  padding: 42px clamp(42px, 7vw, 120px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #f4f8f8;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-switch-page .auth-login-panel {
+  grid-column: 1;
+}
+
+.auth-switch-page .auth-cadastro-panel {
+  grid-column: 2;
+}
+
+/* REMOVE A LOGO PEQUENA DO LOGIN E DO CADASTRO */
+.auth-switch-page .auth-brand {
+  display: none;
+}
+
+.auth-switch-page .auth-card {
+  width: 100%;
+  max-width: 520px;
+}
+
+.auth-switch-page .auth-card h1 {
+  margin: 0 0 8px;
+  color: var(--navy);
+  font-size: clamp(30px, 4vw, 40px);
+  line-height: 1.08;
+}
+
+.auth-switch-page .auth-card .subtitle {
+  margin: 0 0 26px;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.auth-switch-page .auth-form {
+  display: grid;
+  gap: 15px;
+}
+
+.auth-switch-page .auth-footer {
+  text-align: center;
+}
+
+/* CADASTRO MAIS COMPACTO PRA NÃO PRECISAR ROLAR */
+.auth-switch-page .cadastro-card {
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.auth-cadastro-panel .auth-card h1 {
+  font-size: clamp(28px, 3vw, 36px);
+}
+
+.auth-cadastro-panel .auth-card .subtitle {
+  margin-bottom: 16px;
+}
+
+.auth-cadastro-panel .auth-form {
+  gap: 10px;
+}
+
+.auth-cadastro-panel .field label {
+  margin-bottom: 5px;
+}
+
+.auth-cadastro-panel .input,
+.auth-cadastro-panel .select {
+  min-height: 42px;
+}
+
+.auth-cadastro-panel .auth-divider {
+  margin: 12px 0;
+}
+
+.auth-cadastro-panel .auth-footer {
+  margin-top: 12px;
+}
+
+/* PARTE VERDE */
+.auth-slider {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50vw;
+  height: 100vh;
+  min-height: 100vh;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 70px;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(23, 32, 51, .96), rgba(17, 138, 126, .78)),
+    var(--navy);
+  transition: transform .75s cubic-bezier(.77, 0, .18, 1);
+}
+
+.auth-slider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  background: rgba(23, 32, 51, .25);
+}
+
+.auth-switch-page.cadastro-ativo .auth-slider {
+  transform: translateX(-100%);
+}
+
+.auth-slider .auth-art-inner {
+  width: min(620px, 100%);
+  text-align: center;
+  color: #fff;
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* LOGO MAIOR NA PARTE VERDE */
+.slider-logo {
+  width: 360px;
+  height: auto;
+  display: block;
+  margin: 0 auto 1px;
+  flex-shrink: 0;
+}
+
+.auth-slider .auth-art-text {
+  transition: opacity .35s ease, transform .35s ease;
+}
+
+.auth-slider h2 {
+  margin: 0 0 18px;
+  font-size: clamp(34px, 3.8vw, 52px);
+  line-height: 1.13;
+  color: #fff;
+  max-width: 650px;
+}
+
+.auth-slider p {
+  margin: 0 auto;
+  color: rgba(255, 255, 255, .86);
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 560px;
+}
+
+/* TEXTO DO CADASTRO NA PARTE VERDE */
+.cadastro-art-text {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(620px, calc(100% - 80px));
+  transform: translateX(-50%);
+  opacity: 0;
+}
+
+.cadastro-art-text h2 {
+  font-size: clamp(32px, 3.4vw, 48px);
+}
+
+.auth-switch-page.cadastro-ativo .login-art-text {
+  opacity: 0;
+}
+
+.auth-switch-page.cadastro-ativo .cadastro-art-text {
+  opacity: 1;
+  transform: translateX(-50%);
+}
+
+/* CELULAR */
+@media (max-width: 900px) {
+  html,
+  body {
+    overflow: auto;
+  }
+
+  .auth-switch-page {
+    display: block;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .auth-switch-page .auth-panel {
+    width: 100%;
+    height: auto;
+    min-height: 100vh;
+    padding: 42px 28px;
+  }
+
+  .auth-slider {
+    display: none;
+  }
+
+  .auth-cadastro-panel {
+    display: none !important;
+  }
+
+  .auth-switch-page.cadastro-ativo .auth-login-panel {
+    display: none !important;
+  }
+
+  .auth-switch-page.cadastro-ativo .auth-cadastro-panel {
+    display: flex !important;
+  }
+}
+
+.auth-home-link {
+  text-align: center;
+  margin-top: 12px;
+}
+
+.auth-home-link a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 700;
+  transition: .2s;
+}
+
+.auth-home-link a:hover {
+  color: var(--teal);
+}
+
+
+.slider-logo-link {
+  display: block;
+  text-decoration: none;
+  transition: transform .25s ease;
+}
+
+.slider-logo-link:hover {
+  transform: scale(1.03);
+}
+
+/* sem animação do index.html pro cadastro, para evitar animação */
+
+.auth-switch-page.preload * {
+  transition: none !important;
+}
