@@ -9,25 +9,31 @@ class MailerService
         $this->env = $this->loadEnv(dirname(__DIR__, 2) . '/.env');
     }
 
-    public function send(string $to, string $subject, string $message): bool
+    public function send(string $to, string $subject, string $message, bool $isHtml = false, array $inlineImages = []): bool
     {
         $host = $this->env('MAIL_HOST', '');
 
         if ($host !== '') {
-            return $this->sendSmtp($to, $subject, $message);
+            return $this->sendSmtp($to, $subject, $message, $isHtml, $inlineImages);
+        }
+
+        $body = $message;
+        $contentType = ($isHtml ? 'text/html' : 'text/plain') . '; charset=UTF-8';
+        if ($inlineImages !== []) {
+            [$contentType, $body] = $this->buildRelatedMessage($message, $inlineImages);
         }
 
         $headers = [
             'From: ' . $this->formatAddress($this->fromAddress(), $this->fromName()),
             'Reply-To: ' . $this->fromAddress(),
             'MIME-Version: 1.0',
-            'Content-Type: text/plain; charset=UTF-8',
+            'Content-Type: ' . $contentType,
         ];
 
-        return @mail($to, $this->encodedHeader($subject), $message, implode("\r\n", $headers));
+        return @mail($to, $this->encodedHeader($subject), $body, implode("\r\n", $headers));
     }
 
-    private function sendSmtp(string $to, string $subject, string $message): bool
+    private function sendSmtp(string $to, string $subject, string $message, bool $isHtml = false, array $inlineImages = []): bool
     {
         $host = $this->env('MAIL_HOST', '');
         $port = (int) $this->env('MAIL_PORT', '587');
@@ -85,16 +91,22 @@ class MailerService
             $this->command($socket, 'RCPT TO:<' . $to . '>', [250, 251]);
             $this->command($socket, 'DATA', [354]);
 
+            $body = $message;
+            $contentType = ($isHtml ? 'text/html' : 'text/plain') . '; charset=UTF-8';
+            if ($inlineImages !== []) {
+                [$contentType, $body] = $this->buildRelatedMessage($message, $inlineImages);
+            }
+
             $headers = [
                 'From: ' . $this->formatAddress($from, $this->fromName()),
                 'To: ' . $to,
                 'Subject: ' . $this->encodedHeader($subject),
                 'MIME-Version: 1.0',
-                'Content-Type: text/plain; charset=UTF-8',
+                'Content-Type: ' . $contentType,
                 'Content-Transfer-Encoding: 8bit',
             ];
 
-            fwrite($socket, implode("\r\n", $headers) . "\r\n\r\n" . $this->escapeMessage($message) . "\r\n.\r\n");
+            fwrite($socket, implode("\r\n", $headers) . "\r\n\r\n" . $this->escapeMessage($body) . "\r\n.\r\n");
             $this->expect($socket, [250]);
             $this->command($socket, 'QUIT', [221]);
             fclose($socket);
@@ -106,6 +118,37 @@ class MailerService
             }
             return false;
         }
+    }
+
+    private function buildRelatedMessage(string $html, array $inlineImages): array
+    {
+        $boundary = 'justraduz_related_' . bin2hex(random_bytes(12));
+        $body = "--{$boundary}\r\n"
+            . "Content-Type: text/html; charset=UTF-8\r\n"
+            . "Content-Transfer-Encoding: 8bit\r\n\r\n"
+            . $html . "\r\n";
+
+        foreach ($inlineImages as $contentId => $image) {
+            $path = (string) ($image['path'] ?? '');
+            if ($path === '' || !is_file($path)) {
+                continue;
+            }
+
+            $contentType = (string) ($image['content_type'] ?? 'image/png');
+            $data = chunk_split(base64_encode((string) file_get_contents($path)));
+            $safeContentId = preg_replace('/[^a-zA-Z0-9._-]/', '', (string) $contentId) ?: 'image';
+
+            $body .= "--{$boundary}\r\n"
+                . "Content-Type: {$contentType}\r\n"
+                . "Content-Transfer-Encoding: base64\r\n"
+                . "Content-ID: <{$safeContentId}>\r\n"
+                . "X-Attachment-Id: {$safeContentId}\r\n\r\n"
+                . $data . "\r\n";
+        }
+
+        $body .= "--{$boundary}--";
+
+        return ['multipart/related; boundary="' . $boundary . '"', $body];
     }
 
     private function command($socket, string $command, array $expected): string

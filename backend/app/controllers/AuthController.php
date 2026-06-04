@@ -811,11 +811,115 @@ class AuthController extends BaseController
     private function sendPasswordResetEmail(string $email, string $name, string $code): bool
     {
         $subject = 'Código de recuperação de senha - JusTraduz';
-        $message = "Olá, {$name}.\n\n"
-            . "Seu código para recuperar a senha no JusTraduz é: {$code}\n\n"
-            . "Este código expira em 15 minutos. Se você não solicitou a recuperação, ignore este e-mail.\n";
+        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $safeCode = htmlspecialchars($code, ENT_QUOTES, 'UTF-8');
+        $logoPath = dirname(__DIR__, 3) . '/frontend/assets/img/email-logo.png';
+        $homeUrl = htmlspecialchars($this->absoluteAppUrl('/frontend/index.html'), ENT_QUOTES, 'UTF-8');
 
-        return (new MailerService())->send($email, $subject, $message);
+        $message = <<<HTML
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{$subject}</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f8fb;color:#121212;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#f6f8fb;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:100%;max-width:610px;background:#ffffff;border:1px solid #dfe3e8;border-radius:8px;">
+          <tr>
+            <td align="center" style="padding:34px 40px 22px;">
+              <a href="{$homeUrl}" target="_blank" style="display:inline-block;text-decoration:none;border:0;">
+                <img src="cid:justraduz-logo" width="210" alt="JusTraduz" style="display:block;width:210px;max-width:100%;height:auto;border:0;margin:0 auto;">
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:0 40px 18px;color:#202124;font-size:22px;font-weight:400;line-height:28px;">
+              Código de recuperação de senha
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:0 40px 28px;color:#3c4043;font-size:14px;line-height:20px;">
+              Olá, {$safeName}.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px;">
+              <div style="border-top:1px solid #e0e0e0;font-size:1px;line-height:1px;">&nbsp;</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:30px 40px 0;color:#202124;font-size:15px;line-height:22px;">
+              Recebemos uma solicitação para redefinir a senha da sua conta no JusTraduz. Use o código abaixo para continuar:
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:28px 40px;">
+              <div style="display:inline-block;background:#f1f3f4;border:1px solid #dadce0;border-radius:8px;padding:18px 26px;color:#202124;font-size:32px;font-weight:700;letter-spacing:7px;line-height:38px;">{$safeCode}</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 30px;color:#202124;font-size:15px;line-height:22px;">
+              Este código expira em 15 minutos. Se você não solicitou a recuperação de senha, ignore este e-mail.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 40px 34px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#e8f0fe;border-radius:8px;">
+                <tr>
+                  <td valign="top" style="padding:14px 16px;width:24px;">
+                    <div style="width:20px;height:20px;border-radius:10px;background:#1a73e8;color:#ffffff;font-size:14px;font-weight:700;line-height:20px;text-align:center;">i</div>
+                  </td>
+                  <td style="padding:14px 16px 14px 0;color:#174ea6;font-size:13px;line-height:19px;">
+                    Esta mensagem foi enviada automaticamente pela JusTraduz. Por segurança, nunca compartilhe este código com outras pessoas.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+HTML;
+
+        return (new MailerService())->send($email, $subject, $message, true, [
+            'justraduz-logo' => [
+                'path' => $logoPath,
+                'content_type' => 'image/png',
+            ],
+        ]);
+    }
+
+    private function absoluteAppUrl(string $path): string
+    {
+        $url = app_url($path);
+        if (preg_match('#^https?://#i', $url)) {
+            return $url;
+        }
+
+        $scheme = 'http';
+        if (
+            (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off')
+            || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)
+        ) {
+            $scheme = 'https';
+        }
+
+        $forwardedProto = strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
+        if (in_array($forwardedProto, ['http', 'https'], true)) {
+            $scheme = $forwardedProto;
+        }
+
+        $host = trim((string) ($_SERVER['HTTP_HOST'] ?? 'localhost'));
+        $host = preg_replace('#^https?://#i', '', $host) ?: 'localhost';
+
+        return $scheme . '://' . $host . $url;
     }
 
     private function findOrCreateGoogleUser(array $claims): array

@@ -247,19 +247,6 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
 -- attachment_original_name, attachment_path, attachment_mime, attachment_size.
 -- ==========================================================
 
-
-
-
--- ==========================================================
--- Administrador inicial
--- ==========================================================
-
-INSERT INTO users (nome, email, senha, tipo, status)
-SELECT 'Administrador', 'admin@justraduz.local', '$2b$12$Shf6kW2iXWvVLEW9qAUHAOVUKPFCM47oG5iQfZdQHMyH1W4Ho8o2W', 'admin', 'ativo'
-WHERE NOT EXISTS (
-    SELECT 1 FROM users WHERE email = 'admin@justraduz.local'
-);
-
 -- ==========================================================
 -- Seed admin de exemplo original
 -- ==========================================================
