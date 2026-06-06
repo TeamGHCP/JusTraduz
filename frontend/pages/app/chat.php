@@ -46,6 +46,22 @@ function chat_file_size(?int $bytes): string
 
     return number_format($bytes / 1024, 1, ',', '.') . ' KB';
 }
+
+function chat_attachment_preview_type(?string $mime, ?string $filename): string
+{
+    $mime = strtolower((string) $mime);
+    $extension = strtolower(pathinfo((string) $filename, PATHINFO_EXTENSION));
+
+    if (str_starts_with($mime, 'image/') || in_array($extension, ['png', 'jpg', 'jpeg', 'webp'], true)) {
+        return 'image';
+    }
+
+    if ($mime === 'application/pdf' || $extension === 'pdf') {
+        return 'pdf';
+    }
+
+    return '';
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -90,15 +106,28 @@ function chat_file_size(?int $bytes): string
                     <?php if (!empty($message['attachment_path'])): ?>
                       <?php
                         $attachmentUrl = app_url('/backend/public/index.php?rota=/messages/attachment&id=' . (int) $message['id']);
+                        $downloadUrl = $attachmentUrl . '&download=1';
+                        $attachmentName = (string) ($message['attachment_original_name'] ?? 'Anexo');
                         $attachmentSize = chat_file_size(isset($message['attachment_size']) ? (int) $message['attachment_size'] : null);
+                        $previewType = chat_attachment_preview_type($message['attachment_mime'] ?? null, $attachmentName);
                       ?>
-                      <a class="message-attachment" href="<?= e($attachmentUrl) ?>" target="_blank" rel="noopener">
+                      <div
+                        class="message-attachment <?= $previewType !== '' ? 'is-previewable' : '' ?>"
+                        <?= $previewType !== '' ? 'role="button" tabindex="0"' : '' ?>
+                        <?= $previewType !== '' ? 'aria-label="Visualizar anexo ' . e($attachmentName) . '"' : '' ?>
+                        <?php if ($previewType !== ''): ?>
+                          data-attachment-url="<?= e($attachmentUrl) ?>"
+                          data-attachment-name="<?= e($attachmentName) ?>"
+                          data-attachment-type="<?= e($previewType) ?>"
+                          title="Clique para visualizar"
+                        <?php endif; ?>
+                      >
                         <?= icon_svg('paperclip') ?>
                         <span>
-                          <strong><?= e($message['attachment_original_name'] ?? 'Anexo') ?></strong>
+                          <strong><?= e($attachmentName) ?></strong>
                           <?php if ($attachmentSize !== ''): ?><small><?= e($attachmentSize) ?></small><?php endif; ?>
                         </span>
-                      </a>
+                      </div>
                     <?php endif; ?>
                   </div>
                 <?php endforeach; ?>
@@ -122,6 +151,26 @@ function chat_file_size(?int $bytes): string
         </section>
       <?php endif; ?>
     </main>
+  </div>
+  <div class="attachment-modal" data-attachment-modal hidden>
+    <div class="attachment-modal-backdrop" data-attachment-close></div>
+    <section class="attachment-dialog" role="dialog" aria-modal="true" aria-labelledby="attachment-title">
+      <header class="attachment-dialog-head">
+        <div>
+          <span>Anexo do chat</span>
+          <h2 id="attachment-title" data-attachment-title>Arquivo</h2>
+        </div>
+        <div class="attachment-dialog-actions">
+          <a class="btn btn-outline btn-sm" href="#" data-attachment-download>
+            <?= icon_svg('download') ?> Baixar
+          </a>
+          <button class="btn btn-soft btn-sm attachment-close" type="button" data-attachment-close title="Fechar preview">
+            <?= icon_svg('x') ?>
+          </button>
+        </div>
+      </header>
+      <div class="attachment-preview" data-attachment-preview></div>
+    </section>
   </div>
   <script src="assets/js/chat.js"></script>
 </body>
