@@ -3,118 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="0; url=login.html?cadastro">
   <title>Cadastro | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
+  <link rel="stylesheet" href="assets/css/auth-novo.css?v=modulo-1">
 </head>
 <body>
-  <main class="auth-page">
+  <main class="auth-page auth-redirect-page">
     <section class="auth-panel">
       <a class="auth-brand" href="index.html">
         <img src="assets/img/logo.png" alt="JusTraduz">
       </a>
       <div class="auth-card">
-        <h1>Crie sua conta</h1>
-        <p class="subtitle">Escolha seu perfil e comece a usar o JusTraduz.</p>
-
-        <form class="auth-form" action="../backend/public/index.php?rota=/auth/registrar" method="post">
-          <div class="alert" data-auth-alert></div>
-
-          <div class="field">
-            <label for="tipo">Tipo de conta</label>
-            <select class="select" id="tipo" name="tipo" data-account-type>
-              <option value="cliente">Cliente</option>
-              <option value="advogado">Advogado</option>
-              <option value="estagiario">Estagiário</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="nome">Nome completo</label>
-            <input class="input" type="text" id="nome" name="nome" required>
-          </div>
-
-          <div class="field">
-            <label for="email">E-mail</label>
-            <input class="input" type="email" id="email" name="email" required>
-          </div>
-
-          <div class="field">
-            <label for="telefone">Telefone</label>
-            <input class="input" type="tel" id="telefone" name="telefone" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="(00) 00000-0000">
-          </div>
-
-          <div class="form-grid oab-fields" data-oab-fields>
-            <div class="field">
-              <label for="inscricao">Número da OAB</label>
-              <input class="input" type="text" id="inscricao" name="inscricao" inputmode="numeric">
-            </div>
-            <div class="field">
-              <label for="oab_uf">UF da inscrição</label>
-              <select class="select" id="oab_uf" name="oab_uf">
-                <option value="">Buscar no CNA</option>
-                <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
-                <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
-                <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
-                <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
-                <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
-                <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
-                <option>SP</option><option>SE</option><option>TO</option>
-              </select>
-            </div>
-            <div class="oab-lookup-row">
-              <button class="btn btn-soft btn-sm" type="button" data-oab-lookup>Buscar no CNA</button>
-              <span class="oab-lookup-status" data-oab-status></span>
-            </div>
-          </div>
-
-          <div class="form-grid">
-            <div class="field">
-              <label for="senha">Senha</label>
-              <input class="input" type="password" id="senha" name="senha" minlength="6" required>
-            </div>
-            <div class="field">
-              <label for="senha2">Confirmar senha</label>
-              <input class="input" type="password" id="senha2" name="senha2" minlength="6" required>
-            </div>
-          </div>
-
-          <label class="checkline">
-            <input type="checkbox" required>
-            <span>Li e aceito os <a href="termos.html">Termos de Uso</a> e a <a href="privacidade.html">Política de Privacidade</a>.</span>
-          </label>
-
-          <button class="btn btn-primary btn-block" type="submit">Cadastrar</button>
-        </form>
-
-        <div class="auth-divider"><span>ou</span></div>
-
-          <a class="btn btn-google btn-block" href="../backend/public/index.php?rota=/auth/google">
-            <svg class="google-mark" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
-              <path fill="#4285f4" d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.54 5.54 0 0 1-2.39 3.63v2.96h3.86c2.26-2.08 3.55-5.15 3.55-8.83z"/>
-              <path fill="#34a853" d="M12 24c3.24 0 5.96-1.07 7.94-2.9l-3.86-2.96c-1.07.72-2.44 1.14-4.08 1.14-3.13 0-5.78-2.11-6.73-4.95H1.29v3.05A12 12 0 0 0 12 24z"/>
-              <path fill="#fbbc05" d="M5.27 14.33A7.21 7.21 0 0 1 4.89 12c0-.81.14-1.6.38-2.33V6.62H1.29A12 12 0 0 0 0 12c0 1.93.46 3.75 1.29 5.38l3.98-3.05z"/>
-              <path fill="#ea4335" d="M12 4.72c1.76 0 3.34.6 4.59 1.79l3.43-3.43A11.5 11.5 0 0 0 12 0 12 12 0 0 0 1.29 6.62l3.98 3.05C6.22 6.83 8.87 4.72 12 4.72z"/>
-            </svg>
-            Cadastrar com Google
-          </a>
-
-        <p class="auth-footer">Já tem uma conta? <a href="login.html">Entrar</a></p>
+        <h1>Cadastro</h1>
+        <p class="subtitle">O cadastro agora usa a entrada principal do JusTraduz para manter a experiencia consistente.</p>
+        <a class="btn btn-primary btn-block" href="login.html?cadastro">Abrir cadastro</a>
+        <p class="auth-footer">Ja tem conta? <a href="login.html">Entrar</a></p>
       </div>
     </section>
-
-    <aside class="auth-art" aria-label="Cadastro JusTraduz">
-      <div class="auth-art-inner">
-        <div class="auth-art-logo">
-          <img src="assets/img/logo.png" alt="JusTraduz">
-        </div>
-        <h2>Perfis separados para cada jornada.</h2>
-        <p>Clientes enviam documentos, profissionais acompanham casos e administradores gerenciam a plataforma.</p>
-      </div>
-    </aside>
   </main>
-
-  <script src="assets/js/phone-mask.js"></script>
-  <script src="assets/js/auth.js"></script>
+  <script>
+    window.location.replace("login.html?cadastro");
+  </script>
 </body>
 </html>

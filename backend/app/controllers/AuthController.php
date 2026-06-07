@@ -4,19 +4,16 @@ require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/GoogleOAuthService.php';
 require_once dirname(__DIR__) . '/services/MailerService.php';
-require_once dirname(__DIR__) . '/services/OabService.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
 
 class AuthController extends BaseController
 {
     private AuditService $audit;
-    private OabService $oabService;
 
     public function __construct()
     {
         parent::__construct();
         $this->audit = new AuditService($this->pdo);
-        $this->oabService = new OabService();
     }
 
     // -------------------------------------------------------
@@ -27,6 +24,7 @@ class AuthController extends BaseController
         $nome   = trim((string) $this->request->post('nome', ''));
         $email  = $this->normalizeEmail((string) $this->request->post('email', ''));
         $telefone = trim((string) $this->request->post('telefone', ''));
+        $cpf = preg_replace('/\D+/', '', (string) $this->request->post('cpf', '')) ?? '';
         $senha  = trim((string) $this->request->post('senha', ''));
         $senha2 = trim((string) $this->request->post('senha2', ''));
         $tipo   = (string) $this->request->post('tipo', 'cliente');
@@ -36,9 +34,9 @@ class AuthController extends BaseController
         $oab_parametro = null;
         $oab_verificado = false;
         $oab_tipo = null;
-        $status_cna = 'pendente';
+        $status_cna = null;
 
-        $frontUrl = APP_URL . '/frontend/cadastro.html';
+        $frontUrl = APP_URL . '/frontend/login.html?cadastro';
 
         // Validações
         if (!$nome || !$email || !$senha) {
@@ -66,40 +64,32 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'A senha deve ter no mínimo 6 caracteres.');
         }
 
-        if (($tipo === 'advogado' || $tipo === 'estagiario') && !$oab) {
-            $this->response->redirectWithError($frontUrl, 'Número da OAB é obrigatório.');
+        $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
+        if ($tipo === 'cliente') {
+            if (strlen($cpf) !== 11) {
+                $this->response->redirectWithError($frontUrl, 'Informe um CPF valido para consultar seus processos.');
+            }
+        } else {
+            $cpf = null;
         }
 
-        if ($tipo === 'advogado' || $tipo === 'estagiario') {
-            $lookup = $this->oabService->lookup(
-                $oab,
-                $oab_uf,
-                $tipo,
-                $nome,
-                (string) $this->request->post('recaptcha_token', ''),
-                (string) $this->request->post('recaptcha_version', 'v3')
-            );
+        if ($isProfessional) {
+            $validUfs = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 
-            if (($lookup['source_available'] ?? true) && !($lookup['verified'] ?? false)) {
-                $this->response->redirectWithError($frontUrl, (string) ($lookup['message'] ?? 'Não foi possível validar a OAB no CNA.'));
+            if ($oab === '') {
+                $this->response->redirectWithError($frontUrl, 'Numero da OAB e obrigatorio.');
             }
 
-            if ($lookup['verified'] ?? false) {
-                $data = $lookup['data'] ?? [];
-                $oab_uf = strtoupper((string) ($data['uf'] ?? $oab_uf));
-                $oab_status = trim((string) (($data['situacao'] ?? 'REGULAR') . ' - ' . ucfirst((string) ($data['tipo'] ?? $tipo))));
-                $oab_parametro = $data['parametro'] ?? null;
-                $oab_verificado = true;
-                $oab_tipo = $data['tipo'] ?? null;
-                $status_cna = 'verificado';
-            } else {
-                if ($oab_uf === '') {
-                    $this->response->redirectWithError($frontUrl, 'Informe a UF da OAB enquanto a validação automática do CNA estiver indisponível.');
-                }
-
-                $oab_status = 'Pendente: validação automática do CNA indisponível';
-                $status_cna = 'pendente';
+            if (!in_array($oab_uf, $validUfs, true)) {
+                $this->response->redirectWithError($frontUrl, 'Informe a UF da OAB.');
             }
+
+            $oab_status = 'Aguardando validacao administrativa.';
+            $oab_tipo = $tipo;
+            $status_cna = 'pendente';
+        } else {
+            $oab = null;
+            $oab_uf = null;
         }
 
         // Verifica se e-mail já existe
@@ -112,8 +102,8 @@ class AuthController extends BaseController
         // Insere no banco
         $senhaCriptografada = password_hash($senha, PASSWORD_DEFAULT);
 
-        $sql = "INSERT INTO users (nome, email, senha, tipo, telefone, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna)
-                VALUES (:nome, :email, :senha, :tipo, :telefone, :oab, :oab_uf, :oab_status, :oab_parametro, :oab_verificado, :oab_tipo, :status_cna)";
+        $sql = "INSERT INTO users (nome, email, senha, tipo, telefone, cpf, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna)
+                VALUES (:nome, :email, :senha, :tipo, :telefone, :cpf, :oab, :oab_uf, :oab_status, :oab_parametro, :oab_verificado, :oab_tipo, :status_cna)";
 
         try {
             $stmt = $this->pdo->prepare($sql);
@@ -123,6 +113,7 @@ class AuthController extends BaseController
                 ':senha'  => $senhaCriptografada,
                 ':tipo'   => $tipo,
                 ':telefone' => $telefone ?: null,
+                ':cpf' => $cpf ?: null,
                 ':oab'    => $oab,
                 ':oab_uf' => $oab_uf,
                 ':oab_status' => $oab_status,
@@ -138,20 +129,24 @@ class AuthController extends BaseController
                 'oab_verificado' => $oab_verificado,
             ]);
             if (in_array($tipo, ['advogado', 'estagiario'], true)) {
-                $this->logCnaValidation($userId, 'cadastro', null, $status_cna, $oab_verificado ? 'cna' : 'fallback', $oab_status);
+                $this->logOabValidation($userId, 'cadastro', null, 'pendente', 'admin_manual', $oab_status);
             }
         } catch (PDOException $e) {
             if ($e->getCode() === '42S22') {
                 $this->response->redirectWithError(
                     $frontUrl,
-                    'Banco de dados desatualizado. Execute as migrations em database/.'
+                    'Banco de dados desatualizado. Importe um dos SQLs consolidados em database/.'
                 );
             }
 
             throw $e;
         }
 
-        $this->response->redirect(APP_URL . '/frontend/login.html?sucesso=conta_criada');
+        $success = $isProfessional
+            ? 'Cadastro recebido. Sua OAB precisa ser validada pela administracao antes do acesso ao sistema.'
+            : 'conta_criada';
+
+        $this->response->redirect(APP_URL . '/frontend/login.html?sucesso=' . urlencode($success));
     }
 
     // -------------------------------------------------------
@@ -175,7 +170,7 @@ class AuthController extends BaseController
         }
 
         $stmt = $this->pdo->prepare(
-            "SELECT id, nome, senha, tipo FROM users WHERE email = ? AND status = 'ativo'"
+            "SELECT id, nome, senha, tipo, oab_verificado FROM users WHERE email = ? AND status = 'ativo'"
         );
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
@@ -190,9 +185,14 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'Credenciais inválidas.');
         }
 
+        if (in_array((string) $usuario['tipo'], ['advogado', 'estagiario'], true) && (int) ($usuario['oab_verificado'] ?? 0) !== 1) {
+            $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'oab_pending']);
+            $this->response->redirectWithError($frontUrl, 'Sua OAB ainda precisa ser validada pela administracao.');
+        }
+
         // Cria sessão
         // Protege contra fixation e rotaciona token CSRF
-        session_regenerate_id(true);
+        secure_session_regenerate_now();
         $_SESSION['id']     = $usuario['id'];
         $_SESSION['nome']   = $usuario['nome'];
         $_SESSION['tipo']   = $usuario['tipo'];
@@ -272,7 +272,7 @@ class AuthController extends BaseController
             $this->response->redirect(APP_URL . $this->dashboardPathFor((string) $usuario['tipo']));
         } catch (PDOException $e) {
             if ($e->getCode() === '42S22') {
-                $this->response->redirectWithError($frontUrl, 'Banco desatualizado. Execute a migration do login Google.');
+                $this->response->redirectWithError($frontUrl, 'Banco desatualizado. Importe um dos SQLs consolidados em database/.');
             }
 
             throw $e;
@@ -362,7 +362,7 @@ class AuthController extends BaseController
         $_SESSION['nome']   = $usuario['nome'];
         $_SESSION['tipo']   = $usuario['tipo'];
         $_SESSION['logado'] = true;
-        session_regenerate_id(true);
+        secure_session_regenerate_now();
         CsrfMiddleware::generateToken();
         $this->audit->log('auth.admin_login', 'user', (int) $usuario['id']);
 
@@ -380,6 +380,7 @@ class AuthController extends BaseController
         $nome = trim((string) $this->request->post('nome', ''));
         $email = $this->normalizeEmail((string) $this->request->post('email', ''));
         $telefone = trim((string) $this->request->post('telefone', ''));
+        $cpf = preg_replace('/\D+/', '', (string) $this->request->post('cpf', '')) ?? '';
         $senhaAtual = trim((string) $this->request->post('senha_atual', ''));
         $novaSenha = trim((string) $this->request->post('nova_senha', ''));
         $novaSenha2 = trim((string) $this->request->post('nova_senha2', ''));
@@ -387,6 +388,15 @@ class AuthController extends BaseController
 
         if (!$nome || !$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe nome e e-mail válidos.'));
+        }
+
+        $currentType = (string) ($_SESSION['tipo'] ?? '');
+        if ($currentType === 'cliente' && $cpf !== '' && strlen($cpf) !== 11) {
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe um CPF valido.'));
+        }
+
+        if ($currentType !== 'cliente') {
+            $cpf = '';
         }
 
         $stmt = $this->pdo->prepare('SELECT id FROM users WHERE email = ? AND id <> ?');
@@ -424,17 +434,17 @@ class AuthController extends BaseController
             $stmt->execute([(int) $_SESSION['id']]);
             $oldPhoto = (string) ($stmt->fetchColumn() ?: '');
 
-            $stmt = $this->pdo->prepare('UPDATE users SET nome = ?, email = ?, telefone = ?, foto_perfil = ? WHERE id = ?');
-            $stmt->execute([$nome, $email, $telefone ?: null, $profilePhotoPath, (int) $_SESSION['id']]);
+            $stmt = $this->pdo->prepare('UPDATE users SET nome = ?, email = ?, telefone = ?, cpf = ?, foto_perfil = ? WHERE id = ?');
+            $stmt->execute([$nome, $email, $telefone ?: null, $cpf ?: null, $profilePhotoPath, (int) $_SESSION['id']]);
             $this->deleteOldProfilePhoto($oldPhoto, $profilePhotoPath);
         } else {
-            $stmt = $this->pdo->prepare('UPDATE users SET nome = ?, email = ?, telefone = ? WHERE id = ?');
-            $stmt->execute([$nome, $email, $telefone ?: null, (int) $_SESSION['id']]);
+            $stmt = $this->pdo->prepare('UPDATE users SET nome = ?, email = ?, telefone = ?, cpf = ? WHERE id = ?');
+            $stmt->execute([$nome, $email, $telefone ?: null, $cpf ?: null, (int) $_SESSION['id']]);
         }
 
         $_SESSION['nome'] = $nome;
         if ($passwordUpdated) {
-            session_regenerate_id(true);
+            secure_session_regenerate_now();
             unset($_SESSION['_csrf_token']);
             CsrfMiddleware::generateToken();
         }
@@ -442,6 +452,7 @@ class AuthController extends BaseController
         $this->audit->log('profile.update', 'user', (int) $_SESSION['id'], [
             'email' => $email,
             'telefone_informado' => $telefone !== '',
+            'cpf_informado' => $cpf !== '',
             'foto_atualizada' => $profilePhotoPath !== null,
             'senha_atualizada' => $passwordUpdated,
         ]);
@@ -792,20 +803,7 @@ class AuthController extends BaseController
 
     private function destroySessionCookies(): void
     {
-        session_unset();
-        session_destroy();
-
-        $domain = $_SERVER['HTTP_HOST'] ?? '';
-        if (is_string($domain) && strpos($domain, ':') !== false) {
-            $domain = explode(':', $domain, 2)[0];
-        }
-
-        setcookie('PHPSESSID', '', time() - 3600, '/', '', false, true);
-        setcookie('session', '', time() - 3600, '/', '', false, true);
-        if ($domain !== '') {
-            setcookie('PHPSESSID', '', time() - 3600, '/', $domain, false, true);
-            setcookie('session', '', time() - 3600, '/', $domain, false, true);
-        }
+        secure_session_destroy_current();
     }
 
     private function sendPasswordResetEmail(string $email, string $name, string $code): bool
@@ -986,7 +984,7 @@ HTML;
 
     private function signInUser(array $usuario): void
     {
-        session_regenerate_id(true);
+        secure_session_regenerate_now();
         $_SESSION['id'] = $usuario['id'];
         $_SESSION['nome'] = $usuario['nome'];
         $_SESSION['tipo'] = $usuario['tipo'];
@@ -1039,7 +1037,7 @@ HTML;
         return trim((string) ($env[$key] ?? ''));
     }
 
-    private function logCnaValidation(
+    private function logOabValidation(
         int $professionalId,
         string $action,
         ?string $previousStatus,
@@ -1054,7 +1052,7 @@ HTML;
             );
             $stmt->execute([$professionalId, $action, $previousStatus, $newStatus, $origin, $message]);
         } catch (PDOException $e) {
-            error_log('CNA validation log error: ' . $e->getMessage());
+            error_log('OAB validation log error: ' . $e->getMessage());
         }
     }
 

@@ -36,7 +36,7 @@ if ($dateEnd !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateEnd)) {
 }
 
 $sql = 'SELECT d.id, d.nome_arquivo, d.tipo_arquivo, d.created_at, u.nome AS usuario, u.email,
-               ar.id AS analysis_id, ar.confianca, ar.modelo, ar.created_at AS analyzed_at
+               ar.id AS analysis_id, ar.confianca, ar.modelo, ar.prompt_versao, ar.created_at AS analyzed_at
         FROM documents d
         INNER JOIN users u ON u.id = d.user_id
         LEFT JOIN (
@@ -139,6 +139,7 @@ $pdfCount = count(array_filter($documents, static fn ($doc): bool => ($doc['tipo
                       <span class="badge <?= $hasAnalysis ? 'badge-success' : 'badge-warning' ?>"><?= $hasAnalysis ? 'Gerada' : 'Pendente' ?></span>
                       <?php if ($hasAnalysis): ?>
                         <span class="table-subtext"><?= e($document['modelo'] ?: 'Modelo não registrado') ?></span>
+                        <?php if (!empty($document['prompt_versao'])): ?><span class="table-subtext"><?= e($document['prompt_versao']) ?></span><?php endif; ?>
                         <span class="table-subtext"><?= e(date('d/m/Y H:i', strtotime($document['analyzed_at']))) ?></span>
                       <?php endif; ?>
                     </td>
@@ -151,7 +152,19 @@ $pdfCount = count(array_filter($documents, static fn ($doc): bool => ($doc['tipo
                       <?php endif; ?>
                     </td>
                     <td><?= e(date('d/m/Y H:i', strtotime($document['created_at']))) ?></td>
-                    <td><a class="btn btn-soft btn-sm" href="../visualizar-documento.php?id=<?= (int) $document['id'] ?>">Abrir</a></td>
+                    <td>
+                      <div class="stacked-actions">
+                        <a class="btn btn-soft btn-sm" href="../visualizar-documento.php?id=<?= (int) $document['id'] ?>">Abrir</a>
+                        <?php if (!$hasAnalysis): ?>
+                          <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/documents/analyze')) ?>" method="post">
+                            <?= csrf_input() ?>
+                            <input type="hidden" name="document_id" value="<?= (int) $document['id'] ?>">
+                            <input type="hidden" name="autorizar_ia" value="1">
+                            <button class="btn btn-outline btn-sm" type="submit"><?= icon_svg('chart') ?> Gerar IA</button>
+                          </form>
+                        <?php endif; ?>
+                      </div>
+                    </td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>

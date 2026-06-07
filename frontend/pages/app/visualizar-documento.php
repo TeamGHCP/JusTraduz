@@ -29,12 +29,80 @@ function document_access_sql(string $type): array
     return ['0 = 1', []];
 }
 
+function document_analysis_sections(string $text): array
+{
+    $sections = [
+        'simple' => '',
+        'important' => '',
+        'risks' => '',
+        'steps' => '',
+        'notice' => '',
+    ];
+
+    $current = 'simple';
+    $hasHeadings = false;
+    foreach (preg_split('/\R/', $text) ?: [] as $line) {
+        $trimmed = trim((string) $line);
+
+        if (str_starts_with($trimmed, '## ')) {
+            $hasHeadings = true;
+            $heading = mb_strtolower(trim(substr($trimmed, 3)));
+            $current = match (true) {
+                str_contains($heading, 'pontos importantes') => 'important',
+                str_contains($heading, 'riscos') || str_contains($heading, 'atencao') => 'risks',
+                str_contains($heading, 'proximos passos') => 'steps',
+                str_contains($heading, 'aviso') => 'notice',
+                default => 'simple',
+            };
+            continue;
+        }
+
+        $sections[$current] .= ($sections[$current] === '' ? '' : "\n") . $line;
+    }
+
+    if (!$hasHeadings) {
+        $sections['simple'] = $text;
+    }
+
+    return array_map(static fn (string $value): string => trim($value), $sections);
+}
+
+function document_analysis_items(string $text): array
+{
+    $items = [];
+    foreach (preg_split('/\R/', $text) ?: [] as $line) {
+        $line = trim((string) $line);
+        $line = preg_replace('/^[-*]\s*/', '', $line);
+        if ($line !== '') {
+            $items[] = $line;
+        }
+    }
+
+    return $items;
+}
+
+function render_analysis_text_block(string $text): void
+{
+    $items = document_analysis_items($text);
+    if (count($items) > 1) {
+        echo '<ul class="analysis-list">';
+        foreach ($items as $item) {
+            echo '<li>' . e($item) . '</li>';
+        }
+        echo '</ul>';
+        return;
+    }
+
+    echo '<div class="doc-text">' . nl2br(e($text)) . '</div>';
+}
+
 [$accessSql, $accessParams] = document_access_sql($type);
 
 if ($documentId) {
     $document = fetch_one(
         $pdo,
-        "SELECT d.*, u.nome AS cliente, u.email AS cliente_email, ar.resumo, ar.explicacao, ar.confianca
+        "SELECT d.*, u.nome AS cliente, u.email AS cliente_email,
+                ar.resumo, ar.explicacao, ar.confianca, ar.modelo, ar.prompt_versao, ar.created_at AS analyzed_at
          FROM documents d
          INNER JOIN users u ON u.id = d.user_id
          LEFT JOIN ai_results ar ON ar.document_id = d.id
@@ -46,7 +114,9 @@ if ($documentId) {
     $document = null;
     $documents = fetch_all(
         $pdo,
-        "SELECT d.id, d.nome_arquivo, d.tipo_arquivo, d.created_at, u.nome AS cliente, u.email AS cliente_email, ar.id AS analysis_id
+        "SELECT d.id, d.nome_arquivo, d.tipo_arquivo, d.created_at,
+                u.nome AS cliente, u.email AS cliente_email,
+                ar.id AS analysis_id, ar.confianca
          FROM documents d
          INNER JOIN users u ON u.id = d.user_id
          LEFT JOIN ai_results ar ON ar.document_id = d.id
@@ -62,6 +132,8 @@ $isPdf = $fileType === 'pdf';
 $isImage = in_array($fileType, ['png', 'jpg', 'jpeg', 'webp'], true);
 $hasAnalysis = $document && ((string) ($document['resumo'] ?? '') !== '' || (string) ($document['explicacao'] ?? '') !== '');
 $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (float) $document['confianca'])) : null;
+$analysisSections = $hasAnalysis ? document_analysis_sections((string) ($document['explicacao'] ?? '')) : [];
+$helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'] : 'solicitar-ajuda.php';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -78,8 +150,8 @@ $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (fl
 
     <main class="app-main">
       <?php render_topbar(
-          $document ? 'Análise do documento' : 'Documentos',
-          $document ? 'Arquivo original, resumo e explicação em linguagem simples.' : 'Consulte os documentos disponíveis para seu perfil.',
+          $document ? 'Analise do documento' : 'Documentos',
+          $document ? 'Resumo, explicacao simples, riscos e proximos passos.' : 'Consulte os documentos disponiveis para seu perfil.',
           current_user_name()
       ); ?>
 
@@ -90,18 +162,20 @@ $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (fl
             <span class="badge badge-success"><?= e((string) count($documents)) ?> registros</span>
           </div>
           <?php if (!$documents): ?>
-            <?= empty_state('Nenhum documento disponível no momento.') ?>
+            <?= empty_state('Nenhum documento disponivel no momento.') ?>
           <?php else: ?>
             <div class="table-wrap">
               <table class="table">
-                <thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th>Análise</th><th>Enviado em</th><th>Ação</th></tr></thead>
+                <thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th>Analise</th><th>Confianca</th><th>Enviado em</th><th>Acao</th></tr></thead>
                 <tbody>
                   <?php foreach ($documents as $item): ?>
+                    <?php $itemConfidence = $item['confianca'] !== null ? max(0, min(100, (float) $item['confianca'])) : null; ?>
                     <tr>
                       <td><?= e($item['cliente']) ?><span class="table-subtext"><?= e($item['cliente_email']) ?></span></td>
                       <td><strong><?= e($item['nome_arquivo']) ?></strong></td>
                       <td><?= e(strtoupper($item['tipo_arquivo'] ?? '')) ?></td>
                       <td><span class="badge <?= !empty($item['analysis_id']) ? 'badge-success' : 'badge-warning' ?>"><?= !empty($item['analysis_id']) ? 'Gerada' : 'Pendente' ?></span></td>
+                      <td><?= $itemConfidence !== null ? e(number_format($itemConfidence, 1, ',', '.')) . '%' : '<span class="text-muted">-</span>' ?></td>
                       <td><?= e(date('d/m/Y H:i', strtotime($item['created_at']))) ?></td>
                       <td><a href="visualizar-documento.php?id=<?= (int) $item['id'] ?>">Abrir</a></td>
                     </tr>
@@ -112,19 +186,26 @@ $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (fl
           <?php endif; ?>
         </section>
       <?php elseif (!$document): ?>
-        <?= empty_state('Documento não encontrado ou indisponível para seu perfil.') ?>
+        <?= empty_state('Documento nao encontrado ou indisponivel para seu perfil.') ?>
       <?php else: ?>
         <section class="analysis-hero">
           <div>
-            <span class="badge <?= $hasAnalysis ? 'badge-success' : 'badge-warning' ?>"><?= $hasAnalysis ? 'Análise disponível' : 'Análise pendente' ?></span>
+            <span class="badge <?= $hasAnalysis ? 'badge-success' : 'badge-warning' ?>"><?= $hasAnalysis ? 'Analise disponivel' : 'Analise pendente' ?></span>
             <h2><?= e($document['nome_arquivo']) ?></h2>
-            <p>Cliente: <?= e($document['cliente']) ?> · Enviado em <?= e(date('d/m/Y H:i', strtotime($document['created_at']))) ?></p>
+            <p>Cliente: <?= e($document['cliente']) ?> | Enviado em <?= e(date('d/m/Y H:i', strtotime($document['created_at']))) ?></p>
+            <?php if ($hasAnalysis): ?>
+              <div class="analysis-meta-row">
+                <?php if (!empty($document['modelo'])): ?><span><?= e($document['modelo']) ?></span><?php endif; ?>
+                <?php if (!empty($document['prompt_versao'])): ?><span><?= e($document['prompt_versao']) ?></span><?php endif; ?>
+                <?php if (!empty($document['analyzed_at'])): ?><span><?= e(date('d/m/Y H:i', strtotime((string) $document['analyzed_at']))) ?></span><?php endif; ?>
+              </div>
+            <?php endif; ?>
           </div>
           <div class="analysis-hero-actions">
             <?php if ($confidence !== null): ?>
               <div class="confidence-meter">
-                <strong><?= e((string) $confidence) ?>%</strong>
-                <span>confiança</span>
+                <strong><?= e(number_format($confidence, 1, ',', '.')) ?>%</strong>
+                <span>confianca</span>
               </div>
             <?php endif; ?>
             <a class="btn btn-outline btn-sm" href="visualizar-documento.php"><?= icon_svg('file') ?> Voltar</a>
@@ -134,7 +215,7 @@ $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (fl
 
         <section class="doc-toolbar">
           <?php if (in_array($type, ['cliente', 'admin'], true)): ?>
-            <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/documents/delete')) ?>" method="post" data-confirm-delete="Excluir este documento? Esta ação não pode ser desfeita.">
+            <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/documents/delete')) ?>" method="post" data-confirm-delete="Excluir este documento? Esta acao nao pode ser desfeita.">
               <?= csrf_input() ?>
               <input type="hidden" name="document_id" value="<?= (int) $document['id'] ?>">
               <button class="btn btn-outline btn-sm" type="submit"><?= icon_svg('trash') ?> Excluir</button>
@@ -146,17 +227,83 @@ $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (fl
               <input type="hidden" name="document_id" value="<?= (int) $document['id'] ?>">
               <label class="checkline checkline-inline">
                 <input type="checkbox" name="autorizar_ia" value="1" required>
-                <span>Autorizo análise por IA</span>
+                <span>Autorizo analise por IA</span>
               </label>
-              <button class="btn btn-soft btn-sm" type="submit"><?= icon_svg('chart') ?> <?= $hasAnalysis ? 'Regerar análise' : 'Gerar análise' ?></button>
+              <button class="btn btn-soft btn-sm" type="submit"><?= icon_svg('chart') ?> <?= $hasAnalysis ? 'Regerar analise' : 'Gerar analise' ?></button>
             </form>
           <?php endif; ?>
           <?php if ($type === 'cliente'): ?>
-            <a class="btn btn-primary btn-sm" href="solicitar-ajuda.php"><?= icon_svg('help') ?> Pedir ajuda</a>
+            <a class="btn btn-primary btn-sm" href="<?= e($helpUrl) ?>"><?= icon_svg('help') ?> Pedir ajuda com este documento</a>
           <?php endif; ?>
         </section>
 
-        <section class="doc-view doc-view-wide">
+        <section class="doc-view doc-view-wide doc-view-analysis-first">
+          <article class="card doc-pane doc-analysis-pane analysis-pane">
+            <?php if (!$hasAnalysis): ?>
+              <div class="analysis-empty">
+                <?= icon_svg('chart') ?>
+                <h2>Analise ainda nao gerada</h2>
+                <p>Autorize a IA acima para transformar o documento em resumo, linguagem simples, riscos e proximos passos.</p>
+              </div>
+            <?php else: ?>
+              <div class="analysis-summary-card">
+                <div>
+                  <span class="badge badge-info">Resumo objetivo</span>
+                  <h2>O que este documento diz</h2>
+                </div>
+                <?php if ($hasAnalysis): ?><button class="btn btn-outline btn-sm" type="button" data-copy-text="#analysis-summary">Copiar</button><?php endif; ?>
+                <p id="analysis-summary"><?= nl2br(e((string) ($document['resumo'] ?? ''))) ?></p>
+              </div>
+
+              <div class="analysis-section-grid">
+                <section class="analysis-section analysis-section-wide analysis-section-primary">
+                  <div class="analysis-section-head">
+                    <?= icon_svg('file') ?>
+                    <h3>Explicacao em linguagem simples</h3>
+                  </div>
+                  <div id="analysis-simple"><?php render_analysis_text_block($analysisSections['simple'] ?? ''); ?></div>
+                </section>
+
+                <section class="analysis-section">
+                  <div class="analysis-section-head">
+                    <?= icon_svg('check') ?>
+                    <h3>Pontos importantes</h3>
+                  </div>
+                  <?php render_analysis_text_block($analysisSections['important'] ?: 'Nenhum ponto separado pela IA. Leia o resumo e confira o documento original.'); ?>
+                </section>
+
+                <section class="analysis-section">
+                  <div class="analysis-section-head">
+                    <?= icon_svg('shield') ?>
+                    <h3>Riscos e atencao</h3>
+                  </div>
+                  <?php render_analysis_text_block($analysisSections['risks'] ?: 'Sem riscos destacados automaticamente. Isso nao elimina a necessidade de revisao profissional.'); ?>
+                </section>
+
+                <section class="analysis-section">
+                  <div class="analysis-section-head">
+                    <?= icon_svg('help') ?>
+                    <h3>Proximos passos</h3>
+                  </div>
+                  <?php render_analysis_text_block($analysisSections['steps'] ?: 'Separe documentos relacionados e converse com um profissional antes de decidir.'); ?>
+                </section>
+
+                <section class="analysis-section">
+                  <div class="analysis-section-head">
+                    <?= icon_svg('shield') ?>
+                    <h3>Limite da analise</h3>
+                  </div>
+                  <?php render_analysis_text_block($analysisSections['notice'] ?: 'Esta analise e informativa e nao substitui orientacao juridica profissional.'); ?>
+                </section>
+              </div>
+            <?php endif; ?>
+
+            <div class="analysis-disclaimer">
+              <?= icon_svg('shield') ?>
+              <span>Uso informativo: a IA ajuda a entender o texto, mas nao decide seu caso nem substitui advogado.</span>
+            </div>
+          </article>
+
           <article class="card doc-pane doc-file-pane">
             <div class="dash-section-title">
               <h2>Arquivo original</h2>
@@ -172,30 +319,12 @@ $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (fl
                 <img src="<?= e($fileUrl) ?>" alt="<?= e($document['nome_arquivo']) ?>">
               </div>
             <?php else: ?>
-              <?= empty_state('Pré-visualização não disponível para este formato.') ?>
+              <div class="analysis-empty">
+                <?= icon_svg('file') ?>
+                <h2>Preview indisponivel</h2>
+                <p>Abra o arquivo original para consultar este formato.</p>
+              </div>
             <?php endif; ?>
-          </article>
-
-          <article class="card doc-pane doc-analysis-pane analysis-pane">
-            <div class="analysis-block analysis-block-primary">
-              <div class="dash-section-title">
-                <h2>Linguagem simples</h2>
-                <?php if ($hasAnalysis): ?><button class="btn btn-outline btn-sm" type="button" data-copy-text="#analysis-simple">Copiar</button><?php endif; ?>
-              </div>
-              <div class="doc-text" id="analysis-simple"><?= nl2br(e($document['explicacao'] ?: 'Análise por IA ainda não disponível. Autorize o processamento para gerar uma explicação em linguagem simples.')) ?></div>
-            </div>
-            <div class="doc-divider"></div>
-            <div class="analysis-block">
-              <div class="dash-section-title">
-                <h2>Resumo objetivo</h2>
-                <?php if ($hasAnalysis): ?><button class="btn btn-outline btn-sm" type="button" data-copy-text="#analysis-summary">Copiar</button><?php endif; ?>
-              </div>
-              <div class="doc-text" id="analysis-summary"><?= nl2br(e($document['resumo'] ?: 'Resumo ainda não disponível.')) ?></div>
-            </div>
-            <div class="analysis-disclaimer">
-              <?= icon_svg('shield') ?>
-              <span>A análise automática é informativa e não substitui orientação jurídica profissional.</span>
-            </div>
           </article>
         </section>
       <?php endif; ?>

@@ -2,8 +2,38 @@
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_role(['cliente']);
 
-$lawyers = fetch_all($pdo, "SELECT id, nome, oab, oab_uf FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> '')) ORDER BY nome");
+$lawyers = fetch_all($pdo, "SELECT id, nome, oab, oab_uf FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE ORDER BY nome");
 $selectedLawyerId = (int) ($_GET['advogado_id'] ?? 0);
+$selectedDocumentId = (int) ($_GET['document_id'] ?? 0);
+$selectedDocument = null;
+$prefillTitle = '';
+$prefillDescription = '';
+
+if ($selectedDocumentId > 0) {
+    $selectedDocument = fetch_one(
+        $pdo,
+        'SELECT d.id, d.nome_arquivo, d.tipo_arquivo, d.created_at, ar.resumo, ar.explicacao, ar.confianca
+         FROM documents d
+         LEFT JOIN ai_results ar ON ar.document_id = d.id
+         WHERE d.id = ? AND d.user_id = ?',
+        [$selectedDocumentId, current_user_id()]
+    );
+
+    if ($selectedDocument) {
+        $prefillTitle = 'Ajuda com documento: ' . (string) $selectedDocument['nome_arquivo'];
+        $summary = trim((string) ($selectedDocument['resumo'] ?? ''));
+        $analysis = trim((string) ($selectedDocument['explicacao'] ?? ''));
+
+        $prefillDescription = "Documento relacionado: " . (string) $selectedDocument['nome_arquivo'] . "\n";
+        if ($summary !== '') {
+            $prefillDescription .= "\nResumo da analise:\n" . mb_substr($summary, 0, 900) . "\n";
+        }
+        if ($analysis !== '') {
+            $prefillDescription .= "\nPontos da analise para o profissional revisar:\n" . mb_substr(strip_tags($analysis), 0, 1200) . "\n";
+        }
+        $prefillDescription .= "\nMinha duvida principal:\n";
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -19,28 +49,44 @@ $selectedLawyerId = (int) ($_GET['advogado_id'] ?? 0);
     <?php render_sidebar('cliente', 'solicitar-ajuda.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Solicitar ajuda jurídica', 'Escolha um advogado específico ou deixe sua solicitação aberta.', current_user_name()); ?>
+      <?php render_topbar('Solicitar ajuda juridica', 'Transforme a analise do documento em atendimento humano.', current_user_name()); ?>
+
+      <?php if ($selectedDocument): ?>
+        <section class="selected-document-context">
+          <div>
+            <span class="badge badge-info">Documento relacionado</span>
+            <h2><?= e($selectedDocument['nome_arquivo']) ?></h2>
+            <p>Enviado em <?= e(date('d/m/Y H:i', strtotime((string) $selectedDocument['created_at']))) ?><?= $selectedDocument['confianca'] !== null ? ' | Confianca IA: ' . e(number_format((float) $selectedDocument['confianca'], 1, ',', '.')) . '%' : '' ?></p>
+          </div>
+          <a class="btn btn-outline btn-sm" href="visualizar-documento.php?id=<?= (int) $selectedDocument['id'] ?>"><?= icon_svg('file') ?> Ver analise</a>
+        </section>
+      <?php elseif ($selectedDocumentId > 0): ?>
+        <div class="alert alert-error is-visible">Documento nao encontrado para a sua conta. A solicitacao sera criada sem contexto automatico.</div>
+      <?php endif; ?>
 
       <form class="card auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/create')) ?>" method="post">
         <?= csrf_input() ?>
+        <?php if ($selectedDocument): ?>
+          <input type="hidden" name="document_id" value="<?= (int) $selectedDocument['id'] ?>">
+        <?php endif; ?>
         <div class="form-grid">
           <div class="field">
-            <label for="titulo">Título da solicitação</label>
-            <input class="input" id="titulo" name="titulo" required>
+            <label for="titulo">Titulo da solicitacao</label>
+            <input class="input" id="titulo" name="titulo" value="<?= e($prefillTitle) ?>" required>
           </div>
           <div class="field">
             <label for="prioridade">Prioridade</label>
             <select class="select" id="prioridade" name="prioridade">
               <option value="baixa">Baixa</option>
-              <option value="media" selected>Média</option>
-              <option value="alta">Alta</option>
+              <option value="media" <?= !$selectedDocument ? 'selected' : '' ?>>Media</option>
+              <option value="alta" <?= $selectedDocument ? 'selected' : '' ?>>Alta</option>
             </select>
           </div>
         </div>
         <div class="field">
-          <label for="advogado_id">Advogado específico</label>
+          <label for="advogado_id">Advogado especifico</label>
           <select class="select" id="advogado_id" name="advogado_id">
-            <option value="">Deixar solicitação aberta</option>
+            <option value="">Deixar solicitacao aberta</option>
             <?php foreach ($lawyers as $lawyer): ?>
               <option value="<?= (int) $lawyer['id'] ?>" <?= $selectedLawyerId === (int) $lawyer['id'] ? 'selected' : '' ?>>
                 <?= e($lawyer['nome']) ?><?= $lawyer['oab'] ? ' - OAB/' . e($lawyer['oab_uf']) . ' ' . e($lawyer['oab']) : '' ?>
@@ -49,12 +95,12 @@ $selectedLawyerId = (int) ($_GET['advogado_id'] ?? 0);
           </select>
         </div>
         <div class="field">
-          <label for="descricao">Descreva sua dúvida</label>
-          <textarea class="textarea" id="descricao" name="descricao" required></textarea>
+          <label for="descricao">Descreva sua duvida</label>
+          <textarea class="textarea textarea-tall" id="descricao" name="descricao" required><?= e($prefillDescription) ?></textarea>
         </div>
-        <div class="alert alert-success is-visible">A análise automática não substitui orientação jurídica profissional.</div>
+        <div class="alert alert-info is-visible">A IA organiza o contexto, mas a decisao e a orientacao juridica devem vir de um profissional.</div>
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit"><?= icon_svg('help') ?> Enviar solicitação</button>
+          <button class="btn btn-primary" type="submit"><?= icon_svg('help') ?> Enviar solicitacao</button>
           <a class="btn btn-outline" href="lista-advogados.php"><?= icon_svg('users') ?> Ver advogados</a>
         </div>
       </form>

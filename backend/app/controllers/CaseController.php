@@ -34,16 +34,17 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] !== 'cliente') {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login como cliente para solicitar ajuda.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login como cliente para solicitar ajuda.')));
         }
 
         $titulo = trim((string) $this->request->post('titulo', ''));
         $descricao = trim((string) $this->request->post('descricao', ''));
         $prioridade = (string) $this->request->post('prioridade', 'media');
         $advogadoId = $this->request->post('advogado_id') ?: null;
+        $documentId = (int) $this->request->post('document_id', 0);
 
-        if (!$titulo || !$descricao) {
-            $this->response->redirect(app_url('/frontend/solicitar-ajuda.php?erro=' . urlencode('Preencha título e descrição.')));
+        if ($titulo === '' || $descricao === '') {
+            $this->response->redirect(app_url('/frontend/solicitar-ajuda.php?erro=' . urlencode('Preencha titulo e descricao.')));
         }
 
         if (!in_array($prioridade, ['baixa', 'media', 'alta'], true)) {
@@ -51,36 +52,49 @@ class CaseController extends BaseController
         }
 
         if ($advogadoId) {
-            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE id = ? AND tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> ''))");
+            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE id = ? AND tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE");
             $stmt->execute([(int) $advogadoId]);
 
             if (!$stmt->fetch()) {
-                $this->response->redirect(app_url('/frontend/solicitar-ajuda.php?erro=' . urlencode('Advogado inválido.')));
+                $this->response->redirect(app_url('/frontend/solicitar-ajuda.php?erro=' . urlencode('Advogado invalido.')));
             }
         }
 
+        if ($documentId > 0 && !$this->documentBelongsToCurrentClient($documentId)) {
+            $this->response->redirect(app_url('/frontend/solicitar-ajuda.php?erro=' . urlencode('Documento invalido para esta solicitacao.')));
+        }
+
         $status = $advogadoId ? 'em_andamento' : 'aberto';
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO cases (cliente_id, advogado_id, titulo, descricao, status, prioridade) VALUES (?, ?, ?, ?, ?, ?)'
-        );
-        $stmt->execute([(int) $_SESSION['id'], $advogadoId ? (int) $advogadoId : null, $titulo, $descricao, $status, $prioridade]);
+        if ($documentId > 0 && $this->casesHasDocumentIdColumn()) {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO cases (cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade) VALUES (?, ?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([(int) $_SESSION['id'], $advogadoId ? (int) $advogadoId : null, $documentId, $titulo, $descricao, $status, $prioridade]);
+        } else {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO cases (cliente_id, advogado_id, titulo, descricao, status, prioridade) VALUES (?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([(int) $_SESSION['id'], $advogadoId ? (int) $advogadoId : null, $titulo, $descricao, $status, $prioridade]);
+        }
+
         $caseId = (int) $this->pdo->lastInsertId();
 
         if ($advogadoId) {
-            $this->notifications->notify((int) $advogadoId, 'Você recebeu uma nova solicitação: ' . $titulo);
+            $this->notifications->notify((int) $advogadoId, 'Voce recebeu uma nova solicitacao: ' . $titulo);
         } else {
-            $this->notifications->notifyMany($this->notifications->activeLawyers(), 'Nova solicitação aberta: ' . $titulo);
+            $this->notifications->notifyMany($this->notifications->activeLawyers(), 'Nova solicitacao aberta: ' . $titulo);
         }
 
-        $this->notifications->notifyMany($this->notifications->activeAdmins(), 'Nova solicitação cadastrada: ' . $titulo);
-        $this->notifications->notify((int) $_SESSION['id'], 'Sua solicitação foi criada: ' . $titulo);
+        $this->notifications->notifyMany($this->notifications->activeAdmins(), 'Nova solicitacao cadastrada: ' . $titulo);
+        $this->notifications->notify((int) $_SESSION['id'], 'Sua solicitacao foi criada: ' . $titulo);
         $this->audit->log('case.create', 'case', $caseId, [
             'prioridade' => $prioridade,
             'advogado_id' => $advogadoId ? (int) $advogadoId : null,
+            'document_id' => $documentId > 0 ? $documentId : null,
             'status' => $status,
         ]);
 
-        $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?sucesso=' . urlencode('Solicitação criada.')));
+        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&sucesso=' . urlencode('Solicitacao criada. Use o chat para acompanhar o atendimento.')));
     }
 
     public function accept(): void
@@ -88,13 +102,16 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] !== 'advogado') {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login como advogado.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login como advogado.')));
+        }
+
+        if (!$this->currentProfessionalIsVerified()) {
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Sua OAB ainda precisa ser validada pela administracao.')));
         }
 
         $caseId = (int) $this->request->post('case_id', 0);
-
         if ($caseId <= 0) {
-            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Caso inválido.')));
+            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Caso invalido.')));
         }
 
         $stmt = $this->pdo->prepare(
@@ -104,11 +121,11 @@ class CaseController extends BaseController
 
         if ($stmt->rowCount() > 0) {
             $case = $this->caseById($caseId);
-            $this->notifications->notify((int) ($case['cliente_id'] ?? 0), 'Um advogado aceitou sua solicitação: ' . (string) ($case['titulo'] ?? 'Caso'));
+            $this->notifications->notify((int) ($case['cliente_id'] ?? 0), 'Um advogado aceitou sua solicitacao: ' . (string) ($case['titulo'] ?? 'Caso'));
             $this->audit->log('case.accept', 'case', $caseId, ['advogado_id' => (int) $_SESSION['id']]);
         }
 
-        $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php'));
+        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&sucesso=' . urlencode('Caso aceito. Continue pelo chat.')));
     }
 
     public function updateStatus(): void
@@ -116,31 +133,31 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado'])) {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para continuar.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para continuar.')));
         }
 
         $caseId = (int) $this->request->post('case_id', 0);
         $status = (string) $this->request->post('status', '');
 
         if ($caseId <= 0 || !in_array($status, ['aberto', 'em_andamento', 'finalizado'], true)) {
-            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Status inválido.')));
+            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Status invalido.')));
         }
 
         if (($_SESSION['tipo'] ?? '') === 'estagiario') {
-            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Estagiários não podem alterar status de solicitações.')));
+            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Estagiarios nao podem alterar status de solicitacoes.')));
         }
 
         $case = $this->caseById($caseId);
         if (!$case || !$this->canManageCase($case)) {
-            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Você não tem acesso a este caso.')));
+            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Voce nao tem acesso a este caso.')));
         }
 
         if (($_SESSION['tipo'] ?? '') === 'cliente' && $status !== 'finalizado') {
-            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Clientes podem apenas finalizar solicitações.')));
+            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Clientes podem apenas finalizar solicitacoes.')));
         }
 
         if ($status === 'em_andamento' && empty($case['advogado_id'])) {
-            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Casos sem advogado não podem ir para em andamento.')));
+            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Casos sem advogado nao podem ir para em andamento.')));
         }
 
         $stmt = $this->pdo->prepare('UPDATE cases SET status = ? WHERE id = ?');
@@ -160,7 +177,7 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] === 'cliente') {
-            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Perfil sem permissão para criar tarefas.')));
+            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Perfil sem permissao para criar tarefas.')));
         }
 
         $caseId = (int) $this->request->post('case_id', 0);
@@ -169,11 +186,11 @@ class CaseController extends BaseController
 
         $case = $this->caseById($caseId);
         if (!$case || !$this->canManageCase($case)) {
-            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Caso inválido ou indisponível.')));
+            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Caso invalido ou indisponivel.')));
         }
 
         if ($titulo === '') {
-            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Informe o título da tarefa.')));
+            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Informe o titulo da tarefa.')));
         }
 
         $stmt = $this->pdo->prepare('INSERT INTO tasks (case_id, titulo, descricao) VALUES (?, ?, ?)');
@@ -186,7 +203,7 @@ class CaseController extends BaseController
         );
         $this->audit->log('task.create', 'task', $taskId, ['case_id' => $caseId]);
 
-        $this->response->redirect(app_url('/frontend/tarefas.php?sucesso=' . urlencode('Tarefa criada.')));
+        $this->response->redirect(app_url('/frontend/tarefas.php?case_id=' . $caseId . '&sucesso=' . urlencode('Tarefa criada.')));
     }
 
     public function updateTask(): void
@@ -194,19 +211,19 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] === 'cliente') {
-            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Perfil sem permissão para atualizar tarefas.')));
+            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Perfil sem permissao para atualizar tarefas.')));
         }
 
         $taskId = (int) $this->request->post('task_id', 0);
         $status = (string) $this->request->post('status', '');
 
         if ($taskId <= 0 || !in_array($status, ['pendente', 'em_andamento', 'concluida'], true)) {
-            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Dados inválidos da tarefa.')));
+            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Dados invalidos da tarefa.')));
         }
 
         $task = $this->taskById($taskId);
         if (!$task || !$this->canManageCase($task)) {
-            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Tarefa indisponível para seu perfil.')));
+            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Tarefa indisponivel para seu perfil.')));
         }
 
         $stmt = $this->pdo->prepare('UPDATE tasks SET status = ? WHERE id = ?');
@@ -218,7 +235,7 @@ class CaseController extends BaseController
         );
         $this->audit->log('task.update', 'task', $taskId, ['status' => $status, 'case_id' => (int) $task['case_id']]);
 
-        $this->response->redirect(app_url('/frontend/tarefas.php?sucesso=' . urlencode('Tarefa atualizada.')));
+        $this->response->redirect(app_url('/frontend/tarefas.php?case_id=' . (int) $task['case_id'] . '&sucesso=' . urlencode('Tarefa atualizada.')));
     }
 
     public function sendMessage(): void
@@ -226,33 +243,28 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado'])) {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para enviar mensagens.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para enviar mensagens.')));
         }
 
         $caseId = (int) $this->request->post('case_id', 0);
-        $message = trim((string) $this->request->post('mensagem', ''));
+        $message = mb_substr(trim((string) $this->request->post('mensagem', '')), 0, 4000);
         $file = $_FILES['anexo'] ?? null;
         $hasAttachment = is_array($file) && (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE);
 
         if ($caseId <= 0 || ($message === '' && !$hasAttachment)) {
-            $this->response->redirect(app_url('/frontend/chat.php?erro=' . urlencode('Mensagem inválida.')));
+            $this->response->redirect(app_url('/frontend/chat.php?erro=' . urlencode('Mensagem invalida.')));
         }
 
         $userId = (int) $_SESSION['id'];
         $type = (string) ($_SESSION['tipo'] ?? '');
 
-        if ($type === 'admin') {
-            $stmt = $this->pdo->prepare('SELECT id FROM cases WHERE id = ?');
-            $stmt->execute([$caseId]);
-        } else {
-            $stmt = $this->pdo->prepare(
-                'SELECT id FROM cases WHERE id = ? AND (cliente_id = ? OR advogado_id = ?)'
-            );
-            $stmt->execute([$caseId, $userId, $userId]);
+        if (!$this->canAccessCaseId($caseId, $userId, $type)) {
+            $this->response->redirect(app_url('/frontend/chat.php?erro=' . urlencode('Voce nao tem acesso a este caso.')));
         }
 
-        if (!$stmt->fetch()) {
-            $this->response->redirect(app_url('/frontend/chat.php?erro=' . urlencode('Você não tem acesso a este caso.')));
+        $case = $this->caseById($caseId);
+        if ($case && (string) ($case['status'] ?? '') === 'finalizado' && $type !== 'admin') {
+            $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Caso finalizado nao aceita novas mensagens.')));
         }
 
         $attachment = $hasAttachment ? $this->storeMessageAttachment($caseId, $userId, $file) : null;
@@ -272,7 +284,6 @@ class CaseController extends BaseController
         ]);
         $messageId = (int) $this->pdo->lastInsertId();
 
-        $case = $this->caseById($caseId);
         if ($case) {
             $recipients = array_diff($this->notifications->caseParticipantIds($caseId), [$userId]);
             $notificationText = $attachment
@@ -280,6 +291,7 @@ class CaseController extends BaseController
                 : 'Nova mensagem no caso: ' . (string) $case['titulo'];
             $this->notifications->notifyMany($recipients, $notificationText);
         }
+
         $this->audit->log('message.send', 'case', $caseId, [
             'sender_id' => $userId,
             'message_id' => $messageId,
@@ -287,7 +299,7 @@ class CaseController extends BaseController
             'attachment_name' => $attachment['original_name'] ?? null,
         ]);
 
-        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId));
+        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&sucesso=' . urlencode('Mensagem enviada.')));
     }
 
     public function downloadAttachment(): void
@@ -384,6 +396,34 @@ class CaseController extends BaseController
             'cliente' => (int) ($case['cliente_id'] ?? 0) === $userId,
             default => false,
         };
+    }
+
+    private function currentProfessionalIsVerified(): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT oab_verificado FROM users WHERE id = ? AND status = 'ativo'");
+        $stmt->execute([(int) ($_SESSION['id'] ?? 0)]);
+
+        return (int) ($stmt->fetchColumn() ?: 0) === 1;
+    }
+
+    private function documentBelongsToCurrentClient(int $documentId): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT id FROM documents WHERE id = ? AND user_id = ?');
+        $stmt->execute([$documentId, (int) ($_SESSION['id'] ?? 0)]);
+
+        return (bool) $stmt->fetch();
+    }
+
+    private function casesHasDocumentIdColumn(): bool
+    {
+        static $hasColumn = null;
+        if ($hasColumn !== null) {
+            return $hasColumn;
+        }
+
+        $stmt = $this->pdo->query("SHOW COLUMNS FROM cases WHERE Field = 'document_id'");
+        $hasColumn = (bool) $stmt->fetch();
+        return $hasColumn;
     }
 
     private function canAccessCaseId(int $caseId, int $userId, string $type): bool

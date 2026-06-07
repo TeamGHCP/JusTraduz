@@ -2,6 +2,7 @@
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
+require_once dirname(__DIR__) . '/services/JusbrasilService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
 
 class AdminController extends BaseController
@@ -58,7 +59,7 @@ class AdminController extends BaseController
         }
 
         if ($advogadoId !== null) {
-            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE id = ? AND tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> ''))");
+            $stmt = $this->pdo->prepare("SELECT id FROM users WHERE id = ? AND tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE");
             $stmt->execute([$advogadoId]);
             if (!$stmt->fetch()) {
                 $this->response->redirect(app_url('/frontend/admin/solicitacoes.php?erro=' . urlencode('Advogado inválido ou inativo.')));
@@ -95,45 +96,75 @@ class AdminController extends BaseController
         $userId = (int) $this->request->post('user_id', 0);
         $action = (string) $this->request->post('action', '');
         $justification = trim((string) $this->request->post('justificativa', ''));
+        $justification = mb_substr($justification, 0, 500);
 
         if ($userId <= 0 || !in_array($action, ['approve', 'reject', 'pending'], true)) {
-            $this->response->redirect(app_url('/frontend/admin/usuarios.php?erro=' . urlencode('Dados inválidos para revisar OAB.')));
+            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Dados invalidos para revisar OAB.')));
         }
 
-        $stmt = $this->pdo->prepare("SELECT id, nome, tipo, status_cna, oab, oab_uf FROM users WHERE id = ? AND tipo IN ('advogado', 'estagiario')");
+        if (in_array($action, ['approve', 'reject'], true) && $justification === '') {
+            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Informe a justificativa da decisao OAB.')));
+        }
+
+        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo, status_cna, oab, oab_uf, oab_parametro FROM users WHERE id = ? AND tipo IN ('advogado', 'estagiario')");
         $stmt->execute([$userId]);
         $professional = $stmt->fetch();
 
         if (!$professional) {
-            $this->response->redirect(app_url('/frontend/admin/usuarios.php?erro=' . urlencode('Profissional não encontrado.')));
+            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Profissional nao encontrado.')));
         }
 
         $hasOab = trim((string) ($professional['oab'] ?? '')) !== '' && trim((string) ($professional['oab_uf'] ?? '')) !== '';
-        if (!$hasOab) {
-            $this->response->redirect(app_url('/frontend/admin/usuarios.php?erro=' . urlencode('Profissional sem OAB e UF informadas.')));
+        if (!$hasOab && $action !== 'reject') {
+            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Profissional sem OAB e UF informadas.')));
         }
 
         $previousStatus = (string) ($professional['status_cna'] ?? '');
         $adminId = (int) ($_SESSION['id'] ?? 0);
 
+        if ($action === 'reject') {
+            $message = $justification !== '' ? $justification : 'OAB reprovada na revisao manual administrativa.';
+
+            $this->pdo->beginTransaction();
+            try {
+                $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = ? AND tipo IN ('advogado', 'estagiario')");
+                $stmt->execute([$userId]);
+
+                if ($stmt->rowCount() !== 1) {
+                    throw new RuntimeException('Nao foi possivel excluir o profissional reprovado.');
+                }
+
+                $this->audit->log('admin.professional_oab_reject_delete', 'user', $userId, [
+                    'nome' => $professional['nome'] ?? null,
+                    'email' => $professional['email'] ?? null,
+                    'tipo' => $professional['tipo'] ?? null,
+                    'oab' => $professional['oab'] ?? null,
+                    'oab_uf' => $professional['oab_uf'] ?? null,
+                    'status_anterior' => $previousStatus,
+                    'justificativa' => $message,
+                ]);
+
+                $this->pdo->commit();
+            } catch (Throwable $exception) {
+                $this->pdo->rollBack();
+                $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Nao foi possivel excluir a conta reprovada.')));
+            }
+
+            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?sucesso=' . urlencode('OAB reprovada e conta excluida.')));
+        }
+
         if ($action === 'approve') {
             $newStatus = 'verificado';
             $verified = 1;
             $origin = 'admin_manual';
-            $message = 'Validado manualmente pela administração.';
-            $notification = 'Seu cadastro profissional foi validado pela administração.';
-        } elseif ($action === 'reject') {
-            $newStatus = 'invalido';
-            $verified = 0;
-            $origin = 'admin_manual';
-            $message = $justification !== '' ? $justification : 'Reprovado manualmente pela administração.';
-            $notification = 'Sua validação profissional precisa de correção: ' . $message;
+            $message = 'OAB validada manualmente pela administracao.';
+            $notification = 'Seu cadastro profissional foi validado pela administracao.';
         } else {
             $newStatus = 'pendente';
             $verified = 0;
             $origin = 'admin_manual';
-            $message = 'Marcado para revisão manual pela administração.';
-            $notification = 'Sua validação profissional voltou para revisão manual.';
+            $message = 'Marcado para revisao manual pela administracao.';
+            $notification = 'Sua OAB voltou para revisao manual.';
         }
 
         $stmt = $this->pdo->prepare(
@@ -148,7 +179,7 @@ class AdminController extends BaseController
         );
         $stmt->execute([$verified, $newStatus, $message, $newStatus, $origin, $newStatus, $message, $userId]);
 
-        $this->logCnaReview($userId, $adminId, $action, $previousStatus, $newStatus, $origin, $message, $justification);
+        $this->logOabReview($userId, $adminId, $action, $previousStatus, $newStatus, $origin, $message, $justification);
         $this->notifications->notify($userId, $notification);
         $this->audit->log('admin.professional_oab_' . $action, 'user', $userId, [
             'status_anterior' => $previousStatus,
@@ -156,10 +187,35 @@ class AdminController extends BaseController
             'justificativa' => $justification,
         ]);
 
-        $this->response->redirect(app_url('/frontend/admin/usuarios.php?tipo=' . urlencode((string) $professional['tipo']) . '&sucesso=' . urlencode('Revisão profissional atualizada.')));
+        $syncMessage = '';
+        if ($action === 'approve') {
+            $sync = (new JusbrasilService($this->pdo))->syncOabProcesses(
+                $userId,
+                (string) $professional['nome'],
+                (string) $professional['oab'],
+                (string) $professional['oab_uf'],
+                (string) ($professional['oab_parametro'] ?? ''),
+                (string) $professional['tipo']
+            );
+
+            if (!empty($sync['correlation_id'])) {
+                $stmt = $this->pdo->prepare('UPDATE users SET oab_parametro = ? WHERE id = ?');
+                $stmt->execute([(string) $sync['correlation_id'], $userId]);
+            }
+
+            $this->audit->log('jusbrasil.oab_admin_sync', 'user', $userId, [
+                'success' => (bool) ($sync['success'] ?? false),
+                'configured' => (bool) ($sync['configured'] ?? true),
+                'imported' => (int) ($sync['imported'] ?? 0),
+            ]);
+
+            $syncMessage = ' Jusbrasil: ' . (string) ($sync['message'] ?? 'sincronizacao nao concluida.');
+        }
+
+        $this->response->redirect(app_url('/frontend/admin/validar-oab.php?sucesso=' . urlencode('Revisao profissional atualizada.' . $syncMessage)));
     }
 
-    private function logCnaReview(
+    private function logOabReview(
         int $professionalId,
         int $adminId,
         string $action,
@@ -186,7 +242,7 @@ class AdminController extends BaseController
                 $justification !== '' ? $justification : null,
             ]);
         } catch (Throwable $exception) {
-            $this->audit->log('admin.cna_log_error', 'user', $professionalId, ['error' => $exception->getMessage()]);
+            $this->audit->log('admin.oab_log_error', 'user', $professionalId, ['error' => $exception->getMessage()]);
         }
     }
 

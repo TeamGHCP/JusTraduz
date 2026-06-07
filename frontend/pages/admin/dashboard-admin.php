@@ -25,6 +25,26 @@ function admin_action_severity(string $action): string
     return 'info';
 }
 
+function admin_env_configured(string $key): bool
+{
+    $value = getenv($key);
+    if ($value !== false && trim((string) $value) !== '') {
+        return true;
+    }
+
+    $env = database_env_values(PROJECT_ROOT_PATH . '/backend/.env');
+    return trim((string) ($env[$key] ?? '')) !== '';
+}
+
+function admin_risk_level(int $value): string
+{
+    if ($value <= 0) {
+        return 'ok';
+    }
+
+    return $value >= 3 ? 'critical' : 'warning';
+}
+
 $userCount = count_query($pdo, 'SELECT COUNT(*) FROM users');
 $activeUserCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE status = 'ativo'");
 $clientCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo = 'cliente'");
@@ -71,6 +91,41 @@ $failedLoginCount = count_query(
      WHERE action IN ('auth.login_failed', 'auth.admin_login_failed')
        AND created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)"
 );
+$externalProcessCount = count_query($pdo, 'SELECT COUNT(*) FROM external_processes');
+$lastExternalSync = fetch_one($pdo, 'SELECT MAX(last_synced_at) AS synced_at FROM external_processes');
+$lastExternalSyncAt = (string) ($lastExternalSync['synced_at'] ?? '');
+$jusbrasilCpfConfigured = admin_env_configured('JUSBRASIL_API_KEY');
+$jusbrasilOabConfigured = admin_env_configured('JUSBRASIL_OAB_TOKEN');
+$operationalRisks = [
+    [
+        'label' => 'OAB pendente',
+        'value' => $pendingProfessionalCount,
+        'detail' => 'Profissional sem validacao nao entra no sistema completo.',
+        'href' => 'validar-oab.php',
+        'level' => admin_risk_level($pendingProfessionalCount),
+    ],
+    [
+        'label' => 'Casos sem responsavel',
+        'value' => $unassignedCaseCount,
+        'detail' => 'Fila aberta sem dono vira gargalo de atendimento.',
+        'href' => 'solicitacoes.php?responsavel=sem',
+        'level' => admin_risk_level($unassignedCaseCount),
+    ],
+    [
+        'label' => 'Documentos sem IA',
+        'value' => $pendingDocumentCount,
+        'detail' => 'Documento sem analise enfraquece a promessa central.',
+        'href' => 'documentos.php?analysis=pendente',
+        'level' => admin_risk_level($pendingDocumentCount),
+    ],
+    [
+        'label' => 'Falhas de login 24h',
+        'value' => $failedLoginCount,
+        'detail' => 'Tentativas falhas precisam aparecer na auditoria.',
+        'href' => 'auditoria.php?severity=critical&action=login_failed',
+        'level' => admin_risk_level($failedLoginCount),
+    ],
+];
 
 $documentTrendRows = fetch_all(
     $pdo,
@@ -181,10 +236,13 @@ $recentAudit = fetch_all(
 
 $geminiService = new GeminiService();
 $healthChecks = [
+    ['label' => 'Jusbrasil CPF', 'status' => $jusbrasilCpfConfigured ? 'ok' : 'warning', 'detail' => $jusbrasilCpfConfigured ? 'Token configurado' : 'Token ausente'],
+    ['label' => 'Jusbrasil OAB', 'status' => $jusbrasilOabConfigured ? 'ok' : 'warning', 'detail' => $jusbrasilOabConfigured ? 'Token configurado' : 'Token ausente'],
+    ['label' => 'Processos externos', 'status' => $externalProcessCount > 0 ? 'ok' : 'warning', 'detail' => $externalProcessCount > 0 ? $externalProcessCount . ' importado(s)' : 'Sem dados importados'],
     ['label' => 'Banco de dados', 'status' => 'ok', 'detail' => 'Conexão ativa'],
     ['label' => 'Gemini', 'status' => $geminiService->isConfigured() ? 'ok' : 'warning', 'detail' => $geminiService->isConfigured() ? 'Chave configurada' : 'Chave ausente'],
     ['label' => 'Auditoria', 'status' => 'ok', 'detail' => $recentAudit ? 'Eventos registrados' : 'Sem eventos recentes'],
-    ['label' => 'CNA/OAB', 'status' => $pendingProfessionalCount > 0 ? 'warning' : 'ok', 'detail' => $pendingProfessionalCount > 0 ? $pendingProfessionalCount . ' pendência(s)' : 'Sem fila pendente'],
+    ['label' => 'OAB', 'status' => $pendingProfessionalCount > 0 ? 'warning' : 'ok', 'detail' => $pendingProfessionalCount > 0 ? $pendingProfessionalCount . ' pendência(s)' : 'Sem fila pendente'],
 ];
 ?>
 <!DOCTYPE html>
@@ -210,7 +268,7 @@ $healthChecks = [
           <p>Monitore validações OAB, documentos com IA, solicitações críticas, agenda e auditoria em uma única tela operacional.</p>
         </div>
         <div class="admin-hero-actions">
-          <a class="btn btn-primary" href="usuarios.php?oab=pendente"><?= icon_svg('shield') ?> Revisar OAB</a>
+          <a class="btn btn-primary" href="validar-oab.php"><?= icon_svg('shield') ?> Revisar OAB</a>
           <a class="btn btn-outline" href="solicitacoes.php?prioridade=alta"><?= icon_svg('case') ?> Casos críticos</a>
           <a class="btn btn-soft" href="documentos.php?analysis=pendente"><?= icon_svg('folder') ?> IA pendente</a>
         </div>
@@ -232,7 +290,7 @@ $healthChecks = [
           <span>Sem responsável</span>
           <strong><?= e((string) $unassignedCaseCount) ?></strong>
         </a>
-        <a class="admin-alert-tile" href="agenda.php">
+        <a class="admin-alert-tile" href="../agenda.php">
           <span>Agenda 7 dias</span>
           <strong><?= e((string) $upcomingAppointmentCount) ?></strong>
         </a>
@@ -240,6 +298,18 @@ $healthChecks = [
           <span>Falhas login 24h</span>
           <strong><?= e((string) $failedLoginCount) ?></strong>
         </a>
+      </section>
+
+      <section class="admin-risk-board">
+        <?php foreach ($operationalRisks as $risk): ?>
+          <a class="admin-risk-card is-<?= e($risk['level']) ?>" href="<?= e($risk['href']) ?>">
+            <div>
+              <span><?= e($risk['label']) ?></span>
+              <strong><?= e((string) $risk['value']) ?></strong>
+            </div>
+            <p><?= e($risk['detail']) ?></p>
+          </a>
+        <?php endforeach; ?>
       </section>
 
       <section class="admin-dashboard-grid">
@@ -330,8 +400,8 @@ $healthChecks = [
       <section class="grid grid-3 admin-work-grid">
         <article class="dash-section">
           <div class="dash-section-title">
-            <h2>Fila OAB/CNA</h2>
-            <a class="btn btn-soft btn-sm" href="usuarios.php?oab=pendente">Abrir</a>
+            <h2>Fila OAB</h2>
+            <a class="btn btn-soft btn-sm" href="validar-oab.php">Abrir</a>
           </div>
           <?php if (!$pendingProfessionals): ?>
             <?= empty_state('Nenhum profissional pendente.') ?>
@@ -349,14 +419,15 @@ $healthChecks = [
                       <?= csrf_input() ?>
                       <input type="hidden" name="user_id" value="<?= (int) $professional['id'] ?>">
                       <input type="hidden" name="action" value="approve">
+                      <input type="hidden" name="justificativa" value="Aprovado pela central admin apos validacao manual.">
                       <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
                     </form>
-                    <form action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post">
+                    <form action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar esta OAB vai excluir a conta do profissional. Continuar?');">
                       <?= csrf_input() ?>
                       <input type="hidden" name="user_id" value="<?= (int) $professional['id'] ?>">
                       <input type="hidden" name="action" value="reject">
-                      <input type="hidden" name="justificativa" value="Reprovado na revisão manual administrativa.">
-                      <button class="btn btn-outline btn-sm" type="submit">Reprovar</button>
+                      <input type="hidden" name="justificativa" value="OAB reprovada na revisão manual administrativa.">
+                      <button class="btn btn-outline btn-sm" type="submit">Excluir</button>
                     </form>
                   </div>
                 </div>

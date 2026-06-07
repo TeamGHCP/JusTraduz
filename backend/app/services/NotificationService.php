@@ -49,7 +49,7 @@ class NotificationService
 
     public function activeLawyers(): array
     {
-        return $this->idsBySql("SELECT id FROM users WHERE tipo = 'advogado' AND status = 'ativo'");
+        return $this->idsBySql("SELECT id FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE");
     }
 
     private function idsBySql(string $sql): array

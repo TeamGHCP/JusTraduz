@@ -5,34 +5,47 @@ require_login();
 $type = current_user_type();
 $userId = current_user_id();
 $caseId = (int) ($_GET['case_id'] ?? 0);
+$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
+$errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
-if ($type === 'cliente') {
-    $cases = fetch_all($pdo, 'SELECT c.*, u.nome AS other_name FROM cases c LEFT JOIN users u ON u.id = c.advogado_id WHERE c.cliente_id = ? ORDER BY c.created_at DESC', [$userId]);
-} elseif ($type === 'advogado') {
-    $cases = fetch_all($pdo, 'SELECT c.*, u.nome AS other_name FROM cases c INNER JOIN users u ON u.id = c.cliente_id WHERE c.advogado_id = ? ORDER BY c.created_at DESC', [$userId]);
-} elseif ($type === 'admin') {
-    $cases = fetch_all(
-        $pdo,
-        "SELECT c.*, CONCAT(cli.nome, ' / ', COALESCE(adv.nome, 'sem advogado')) AS other_name
-         FROM cases c
-         INNER JOIN users cli ON cli.id = c.cliente_id
-         LEFT JOIN users adv ON adv.id = c.advogado_id
-         ORDER BY c.created_at DESC"
-    );
-} else {
-    $cases = [];
+function chat_cases_has_document_id(PDO $pdo): bool
+{
+    static $hasColumn = null;
+    if ($hasColumn !== null) {
+        return $hasColumn;
+    }
+
+    $stmt = $pdo->query("SHOW COLUMNS FROM cases WHERE Field = 'document_id'");
+    $hasColumn = (bool) $stmt->fetch();
+    return $hasColumn;
 }
 
-if (!$caseId && $cases) {
-    $caseId = (int) $cases[0]['id'];
+function chat_status_badge_class(string $status): string
+{
+    return match ($status) {
+        'finalizado' => 'badge-success',
+        'em_andamento' => 'badge-info',
+        default => 'badge-warning',
+    };
 }
 
-$allowedCaseIds = array_map(static fn (array $case): int => (int) $case['id'], $cases);
-if ($caseId && !in_array($caseId, $allowedCaseIds, true)) {
-    $caseId = 0;
+function chat_priority_badge_class(string $priority): string
+{
+    return $priority === 'alta' ? 'badge-warning' : 'badge-info';
 }
 
-$messages = $caseId ? fetch_all($pdo, 'SELECT m.*, u.nome FROM messages m INNER JOIN users u ON u.id = m.sender_id WHERE m.case_id = ? ORDER BY m.created_at ASC', [$caseId]) : [];
+function chat_other_party(array $case, string $type): string
+{
+    if ($type === 'cliente') {
+        return (string) ($case['advogado'] ?? 'Aguardando profissional');
+    }
+
+    if ($type === 'advogado') {
+        return (string) ($case['cliente'] ?? 'Cliente');
+    }
+
+    return trim((string) ($case['cliente'] ?? 'Cliente') . ' / ' . (string) ($case['advogado'] ?? 'sem profissional'));
+}
 
 function chat_file_size(?int $bytes): string
 {
@@ -62,6 +75,70 @@ function chat_attachment_preview_type(?string $mime, ?string $filename): string
 
     return '';
 }
+
+$hasDocumentColumn = chat_cases_has_document_id($pdo);
+$documentSelect = $hasDocumentColumn ? ', c.document_id, d.nome_arquivo AS document_name' : ', NULL AS document_id, NULL AS document_name';
+$documentJoin = $hasDocumentColumn ? ' LEFT JOIN documents d ON d.id = c.document_id' : '';
+$where = [];
+$params = [];
+
+if ($type === 'cliente') {
+    $where[] = 'c.cliente_id = ?';
+    $params[] = $userId;
+} elseif ($type === 'advogado') {
+    $where[] = 'c.advogado_id = ?';
+    $params[] = $userId;
+} elseif ($type !== 'admin') {
+    $where[] = '0 = 1';
+}
+
+$sql = "SELECT c.id, c.cliente_id, c.advogado_id, c.titulo, c.descricao, c.status, c.prioridade, c.created_at,
+               cli.nome AS cliente, adv.nome AS advogado,
+               (SELECT COUNT(*) FROM messages m WHERE m.case_id = c.id) AS message_count,
+               (SELECT MAX(m.created_at) FROM messages m WHERE m.case_id = c.id) AS last_message_at,
+               (SELECT COUNT(*) FROM tasks t WHERE t.case_id = c.id) AS task_count,
+               (SELECT COUNT(*) FROM appointments a WHERE a.case_id = c.id AND a.status <> 'cancelado') AS appointment_count
+               $documentSelect
+        FROM cases c
+        INNER JOIN users cli ON cli.id = c.cliente_id
+        LEFT JOIN users adv ON adv.id = c.advogado_id
+        $documentJoin";
+
+if ($where) {
+    $sql .= ' WHERE ' . implode(' AND ', $where);
+}
+
+$sql .= " ORDER BY FIELD(c.prioridade, 'alta', 'media', 'baixa'), FIELD(c.status, 'aberto', 'em_andamento', 'finalizado'), c.created_at DESC";
+$cases = fetch_all($pdo, $sql, $params);
+
+if (!$caseId && $cases) {
+    $caseId = (int) $cases[0]['id'];
+}
+
+$allowedCaseIds = array_map(static fn (array $case): int => (int) $case['id'], $cases);
+if ($caseId && !in_array($caseId, $allowedCaseIds, true)) {
+    $caseId = 0;
+}
+
+$selectedCase = null;
+foreach ($cases as $case) {
+    if ((int) $case['id'] === $caseId) {
+        $selectedCase = $case;
+        break;
+    }
+}
+
+$messages = $caseId ? fetch_all(
+    $pdo,
+    'SELECT m.*, u.nome, u.tipo
+     FROM messages m
+     INNER JOIN users u ON u.id = m.sender_id
+     WHERE m.case_id = ?
+     ORDER BY m.created_at ASC',
+    [$caseId]
+) : [];
+
+$canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado' || $type === 'admin');
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -77,81 +154,148 @@ function chat_attachment_preview_type(?string $mime, ?string $filename): string
     <?php render_sidebar($type, 'chat.php'); ?>
 
     <main class="app-main chat-main">
-      <?php render_topbar('Chat interno', 'Mensagens vinculadas aos seus casos.', current_user_name()); ?>
+      <?php render_topbar('Chat por caso', 'Conversa vinculada a uma solicitacao, documento e proximas acoes.', current_user_name()); ?>
+
+      <?php if ($successMessage !== ''): ?>
+        <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
+      <?php endif; ?>
+      <?php if ($errorMessage !== ''): ?>
+        <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
+      <?php endif; ?>
 
       <?php if (!$cases): ?>
-        <?= empty_state('Nenhum chat disponível. Abra ou aceite uma solicitação para iniciar uma conversa.') ?>
+        <?= empty_state($type === 'cliente' ? 'Nenhum chat disponivel. Abra uma solicitacao para iniciar o atendimento.' : 'Nenhum caso aceito para conversar no momento.') ?>
       <?php else: ?>
         <section class="chat-layout">
           <aside class="chat-list">
             <?php foreach ($cases as $case): ?>
               <a class="chat-item <?= (int) $case['id'] === $caseId ? 'active' : '' ?>" href="chat.php?case_id=<?= (int) $case['id'] ?>">
                 <strong><?= e($case['titulo']) ?></strong>
-                <span><?= e($case['other_name'] ?? 'Aguardando profissional') ?></span>
+                <span><?= e(chat_other_party($case, $type)) ?></span>
+                <small>
+                  <?= e(status_label($case['status'] ?? '')) ?>
+                  <?php if (!empty($case['last_message_at'])): ?>
+                    | <?= e(date('d/m H:i', strtotime((string) $case['last_message_at']))) ?>
+                  <?php endif; ?>
+                </small>
               </a>
             <?php endforeach; ?>
           </aside>
+
           <div class="chat-panel">
-            <div class="chat-head"><strong>Caso #<?= $caseId ?></strong></div>
-            <div class="chat-messages" data-chat-messages>
-              <?php if (!$messages): ?>
-                <div class="message">Nenhuma mensagem enviada ainda.</div>
-              <?php else: ?>
-                <?php foreach ($messages as $message): ?>
-                  <div class="message <?= (int) $message['sender_id'] === $userId ? 'out' : '' ?>">
-                    <strong><?= e($message['nome']) ?></strong><br>
-                    <?php if ((string) ($message['mensagem'] ?? '') !== ''): ?>
-                      <?= nl2br(e($message['mensagem'])) ?>
-                    <?php endif; ?>
-                    <?php if (!empty($message['attachment_path'])): ?>
-                      <?php
-                        $attachmentUrl = app_url('/backend/public/index.php?rota=/messages/attachment&id=' . (int) $message['id']);
-                        $downloadUrl = $attachmentUrl . '&download=1';
-                        $attachmentName = (string) ($message['attachment_original_name'] ?? 'Anexo');
-                        $attachmentSize = chat_file_size(isset($message['attachment_size']) ? (int) $message['attachment_size'] : null);
-                        $previewType = chat_attachment_preview_type($message['attachment_mime'] ?? null, $attachmentName);
-                      ?>
-                      <div
-                        class="message-attachment <?= $previewType !== '' ? 'is-previewable' : '' ?>"
-                        <?= $previewType !== '' ? 'role="button" tabindex="0"' : '' ?>
-                        <?= $previewType !== '' ? 'aria-label="Visualizar anexo ' . e($attachmentName) . '"' : '' ?>
-                        <?php if ($previewType !== ''): ?>
-                          data-attachment-url="<?= e($attachmentUrl) ?>"
-                          data-attachment-name="<?= e($attachmentName) ?>"
-                          data-attachment-type="<?= e($previewType) ?>"
-                          title="Clique para visualizar"
-                        <?php endif; ?>
-                      >
-                        <?= icon_svg('paperclip') ?>
-                        <span>
-                          <strong><?= e($attachmentName) ?></strong>
-                          <?php if ($attachmentSize !== ''): ?><small><?= e($attachmentSize) ?></small><?php endif; ?>
-                        </span>
-                      </div>
-                    <?php endif; ?>
-                  </div>
-                <?php endforeach; ?>
-              <?php endif; ?>
-            </div>
-            <form class="chat-compose" action="<?= e(app_url('/backend/public/index.php?rota=/messages/send')) ?>" method="post" enctype="multipart/form-data" data-chat-form>
-              <?= csrf_input() ?>
-              <input type="hidden" name="case_id" value="<?= $caseId ?>">
-              <label class="btn btn-outline chat-attach-btn" title="Anexar arquivo">
-                <?= icon_svg('paperclip') ?>
-                <span>Anexar</span>
-                <input type="file" name="anexo" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx" data-chat-file>
-              </label>
-              <div class="chat-input-stack">
-                <input class="input" type="text" name="mensagem" placeholder="Digite sua mensagem" data-chat-input>
-                <span class="chat-file-name" data-chat-file-name></span>
+            <?php if (!$selectedCase): ?>
+              <div class="chat-case-context">
+                <?= empty_state('Selecione um caso para abrir o chat.') ?>
               </div>
-              <button class="btn btn-primary" type="submit"><?= icon_svg('mail') ?> Enviar</button>
-            </form>
+            <?php else: ?>
+              <section class="chat-case-context">
+                <div class="chat-context-head">
+                  <div>
+                    <div class="chat-head-badges">
+                      <span class="badge <?= e(chat_status_badge_class((string) $selectedCase['status'])) ?>"><?= e(status_label($selectedCase['status'] ?? '')) ?></span>
+                      <span class="badge <?= e(chat_priority_badge_class((string) $selectedCase['prioridade'])) ?>"><?= e((string) $selectedCase['prioridade']) ?></span>
+                    </div>
+                    <h2><?= e($selectedCase['titulo']) ?></h2>
+                    <p><?= e($selectedCase['descricao'] ?: 'Sem descricao cadastrada.') ?></p>
+                  </div>
+                  <div class="chat-context-actions">
+                    <a class="btn btn-outline btn-sm" href="acompanhar-solicitacoes.php"><?= icon_svg('case') ?> Casos</a>
+                    <a class="btn btn-outline btn-sm" href="tarefas.php?case_id=<?= $caseId ?>"><?= icon_svg('check') ?> Tarefas</a>
+                    <a class="btn btn-soft btn-sm" href="agenda.php"><?= icon_svg('calendar') ?> Agenda</a>
+                  </div>
+                </div>
+
+                <div class="chat-context-grid">
+                  <div><span>Cliente</span><strong><?= e($selectedCase['cliente'] ?? '-') ?></strong></div>
+                  <div><span>Responsavel</span><strong><?= e($selectedCase['advogado'] ?? 'Aguardando') ?></strong></div>
+                  <div><span>Mensagens</span><strong><?= e((string) (int) $selectedCase['message_count']) ?></strong></div>
+                  <div><span>Criado em</span><strong><?= e(date('d/m/Y H:i', strtotime((string) $selectedCase['created_at']))) ?></strong></div>
+                </div>
+
+                <?php if (!empty($selectedCase['document_id'])): ?>
+                  <a class="case-linked-doc chat-linked-doc" href="visualizar-documento.php?id=<?= (int) $selectedCase['document_id'] ?>">
+                    <?= icon_svg('file') ?>
+                    <span><?= e($selectedCase['document_name'] ?? 'Documento relacionado') ?></span>
+                  </a>
+                <?php endif; ?>
+              </section>
+
+              <div class="chat-messages" data-chat-messages>
+                <?php if (!$messages): ?>
+                  <div class="message">Nenhuma mensagem enviada ainda. Comece com uma pergunta objetiva sobre o caso.</div>
+                <?php else: ?>
+                  <?php foreach ($messages as $message): ?>
+                    <div class="message <?= (int) $message['sender_id'] === $userId ? 'out' : '' ?>">
+                      <div class="message-meta">
+                        <strong><?= e($message['nome']) ?></strong>
+                        <time><?= e(date('d/m/Y H:i', strtotime((string) $message['created_at']))) ?></time>
+                      </div>
+                      <?php if ((string) ($message['mensagem'] ?? '') !== ''): ?>
+                        <div><?= nl2br(e($message['mensagem'])) ?></div>
+                      <?php endif; ?>
+                      <?php if (!empty($message['attachment_path'])): ?>
+                        <?php
+                          $attachmentUrl = app_url('/backend/public/index.php?rota=/messages/attachment&id=' . (int) $message['id']);
+                          $downloadUrl = $attachmentUrl . '&download=1';
+                          $attachmentName = (string) ($message['attachment_original_name'] ?? 'Anexo');
+                          $attachmentSize = chat_file_size(isset($message['attachment_size']) ? (int) $message['attachment_size'] : null);
+                          $previewType = chat_attachment_preview_type($message['attachment_mime'] ?? null, $attachmentName);
+                        ?>
+                        <div
+                          class="message-attachment <?= $previewType !== '' ? 'is-previewable' : '' ?>"
+                          <?= $previewType !== '' ? 'role="button" tabindex="0"' : '' ?>
+                          <?= $previewType !== '' ? 'aria-label="Visualizar anexo ' . e($attachmentName) . '"' : '' ?>
+                          <?php if ($previewType !== ''): ?>
+                            data-attachment-url="<?= e($attachmentUrl) ?>"
+                            data-attachment-name="<?= e($attachmentName) ?>"
+                            data-attachment-type="<?= e($previewType) ?>"
+                            title="Clique para visualizar"
+                          <?php endif; ?>
+                        >
+                          <?= icon_svg('paperclip') ?>
+                          <span>
+                            <strong><?= e($attachmentName) ?></strong>
+                            <?php if ($attachmentSize !== ''): ?><small><?= e($attachmentSize) ?></small><?php endif; ?>
+                          </span>
+                          <a class="attachment-download" href="<?= e($downloadUrl) ?>" title="Baixar anexo">
+                            <?= icon_svg('download') ?>
+                            <span>Baixar</span>
+                          </a>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </div>
+
+              <?php if ($canCompose): ?>
+                <form class="chat-compose" action="<?= e(app_url('/backend/public/index.php?rota=/messages/send')) ?>" method="post" enctype="multipart/form-data" data-chat-form>
+                  <?= csrf_input() ?>
+                  <input type="hidden" name="case_id" value="<?= $caseId ?>">
+                  <label class="btn btn-outline chat-attach-btn" title="Anexar arquivo">
+                    <?= icon_svg('paperclip') ?>
+                    <span>Anexar</span>
+                    <input type="file" name="anexo" accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.doc,.docx" data-chat-file>
+                  </label>
+                  <div class="chat-input-stack">
+                    <input class="input" type="text" name="mensagem" placeholder="Digite uma mensagem sobre este caso" data-chat-input>
+                    <span class="chat-file-name" data-chat-file-name></span>
+                  </div>
+                  <button class="btn btn-primary" type="submit"><?= icon_svg('mail') ?> Enviar</button>
+                </form>
+              <?php else: ?>
+                <div class="chat-compose chat-compose-locked">
+                  <span class="badge badge-success">Caso finalizado</span>
+                  <p>Novas mensagens estao bloqueadas para manter o historico encerrado.</p>
+                </div>
+              <?php endif; ?>
+            <?php endif; ?>
           </div>
         </section>
       <?php endif; ?>
     </main>
   </div>
+
   <div class="attachment-modal" data-attachment-modal hidden>
     <div class="attachment-modal-backdrop" data-attachment-close></div>
     <section class="attachment-dialog" role="dialog" aria-modal="true" aria-labelledby="attachment-title">

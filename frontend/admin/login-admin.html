@@ -23,15 +23,15 @@
 
           <div class="field">
             <label for="email">E-mail administrativo</label>
-            <input class="input" type="email" id="email" name="email" placeholder="admin@seudominio.com" required>
+            <input class="input" type="email" id="email" name="email" placeholder="admin@seudominio.com" autocomplete="email" required>
           </div>
 
           <div class="field">
             <label for="senha">Senha</label>
-            <input class="input" type="password" id="senha" name="senha" placeholder="Senha do admin" required>
+            <input class="input" type="password" id="senha" name="senha" placeholder="Senha do admin" autocomplete="current-password" required>
           </div>
 
-          <button class="btn btn-primary btn-block" type="submit">Entrar no admin</button>
+          <button class="btn btn-primary btn-block" type="submit" data-loading-text="Entrando...">Entrar no admin</button>
         </form>
 
         <p class="auth-footer">Login de usuários comuns: <a href="../login.html">entrar no JusTraduz</a></p>

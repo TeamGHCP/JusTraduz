@@ -3,8 +3,48 @@ require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 
 $type = current_user_type();
-$user = fetch_one($pdo, 'SELECT nome, email, tipo, telefone, foto_perfil, oab, oab_uf, oab_status FROM users WHERE id = ?', [current_user_id()]);
+$user = fetch_one(
+    $pdo,
+    'SELECT nome, email, tipo, telefone, cpf, foto_perfil, oab, oab_uf, oab_status, oab_verificado, status_cna, cna_validado_em, cna_origem, cna_ultimo_erro
+     FROM users
+     WHERE id = ?',
+    [current_user_id()]
+);
 $photoUrl = !empty($user['foto_perfil']) ? '../' . ltrim((string) $user['foto_perfil'], '/') : '';
+
+function profile_oab_status_meta(array $user): array
+{
+    $verified = (int) ($user['oab_verificado'] ?? 0) === 1;
+    $status = (string) (($user['status_cna'] ?? '') ?: 'pendente');
+
+    if ($verified || $status === 'verificado') {
+        return [
+            'label' => 'OAB validada',
+            'badge' => 'badge-success',
+            'alert' => 'alert-success',
+            'message' => 'Seu cadastro profissional esta validado. O acesso a casos, documentos e agenda profissional esta liberado.',
+        ];
+    }
+
+    if (in_array($status, ['invalido', 'nao_encontrado'], true)) {
+        return [
+            'label' => 'OAB com pendencia',
+            'badge' => 'badge-danger',
+            'alert' => 'alert-error',
+            'message' => 'A administracao encontrou problema na OAB informada. Atualize seus dados com o suporte antes de tentar acessar como profissional.',
+        ];
+    }
+
+    return [
+        'label' => 'Aguardando validacao',
+        'badge' => 'badge-warning',
+        'alert' => 'alert-info',
+        'message' => 'Sua OAB ainda depende de revisao administrativa. Enquanto isso, o acesso profissional completo permanece bloqueado.',
+    ];
+}
+
+$isProfessional = in_array($user['tipo'] ?? '', ['advogado', 'estagiario'], true);
+$oabStatus = $isProfessional ? profile_oab_status_meta($user) : null;
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -34,6 +74,9 @@ $photoUrl = !empty($user['foto_perfil']) ? '../' . ltrim((string) $user['foto_pe
           <h3><?= e($user['nome'] ?? '') ?></h3>
           <p><?= e($user['email'] ?? '') ?></p>
           <p class="mt-12"><span class="badge badge-success">Conta ativa</span></p>
+          <?php if ($oabStatus): ?>
+            <p class="mt-8"><span class="badge <?= e($oabStatus['badge']) ?>"><?= e($oabStatus['label']) ?></span></p>
+          <?php endif; ?>
         </aside>
         <div class="profile-main">
           <form class="card auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/profile/update')) ?>" method="post" enctype="multipart/form-data">
@@ -46,6 +89,9 @@ $photoUrl = !empty($user['foto_perfil']) ? '../' . ltrim((string) $user['foto_pe
               <div class="field"><label for="nome">Nome</label><input class="input" id="nome" name="nome" value="<?= e($user['nome'] ?? '') ?>" required></div>
               <div class="field"><label for="email">E-mail</label><input class="input" id="email" name="email" type="email" value="<?= e($user['email'] ?? '') ?>" required></div>
               <div class="field"><label for="telefone">Telefone</label><input class="input" id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="(00) 00000-0000" value="<?= e($user['telefone'] ?? '') ?>"></div>
+              <?php if (($user['tipo'] ?? '') === 'cliente'): ?>
+                <div class="field"><label for="cpf">CPF</label><input class="input" id="cpf" name="cpf" type="text" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" value="<?= e($user['cpf'] ?? '') ?>"></div>
+              <?php endif; ?>
               <div class="field"><label for="tipo">Tipo</label><input class="input" id="tipo" value="<?= e($user['tipo'] ?? '') ?>" disabled></div>
             </div>
             <?php if (in_array($user['tipo'] ?? '', ['advogado', 'estagiario'], true)): ?>
@@ -56,6 +102,42 @@ $photoUrl = !empty($user['foto_perfil']) ? '../' . ltrim((string) $user['foto_pe
             <?php endif; ?>
             <button class="btn btn-primary" type="submit"><?= icon_svg('user') ?> Salvar alterações</button>
           </form>
+
+          <?php if ($oabStatus): ?>
+            <section class="card profile-oab-card">
+              <div class="dash-section-title">
+                <div>
+                  <h2>Status profissional</h2>
+                  <p class="text-muted">Validacao manual da OAB vinculada ao seu cadastro.</p>
+                </div>
+                <span class="badge <?= e($oabStatus['badge']) ?>"><?= e($oabStatus['label']) ?></span>
+              </div>
+
+              <div class="alert is-visible <?= e($oabStatus['alert']) ?>"><?= e($oabStatus['message']) ?></div>
+
+              <div class="profile-oab-grid">
+                <div>
+                  <span>OAB</span>
+                  <strong><?= e(trim((string) (($user['oab_uf'] ?? '') . ' ' . ($user['oab'] ?? ''))) ?: '-') ?></strong>
+                </div>
+                <div>
+                  <span>Origem</span>
+                  <strong><?= e(($user['cna_origem'] ?? '') ?: 'admin_manual') ?></strong>
+                </div>
+                <div>
+                  <span>Ultima validacao</span>
+                  <strong><?= !empty($user['cna_validado_em']) ? e(date('d/m/Y H:i', strtotime((string) $user['cna_validado_em']))) : '-' ?></strong>
+                </div>
+              </div>
+
+              <?php if (!empty($user['oab_status'])): ?>
+                <p class="text-muted mt-12"><?= e($user['oab_status']) ?></p>
+              <?php endif; ?>
+              <?php if (!empty($user['cna_ultimo_erro'])): ?>
+                <p class="text-muted mt-12"><?= e($user['cna_ultimo_erro']) ?></p>
+              <?php endif; ?>
+            </section>
+          <?php endif; ?>
 
           <section class="card">
             <div class="dash-section-title"><h2>Segurança</h2></div>

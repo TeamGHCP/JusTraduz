@@ -181,6 +181,43 @@
   flex-wrap: wrap;
 }
 
+.oab-validation-box {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.oab-validation-box > span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.oab-validation-box > strong {
+  color: var(--navy);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.oab-validation-box > small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.oab-validation-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .select-sm {
   width: auto;
   min-width: 128px;
@@ -395,32 +432,6 @@
 
 .schedule-card .auth-form {
   gap: 12px;
-}
-
-.oab-lookup-row {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.oab-lookup-status {
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 750;
-}
-
-.oab-lookup-status.is-success {
-  color: var(--success);
-}
-
-.oab-lookup-status.is-warning {
-  color: var(--warning);
-}
-
-.oab-lookup-status.is-error {
-  color: var(--danger);
 }
 
 .audit-filter {

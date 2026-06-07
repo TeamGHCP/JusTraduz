@@ -5,14 +5,86 @@ require_login();
 $type = current_user_type();
 $userId = current_user_id();
 $professionalFilter = (int) ($_GET['professional_id'] ?? 0);
-$roleFilter = $_GET['perfil'] ?? '';
+$roleFilter = trim((string) ($_GET['perfil'] ?? ''));
+$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
+$errorMessage = trim((string) ($_GET['erro'] ?? ''));
+
+function agenda_datetime_label(?string $value): string
+{
+    if (!$value) {
+        return '-';
+    }
+
+    return date('d/m/Y H:i', strtotime($value));
+}
+
+function agenda_time_range(array $row): string
+{
+    return date('H:i', strtotime((string) $row['starts_at'])) . ' - ' . date('H:i', strtotime((string) $row['ends_at']));
+}
+
+function agenda_role_label(?string $role): string
+{
+    return $role === 'advogado' ? 'Advogado' : ($role === 'estagiario' ? 'Estagiario' : 'Profissional');
+}
+
+function agenda_status_badge_class(string $status): string
+{
+    return match ($status) {
+        'agendado', 'livre' => 'badge-success',
+        'concluido' => 'badge-info',
+        'ocupado', 'bloqueado' => 'badge-warning',
+        'cancelado' => 'badge-danger',
+        default => 'badge-info',
+    };
+}
+
+function agenda_status_label(string $status): string
+{
+    return match ($status) {
+        'livre' => 'Livre',
+        'ocupado' => 'Ocupado',
+        'bloqueado' => 'Bloqueado',
+        'agendado' => 'Agendado',
+        'cancelado' => 'Cancelado',
+        'concluido' => 'Concluido',
+        default => ucfirst($status),
+    };
+}
+
+$professionals = fetch_all(
+    $pdo,
+    "SELECT id, nome, tipo, oab, oab_uf
+     FROM users
+     WHERE tipo IN ('advogado', 'estagiario')
+       AND status = 'ativo'
+       AND oab_verificado = TRUE
+     ORDER BY FIELD(tipo, 'advogado', 'estagiario'), nome"
+);
 
 $clientsCases = $type === 'cliente'
-    ? fetch_all($pdo, "SELECT id, titulo FROM cases WHERE cliente_id = ? AND status <> 'finalizado' ORDER BY created_at DESC", [$userId])
+    ? fetch_all(
+        $pdo,
+        "SELECT id, titulo
+         FROM cases
+         WHERE cliente_id = ? AND status <> 'finalizado'
+         ORDER BY FIELD(prioridade, 'alta', 'media', 'baixa'), created_at DESC",
+        [$userId]
+    )
     : [];
 
+$freeSlots = [];
+$slots = [];
+$appointments = [];
+
 if ($type === 'cliente') {
-    $where = ["s.status = 'livre'", 's.starts_at >= NOW()', "u.status = 'ativo'", "u.tipo IN ('advogado', 'estagiario')", "(u.oab_verificado = TRUE OR (u.status_cna = 'pendente' AND COALESCE(u.oab, '') <> '' AND COALESCE(u.oab_uf, '') <> ''))"];
+    $where = [
+        "s.status = 'livre'",
+        's.starts_at >= NOW()',
+        "u.status = 'ativo'",
+        "u.tipo IN ('advogado', 'estagiario')",
+        'u.oab_verificado = TRUE',
+    ];
     $params = [];
 
     if ($professionalFilter > 0) {
@@ -27,61 +99,86 @@ if ($type === 'cliente') {
 
     $freeSlots = fetch_all(
         $pdo,
-        'SELECT s.*, u.nome AS profissional, u.tipo, u.oab, u.oab_uf
+        'SELECT s.id, s.professional_id, s.starts_at, s.ends_at, s.titulo, u.nome AS profissional, u.tipo, u.oab, u.oab_uf
          FROM schedule_slots s
          INNER JOIN users u ON u.id = s.professional_id
          WHERE ' . implode(' AND ', $where) . '
          ORDER BY s.starts_at ASC
-         LIMIT 80',
+         LIMIT 60',
         $params
     );
 
     $appointments = fetch_all(
         $pdo,
-        'SELECT a.*, s.starts_at, s.ends_at, u.nome AS profissional, u.tipo, c.titulo AS caso
+        'SELECT a.*, s.starts_at, s.ends_at, pro.nome AS profissional, pro.tipo, c.titulo AS caso
          FROM appointments a
          INNER JOIN schedule_slots s ON s.id = a.slot_id
-         INNER JOIN users u ON u.id = s.professional_id
+         INNER JOIN users pro ON pro.id = s.professional_id
          LEFT JOIN cases c ON c.id = a.case_id
          WHERE a.client_id = ?
          ORDER BY s.starts_at DESC
-         LIMIT 60',
+         LIMIT 80',
         [$userId]
     );
 } elseif (in_array($type, ['advogado', 'estagiario'], true)) {
-    $freeSlots = [];
-    $appointments = fetch_all(
+    $slots = fetch_all(
         $pdo,
-        'SELECT a.*, s.id AS slot_id, s.titulo AS slot_title, s.starts_at, s.ends_at, s.status AS slot_status, cli.nome AS cliente, c.titulo AS caso
+        'SELECT s.id, s.starts_at, s.ends_at, s.status, s.titulo,
+                a.id AS appointment_id, a.assunto, a.observacoes, a.status AS appointment_status, a.case_id,
+                cli.nome AS cliente, c.titulo AS caso
          FROM schedule_slots s
          LEFT JOIN appointments a ON a.slot_id = s.id AND a.status <> "cancelado"
          LEFT JOIN users cli ON cli.id = a.client_id
          LEFT JOIN cases c ON c.id = a.case_id
          WHERE s.professional_id = ?
          ORDER BY s.starts_at DESC
-         LIMIT 100',
+         LIMIT 120',
         [$userId]
     );
+
+    $appointments = array_values(array_filter($slots, static fn (array $slot): bool => !empty($slot['appointment_id'])));
 } else {
-    $freeSlots = [];
-    $appointments = fetch_all(
+    $where = ['1 = 1'];
+    $params = [];
+
+    if ($professionalFilter > 0) {
+        $where[] = 's.professional_id = ?';
+        $params[] = $professionalFilter;
+    }
+
+    if (in_array($roleFilter, ['advogado', 'estagiario'], true)) {
+        $where[] = 'pro.tipo = ?';
+        $params[] = $roleFilter;
+    }
+
+    $slots = fetch_all(
         $pdo,
-        'SELECT a.*, s.id AS slot_id, s.titulo AS slot_title, s.starts_at, s.ends_at, s.status AS slot_status, pro.nome AS profissional, pro.tipo, cli.nome AS cliente, c.titulo AS caso
+        'SELECT s.id, s.professional_id, s.starts_at, s.ends_at, s.status, s.titulo,
+                pro.nome AS profissional, pro.tipo,
+                a.id AS appointment_id, a.assunto, a.status AS appointment_status, a.case_id,
+                cli.nome AS cliente, c.titulo AS caso
          FROM schedule_slots s
          INNER JOIN users pro ON pro.id = s.professional_id
          LEFT JOIN appointments a ON a.slot_id = s.id AND a.status <> "cancelado"
          LEFT JOIN users cli ON cli.id = a.client_id
          LEFT JOIN cases c ON c.id = a.case_id
+         WHERE ' . implode(' AND ', $where) . '
          ORDER BY s.starts_at DESC
-         LIMIT 120'
+         LIMIT 160',
+        $params
     );
+
+    $appointments = array_values(array_filter($slots, static fn (array $slot): bool => !empty($slot['appointment_id'])));
 }
 
-$professionals = fetch_all(
-    $pdo,
-    "SELECT id, nome, tipo FROM users WHERE tipo IN ('advogado', 'estagiario') AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> '')) ORDER BY tipo, nome"
-);
+$activeAppointments = count(array_filter($appointments, static function (array $appointment): bool {
+    $status = $appointment['appointment_status'] ?? $appointment['status'] ?? '';
+    return $status === 'agendado';
+}));
 $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
+$calendarSubtitle = $type === 'cliente'
+    ? 'Encontre horario livre, vincule a um caso e confirme atendimento.'
+    : ($type === 'admin' ? 'Visao operacional de disponibilidade e atendimentos.' : 'Crie horarios, bloqueie agenda e acompanhe atendimentos.');
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -91,59 +188,272 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
   <title>Agenda | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
-  <link rel="stylesheet" href="assets/css/agenda.css">
+  <link rel="stylesheet" href="assets/css/agenda.css?v=module-5">
 </head>
 <body>
   <div class="app-shell">
     <?php render_sidebar($type, 'agenda.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Agenda', $type === 'cliente' ? 'Veja horários livres de advogados e estagiários.' : 'Gerencie disponibilidade e acompanhe atendimentos.', current_user_name()); ?>
+      <?php render_topbar('Agenda', $calendarSubtitle, current_user_name()); ?>
 
-      <?php if ($type === 'cliente'): ?>
+      <?php if ($successMessage !== ''): ?>
+        <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
+      <?php endif; ?>
+      <?php if ($errorMessage !== ''): ?>
+        <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
+      <?php endif; ?>
+
+      <section class="grid grid-4">
+        <?php if ($type === 'cliente'): ?>
+          <?= stat_card('Horarios livres', count($freeSlots), 'calendar') ?>
+          <?= stat_card('Meus atendimentos', count($appointments), 'case') ?>
+          <?= stat_card('Ativos', $activeAppointments, 'chat') ?>
+          <?= stat_card('Casos abertos', count($clientsCases), 'help') ?>
+        <?php else: ?>
+          <?= stat_card('Slots exibidos', count($slots), 'calendar') ?>
+          <?= stat_card('Atendimentos', count($appointments), 'case') ?>
+          <?= stat_card('Ativos', $activeAppointments, 'chat') ?>
+          <?= stat_card('Profissionais', count($professionals), 'users') ?>
+        <?php endif; ?>
+      </section>
+
+      <?php if ($type === 'cliente' || $type === 'admin'): ?>
         <section class="dash-section">
-          <form class="agenda-filter" method="get">
+          <form class="card agenda-filter" method="get">
             <div class="field">
-              <label for="professional_id">Advogado ou estagiário</label>
+              <label for="professional_id">Profissional</label>
               <select class="select" id="professional_id" name="professional_id">
-                <option value="">Todos os profissionais</option>
+                <option value="">Todos</option>
                 <?php foreach ($professionals as $professional): ?>
                   <option value="<?= (int) $professional['id'] ?>" <?= $professionalFilter === (int) $professional['id'] ? 'selected' : '' ?>>
-                    <?= e($professional['nome']) ?> - <?= e($professional['tipo'] === 'advogado' ? 'Advogado' : 'Estagiário') ?>
+                    <?= e($professional['nome']) ?> - <?= e(agenda_role_label($professional['tipo'])) ?>
                   </option>
                 <?php endforeach; ?>
               </select>
             </div>
+            <div class="field">
+              <label for="perfil">Perfil</label>
+              <select class="select" id="perfil" name="perfil">
+                <option value="">Todos</option>
+                <option value="advogado" <?= $roleFilter === 'advogado' ? 'selected' : '' ?>>Advogado</option>
+                <option value="estagiario" <?= $roleFilter === 'estagiario' ? 'selected' : '' ?>>Estagiario</option>
+              </select>
+            </div>
             <div class="form-actions">
-              <button class="btn btn-success" type="submit">Ver agenda</button>
-              <?php if ($professionalFilter > 0): ?>
-                <a class="btn btn-outline" href="agenda.php">Ver todos</a>
-              <?php endif; ?>
+              <button class="btn btn-primary" type="submit">Filtrar</button>
+              <a class="btn btn-outline" href="agenda.php">Limpar</a>
             </div>
           </form>
         </section>
       <?php endif; ?>
 
+      <?php if ($canManageSlots): ?>
+        <section class="dash-section agenda-create-section">
+          <div class="card agenda-create-card">
+            <div>
+              <span class="badge badge-info">Disponibilidade</span>
+              <h2>Abrir horario de atendimento</h2>
+              <p>Crie horarios livres para clientes ou bloqueios internos. Conflitos de horario sao recusados pelo backend.</p>
+            </div>
+            <form class="agenda-inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/slots/create')) ?>" method="post">
+              <?= csrf_input() ?>
+              <div class="field">
+                <label for="starts_at">Inicio</label>
+                <input class="input" id="starts_at" name="starts_at" type="datetime-local" required>
+              </div>
+              <div class="field">
+                <label for="ends_at">Fim</label>
+                <input class="input" id="ends_at" name="ends_at" type="datetime-local" required>
+              </div>
+              <div class="field">
+                <label for="slot_title_static">Titulo</label>
+                <input class="input" id="slot_title_static" name="titulo" placeholder="Atendimento inicial">
+              </div>
+              <div class="field">
+                <label for="slot_status_static">Status</label>
+                <select class="select" id="slot_status_static" name="status">
+                  <option value="livre">Livre para cliente</option>
+                  <option value="bloqueado">Bloqueio interno</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" type="submit"><?= icon_svg('calendar') ?> Criar horario</button>
+            </form>
+          </div>
+        </section>
+      <?php endif; ?>
+
       <section class="dash-section">
         <div class="dash-section-title">
-          <h2>Calendário</h2>
-          <span class="badge badge-success">Bolinha verde indica horários no dia. Clique nela para ver detalhes.</span>
+          <h2>Calendario</h2>
+          <span class="badge badge-info">Clique no contador do dia para ver detalhes</span>
         </div>
-        <div id="calendar" class="card p-16"></div>
+        <div id="calendar" class="card agenda-calendar-card"></div>
       </section>
 
-      <!-- Modal para criar/editar horário -->
+      <?php if ($type === 'cliente'): ?>
+        <section class="dash-section">
+          <div class="dash-section-title">
+            <h2>Horarios disponiveis</h2>
+            <span class="badge badge-success"><?= e((string) count($freeSlots)) ?> livres</span>
+          </div>
+
+          <?php if (!$freeSlots): ?>
+            <?= empty_state('Nenhum horario livre encontrado para os filtros atuais.') ?>
+          <?php else: ?>
+            <div class="agenda-slot-grid">
+              <?php foreach ($freeSlots as $slot): ?>
+                <article class="agenda-slot-card" id="slot-<?= (int) $slot['id'] ?>" data-slot-card="<?= (int) $slot['id'] ?>">
+                  <div class="agenda-slot-head">
+                    <div>
+                      <span class="badge badge-success">Livre</span>
+                      <h3><?= e($slot['titulo'] ?: 'Atendimento juridico') ?></h3>
+                    </div>
+                    <strong><?= e(agenda_time_range($slot)) ?></strong>
+                  </div>
+                  <div class="agenda-slot-meta">
+                    <div><span>Data</span><strong><?= e(date('d/m/Y', strtotime((string) $slot['starts_at']))) ?></strong></div>
+                    <div><span>Profissional</span><strong><?= e($slot['profissional']) ?></strong></div>
+                    <div><span>Perfil</span><strong><?= e(agenda_role_label($slot['tipo'])) ?></strong></div>
+                    <div><span>OAB</span><strong><?= e(trim((string) ($slot['oab'] ?? '') . '/' . (string) ($slot['oab_uf'] ?? ''), '/')) ?></strong></div>
+                  </div>
+                  <form class="agenda-book-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/book')) ?>" method="post">
+                    <?= csrf_input() ?>
+                    <input type="hidden" name="slot_id" value="<?= (int) $slot['id'] ?>">
+                    <div class="field">
+                      <label for="case_<?= (int) $slot['id'] ?>">Caso vinculado</label>
+                      <select class="select" id="case_<?= (int) $slot['id'] ?>" name="case_id">
+                        <option value="">Sem caso especifico</option>
+                        <?php foreach ($clientsCases as $case): ?>
+                          <option value="<?= (int) $case['id'] ?>"><?= e($case['titulo']) ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label for="assunto_<?= (int) $slot['id'] ?>">Assunto</label>
+                      <input class="input" id="assunto_<?= (int) $slot['id'] ?>" name="assunto" required placeholder="Ex.: revisar notificacao">
+                    </div>
+                    <div class="field agenda-field-full">
+                      <label for="obs_<?= (int) $slot['id'] ?>">Observacoes</label>
+                      <textarea class="textarea textarea-sm" id="obs_<?= (int) $slot['id'] ?>" name="observacoes" placeholder="Resumo objetivo para o profissional"></textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit"><?= icon_svg('calendar') ?> Agendar</button>
+                  </form>
+                </article>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        </section>
+
+        <section class="dash-section">
+          <div class="dash-section-title">
+            <h2>Meus atendimentos</h2>
+            <span class="badge badge-info"><?= e((string) count($appointments)) ?> registros</span>
+          </div>
+
+          <?php if (!$appointments): ?>
+            <?= empty_state('Voce ainda nao tem atendimentos agendados.') ?>
+          <?php else: ?>
+            <div class="agenda-list">
+              <?php foreach ($appointments as $appointment): ?>
+                <article class="agenda-row">
+                  <div>
+                    <span class="badge <?= e(agenda_status_badge_class((string) $appointment['status'])) ?>"><?= e(agenda_status_label((string) $appointment['status'])) ?></span>
+                    <h3><?= e($appointment['assunto']) ?></h3>
+                    <p><?= e(agenda_datetime_label($appointment['starts_at'])) ?> com <?= e($appointment['profissional']) ?><?= !empty($appointment['caso']) ? ' | Caso: ' . e($appointment['caso']) : '' ?></p>
+                  </div>
+                  <?php if (($appointment['status'] ?? '') === 'agendado'): ?>
+                    <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/appointments/update')) ?>" method="post">
+                      <?= csrf_input() ?>
+                      <input type="hidden" name="appointment_id" value="<?= (int) $appointment['id'] ?>">
+                      <input type="hidden" name="status" value="cancelado">
+                      <button class="btn btn-outline btn-sm" type="submit">Cancelar</button>
+                    </form>
+                  <?php endif; ?>
+                </article>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        </section>
+      <?php else: ?>
+        <section class="dash-section">
+          <div class="dash-section-title">
+            <h2><?= $type === 'admin' ? 'Agenda operacional' : 'Minha disponibilidade' ?></h2>
+            <span class="badge badge-info"><?= e((string) count($slots)) ?> slots</span>
+          </div>
+
+          <?php if (!$slots): ?>
+            <?= empty_state($type === 'admin' ? 'Nenhum horario encontrado para os filtros atuais.' : 'Voce ainda nao cadastrou horarios.') ?>
+          <?php else: ?>
+            <div class="agenda-list">
+              <?php foreach ($slots as $slot): ?>
+                <?php
+                  $slotStatus = (string) ($slot['appointment_status'] ?: $slot['status']);
+                  $hasAppointment = !empty($slot['appointment_id']);
+                  $isFuture = strtotime((string) $slot['starts_at']) > time();
+                ?>
+                <article class="agenda-row">
+                  <div>
+                    <span class="badge <?= e(agenda_status_badge_class($slotStatus)) ?>"><?= e(agenda_status_label($slotStatus)) ?></span>
+                    <h3><?= e($slot['assunto'] ?: ($slot['titulo'] ?: 'Horario de agenda')) ?></h3>
+                    <p>
+                      <?= e(agenda_datetime_label($slot['starts_at'])) ?> | <?= e(agenda_time_range($slot)) ?>
+                      <?php if ($type === 'admin' && !empty($slot['profissional'])): ?>
+                        | <?= e($slot['profissional']) ?> (<?= e(agenda_role_label($slot['tipo'] ?? '')) ?>)
+                      <?php endif; ?>
+                      <?php if (!empty($slot['cliente'])): ?>
+                        | Cliente: <?= e($slot['cliente']) ?>
+                      <?php endif; ?>
+                      <?php if (!empty($slot['caso'])): ?>
+                        | Caso: <?= e($slot['caso']) ?>
+                      <?php endif; ?>
+                    </p>
+                  </div>
+                  <div class="agenda-row-actions">
+                    <?php if (!empty($slot['case_id'])): ?>
+                      <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $slot['case_id'] ?>">Chat</a>
+                    <?php endif; ?>
+
+                    <?php if ($hasAppointment && ($slot['appointment_status'] ?? '') === 'agendado'): ?>
+                      <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/appointments/update')) ?>" method="post">
+                        <?= csrf_input() ?>
+                        <input type="hidden" name="appointment_id" value="<?= (int) $slot['appointment_id'] ?>">
+                        <input type="hidden" name="status" value="concluido">
+                        <button class="btn btn-soft btn-sm" type="submit">Concluir</button>
+                      </form>
+                      <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/appointments/update')) ?>" method="post">
+                        <?= csrf_input() ?>
+                        <input type="hidden" name="appointment_id" value="<?= (int) $slot['appointment_id'] ?>">
+                        <input type="hidden" name="status" value="cancelado">
+                        <button class="btn btn-outline btn-sm" type="submit">Cancelar</button>
+                      </form>
+                    <?php elseif (!$hasAppointment && $type !== 'admin' && $isFuture): ?>
+                      <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/slots/update')) ?>" method="post">
+                        <?= csrf_input() ?>
+                        <input type="hidden" name="slot_id" value="<?= (int) $slot['id'] ?>">
+                        <input type="hidden" name="status" value="<?= ($slot['status'] ?? '') === 'livre' ? 'bloqueado' : 'livre' ?>">
+                        <button class="btn btn-outline btn-sm" type="submit"><?= ($slot['status'] ?? '') === 'livre' ? 'Bloquear' : 'Liberar' ?></button>
+                      </form>
+                    <?php endif; ?>
+                  </div>
+                </article>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        </section>
+      <?php endif; ?>
+
       <div id="slot-modal" class="modal" style="display:none;">
-        <div class="modal-backdrop"></div>
+        <div class="modal-backdrop" data-slot-modal-close></div>
         <div class="modal-card">
-          <h3 id="slot-modal-title">Novo horário</h3>
+          <h3 id="slot-modal-title">Novo horario</h3>
           <form id="slot-modal-form">
             <?= csrf_input() ?>
             <input type="hidden" name="slot_id" id="slot-modal-id" value="">
             <input type="hidden" name="slot_date" id="slot-date" value="">
             <div id="slot-modal-alert" style="display:none;margin-bottom:8px;" class="modal-alert"></div>
             <div class="field">
-              <label for="slot-starts">Hora de início</label>
+              <label for="slot-starts">Hora de inicio</label>
               <input id="slot-starts" name="starts_time" type="time" required class="input">
             </div>
             <div class="field">
@@ -151,29 +461,28 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
               <input id="slot-ends" name="ends_time" type="time" required class="input">
             </div>
             <div class="field">
-              <label for="slot-title">Título</label>
+              <label for="slot-title">Titulo</label>
               <input id="slot-title" name="titulo" class="input">
             </div>
             <div class="field">
               <label for="slot-status">Status</label>
               <select id="slot-status" name="status" class="select">
-                <option value="livre">Livre (visível para cliente)</option>
-                <option value="bloqueado">Ocupado (somente interno)</option>
+                <option value="livre">Livre para cliente</option>
+                <option value="bloqueado">Bloqueio interno</option>
               </select>
             </div>
             <div class="form-actions">
-              <button type="submit" class="btn btn-success">Salvar</button>
+              <button type="submit" class="btn btn-primary">Salvar</button>
               <button type="button" id="slot-modal-cancel" class="btn btn-outline">Cancelar</button>
             </div>
           </form>
         </div>
       </div>
 
-      <!-- Modal para ver horários do dia -->
       <div id="day-slots-modal" class="modal" style="display:none;">
-        <div class="modal-backdrop"></div>
+        <div class="modal-backdrop" data-day-modal-close></div>
         <div class="modal-card day-slots-card">
-          <h3 id="day-slots-title">Horários do dia</h3>
+          <h3 id="day-slots-title">Horarios do dia</h3>
           <div id="day-slots-content" class="day-slots-content"></div>
           <div class="form-actions">
             <button type="button" id="day-slots-close" class="btn btn-outline">Fechar</button>
@@ -186,6 +495,6 @@ $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
     window.CURRENT_USER_ID = <?= (int) current_user_id() ?>;
     window.CURRENT_USER_TYPE = '<?= e((string) current_user_type()) ?>';
   </script>
-  <script src="assets/js/agenda.js"></script>
+  <script src="assets/js/agenda.js?v=module-5"></script>
 </body>
 </html>

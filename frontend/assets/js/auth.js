@@ -6,55 +6,95 @@ document.addEventListener("DOMContentLoaded", () => {
   const backendRoute = (path) => `${backendBase}?rota=${encodeURIComponent(path)}`;
   let csrfToken = "";
 
-  // Defensive: remove any stray `session` cookie left by previous experiments or other apps
-  // This helps avoid ambiguous cookies that may cause unexpected auth behavior in local dev.
   function clearCookie(name) {
     try {
-      // expire for current host
-      document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      // expire for root domain (if present)
-      const host = window.location.hostname;
-      document.cookie = name + '=; Path=/; Domain=' + host + '; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+      document.cookie = `${name}=; Path=/; Domain=${window.location.hostname}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
     } catch (e) {
       // ignore
     }
   }
 
-  clearCookie('session');
+  clearCookie("session");
 
   const typeSelect = document.querySelector("[data-account-type]");
+  const cpfFields = document.querySelector("[data-cpf-fields]");
+  const cpfInput = document.querySelector("[name='cpf']");
   const oabFields = document.querySelector("[data-oab-fields]");
   const oabInput = document.querySelector("[name='inscricao']");
   const ufInput = document.querySelector("[name='oab_uf']");
-  const nameInput = document.querySelector("[name='nome']");
-  const lookupButton = document.querySelector("[data-oab-lookup]");
-  const lookupStatus = document.querySelector("[data-oab-status]");
-  const alertBox = document.querySelector("[data-auth-alert]");
+  const professionalNote = document.querySelector("[data-professional-note]");
+  const alertBoxes = document.querySelectorAll("[data-auth-alert]");
+
+  function formatOab(value) {
+    return String(value || "").replace(/\D+/g, "").slice(0, 7);
+  }
+
+  function formatCpf(value) {
+    const digits = String(value || "").replace(/\D+/g, "").slice(0, 11);
+    return digits
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1-$2");
+  }
 
   function syncOabFields() {
     if (!typeSelect || !oabFields) return;
 
     const needsOab = ["advogado", "estagiario"].includes(typeSelect.value);
+    const needsCpf = typeSelect.value === "cliente";
     oabFields.classList.toggle("is-visible", needsOab);
 
-    if (oabInput) oabInput.toggleAttribute("required", needsOab);
-    if (!needsOab) {
-      if (oabInput) oabInput.value = "";
-      if (ufInput) ufInput.value = "";
-      setOabStatus("");
+    if (cpfFields) cpfFields.hidden = !needsCpf;
+    if (professionalNote) professionalNote.hidden = !needsOab;
+    if (cpfInput) {
+      cpfInput.toggleAttribute("required", needsCpf);
+      cpfInput.value = needsCpf ? formatCpf(cpfInput.value) : "";
+    }
+
+    if (oabInput) {
+      oabInput.toggleAttribute("required", needsOab);
+      oabInput.value = needsOab ? formatOab(oabInput.value) : "";
+    }
+
+    if (ufInput) {
+      ufInput.toggleAttribute("required", needsOab);
+      if (!needsOab) ufInput.value = "";
     }
   }
 
   function showMessage(message, kind) {
+    if (!alertBoxes.length || !message) return;
+    alertBoxes.forEach((alertBox) => {
+      alertBox.textContent = message;
+      alertBox.className = `alert is-visible ${kind === "success" ? "alert-success" : "alert-error"}`;
+    });
+  }
+
+  function showFormMessage(form, message, kind = "error") {
+    const alertBox = form.querySelector("[data-auth-alert]") || alertBoxes[0];
     if (!alertBox || !message) return;
     alertBox.textContent = message;
     alertBox.className = `alert is-visible ${kind === "success" ? "alert-success" : "alert-error"}`;
   }
 
-  function setOabStatus(message, kind = "") {
-    if (!lookupStatus) return;
-    lookupStatus.textContent = message;
-    lookupStatus.className = `oab-lookup-status ${kind ? `is-${kind}` : ""}`;
+  function countDigits(value) {
+    return String(value || "").replace(/\D+/g, "").length;
+  }
+
+  function setButtonLoading(button, loading) {
+    if (!button) return;
+    if (loading) {
+      button.dataset.originalText = button.textContent.trim();
+      button.textContent = button.dataset.loadingText || "Processando...";
+      button.classList.add("is-loading");
+      button.disabled = true;
+      return;
+    }
+
+    button.textContent = button.dataset.originalText || button.textContent;
+    button.classList.remove("is-loading");
+    button.disabled = false;
   }
 
   async function ensureCsrfToken() {
@@ -74,68 +114,23 @@ document.addEventListener("DOMContentLoaded", () => {
     return csrfToken;
   }
 
-  async function lookupOab() {
-    if (!typeSelect || !oabInput || !lookupButton) return;
-    const needsOab = ["advogado", "estagiario"].includes(typeSelect.value);
-    const inscricao = oabInput.value.replace(/\D+/g, "");
-
-    if (!needsOab || !inscricao) {
-      setOabStatus("Informe o número da OAB para consultar.", "error");
-      return;
-    }
-
-    lookupButton.disabled = true;
-    setOabStatus("Consultando CNA...", "loading");
-
-    try {
-      const token = await ensureCsrfToken();
-      const body = new URLSearchParams({
-        tipo: typeSelect.value,
-        inscricao,
-        oab_uf: ufInput?.value || "",
-        nome: nameInput?.value || "",
-      });
-      if (token) body.set("_csrf", token);
-
-      const response = await fetch(backendRoute("/oab/lookup"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          ...(token ? { "X-CSRF-Token": token } : {}),
-        },
-        credentials: "include",
-        body,
-      });
-
-      if (response.status === 403) {
-        setOabStatus("Sua sessão expirou. Recarregue a página e tente novamente.", "error");
-        return;
-      }
-
-      const data = await response.json();
-
-      if (data.verified && data.data) {
-        if (ufInput && data.data.uf) ufInput.value = data.data.uf;
-        const tipo = data.data.tipo ? ` (${data.data.tipo})` : "";
-        setOabStatus(`Validado no CNA: OAB/${data.data.uf} ${data.data.inscricao}${tipo}.`, "success");
-        return;
-      }
-
-      setOabStatus(data.message || "Não foi possível validar a inscrição agora.", data.source_available === false ? "warning" : "error");
-    } catch (error) {
-      setOabStatus("Falha ao consultar o CNA agora.", "warning");
-    } finally {
-      lookupButton.disabled = false;
-    }
-  }
-
   if (typeSelect) {
     typeSelect.addEventListener("change", syncOabFields);
     syncOabFields();
   }
 
-  if (lookupButton) {
-    lookupButton.addEventListener("click", lookupOab);
+  if (oabInput) {
+    oabInput.addEventListener("input", () => {
+      const formatted = formatOab(oabInput.value);
+      if (oabInput.value !== formatted) oabInput.value = formatted;
+    });
+  }
+
+  if (cpfInput) {
+    cpfInput.addEventListener("input", () => {
+      const formatted = formatCpf(cpfInput.value);
+      if (cpfInput.value !== formatted) cpfInput.value = formatted;
+    });
   }
 
   const params = new URLSearchParams(window.location.search);
@@ -152,17 +147,80 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!token) return;
       document.querySelectorAll('form[method="post"]').forEach((form) => {
         if (!form.querySelector('input[name="_csrf"]')) {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = '_csrf';
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = "_csrf";
           input.value = token;
           form.appendChild(input);
         }
       });
     } catch (e) {
-      // ignore CSRF injection failures — forms will fail server-side with token error
+      // ignore
     }
   }
 
   injectCsrf();
+
+  document.querySelectorAll(".auth-form").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const submitButton = form.querySelector('button[type="submit"]');
+      const senha = form.querySelector('input[name="senha"]');
+      const senha2 = form.querySelector('input[name="senha2"]');
+      const formType = form.querySelector("[data-account-type]")?.value || "";
+      const formCpf = form.querySelector('input[name="cpf"]');
+      const formOab = form.querySelector('input[name="inscricao"]');
+      const formUf = form.querySelector('select[name="oab_uf"]');
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      if (senha && senha2 && senha.value !== senha2.value) {
+        showFormMessage(form, "As senhas precisam ser iguais.");
+        senha2.focus();
+        return;
+      }
+
+      if (formCpf?.required && countDigits(formCpf.value) !== 11) {
+        showFormMessage(form, "Informe um CPF completo para continuar.");
+        formCpf.focus();
+        return;
+      }
+
+      if (["advogado", "estagiario"].includes(formType)) {
+        if (!formOab?.value || countDigits(formOab.value) < 4 || !formUf?.value) {
+          showFormMessage(form, "Informe numero da OAB e UF para o admin validar seu acesso.");
+          (formOab?.value ? formUf : formOab)?.focus();
+          return;
+        }
+      }
+
+      setButtonLoading(submitButton, true);
+
+      try {
+        const token = await ensureCsrfToken();
+        if (!token) {
+          showFormMessage(form, "Nao foi possivel preparar a seguranca do formulario. Recarregue a pagina.");
+          setButtonLoading(submitButton, false);
+          return;
+        }
+
+        if (!form.querySelector('input[name="_csrf"]')) {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = "_csrf";
+          input.value = token;
+          form.appendChild(input);
+        }
+
+        HTMLFormElement.prototype.submit.call(form);
+      } catch (e) {
+        showFormMessage(form, "Nao foi possivel enviar agora. Tente novamente.");
+        setButtonLoading(submitButton, false);
+      }
+    });
+  });
 });

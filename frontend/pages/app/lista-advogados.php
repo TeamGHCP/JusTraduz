@@ -2,7 +2,69 @@
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 
-$lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, foto_perfil, oab, oab_uf, oab_status, oab_verificado FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND (oab_verificado = TRUE OR (status_cna = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> '')) ORDER BY nome");
+$type = current_user_type();
+$q = trim((string) ($_GET['q'] ?? ''));
+$uf = strtoupper(trim((string) ($_GET['uf'] ?? '')));
+$onlyAvailable = (string) ($_GET['disponivel'] ?? '') === '1';
+
+$ufs = fetch_all(
+    $pdo,
+    "SELECT DISTINCT oab_uf
+     FROM users
+     WHERE tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE AND oab_uf IS NOT NULL AND oab_uf <> ''
+     ORDER BY oab_uf"
+);
+
+$where = ["u.tipo = 'advogado'", "u.status = 'ativo'", 'u.oab_verificado = TRUE'];
+$params = [];
+
+if ($q !== '') {
+    $where[] = '(u.nome LIKE ? OR u.email LIKE ? OR u.oab LIKE ?)';
+    $like = '%' . $q . '%';
+    array_push($params, $like, $like, $like);
+}
+
+if ($uf !== '') {
+    $where[] = 'u.oab_uf = ?';
+    $params[] = $uf;
+}
+
+if ($onlyAvailable) {
+    $where[] = "EXISTS (
+        SELECT 1
+        FROM schedule_slots sx
+        WHERE sx.professional_id = u.id
+          AND sx.status = 'livre'
+          AND sx.starts_at >= NOW()
+    )";
+}
+
+$lawyers = fetch_all(
+    $pdo,
+    "SELECT u.id, u.nome, u.email, u.telefone, u.foto_perfil, u.oab, u.oab_uf, u.oab_status,
+            (SELECT COUNT(*) FROM cases c WHERE c.advogado_id = u.id AND c.status <> 'finalizado') AS active_cases,
+            (SELECT COUNT(*) FROM schedule_slots s WHERE s.professional_id = u.id AND s.status = 'livre' AND s.starts_at >= NOW()) AS free_slots,
+            (SELECT MIN(s.starts_at) FROM schedule_slots s WHERE s.professional_id = u.id AND s.status = 'livre' AND s.starts_at >= NOW()) AS next_free_at
+     FROM users u
+     WHERE " . implode(' AND ', $where) . "
+     ORDER BY free_slots DESC, active_cases ASC, u.nome ASC",
+    $params
+);
+
+function directory_lawyer_photo(array $lawyer): string
+{
+    $path = trim((string) ($lawyer['foto_perfil'] ?? ''));
+    return $path !== '' ? '../' . ltrim($path, '/') : '';
+}
+
+function directory_datetime(?string $value): string
+{
+    if (!$value) {
+        return 'Sem horario livre';
+    }
+
+    return date('d/m/Y H:i', strtotime($value));
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -14,55 +76,102 @@ $lawyers = fetch_all($pdo, "SELECT id, nome, email, telefone, foto_perfil, oab, 
   <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
 </head>
 <body>
-  <header class="site-header" data-site-header>
-    <div class="container nav-bar">
-      <a class="brand" href="<?= e(dashboard_url()) ?>"><img src="assets/img/logo.png" alt="JusTraduz"></a>
-      <nav class="nav-links"><a href="<?= e(dashboard_url()) ?>">Dashboard</a><a href="solicitar-ajuda.php">Solicitar ajuda</a><a href="chat.php">Chat</a></nav>
-      <div class="nav-actions">
-        <?= render_theme_toggle() ?>
-      </div>
-      <button class="mobile-toggle" type="button" data-nav-toggle aria-label="Abrir menu">
-        <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
-      </button>
-    </div>
-  </header>
-  <main class="container page-section">
-    <div class="section-head">
-      <h2>Advogados cadastrados</h2>
-      <p>Profissionais ativos no JusTraduz.</p>
-    </div>
-    <?php if (!$lawyers): ?>
-      <?= empty_state('Nenhum advogado cadastrado ainda.') ?>
-    <?php else: ?>
-      <div class="grid grid-3">
-        <?php foreach ($lawyers as $lawyer): ?>
-          <article class="card lawyer-card">
-            <?php $lawyerPhotoUrl = !empty($lawyer['foto_perfil']) ? '../' . ltrim((string) $lawyer['foto_perfil'], '/') : ''; ?>
-            <div class="lawyer-avatar">
-              <?php if ($lawyerPhotoUrl): ?>
-                <img src="<?= e($lawyerPhotoUrl) ?>" alt="<?= e($lawyer['nome']) ?>">
-              <?php else: ?>
-                <?= e(substr($lawyer['nome'], 0, 1)) ?>
-              <?php endif; ?>
-            </div>
-            <div>
-              <h3><?= e($lawyer['nome']) ?></h3>
-              <p><?= $lawyer['oab'] ? 'OAB/' . e($lawyer['oab_uf']) . ' ' . e($lawyer['oab']) : 'OAB não informada' ?></p>
-              <p class="mt-8"><span class="badge badge-info"><?= e($lawyer['oab_status'] ?: 'Cadastro ativo') ?></span></p>
-              <p class="mt-12 text-muted">
-                E-mail: <?= e($lawyer['email']) ?><br>
-                Telefone: <?= e($lawyer['telefone'] ?: 'Não informado') ?>
-              </p>
-              <?php if (current_user_type() === 'cliente'): ?>
-                <a class="btn btn-primary btn-sm mt-14" href="solicitar-ajuda.php?advogado_id=<?= (int) $lawyer['id'] ?>">Solicitar atendimento</a>
-              <?php endif; ?>
-            </div>
-          </article>
-        <?php endforeach; ?>
-      </div>
-    <?php endif; ?>
-  </main>
-  <script src="assets/js/theme.js?v=theme-slow-3"></script>
-  <script src="assets/js/main.js"></script>
+  <div class="app-shell">
+    <?php render_sidebar($type, 'lista-advogados.php'); ?>
+
+    <main class="app-main">
+      <?php render_topbar('Advogados verificados', 'Profissionais ativos, validados e prontos para receber solicitacoes.', current_user_name()); ?>
+
+      <section class="lawyer-directory-hero">
+        <div>
+          <span class="badge badge-success">OAB validada</span>
+          <h2><?= e((string) count($lawyers)) ?> profissionais encontrados</h2>
+          <p>Use a lista para direcionar atendimento com contexto. Para cliente, o botao ja abre a solicitacao com o advogado escolhido.</p>
+        </div>
+        <?php if ($type === 'cliente'): ?>
+          <a class="btn btn-primary" href="solicitar-ajuda.php"><?= icon_svg('help') ?> Solicitar ajuda aberta</a>
+        <?php else: ?>
+          <a class="btn btn-outline" href="<?= e(dashboard_url($type)) ?>">Voltar ao dashboard</a>
+        <?php endif; ?>
+      </section>
+
+      <form class="card admin-filter lawyer-directory-filter" method="get">
+        <div class="field">
+          <label for="q">Busca</label>
+          <input class="input" id="q" name="q" value="<?= e($q) ?>" placeholder="Nome, email ou OAB">
+        </div>
+        <div class="field">
+          <label for="uf">UF da OAB</label>
+          <select class="select" id="uf" name="uf">
+            <option value="">Todas</option>
+            <?php foreach ($ufs as $item): ?>
+              <?php $itemUf = strtoupper((string) ($item['oab_uf'] ?? '')); ?>
+              <option value="<?= e($itemUf) ?>" <?= $uf === $itemUf ? 'selected' : '' ?>><?= e($itemUf) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <label class="checkline directory-check">
+          <input type="checkbox" name="disponivel" value="1" <?= $onlyAvailable ? 'checked' : '' ?>>
+          <span>Com horario livre</span>
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Filtrar</button>
+          <a class="btn btn-outline" href="lista-advogados.php">Limpar</a>
+        </div>
+      </form>
+
+      <section class="dash-section">
+        <div class="dash-section-title">
+          <h2>Lista de profissionais</h2>
+          <span class="badge badge-info"><?= e((string) count($lawyers)) ?> registros</span>
+        </div>
+        <?php if (!$lawyers): ?>
+          <?= empty_state('Nenhum advogado encontrado para os filtros atuais.') ?>
+        <?php else: ?>
+          <div class="lawyer-directory-grid">
+            <?php foreach ($lawyers as $lawyer): ?>
+              <?php $photoUrl = directory_lawyer_photo($lawyer); ?>
+              <article class="lawyer-directory-card">
+                <div class="lawyer-directory-head">
+                  <div class="lawyer-avatar lawyer-avatar-large">
+                    <?php if ($photoUrl): ?>
+                      <img src="<?= e($photoUrl) ?>" alt="<?= e($lawyer['nome']) ?>">
+                    <?php else: ?>
+                      <?= e(strtoupper(substr((string) $lawyer['nome'], 0, 1))) ?>
+                    <?php endif; ?>
+                  </div>
+                  <div>
+                    <span class="badge badge-success">Validado</span>
+                    <h3><?= e($lawyer['nome']) ?></h3>
+                    <p><?= $lawyer['oab'] ? 'OAB/' . e($lawyer['oab_uf']) . ' ' . e($lawyer['oab']) : 'OAB informada pelo cadastro' ?></p>
+                  </div>
+                </div>
+
+                <div class="case-meta-grid lawyer-directory-meta">
+                  <div><span>Casos ativos</span><strong><?= e((string) (int) $lawyer['active_cases']) ?></strong></div>
+                  <div><span>Horarios livres</span><strong><?= e((string) (int) $lawyer['free_slots']) ?></strong></div>
+                  <div><span>Proximo livre</span><strong><?= e(directory_datetime($lawyer['next_free_at'] ?? null)) ?></strong></div>
+                  <div><span>Contato</span><strong><?= e($lawyer['telefone'] ?: 'Nao informado') ?></strong></div>
+                </div>
+
+                <p class="text-muted"><?= e($lawyer['oab_status'] ?: 'Profissional ativo e aprovado pela administracao.') ?></p>
+
+                <div class="case-actions">
+                  <?php if ($type === 'cliente'): ?>
+                    <a class="btn btn-primary btn-sm" href="solicitar-ajuda.php?advogado_id=<?= (int) $lawyer['id'] ?>"><?= icon_svg('help') ?> Solicitar atendimento</a>
+                    <?php if ((int) $lawyer['free_slots'] > 0): ?>
+                      <a class="btn btn-outline btn-sm" href="agenda.php?professional_id=<?= (int) $lawyer['id'] ?>"><?= icon_svg('calendar') ?> Ver agenda</a>
+                    <?php endif; ?>
+                  <?php else: ?>
+                    <a class="btn btn-outline btn-sm" href="agenda.php?professional_id=<?= (int) $lawyer['id'] ?>"><?= icon_svg('calendar') ?> Agenda</a>
+                  <?php endif; ?>
+                </div>
+              </article>
+            <?php endforeach; ?>
+          </div>
+        <?php endif; ?>
+      </section>
+    </main>
+  </div>
 </body>
 </html>

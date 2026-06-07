@@ -20,16 +20,16 @@
           <div class="alert" data-auth-alert></div>
           <div class="field">
             <label for="email_solicitar">E-mail</label>
-            <input class="input" type="email" id="email_solicitar" name="email" required>
+            <input class="input" type="email" id="email_solicitar" name="email" autocomplete="email" required>
           </div>
-          <button class="btn btn-primary btn-block" type="submit">Enviar código</button>
+          <button class="btn btn-primary btn-block" type="submit" data-loading-text="Enviando...">Enviar código</button>
         </form>
 
         <form class="auth-form" action="../backend/public/index.php?rota=/auth/reset-password" method="post">
           <input type="hidden" name="acao" value="confirm_code">
           <div class="field">
             <label for="email_confirmar">E-mail</label>
-            <input class="input" type="email" id="email_confirmar" name="email" required>
+            <input class="input" type="email" id="email_confirmar" name="email" autocomplete="email" required>
           </div>
           <div class="field">
             <label for="codigo">Código recebido</label>
@@ -38,14 +38,14 @@
           <div class="form-grid">
             <div class="field">
               <label for="senha">Nova senha</label>
-              <input class="input" type="password" id="senha" name="senha" minlength="6" required>
+              <input class="input" type="password" id="senha" name="senha" minlength="6" autocomplete="new-password" required>
             </div>
             <div class="field">
               <label for="senha2">Confirmar senha</label>
-              <input class="input" type="password" id="senha2" name="senha2" minlength="6" required>
+              <input class="input" type="password" id="senha2" name="senha2" minlength="6" autocomplete="new-password" required>
             </div>
           </div>
-          <button class="btn btn-primary btn-block" type="submit">Validar código e atualizar senha</button>
+          <button class="btn btn-primary btn-block" type="submit" data-loading-text="Atualizando...">Validar código e atualizar senha</button>
         </form>
         <p class="auth-footer"><a href="login.html">Voltar para login</a></p>
       </div>

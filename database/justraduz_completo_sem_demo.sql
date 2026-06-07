@@ -1,27 +1,9 @@
--- ==========================================================
--- JusTraduz - SQL completo unificado
--- Gerado a partir dos arquivos enviados pelo usuario.
---
--- Ordem aplicada:
--- 1) Criacao do banco e tabelas completas
--- 2) Campos das migrations ja incorporados no schema
--- 3) Dados demo/resetaveis
--- 4) Seed admin de exemplo comentado ao final
---
--- Migrations incorporadas no schema:
--- - migration_telefone
--- - migration_profile_photo
--- - migration_password_reset_codes
--- - migration_oab
--- - migration_ai_metadata
--- - migration_google_oauth
--- - migration_indexes_integrity
--- - migration_message_attachments
---
--- Observacao: os DELETE do seed demo foram convertidos para JOIN,
--- evitando erro 1175 do MySQL Workbench em Safe Update Mode.
--- ==========================================================
+﻿-- JusTraduz - instalador SQL consolidado.
+-- Contem schema final e migrations incorporadas.
+-- ATENCAO: este arquivo recria o banco justraduz do zero.
+-- Nao execute em uma base com dados reais sem backup.
 
+DROP DATABASE IF EXISTS justraduz;
 CREATE DATABASE IF NOT EXISTS justraduz
 CHARSET utf8mb4
 COLLATE utf8mb4_general_ci;
@@ -33,7 +15,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
--- usuários
+-- usuÃ¡rios
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -47,7 +29,7 @@ CREATE TABLE IF NOT EXISTS users (
     oab_parametro TEXT,
     oab_verificado BOOLEAN DEFAULT FALSE,
 
-    -- Campos auxiliares para integracoes futuras com o CNA.
+    -- Campos auxiliares legados para validacao administrativa de OAB.
     oab_tipo VARCHAR(50),
     status_cna ENUM('pendente', 'verificado', 'invalido', 'nao_encontrado') DEFAULT 'pendente',
     cna_validado_em DATETIME NULL,
@@ -57,6 +39,7 @@ CREATE TABLE IF NOT EXISTS users (
     cna_tentativas INT DEFAULT 0,
     
     telefone VARCHAR(25),
+    cpf VARCHAR(14),
     foto_perfil VARCHAR(255),
     google_sub VARCHAR(255) UNIQUE,
     google_picture VARCHAR(255),
@@ -91,11 +74,12 @@ CREATE TABLE IF NOT EXISTS ai_results (
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8mb4;
 
--- casos (solicitações de ajuda)
+-- casos (solicitaÃ§Ãµes de ajuda)
 CREATE TABLE IF NOT EXISTS cases (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cliente_id INT NOT NULL,
     advogado_id INT NULL,
+    document_id INT NULL,
     titulo VARCHAR(255),
     descricao TEXT,
     status ENUM('aberto', 'em_andamento', 'finalizado') DEFAULT 'aberto',
@@ -103,8 +87,10 @@ CREATE TABLE IF NOT EXISTS cases (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cliente_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (advogado_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE SET NULL,
     INDEX idx_cases_cliente_status (cliente_id, status),
-    INDEX idx_cases_advogado_status (advogado_id, status)
+    INDEX idx_cases_advogado_status (advogado_id, status),
+    INDEX idx_cases_document (document_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- mensagens
@@ -166,7 +152,7 @@ CREATE TABLE IF NOT EXISTS appointments (
     INDEX idx_appointments_status (status, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
--- notificações (CORRIGIDO: Sintaxe finalizada e fechamento correto)
+-- notificaÃ§Ãµes (CORRIGIDO: Sintaxe finalizada e fechamento correto)
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -207,7 +193,7 @@ CREATE TABLE IF NOT EXISTS password_reset_codes (
     INDEX idx_password_reset_user (user_id, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
--- tabela de log cna
+-- tabela de log OAB
 CREATE TABLE IF NOT EXISTS cna_validacao_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     profissional_id INT NOT NULL,
@@ -224,42 +210,45 @@ CREATE TABLE IF NOT EXISTS cna_validacao_logs (
     FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS external_processes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    owner_type ENUM('cliente', 'advogado', 'estagiario') NOT NULL,
+    source VARCHAR(40) NOT NULL DEFAULT 'jusbrasil',
+    query_type ENUM('cpf', 'oab') NOT NULL,
+    query_value VARCHAR(40) NOT NULL,
+    process_number VARCHAR(40) NOT NULL,
+    tribunal VARCHAR(40) NULL,
+    uf VARCHAR(10) NULL,
+    comarca VARCHAR(120) NULL,
+    tipo_processo VARCHAR(80) NULL,
+    classe_processual VARCHAR(255) NULL,
+    assunto VARCHAR(255) NULL,
+    status_inferido VARCHAR(120) NULL,
+    status_normalizado VARCHAR(120) NULL,
+    link VARCHAR(500) NULL,
+    data_ultima_atualizacao DATE NULL,
+    data_andamento_mais_recente DATE NULL,
+    payload_json LONGTEXT NULL,
+    last_synced_at DATETIME NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_external_process_user_query (user_id, source, query_type, query_value, process_number),
+    INDEX idx_external_processes_user_status (user_id, status_normalizado),
+    INDEX idx_external_processes_query (source, query_type, query_value)
+) DEFAULT CHARSET=utf8mb4;
+-- Registro das migrations ja incorporadas neste schema consolidado.
 INSERT IGNORE INTO schema_migrations (version) VALUES
-('migration_telefone'),
-('migration_profile_photo'),
-('migration_password_reset_codes'),
-('migration_oab'),
-('migration_ai_metadata'),
-('migration_google_oauth'),
-('migration_indexes_integrity'),
-('migration_message_attachments');
+    ('migration_telefone'),
+    ('migration_profile_photo'),
+    ('migration_password_reset_codes'),
+    ('migration_oab'),
+    ('migration_ai_metadata'),
+    ('migration_message_attachments'),
+    ('migration_indexes_integrity'),
+    ('migration_google_oauth'),
+    ('migration_jusbrasil_processes'),
+    ('migration_case_document');
 
-
--- ==========================================================
--- Migrations incorporadas
--- ==========================================================
--- As migrations enviadas eram, em grande parte, ALTER TABLE para
--- campos que ja estao no schema acima. Para evitar duplicacao e erros
--- como "Duplicate column name", elas nao foram repetidas aqui.
---
--- A migration_message_attachments tambem foi incorporada diretamente
--- na tabela messages com os campos:
--- attachment_original_name, attachment_path, attachment_mime, attachment_size.
--- ==========================================================
-
--- ==========================================================
--- Seed admin de exemplo original
--- ==========================================================
--- Mantive este trecho comentado porque ele usa um placeholder
--- '<HASH_GERADO_COM_PASSWORD_HASH>'. Para usar, gere um hash real
--- com password_hash no PHP e descomente o INSERT abaixo.
-
--- -- ATENÇÃO: este arquivo é um exemplo. NÃO o execute em produção sem revisar.
--- -- Antes de executar, gere um hash seguro com:
--- -- C:\xampp\php\php.exe -r "echo password_hash('SENHA_FORTE_AQUI', PASSWORD_DEFAULT);"
--- -- Troque o e-mail e o hash abaixo antes de importar.
--- INSERT INTO users (nome, email, senha, tipo, status)
--- SELECT 'Administrador', 'admin@justraduz.local', '<HASH_GERADO_COM_PASSWORD_HASH>', 'admin', 'ativo'
--- WHERE NOT EXISTS (
---     SELECT 1 FROM users WHERE email = 'admin@justraduz.local'
--- );
+SELECT 'Banco JusTraduz instalado sem dados demo.' AS resultado;

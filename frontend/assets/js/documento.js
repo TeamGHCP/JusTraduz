@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelectorAll("[data-confirm-delete]").forEach((form) => {
     form.addEventListener("submit", (event) => {
-      const message = form.getAttribute("data-confirm-delete") || "Confirmar exclusão?";
+      const message = form.getAttribute("data-confirm-delete") || "Confirmar exclusao?";
       if (!window.confirm(message)) {
         event.preventDefault();
       }
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const button = form.querySelector("button[type='submit']");
       if (!button) return;
       button.disabled = true;
-      button.textContent = "Gerando análise...";
+      button.textContent = "Gerando analise...";
     });
   });
 });

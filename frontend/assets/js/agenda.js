@@ -1,474 +1,432 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const calendarEl = document.getElementById('calendar');
+document.addEventListener("DOMContentLoaded", () => {
+  const calendarEl = document.getElementById("calendar");
   if (!calendarEl) return;
-  const currentUserType = String(window.CURRENT_USER_TYPE || '');
-  const isProfessional = currentUserType === 'advogado' || currentUserType === 'estagiario';
-  const frontendIndex = window.location.pathname.indexOf('/frontend/');
-  const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : '';
+
+  const currentUserType = String(window.CURRENT_USER_TYPE || "");
+  const currentUserId = Number(window.CURRENT_USER_ID || 0);
+  const isProfessional = currentUserType === "advogado" || currentUserType === "estagiario";
+  const frontendIndex = window.location.pathname.indexOf("/frontend/");
+  const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";
+  const params = new URLSearchParams(window.location.search);
+  const professionalSelect = document.getElementById("professional_id");
+  const roleSelect = document.getElementById("perfil");
+  const slotModal = document.getElementById("slot-modal");
+  const slotForm = document.getElementById("slot-modal-form");
+  const slotModalTitle = document.getElementById("slot-modal-title");
+  const slotModalCancel = document.getElementById("slot-modal-cancel");
+  const daySlotsModal = document.getElementById("day-slots-modal");
+  const daySlotsTitle = document.getElementById("day-slots-title");
+  const daySlotsContent = document.getElementById("day-slots-content");
+
+  let professionalId = professionalSelect ? Number(professionalSelect.value || 0) : 0;
+  let roleFilter = roleSelect ? String(roleSelect.value || "") : "";
+  let year = Number(params.get("year") || new Date().getFullYear());
+  let month = Number(params.get("month") || new Date().getMonth() + 1);
 
   function apiRoute(path, extraParams = {}) {
     const url = new URL(`${appBasePath}/backend/public/index.php`, window.location.origin);
-    url.searchParams.set('rota', path);
+    url.searchParams.set("rota", path);
     Object.entries(extraParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
+      if (value !== undefined && value !== null && value !== "") {
         url.searchParams.set(key, String(value));
       }
     });
     return url.toString();
   }
 
-  const params = new URLSearchParams(window.location.search);
-  const professionalSelect = document.getElementById('professional_id');
-  let professionalId = professionalSelect ? Number(professionalSelect.value || 0) : 0;
-
-  const now = new Date();
-  let year = Number(params.get('year') || now.getFullYear());
-  let month = Number(params.get('month') || now.getMonth() + 1); // 1-12
-
   function startOfMonth(y, m) {
     return new Date(y, m - 1, 1);
   }
+
   function endOfMonth(y, m) {
     return new Date(y, m, 0);
   }
 
-  function formatDateISO(d) {
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  function formatDateISO(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   }
 
   function parseServerDate(value) {
-    // Normalize MySQL DATETIME (YYYY-MM-DD HH:MM:SS) for robust browser parsing.
-    const raw = String(value || '').trim();
-    if (!raw) return new Date('invalid');
-    const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
-    return new Date(normalized);
+    const raw = String(value || "").trim();
+    if (!raw) return new Date("invalid");
+    return new Date(raw.includes("T") ? raw : raw.replace(" ", "T"));
   }
 
   function extractDayKey(value) {
-    const raw = String(value || '').trim();
-    if (!raw) return '';
-    // Prefer direct DB date extraction to avoid browser parse inconsistencies.
-    if (raw.length >= 10) {
-      return raw.slice(0, 10);
-    }
-    const d = parseServerDate(raw);
-    if (isNaN(d.getTime())) return '';
-    return formatDateISO(d);
+    const raw = String(value || "").trim();
+    if (raw.length >= 10) return raw.slice(0, 10);
+    const date = parseServerDate(raw);
+    return Number.isNaN(date.getTime()) ? "" : formatDateISO(date);
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function monthLabel(y, m) {
+    return new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  }
+
+  function formatHour(value) {
+    const raw = String(value || "").trim();
+    if (raw.length >= 16 && raw.includes(" ")) return raw.slice(11, 16);
+    const date = parseServerDate(value);
+    if (Number.isNaN(date.getTime())) return "--:--";
+    return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function formatDayLabel(value) {
+    return value.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
+  }
+
+  function groupByDay(items) {
+    const grouped = {};
+    items.forEach((item) => {
+      const key = extractDayKey(item.starts_at);
+      if (!key) return;
+      grouped[key] = grouped[key] || [];
+      grouped[key].push(item);
+    });
+    return grouped;
   }
 
   async function loadData() {
     const start = formatDateISO(startOfMonth(year, month));
     const end = formatDateISO(endOfMonth(year, month));
-    const url = apiRoute('/schedule/calendar', {
+    const response = await fetch(apiRoute("/schedule/calendar", {
       start,
       end,
-      professional_id: professionalId || '',
+      professional_id: professionalId || "",
+      perfil: roleFilter || "",
+    }), { credentials: "include" });
+
+    if (!response.ok) {
+      return { slots: [], appointments: [] };
+    }
+
+    return response.json();
+  }
+
+  function scrollToSlot(slotId) {
+    const card = document.querySelector(`[data-slot-card="${slotId}"]`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.classList.add("is-highlighted");
+    setTimeout(() => card.classList.remove("is-highlighted"), 1200);
+  }
+
+  function showDayModal(dayDate, slots, appointments) {
+    if (!daySlotsModal || !daySlotsTitle || !daySlotsContent) return;
+
+    daySlotsTitle.textContent = `Horarios de ${formatDayLabel(dayDate)}`;
+    const rows = [];
+
+    slots
+      .slice()
+      .sort((a, b) => parseServerDate(a.starts_at) - parseServerDate(b.starts_at))
+      .forEach((slot) => {
+        const canEdit = isProfessional && currentUserId === Number(slot.professional_id);
+        const canBook = currentUserType === "cliente" && String(slot.status) === "livre";
+        rows.push(`
+          <div class="day-slot-row">
+            <div>
+              <div class="day-slot-time">${formatHour(slot.starts_at)} - ${formatHour(slot.ends_at)}</div>
+              <div class="day-slot-title">${escapeHtml(slot.titulo || "Horario de atendimento")}</div>
+              <div class="day-slot-meta">${escapeHtml(slot.professional_name || slot.profissional || "")} ${slot.status ? "| " + escapeHtml(slot.status) : ""}</div>
+            </div>
+            ${canBook ? `<button type="button" class="btn btn-primary btn-sm" data-scroll-slot="${slot.id}">Agendar</button>` : ""}
+            ${canEdit ? `<button type="button" class="btn btn-soft btn-sm" data-edit-slot="${slot.id}">Editar</button>` : ""}
+          </div>
+        `);
+      });
+
+    appointments
+      .slice()
+      .sort((a, b) => parseServerDate(a.starts_at) - parseServerDate(b.starts_at))
+      .forEach((appointment) => {
+        rows.push(`
+          <div class="day-slot-row day-slot-row-appointment">
+            <div>
+              <div class="day-slot-time">${formatHour(appointment.starts_at)} - ${formatHour(appointment.ends_at)}</div>
+              <div class="day-slot-title">${escapeHtml(appointment.assunto || "Atendimento agendado")}</div>
+              <div class="day-slot-meta">${escapeHtml(appointment.client_name || appointment.professional_name || "")} | ${escapeHtml(appointment.status || "agendado")}</div>
+            </div>
+          </div>
+        `);
+      });
+
+    daySlotsContent.innerHTML = rows.length ? rows.join("") : '<p class="text-muted">Nenhum horario neste dia.</p>';
+    daySlotsContent.querySelectorAll("[data-scroll-slot]").forEach((button) => {
+      button.addEventListener("click", () => {
+        hideDayModal();
+        scrollToSlot(button.dataset.scrollSlot);
+      });
     });
-    const res = await fetch(url, { credentials: 'include' });
-    if (!res.ok) return { slots: [], appointments: [] };
-    return await res.json();
-  }
-
-  if (professionalSelect) {
-    professionalSelect.addEventListener('change', () => {
-      professionalId = Number(professionalSelect.value || 0);
-      render();
+    daySlotsContent.querySelectorAll("[data-edit-slot]").forEach((button) => {
+      button.addEventListener("click", () => {
+        hideDayModal();
+        openEditModal(button.dataset.editSlot);
+      });
     });
+
+    daySlotsModal.style.display = "flex";
   }
 
-  function monthLabel(y, m) {
-    return new Date(y, m - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  function hideDayModal() {
+    if (daySlotsModal) daySlotsModal.style.display = "none";
   }
 
-  function buildCalendarGrid(slotsByDay, apptsByDay, monthTotal) {
+  function buildCalendar(slotsByDay, appointmentsByDay, total) {
     const first = startOfMonth(year, month);
     const last = endOfMonth(year, month);
     const startWeekDay = first.getDay();
     const daysInMonth = last.getDate();
+    const table = document.createElement("table");
+    table.className = "calendar-table";
+    table.innerHTML = "<thead><tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sab</th></tr></thead>";
 
-    const table = document.createElement('table');
-    table.className = 'calendar-table';
+    const tbody = document.createElement("tbody");
+    let row = document.createElement("tr");
 
-    const thead = document.createElement('thead');
-    thead.innerHTML = '<tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th></tr>';
-    table.appendChild(thead);
-
-    const tbody = document.createElement('tbody');
-    let row = document.createElement('tr');
-    // fill empty cells
-    for (let i = 0; i < startWeekDay; i++) {
-      row.appendChild(document.createElement('td'));
+    for (let i = 0; i < startWeekDay; i += 1) {
+      row.appendChild(document.createElement("td"));
     }
 
-    for (let day = 1; day <= daysInMonth; day++) {
+    for (let day = 1; day <= daysInMonth; day += 1) {
       if ((startWeekDay + day - 1) % 7 === 0 && day !== 1) {
         tbody.appendChild(row);
-        row = document.createElement('tr');
+        row = document.createElement("tr");
       }
 
-      const cell = document.createElement('td');
-      cell.className = 'calendar-cell';
-      const d = new Date(year, month - 1, day);
-      const key = formatDateISO(d);
+      const cell = document.createElement("td");
+      cell.className = "calendar-cell";
+      if (isProfessional) cell.classList.add("is-clickable");
 
-      const dayHeader = document.createElement('div');
-      dayHeader.className = 'calendar-day-header';
-      dayHeader.innerHTML = `<span class="day-num">${day}</span>`;
-      cell.appendChild(dayHeader);
-
+      const date = new Date(year, month - 1, day);
+      const key = formatDateISO(date);
       const slots = slotsByDay[key] || [];
-      const appts = apptsByDay[key] || [];
+      const appointments = appointmentsByDay[key] || [];
+      const dayTotal = slots.length + appointments.length;
 
-      const totalItems = slots.length + appts.length;
-      if (totalItems > 0) {
-        cell.classList.add('has-schedule');
-        const countBadge = document.createElement('span');
-        countBadge.className = 'calendar-day-count';
-        countBadge.textContent = `${totalItems} horário${totalItems === 1 ? '' : 's'}`;
-        dayHeader.appendChild(countBadge);
+      const header = document.createElement("div");
+      header.className = "calendar-day-header";
+      header.innerHTML = `<span class="day-num">${day}</span>`;
 
-        const dot = document.createElement('button');
-        dot.type = 'button';
-        dot.className = 'day-dot';
-        dot.title = `${totalItems} horário(s) neste dia`;
-        dot.innerHTML = `<span class="day-dot-count">${totalItems}</span>`;
-        dot.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          ev.stopPropagation();
-          openDaySlotsModal(d, slots, appts);
+      if (dayTotal > 0) {
+        cell.classList.add("has-schedule");
+        header.insertAdjacentHTML("beforeend", `<span class="calendar-day-count">${dayTotal}</span>`);
+      }
+
+      cell.appendChild(header);
+
+      if (dayTotal > 0) {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        dot.className = "day-dot";
+        dot.innerHTML = `<span>${dayTotal}</span>`;
+        dot.title = `${dayTotal} item(ns) de agenda`;
+        dot.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          showDayModal(date, slots, appointments);
         });
         cell.appendChild(dot);
       }
 
-      // click day to prefill new slot form (for professionals)
-      cell.addEventListener('click', (ev) => {
-        // avoid firing when clicking inside slot/appointment elements
-        if (ev.target && ev.target.closest && ev.target.closest('.calendar-slot, .calendar-appointment')) return;
-        if (isProfessional) prefillNewSlot(day);
+      cell.addEventListener("click", () => {
+        if (isProfessional) prefillCreateModal(date);
       });
 
       row.appendChild(cell);
     }
 
-    // fill remaining cells
     while (row.children.length < 7) {
-      row.appendChild(document.createElement('td'));
+      row.appendChild(document.createElement("td"));
     }
+
     tbody.appendChild(row);
     table.appendChild(tbody);
 
-    calendarEl.innerHTML = '';
-    const header = document.createElement('div');
-    header.className = 'calendar-controls';
-    header.innerHTML = `
-      <button id="cal-prev" class="btn btn-sm" type="button">&lt;</button>
+    calendarEl.innerHTML = "";
+    const controls = document.createElement("div");
+    controls.className = "calendar-controls";
+    controls.innerHTML = `
+      <button id="cal-prev" class="btn btn-outline btn-sm" type="button">&lt;</button>
       <div class="calendar-month-summary">
         <strong>${monthLabel(year, month)}</strong>
-        <span>${monthTotal} horário${monthTotal === 1 ? '' : 's'} cadastrado${monthTotal === 1 ? '' : 's'} no mês</span>
+        <span>${total} item(ns) de agenda no mes</span>
       </div>
-      <button id="cal-next" class="btn btn-sm" type="button">&gt;</button>
+      <button id="cal-next" class="btn btn-outline btn-sm" type="button">&gt;</button>
     `;
-    calendarEl.appendChild(header);
+    calendarEl.appendChild(controls);
     calendarEl.appendChild(table);
 
-    document.getElementById('cal-prev').addEventListener('click', () => { if (month === 1) { year--; month = 12; } else { month--; } render(); });
-    document.getElementById('cal-next').addEventListener('click', () => { if (month === 12) { year++; month = 1; } else { month++; } render(); });
-  }
-
-  // simple text escape for insertion into innerHTML
-  function escapeHtml(str) {
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  function groupByDay(items, dateKey) {
-    const map = {};
-    items.forEach((it) => {
-      const key = extractDayKey(it[dateKey]);
-      if (!key) return;
-      if (!map[key]) map[key] = [];
-      map[key].push(it);
-    });
-    return map;
-  }
-
-  function scrollToBookingForm(slotId) {
-    const el = document.querySelector(`form[action*="/schedule/book"] input[name="slot_id"][value="${slotId}"]`);
-    if (el) {
-      // find the form and scroll to it
-      const form = el.closest('form');
-      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    } else {
-      alert('Formulário de agendamento não encontrado nesta página. Role para baixo para ver horários livres.');
-    }
-  }
-
-  function formatHour(dateValue) {
-    const raw = String(dateValue || '').trim();
-    // Fast path for MySQL DATETIME values.
-    if (raw.length >= 16 && raw.includes(' ')) {
-      return raw.slice(11, 16);
-    }
-    const d = parseServerDate(dateValue);
-    if (isNaN(d.getTime())) return '--:--';
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  function formatDayLabel(dateObj) {
-    return dateObj.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
-  }
-
-  function openDaySlotsModal(dayDate, slots, appts) {
-    const modal = document.getElementById('day-slots-modal');
-    const title = document.getElementById('day-slots-title');
-    const content = document.getElementById('day-slots-content');
-    if (!modal || !title || !content) return;
-
-    title.textContent = 'Horários de ' + formatDayLabel(dayDate);
-
-    const orderedSlots = [...slots].sort((a, b) => parseServerDate(a.starts_at) - parseServerDate(b.starts_at));
-    const orderedAppts = [...appts].sort((a, b) => parseServerDate(a.starts_at) - parseServerDate(b.starts_at));
-
-    if (orderedSlots.length === 0 && orderedAppts.length === 0) {
-      content.innerHTML = '<p class="text-muted">Nenhum horário neste dia.</p>';
-    } else {
-      const rows = [];
-      orderedSlots.forEach((s) => {
-        const canEdit = isProfessional && Number(window.CURRENT_USER_ID) === Number(s.professional_id);
-        rows.push(
-          `<div class="day-slot-row">
-            <div>
-              <div class="day-slot-time">${formatHour(s.starts_at)} - ${formatHour(s.ends_at)}</div>
-              <div class="day-slot-title">${s.titulo ? escapeHtml(s.titulo) : 'Horário'}</div>
-              <div class="day-slot-meta">${s.status === 'livre' ? 'Livre' : 'Ocupado interno'}</div>
-            </div>
-            ${canEdit ? `<button type="button" class="btn btn-soft btn-sm day-slot-edit" data-slot-id="${s.id}">Editar</button>` : ''}
-          </div>`
-        );
-      });
-
-      orderedAppts.forEach((a) => {
-        rows.push(
-          `<div class="day-slot-row day-slot-row-appointment">
-            <div>
-              <div class="day-slot-time">${formatHour(a.starts_at)} - ${formatHour(a.ends_at)}</div>
-              <div class="day-slot-title">${a.assunto ? escapeHtml(a.assunto) : 'Agendamento'}</div>
-              <div class="day-slot-meta">Agendado</div>
-            </div>
-          </div>`
-        );
-      });
-
-      content.innerHTML = rows.join('');
-    }
-
-    content.querySelectorAll('.day-slot-edit').forEach((btn) => {
-      btn.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        const slotId = btn.dataset.slotId;
-        hideDaySlotsModal();
-        openEditModal(slotId);
-      });
+    document.getElementById("cal-prev").addEventListener("click", () => {
+      if (month === 1) {
+        year -= 1;
+        month = 12;
+      } else {
+        month -= 1;
+      }
+      render();
     });
 
-    modal.style.display = 'flex';
-  }
-
-  function hideDaySlotsModal() {
-    const modal = document.getElementById('day-slots-modal');
-    if (modal) modal.style.display = 'none';
-  }
-
-  function prefillNewSlot(day) {
-    // open the modal prefilled with the selected day time range
-    const y = year; const m = month; const d = day;
-    const starts = new Date(y, m - 1, d, 9, 0); // default 09:00
-    const ends = new Date(y, m - 1, d, 10, 0);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const clickedDay = new Date(y, m - 1, d, 0, 0, 0);
-    if (clickedDay < today) {
-      showModalAlert('Não é possível criar horário em dia passado.', 'error');
-      return;
-    }
-    const toTimeValue = (dt) => String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
-    const toDateValue = (dt) => dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
-    const startsInput = document.getElementById('slot-starts');
-    const endsInput = document.getElementById('slot-ends');
-    const dateInput = document.getElementById('slot-date');
-    if (startsInput) startsInput.value = toTimeValue(starts);
-    if (endsInput) endsInput.value = toTimeValue(ends);
-    if (dateInput) dateInput.value = toDateValue(starts);
-    openCreateModal();
+    document.getElementById("cal-next").addEventListener("click", () => {
+      if (month === 12) {
+        year += 1;
+        month = 1;
+      } else {
+        month += 1;
+      }
+      render();
+    });
   }
 
   async function render() {
     const data = await loadData();
-    const slotsByDay = groupByDay(data.slots || [], 'starts_at');
-    const apptsByDay = groupByDay(data.appointments || [], 'starts_at');
-    const monthTotal = (data.slots || []).length + (data.appointments || []).length;
-    buildCalendarGrid(slotsByDay, apptsByDay, monthTotal);
-    // initialize modal hooks after render
-    initSlotModal();
-  }
-
-  // -----------------------
-  // Modal: create/edit slot via AJAX
-  // -----------------------
-  const slotModal = document.getElementById('slot-modal');
-  const slotForm = document.getElementById('slot-modal-form');
-  const slotModalTitle = document.getElementById('slot-modal-title');
-  const slotModalCancel = document.getElementById('slot-modal-cancel');
-
-  function showModal() {
-    if (!slotModal) return;
-    // use flex so the modal centers via CSS (.modal uses display:flex)
-    slotModal.style.display = 'flex';
-  }
-  function hideModal() {
-    if (!slotModal) return;
-    slotModal.style.display = 'none';
+    const slots = data.slots || [];
+    const appointments = data.appointments || [];
+    buildCalendar(groupByDay(slots), groupByDay(appointments), slots.length + appointments.length);
   }
 
   async function fetchCsrf() {
+    const existing = slotForm?.querySelector('input[name="_csrf"]')?.value;
+    if (existing) return existing;
+
     try {
-      const r = await fetch(apiRoute('/auth/csrf'), { credentials: 'include' });
-      if (!r.ok) return null;
-      const j = await r.json();
-      return j.csrf || null;
-    } catch (e) {
-      return null;
+      const response = await fetch(apiRoute("/auth/csrf"), { credentials: "include" });
+      if (!response.ok) return "";
+      const data = await response.json();
+      return data.csrf || "";
+    } catch (error) {
+      return "";
     }
   }
 
-  let modalInitialized = false;
-  function initSlotModal() {
-    if (!slotForm) return;
-    if (modalInitialized) return;
-    modalInitialized = true;
-
-    // Cancel button
-    slotModalCancel?.addEventListener('click', (e) => { e.preventDefault(); hideModal(); });
-
-    const dayClose = document.getElementById('day-slots-close');
-    dayClose?.addEventListener('click', (e) => { e.preventDefault(); hideDaySlotsModal(); });
-
-    slotForm.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const raw = new FormData(slotForm);
-      const formData = new FormData();
-
-      const slotId = raw.get('slot_id');
-      const slotDate = String(raw.get('slot_date') || '');
-      const startsTime = String(raw.get('starts_time') || '');
-      const endsTime = String(raw.get('ends_time') || '');
-      const titulo = String(raw.get('titulo') || '');
-      const status = String(raw.get('status') || 'livre');
-
-      if (!slotDate || !startsTime || !endsTime) {
-        showModalAlert('Selecione dia, hora inicial e hora final.', 'error');
-        return;
-      }
-
-      formData.set('slot_id', String(slotId || ''));
-      formData.set('starts_at', `${slotDate}T${startsTime}`);
-      formData.set('ends_at', `${slotDate}T${endsTime}`);
-      formData.set('titulo', titulo);
-      formData.set('status', status);
-
-      const csrf = raw.get('_csrf');
-      if (csrf) formData.set('_csrf', String(csrf));
-
-      const currentSlotId = formData.get('slot_id');
-      const url = apiRoute(currentSlotId ? '/schedule/slots/update' : '/schedule/slots/create');
-      const token = await fetchCsrf();
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          credentials: 'include',
-          headers: Object.assign({'X-Requested-With': 'XMLHttpRequest'}, token ? { 'X-CSRF-Token': token } : {}),
-          body: formData,
-        });
-        const contentType = res.headers.get('Content-Type') || '';
-        const isJson = contentType.indexOf('application/json') !== -1;
-
-        if (isJson) {
-          const payload = await res.json();
-          if (res.ok && payload && payload.success === true) {
-            showModalAlert('Horário salvo com sucesso.', 'success');
-            setTimeout(() => { hideModal(); render(); }, 600);
-            return;
-          }
-
-          showModalAlert((payload && payload.error) ? payload.error : 'Erro ao salvar horário.', 'error');
-          return;
-        }
-
-        // Non-JSON means backend redirected/rendered HTML (commonly validation/auth failure).
-        if (res.redirected && res.url) {
-          try {
-            const u = new URL(res.url, window.location.origin);
-            const erro = u.searchParams.get('erro');
-            if (erro) {
-              showModalAlert(erro, 'error');
-              return;
-            }
-          } catch (e) {
-            // ignore parse issues and fallback below
-          }
-        }
-
-        if (res.ok) {
-          showModalAlert('Servidor não retornou confirmação de criação. Verifique login/OAB/permissão e tente novamente.', 'error');
-          return;
-        }
-
-        const text = await res.text();
-        const fallback = text ? String(text).slice(0, 220) : 'Erro ao salvar horário.';
-        showModalAlert(fallback, 'error');
-        return;
-      } catch (e) {
-        showModalAlert('Falha ao salvar horário. Tente novamente.', 'error');
-      }
-    });
+  function showSlotModal() {
+    if (slotModal) slotModal.style.display = "flex";
   }
 
-  function showModalAlert(message, type) {
-    const container = document.getElementById('slot-modal-alert');
-    if (!container) return;
-    container.textContent = message;
-    container.className = 'modal-alert ' + (type === 'success' ? 'alert-success' : 'alert-error');
-    container.style.display = 'block';
+  function hideSlotModal() {
+    if (slotModal) slotModal.style.display = "none";
+  }
+
+  function showModalAlert(message, kind) {
+    const box = document.getElementById("slot-modal-alert");
+    if (!box) return;
+    box.textContent = message;
+    box.className = `modal-alert ${kind === "success" ? "alert-success" : "alert-error"}`;
+    box.style.display = "block";
+  }
+
+  function clearModalAlert() {
+    const box = document.getElementById("slot-modal-alert");
+    if (box) box.style.display = "none";
+  }
+
+  function prefillCreateModal(date) {
+    if (!slotForm) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selected = new Date(date);
+    selected.setHours(0, 0, 0, 0);
+    if (selected < today) return;
+
+    slotForm.reset();
+    clearModalAlert();
+    document.getElementById("slot-modal-id").value = "";
+    document.getElementById("slot-date").value = formatDateISO(date);
+    document.getElementById("slot-starts").value = "09:00";
+    document.getElementById("slot-ends").value = "10:00";
+    document.getElementById("slot-status").value = "livre";
+    if (slotModalTitle) slotModalTitle.textContent = "Novo horario";
+    showSlotModal();
   }
 
   async function openEditModal(slotId) {
-    // Fetch details from calendar endpoint for current month and find slot by id.
+    if (!slotForm) return;
     const data = await loadData();
-    const allSlots = (data.slots || []);
-    const slot = allSlots.find(s => String(s.id) === String(slotId));
+    const slot = (data.slots || []).find((item) => String(item.id) === String(slotId));
     if (!slot) return;
-    document.getElementById('slot-modal-id').value = slot.id;
-    const startsDt = parseServerDate(slot.starts_at);
-    const endsDt = parseServerDate(slot.ends_at);
-    const pad = (n) => String(n).padStart(2, '0');
-    document.getElementById('slot-date').value = `${startsDt.getFullYear()}-${pad(startsDt.getMonth()+1)}-${pad(startsDt.getDate())}`;
-    document.getElementById('slot-starts').value = `${pad(startsDt.getHours())}:${pad(startsDt.getMinutes())}`;
-    document.getElementById('slot-ends').value = `${pad(endsDt.getHours())}:${pad(endsDt.getMinutes())}`;
-    document.getElementById('slot-title').value = slot.titulo || '';
-    document.getElementById('slot-status').value = slot.status === 'livre' ? 'livre' : 'bloqueado';
-    slotModalTitle.textContent = 'Editar horário';
-    showModal();
+
+    const starts = parseServerDate(slot.starts_at);
+    const ends = parseServerDate(slot.ends_at);
+    if (Number.isNaN(starts.getTime()) || Number.isNaN(ends.getTime())) return;
+
+    clearModalAlert();
+    document.getElementById("slot-modal-id").value = slot.id;
+    document.getElementById("slot-date").value = formatDateISO(starts);
+    document.getElementById("slot-starts").value = `${String(starts.getHours()).padStart(2, "0")}:${String(starts.getMinutes()).padStart(2, "0")}`;
+    document.getElementById("slot-ends").value = `${String(ends.getHours()).padStart(2, "0")}:${String(ends.getMinutes()).padStart(2, "0")}`;
+    document.getElementById("slot-title").value = slot.titulo || "";
+    document.getElementById("slot-status").value = slot.status === "livre" ? "livre" : "bloqueado";
+    if (slotModalTitle) slotModalTitle.textContent = "Editar horario";
+    showSlotModal();
   }
 
-  function openCreateModal() {
-    // clear fields
-    document.getElementById('slot-modal-id').value = '';
-    document.getElementById('slot-status').value = 'livre';
-    document.getElementById('slot-title').value = '';
-    const alertBox = document.getElementById('slot-modal-alert');
-    if (alertBox) alertBox.style.display = 'none';
-    slotModalTitle.textContent = 'Novo horário';
-    showModal();
-  }
+  slotModalCancel?.addEventListener("click", hideSlotModal);
+  document.querySelectorAll("[data-slot-modal-close]").forEach((el) => el.addEventListener("click", hideSlotModal));
+  document.getElementById("day-slots-close")?.addEventListener("click", hideDayModal);
+  document.querySelectorAll("[data-day-modal-close]").forEach((el) => el.addEventListener("click", hideDayModal));
+
+  slotForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const raw = new FormData(slotForm);
+    const slotId = String(raw.get("slot_id") || "");
+    const slotDate = String(raw.get("slot_date") || "");
+    const startsTime = String(raw.get("starts_time") || "");
+    const endsTime = String(raw.get("ends_time") || "");
+
+    if (!slotDate || !startsTime || !endsTime) {
+      showModalAlert("Informe dia, inicio e fim.", "error");
+      return;
+    }
+
+    const payload = new FormData();
+    payload.set("starts_at", `${slotDate}T${startsTime}`);
+    payload.set("ends_at", `${slotDate}T${endsTime}`);
+    payload.set("titulo", String(raw.get("titulo") || ""));
+    payload.set("status", String(raw.get("status") || "livre"));
+    if (slotId) payload.set("slot_id", slotId);
+
+    const csrf = await fetchCsrf();
+    if (csrf) payload.set("_csrf", csrf);
+
+    try {
+      const response = await fetch(apiRoute(slotId ? "/schedule/slots/update" : "/schedule/slots/create"), {
+        method: "POST",
+        credentials: "include",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        body: payload,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        showModalAlert(data.error || "Nao foi possivel salvar horario.", "error");
+        return;
+      }
+      showModalAlert("Horario salvo.", "success");
+      setTimeout(() => {
+        hideSlotModal();
+        render();
+      }, 500);
+    } catch (error) {
+      showModalAlert("Falha ao salvar horario.", "error");
+    }
+  });
+
+  professionalSelect?.addEventListener("change", () => {
+    professionalId = Number(professionalSelect.value || 0);
+    render();
+  });
+
+  roleSelect?.addEventListener("change", () => {
+    roleFilter = String(roleSelect.value || "");
+    render();
+  });
 
   render();
 });

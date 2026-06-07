@@ -8,6 +8,8 @@
   }
 
   .admin-alert-strip,
+  .admin-risk-board,
+  .admin-policy-strip,
   .admin-dashboard-grid,
   .admin-filter-wide,
   .admin-filter-documents,
@@ -59,8 +61,14 @@
   .product-preview,
   .client-command,
   .lawyer-command,
+  .professional-card-grid,
+  .lawyer-directory-grid,
+  .case-filter,
+  .case-board,
   .grid-2,
   .grid-3,
+  .profile-oab-grid,
+  .analysis-section-grid,
   .doc-view,
   .doc-view-wide,
   .profile-layout {
@@ -112,11 +120,29 @@
 
   .admin-hero,
   .analysis-hero,
-  .admin-filter {
+  .admin-filter,
+  .task-filter-grid,
+  .lawyer-directory-filter,
+  .permission-grid {
     grid-template-columns: 1fr;
   }
 
+  .case-meta-grid,
+  .chat-context-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .chat-context-head {
+    flex-direction: column;
+  }
+
+  .chat-context-actions {
+    justify-content: flex-start;
+  }
+
   .admin-alert-strip,
+  .admin-risk-board,
+  .admin-policy-strip,
   .admin-dashboard-grid,
   .admin-filter-wide,
   .admin-filter-documents,
@@ -132,7 +158,9 @@
   }
 
   .admin-hero,
-  .analysis-hero {
+  .analysis-hero,
+  .lawyer-directory-hero,
+  .professional-alert {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -194,6 +222,7 @@
   .footer-row,
   .auth-extra,
   .notification-item,
+  .selected-document-context,
   .dash-section-title,
   .chat-compose {
     align-items: flex-start;
@@ -216,6 +245,7 @@
   .form-actions,
   .hero-actions,
   .admin-hero-actions,
+  .selected-document-context .btn,
   .analysis-hero-actions {
     width: 100%;
   }
@@ -239,6 +269,10 @@
 
   .preview-topline,
   .case-card,
+  .case-card-head,
+  .case-card-foot,
+  .chat-context-head,
+  .professional-list-item,
   .review-item,
   .audit-feed-item {
     align-items: flex-start;
@@ -250,8 +284,23 @@
   }
 
   .review-actions,
-  .stacked-actions {
+  .stacked-actions,
+  .case-actions,
+  .chat-context-actions,
+  .professional-list-item {
     width: 100%;
+  }
+
+  .case-actions .btn,
+  .case-actions .inline-form,
+  .case-actions .select,
+  .chat-context-actions .btn {
+    width: 100%;
+  }
+
+  .case-meta-grid,
+  .chat-context-grid {
+    grid-template-columns: 1fr;
   }
 
   .message {

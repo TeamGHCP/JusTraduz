@@ -65,7 +65,7 @@ class CsrfMiddleware
 
         $stored = $_SESSION['_csrf_token'] ?? '';
 
-        if (!is_string($stored) || !is_string($token) || !hash_equals($stored, $token)) {
+        if (!is_string($stored) || $stored === '' || !is_string($token) || $token === '' || !hash_equals($stored, $token)) {
             throw new RuntimeException('CSRF token inválido', 403);
         }
     }

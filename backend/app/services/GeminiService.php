@@ -3,7 +3,7 @@
 class GeminiService
 {
     private const MAX_INLINE_BYTES = 19 * 1024 * 1024;
-    private const PROMPT_VERSION = '2026-05-31-document-v1';
+    private const PROMPT_VERSION = '2026-06-06-document-v2';
     private const SUPPORTED_FILE_MIMES = [
         'application/pdf',
         'image/png',
@@ -46,8 +46,8 @@ class GeminiService
         $text = trim($text);
         if (!$this->isConfigured() || $text === '') {
             $this->lastError = !$this->isConfigured()
-                ? 'A chave GEMINI_API_KEY não está configurada.'
-                : 'Não há texto para analisar.';
+                ? 'A chave GEMINI_API_KEY nao esta configurada.'
+                : 'Nao ha texto para analisar.';
             return null;
         }
 
@@ -61,7 +61,7 @@ class GeminiService
         $extractedText = trim((string) $extractedText);
 
         if (!$this->isConfigured()) {
-            $this->lastError = 'A chave GEMINI_API_KEY não está configurada.';
+            $this->lastError = 'A chave GEMINI_API_KEY nao esta configurada.';
             return null;
         }
 
@@ -75,7 +75,7 @@ class GeminiService
 
         $fileSize = (int) filesize($filePath);
         if ($fileSize <= 0) {
-            $this->lastError = 'O arquivo está vazio.';
+            $this->lastError = 'O arquivo esta vazio.';
             return $extractedText !== '' ? $this->analyzeDocument($extractedText) : null;
         }
 
@@ -84,13 +84,13 @@ class GeminiService
                 return $this->analyzeDocument($extractedText);
             }
 
-            $this->lastError = 'O arquivo é grande demais para análise direta. Envie um PDF com texto selecionável ou menor que 19 MB.';
+            $this->lastError = 'O arquivo e grande demais para analise direta. Envie um PDF com texto selecionavel ou menor que 19 MB.';
             return null;
         }
 
         $contents = file_get_contents($filePath);
         if ($contents === false) {
-            $this->lastError = 'Não foi possível ler o arquivo salvo.';
+            $this->lastError = 'Nao foi possivel ler o arquivo salvo.';
             return $extractedText !== '' ? $this->analyzeDocument($extractedText) : null;
         }
 
@@ -120,22 +120,39 @@ class GeminiService
         $json = self::extractJson($response);
         $data = json_decode($json, true);
 
+        return $this->normalizeAnalysisResponse($response, $data);
+    }
+
+    private function normalizeAnalysisResponse(string $response, mixed $data): ?array
+    {
         if (!is_array($data)) {
             return [
-                'resumo' => $response,
-                'explicacao' => 'Não foi possível separar automaticamente a explicação em linguagem simples. Revise o resumo gerado.',
+                'resumo' => self::plainText($response),
+                'explicacao' => self::composeStructuredExplanation(
+                    'A IA retornou uma resposta em texto livre. Leia com cuidado e confirme os pontos importantes com um profissional.',
+                    [],
+                    ['A resposta nao veio no formato estruturado esperado.'],
+                    ['Revise o documento original antes de tomar qualquer decisao.'],
+                    'Esta analise e informativa e nao substitui orientacao juridica profissional.'
+                ),
                 'confianca' => 60,
             ];
         }
 
+        $simpleExplanation = self::plainText((string) ($data['explicacao_simples'] ?? $data['explicacao'] ?? ''));
+        $importantPoints = self::listFromMixed($data['pontos_importantes'] ?? []);
+        $risks = self::listFromMixed($data['riscos'] ?? $data['pontos_de_atencao'] ?? []);
+        $nextSteps = self::listFromMixed($data['proximos_passos'] ?? []);
+        $notice = self::plainText((string) ($data['aviso_informativo'] ?? 'Esta analise e informativa e nao substitui orientacao juridica profissional.'));
+
         $analysis = [
-            'resumo' => trim((string) ($data['resumo'] ?? '')),
-            'explicacao' => trim((string) ($data['explicacao'] ?? '')),
+            'resumo' => self::plainText((string) ($data['resumo'] ?? '')),
+            'explicacao' => self::composeStructuredExplanation($simpleExplanation, $importantPoints, $risks, $nextSteps, $notice),
             'confianca' => max(0, min(100, (float) ($data['confianca'] ?? 70))),
         ];
 
         if ($analysis['resumo'] === '' && $analysis['explicacao'] === '') {
-            $this->lastError = 'A resposta da Gemini veio sem resumo ou explicação.';
+            $this->lastError = 'A resposta da Gemini veio sem resumo ou explicacao.';
             return null;
         }
 
@@ -145,7 +162,7 @@ class GeminiService
     private function generateContent(array $parts): ?string
     {
         if (!function_exists('curl_init')) {
-            $this->lastError = 'A extensão curl do PHP não está habilitada.';
+            $this->lastError = 'A extensao curl do PHP nao esta habilitada.';
             return null;
         }
 
@@ -163,7 +180,7 @@ class GeminiService
         ], JSON_UNESCAPED_UNICODE);
 
         if ($payload === false) {
-            $this->lastError = 'Não foi possível montar a requisição JSON para a Gemini.';
+            $this->lastError = 'Nao foi possivel montar a requisicao JSON para a Gemini.';
             return null;
         }
 
@@ -186,7 +203,7 @@ class GeminiService
         curl_close($ch);
 
         if ($raw === false) {
-            $this->lastError = 'Erro de conexão com a Gemini: ' . ($curlError ?: 'sem detalhes.');
+            $this->lastError = 'Erro de conexao com a Gemini: ' . ($curlError ?: 'sem detalhes.');
             return null;
         }
 
@@ -201,7 +218,7 @@ class GeminiService
         $text = trim((string) ($data['candidates'][0]['content']['parts'][0]['text'] ?? ''));
         if ($text === '') {
             $reason = (string) ($data['promptFeedback']['blockReason'] ?? $data['candidates'][0]['finishReason'] ?? '');
-            $this->lastError = 'A Gemini não retornou conteúdo' . ($reason !== '' ? ' (' . $reason . ')' : '') . '.';
+            $this->lastError = 'A Gemini nao retornou conteudo' . ($reason !== '' ? ' (' . $reason . ')' : '') . '.';
             return null;
         }
 
@@ -244,23 +261,106 @@ class GeminiService
 
     private static function buildPrompt(string $text, bool $hasFile): string
     {
-        $prompt = "Você é um assistente jurídico brasileiro. Analise o documento jurídico e responda somente em JSON válido, sem markdown, com as chaves resumo, explicacao e confianca.\n\n"
+        $prompt = "Voce e um assistente juridico brasileiro focado em explicar documentos para pessoas leigas. Analise o documento e responda somente em JSON valido, sem markdown.\n\n"
+            . "Formato obrigatorio:\n"
+            . "{\n"
+            . "  \"resumo\": \"resumo objetivo em ate 3 frases\",\n"
+            . "  \"explicacao_simples\": \"explicacao clara, sem juridiques, sobre o que o documento quer dizer\",\n"
+            . "  \"pontos_importantes\": [\"ponto 1\", \"ponto 2\", \"ponto 3\"],\n"
+            . "  \"riscos\": [\"risco ou ponto de atencao 1\", \"risco ou ponto de atencao 2\"],\n"
+            . "  \"proximos_passos\": [\"acao segura 1\", \"acao segura 2\", \"acao segura 3\"],\n"
+            . "  \"aviso_informativo\": \"aviso curto dizendo que isso nao substitui orientacao juridica profissional\",\n"
+            . "  \"confianca\": 0\n"
+            . "}\n\n"
             . "Regras:\n"
-            . "- resumo: resumo objetivo em português do Brasil, com os pontos principais.\n"
-            . "- explicacao: reescreva em linguagem simples para uma pessoa sem conhecimento jurídico.\n"
-            . "- confianca: número de 0 a 100 indicando segurança da análise conforme a qualidade do documento.\n"
-            . "- Não invente dados que não estejam no documento.\n"
-            . "- Se algum trecho estiver ilegível, diga isso sem completar informações por conta própria.\n\n";
+            . "- Use portugues do Brasil, frases curtas e termos simples.\n"
+            . "- Nao entregue parecer juridico definitivo, estrategia processual ou promessa de resultado.\n"
+            . "- Nao invente dados, prazos, valores, partes ou fundamentos que nao estejam no documento.\n"
+            . "- Se algum trecho estiver ilegivel, diga isso em riscos e reduza a confianca.\n"
+            . "- Se o arquivo nao parecer juridico, diga isso claramente e coloque confianca baixa.\n"
+            . "- proximos_passos devem ser acoes prudentes: guardar comprovantes, conferir prazos, procurar profissional, separar documentos.\n"
+            . "- confianca deve ser numero de 0 a 100 conforme legibilidade e completude do documento.\n\n";
 
         if ($hasFile) {
             $prompt .= "Use o arquivo anexado como fonte principal.\n\n";
         }
 
         if ($text !== '') {
-            $prompt .= "Texto extraído do documento, quando disponível:\n" . mb_substr($text, 0, 28000);
+            $prompt .= "Texto extraido do documento, quando disponivel:\n" . mb_substr($text, 0, 28000);
         }
 
         return $prompt;
+    }
+
+    private static function composeStructuredExplanation(
+        string $simpleExplanation,
+        array $importantPoints,
+        array $risks,
+        array $nextSteps,
+        string $notice
+    ): string {
+        $sections = [];
+
+        if ($simpleExplanation !== '') {
+            $sections[] = "## Explicacao em linguagem simples\n" . $simpleExplanation;
+        }
+
+        if ($importantPoints) {
+            $sections[] = "## Pontos importantes\n" . self::bulletList($importantPoints);
+        }
+
+        if ($risks) {
+            $sections[] = "## Riscos e pontos de atencao\n" . self::bulletList($risks);
+        }
+
+        if ($nextSteps) {
+            $sections[] = "## Proximos passos sugeridos\n" . self::bulletList($nextSteps);
+        }
+
+        if ($notice !== '') {
+            $sections[] = "## Aviso informativo\n" . $notice;
+        }
+
+        return trim(implode("\n\n", $sections));
+    }
+
+    private static function listFromMixed(mixed $value): array
+    {
+        if (is_string($value)) {
+            $value = preg_split('/\r?\n|;/', $value) ?: [];
+        }
+
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $items = [];
+        foreach ($value as $item) {
+            if (is_array($item)) {
+                $item = implode(' ', array_map(static fn (mixed $part): string => is_scalar($part) ? (string) $part : '', $item));
+            }
+
+            $text = self::plainText(is_scalar($item) ? (string) $item : '');
+            $text = preg_replace('/^[-*]\s*/', '', $text);
+            if ($text !== '') {
+                $items[] = $text;
+            }
+        }
+
+        return array_values(array_slice(array_unique($items), 0, 6));
+    }
+
+    private static function bulletList(array $items): string
+    {
+        return implode("\n", array_map(static fn (string $item): string => '- ' . $item, $items));
+    }
+
+    private static function plainText(string $text): string
+    {
+        $text = trim($text);
+        $text = preg_replace('/[ \t]+/', ' ', $text);
+        $text = preg_replace('/\R{3,}/', "\n\n", (string) $text);
+        return trim((string) $text);
     }
 
     private static function configAliases(string $key): array

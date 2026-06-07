@@ -11,6 +11,29 @@ function require_login(): void
         header('Location: ' . app_url('/frontend/login.html?erro=' . urlencode('Faça login para continuar.')));
         exit;
     }
+
+    require_validated_professional_access();
+}
+
+function require_validated_professional_access(): void
+{
+    $type = $_SESSION['tipo'] ?? '';
+    if (!in_array($type, ['advogado', 'estagiario'], true)) {
+        return;
+    }
+
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT oab_verificado FROM users WHERE id = ? AND status = 'ativo'");
+    $stmt->execute([current_user_id()]);
+
+    if ((int) ($stmt->fetchColumn() ?: 0) === 1) {
+        return;
+    }
+
+    secure_session_destroy_current();
+
+    header('Location: ' . app_url('/frontend/login.html?erro=' . urlencode('Sua OAB ainda precisa ser validada pela administracao.')));
+    exit;
 }
 
 function require_role(array $roles): void

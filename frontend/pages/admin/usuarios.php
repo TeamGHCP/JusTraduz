@@ -62,7 +62,7 @@ if ($q !== '') {
 }
 
 if ($oabFilter === 'verificado') {
-    $where[] = "tipo IN ('advogado', 'estagiario') AND (oab_verificado = TRUE OR status_cna = 'verificado')";
+    $where[] = "tipo IN ('advogado', 'estagiario') AND oab_verificado = TRUE";
 } elseif ($oabFilter === 'pendente') {
     $where[] = "tipo IN ('advogado', 'estagiario') AND oab_verificado = FALSE AND COALESCE(status_cna, 'pendente') = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> ''";
 } elseif ($oabFilter === 'invalido') {
@@ -81,7 +81,7 @@ $users = fetch_all($pdo, $sql, $params);
 
 $userTotal = count_query($pdo, 'SELECT COUNT(*) FROM users');
 $activeTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE status = 'ativo'");
-$verifiedProfessionalTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('advogado', 'estagiario') AND (oab_verificado = TRUE OR status_cna = 'verificado')");
+$verifiedProfessionalTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('advogado', 'estagiario') AND oab_verificado = TRUE");
 $pendingProfessionalTotal = count_query(
     $pdo,
     "SELECT COUNT(*) FROM users
@@ -138,7 +138,7 @@ $pendingProfessionalTotal = count_query(
           </select>
         </div>
         <div class="field">
-          <label for="oab">OAB/CNA</label>
+          <label for="oab">OAB</label>
           <select class="select" id="oab" name="oab">
             <option value="">Todos</option>
             <option value="pendente" <?= $oabFilter === 'pendente' ? 'selected' : '' ?>>Pendente</option>
@@ -163,7 +163,7 @@ $pendingProfessionalTotal = count_query(
         <?php else: ?>
           <div class="table-wrap">
             <table class="table admin-users-table">
-              <thead><tr><th>Usuário</th><th>Contato</th><th>Perfil</th><th>OAB/CNA</th><th>Status</th><th>Criado em</th><th>Ações</th></tr></thead>
+              <thead><tr><th>Usuário</th><th>Contato</th><th>Perfil</th><th>OAB</th><th>Status</th><th>Criado em</th><th>Ações</th></tr></thead>
               <tbody>
                 <?php foreach ($users as $user): ?>
                   <?php $isProfessional = in_array($user['tipo'], ['advogado', 'estagiario'], true); ?>
@@ -200,6 +200,7 @@ $pendingProfessionalTotal = count_query(
                             <?= csrf_input() ?>
                             <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
                             <input type="hidden" name="action" value="approve">
+                            <input class="input admin-reason-input" name="justificativa" placeholder="Fonte da validacao" required>
                             <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
                           </form>
                           <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post">
@@ -208,12 +209,12 @@ $pendingProfessionalTotal = count_query(
                             <input type="hidden" name="action" value="pending">
                             <button class="btn btn-soft btn-sm" type="submit">Revisar</button>
                           </form>
-                          <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post">
+                          <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar esta OAB vai excluir a conta do profissional. Continuar?');">
                             <?= csrf_input() ?>
                             <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
                             <input type="hidden" name="action" value="reject">
-                            <input class="input admin-reason-input" name="justificativa" placeholder="Motivo da reprovação">
-                            <button class="btn btn-outline btn-sm" type="submit">Reprovar</button>
+                            <input class="input admin-reason-input" name="justificativa" placeholder="Motivo da reprovação" required>
+                            <button class="btn btn-outline btn-sm" type="submit">Excluir por OAB inválida</button>
                           </form>
                         </div>
                       <?php endif; ?>

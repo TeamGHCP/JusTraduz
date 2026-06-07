@@ -1,13 +1,12 @@
 <?php
 
+require_once __DIR__ . '/security.php';
+
 function secure_session_configure(): void
 {
     if (session_status() !== PHP_SESSION_NONE) {
         return;
     }
-
-    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
-        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
 
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
@@ -15,7 +14,7 @@ function secure_session_configure(): void
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
-        'secure' => $secure,
+        'secure' => security_is_https(),
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -41,4 +40,49 @@ function secure_session_start(): void
     }
 
     $_SESSION['_last_activity'] = $now;
+
+    if (!empty($_SESSION['logado'])) {
+        secure_session_regenerate_if_due($now);
+    }
+}
+
+function secure_session_regenerate_if_due(?int $now = null): void
+{
+    if (session_status() !== PHP_SESSION_ACTIVE || headers_sent()) {
+        return;
+    }
+
+    $now ??= time();
+    $lastRegeneration = (int) ($_SESSION['_session_regenerated_at'] ?? 0);
+    if ($lastRegeneration <= 0) {
+        $_SESSION['_session_regenerated_at'] = $now;
+        return;
+    }
+
+    if (($now - $lastRegeneration) < (15 * 60)) {
+        return;
+    }
+
+    session_regenerate_id(true);
+    $_SESSION['_session_regenerated_at'] = $now;
+}
+
+function secure_session_regenerate_now(): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE && !headers_sent()) {
+        session_regenerate_id(true);
+        $_SESSION['_session_regenerated_at'] = time();
+    }
+}
+
+function secure_session_destroy_current(): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_unset();
+        session_destroy();
+    }
+
+    security_expire_cookie(session_name() ?: 'PHPSESSID');
+    security_expire_cookie('PHPSESSID');
+    security_expire_cookie('session');
 }

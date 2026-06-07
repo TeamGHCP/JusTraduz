@@ -36,7 +36,6 @@ body {
   grid-column: 2;
 }
 
-/* REMOVE A LOGO PEQUENA DO LOGIN E DO CADASTRO */
 .auth-switch-page .auth-brand {
   display: none;
 }
@@ -64,15 +63,38 @@ body {
   gap: 15px;
 }
 
+.field-help {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.auth-note {
+  padding: 10px 12px;
+  border: 1px solid rgba(47, 95, 152, .18);
+  border-radius: var(--radius-sm);
+  background: rgba(47, 95, 152, .08);
+  color: var(--info);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.btn.is-loading {
+  cursor: wait;
+  opacity: .76;
+  transform: none;
+}
+
 .auth-switch-page .auth-footer {
   text-align: center;
 }
 
-/* CADASTRO MAIS COMPACTO PRA NÃO PRECISAR ROLAR */
 .auth-switch-page .cadastro-card {
-  max-height: none;
-  overflow: visible;
-  padding-right: 0;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
 }
 
 .auth-cadastro-panel .auth-card h1 {
@@ -80,31 +102,30 @@ body {
 }
 
 .auth-cadastro-panel .auth-card .subtitle {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .auth-cadastro-panel .auth-form {
-  gap: 10px;
+  gap: 9px;
 }
 
 .auth-cadastro-panel .field label {
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .auth-cadastro-panel .input,
 .auth-cadastro-panel .select {
-  min-height: 42px;
+  min-height: 40px;
 }
 
 .auth-cadastro-panel .auth-divider {
-  margin: 12px 0;
+  margin: 10px 0;
 }
 
 .auth-cadastro-panel .auth-footer {
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
-/* PARTE VERDE */
 .auth-slider {
   position: absolute;
   top: 0;
@@ -142,14 +163,12 @@ body {
   text-align: center;
   color: #fff;
   position: relative;
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-/* LOGO MAIOR NA PARTE VERDE */
 .slider-logo {
   width: 360px;
   height: auto;
@@ -178,7 +197,6 @@ body {
   max-width: 560px;
 }
 
-/* TEXTO DO CADASTRO NA PARTE VERDE */
 .cadastro-art-text {
   position: absolute;
   left: 50%;
@@ -201,7 +219,6 @@ body {
   transform: translateX(-50%);
 }
 
-/* CELULAR */
 @media (max-width: 900px) {
   html,
   body {
@@ -236,6 +253,12 @@ body {
   .auth-switch-page.cadastro-ativo .auth-cadastro-panel {
     display: flex !important;
   }
+
+  .auth-switch-page .cadastro-card {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
 }
 
 .auth-home-link {
@@ -255,7 +278,6 @@ body {
   color: var(--teal);
 }
 
-
 .slider-logo-link {
   display: block;
   text-decoration: none;
@@ -266,8 +288,17 @@ body {
   transform: scale(1.03);
 }
 
-/* sem animação do index.html pro cadastro, para evitar animação */
-
 .auth-switch-page.preload * {
   transition: none !important;
+}
+
+.auth-redirect-page {
+  display: grid;
+  min-height: 100vh;
+  background: #f4f8f8;
+}
+
+.auth-redirect-page .auth-panel {
+  width: min(560px, 100%);
+  margin: 0 auto;
 }

@@ -15,7 +15,7 @@ if (authPage) {
     showCadastro.addEventListener("click", function (event) {
       event.preventDefault();
       authPage.classList.add("cadastro-ativo");
-      history.replaceState(null, "", "login-novo.html?cadastro");
+      history.replaceState(null, "", "login.html?cadastro");
     });
   }
 
@@ -23,7 +23,7 @@ if (authPage) {
     showLogin.addEventListener("click", function (event) {
       event.preventDefault();
       authPage.classList.remove("cadastro-ativo");
-      history.replaceState(null, "", "login-novo.html");
+      history.replaceState(null, "", "login.html");
     });
   }
 }

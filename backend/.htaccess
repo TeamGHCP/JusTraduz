@@ -1,0 +1,18 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+</IfModule>
+
+<FilesMatch "^\.|\.env$|\.ini$|\.log$|\.sql$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(?:app|routes)(?:/|$) - [F,L]
+    RewriteRule ^storage/(?:documents|message-attachments)(?:/|$) - [F,L]
+</IfModule>

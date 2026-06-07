@@ -17,8 +17,6 @@ $routes = [
     ['POST', '/profile/update', 'AuthController', 'updateProfile'],
     ['POST', '/profile/password-code', 'AuthController', 'profilePasswordCode'],
     ['POST', '/profile/password-reset', 'AuthController', 'profilePasswordReset'],
-    ['POST', '/oab/lookup', 'OabController', 'lookup'],
-
     ['POST', '/documents/upload', 'DocumentController', 'upload'],
     ['POST', '/documents/analyze', 'DocumentController', 'analyze'],
     ['POST', '/documents/delete', 'DocumentController', 'delete'],
@@ -33,6 +31,8 @@ $routes = [
     ['GET', '/messages/attachment', 'CaseController', 'downloadAttachment'],
 
     ['POST', '/notifications/read', 'NotificationController', 'markRead'],
+
+    ['POST', '/processes/sync', 'ProcessController', 'sync'],
 
     ['POST', '/schedule/slots/create', 'ScheduleController', 'createSlot'],
     ['POST', '/schedule/slots/update', 'ScheduleController', 'updateSlot'],

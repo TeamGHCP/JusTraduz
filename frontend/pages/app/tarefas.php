@@ -4,8 +4,43 @@ require_login();
 
 $type = current_user_type();
 $userId = current_user_id();
-$status = $_GET['status'] ?? '';
+$status = trim((string) ($_GET['status'] ?? ''));
 $caseFilter = (int) ($_GET['case_id'] ?? 0);
+$q = trim((string) ($_GET['q'] ?? ''));
+
+function task_status_badge(?string $status): string
+{
+    return match ($status) {
+        'concluida' => 'badge-success',
+        'em_andamento' => 'badge-info',
+        default => 'badge-warning',
+    };
+}
+
+function task_priority_badge(?string $priority): string
+{
+    return $priority === 'alta' ? 'badge-warning' : 'badge-info';
+}
+
+function task_datetime(?string $value): string
+{
+    if (!$value) {
+        return '-';
+    }
+
+    return date('d/m/Y H:i', strtotime($value));
+}
+
+function task_short(?string $text, int $limit = 130): string
+{
+    $text = trim((string) $text);
+    if ($text === '') {
+        return 'Sem descricao';
+    }
+
+    return mb_strlen($text) > $limit ? mb_substr($text, 0, $limit - 3) . '...' : $text;
+}
+
 $where = [];
 $params = [];
 
@@ -29,17 +64,30 @@ if ($caseFilter > 0) {
     $params[] = $caseFilter;
 }
 
-$sql = 'SELECT t.*, c.titulo AS caso, c.status AS case_status, cli.nome AS cliente, adv.nome AS advogado
+if ($q !== '') {
+    $where[] = '(t.titulo LIKE ? OR t.descricao LIKE ? OR c.titulo LIKE ? OR cli.nome LIKE ? OR adv.nome LIKE ?)';
+    $like = '%' . $q . '%';
+    array_push($params, $like, $like, $like, $like, $like);
+}
+
+$sql = "SELECT t.*, c.titulo AS caso, c.status AS case_status, c.prioridade,
+               cli.nome AS cliente, adv.nome AS advogado
         FROM tasks t
         INNER JOIN cases c ON c.id = t.case_id
         INNER JOIN users cli ON cli.id = c.cliente_id
-        LEFT JOIN users adv ON adv.id = c.advogado_id';
+        LEFT JOIN users adv ON adv.id = c.advogado_id";
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
-$sql .= ' ORDER BY t.created_at DESC';
+$sql .= " ORDER BY FIELD(t.status, 'pendente', 'em_andamento', 'concluida'),
+                 FIELD(c.prioridade, 'alta', 'media', 'baixa'),
+                 t.created_at DESC";
 
 $tasks = fetch_all($pdo, $sql, $params);
+$totalTasks = count($tasks);
+$pendingCount = count(array_filter($tasks, static fn (array $task): bool => ($task['status'] ?? '') === 'pendente'));
+$progressCount = count(array_filter($tasks, static fn (array $task): bool => ($task['status'] ?? '') === 'em_andamento'));
+$doneCount = count(array_filter($tasks, static fn (array $task): bool => ($task['status'] ?? '') === 'concluida'));
 
 if ($type === 'advogado') {
     $cases = fetch_all(
@@ -48,7 +96,7 @@ if ($type === 'advogado') {
          FROM cases c
          INNER JOIN users cli ON cli.id = c.cliente_id
          WHERE c.advogado_id = ? AND c.status <> 'finalizado'
-         ORDER BY c.created_at DESC",
+         ORDER BY FIELD(c.prioridade, 'alta', 'media', 'baixa'), c.created_at DESC",
         [$userId]
     );
 } elseif ($type === 'admin') {
@@ -58,7 +106,17 @@ if ($type === 'advogado') {
          FROM cases c
          INNER JOIN users cli ON cli.id = c.cliente_id
          WHERE c.status <> 'finalizado'
-         ORDER BY c.created_at DESC"
+         ORDER BY FIELD(c.prioridade, 'alta', 'media', 'baixa'), c.created_at DESC"
+    );
+} elseif ($type === 'cliente') {
+    $cases = fetch_all(
+        $pdo,
+        "SELECT c.id, c.titulo, cli.nome AS cliente
+         FROM cases c
+         INNER JOIN users cli ON cli.id = c.cliente_id
+         WHERE c.cliente_id = ?
+         ORDER BY c.created_at DESC",
+        [$userId]
     );
 } else {
     $cases = [];
@@ -80,35 +138,54 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
     <?php render_sidebar($type, 'tarefas.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Tarefas', 'Organize próximos passos dos casos e acompanhe o andamento.', current_user_name()); ?>
+      <?php render_topbar('Tarefas', 'Proximos passos com caso, cliente, prioridade e responsavel visiveis.', current_user_name()); ?>
+
+      <?php if ($type === 'estagiario'): ?>
+        <section class="professional-alert professional-alert-locked">
+          <div>
+            <strong>Tarefas bloqueadas para este perfil.</strong>
+            <span>Sem atribuicao formal, estagiario nao cria, altera ou consulta tarefas de casos. Isso e regra de responsabilidade, nao detalhe visual.</span>
+          </div>
+          <a class="btn btn-primary btn-sm" href="agenda.php">Minha agenda</a>
+        </section>
+      <?php endif; ?>
+
+      <section class="grid grid-4">
+        <?= stat_card('Resultado', $totalTasks, 'check') ?>
+        <?= stat_card('Pendentes', $pendingCount, 'help') ?>
+        <?= stat_card('Em andamento', $progressCount, 'case') ?>
+        <?= stat_card('Concluidas', $doneCount, 'shield') ?>
+      </section>
 
       <?php if ($canManageTasks): ?>
-        <form class="card auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/tasks/create')) ?>" method="post">
+        <form class="card auth-form task-create-card" action="<?= e(app_url('/backend/public/index.php?rota=/tasks/create')) ?>" method="post">
           <?= csrf_input() ?>
           <div class="dash-section-title">
             <h2>Nova tarefa</h2>
             <span class="badge badge-success"><?= e((string) count($cases)) ?> casos ativos</span>
           </div>
           <?php if (!$cases): ?>
-            <p class="text-muted">Nenhum caso ativo disponível para criar tarefas.</p>
+            <p class="text-muted">Nenhum caso ativo disponivel para criar tarefas.</p>
           <?php else: ?>
             <div class="form-grid">
               <div class="field">
                 <label for="case_id">Caso</label>
                 <select class="select" id="case_id" name="case_id" required>
                   <?php foreach ($cases as $case): ?>
-                    <option value="<?= (int) $case['id'] ?>" <?= $caseFilter === (int) $case['id'] ? 'selected' : '' ?>><?= e('#' . $case['id'] . ' - ' . $case['titulo'] . ' (' . $case['cliente'] . ')') ?></option>
+                    <option value="<?= (int) $case['id'] ?>" <?= $caseFilter === (int) $case['id'] ? 'selected' : '' ?>>
+                      <?= e('#' . $case['id'] . ' - ' . $case['titulo'] . ' (' . $case['cliente'] . ')') ?>
+                    </option>
                   <?php endforeach; ?>
                 </select>
               </div>
               <div class="field">
-                <label for="titulo">Título</label>
+                <label for="titulo">Titulo</label>
                 <input class="input" id="titulo" name="titulo" required>
               </div>
             </div>
             <div class="field">
-              <label for="descricao">Descrição</label>
-              <textarea class="textarea" id="descricao" name="descricao"></textarea>
+              <label for="descricao">Descricao</label>
+              <textarea class="textarea" id="descricao" name="descricao" placeholder="O que precisa acontecer, por que importa e qual e a proxima evidencia esperada."></textarea>
             </div>
             <button class="btn btn-primary" type="submit"><?= icon_svg('check') ?> Criar tarefa</button>
           <?php endif; ?>
@@ -116,20 +193,34 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
       <?php endif; ?>
 
       <section class="dash-section">
-        <form class="card admin-filter" method="get">
-          <?php if ($caseFilter > 0): ?><input type="hidden" name="case_id" value="<?= (int) $caseFilter ?>"><?php endif; ?>
+        <form class="card admin-filter task-filter-grid" method="get">
+          <div class="field">
+            <label for="q">Busca</label>
+            <input class="input" id="q" name="q" value="<?= e($q) ?>" placeholder="Tarefa, caso, cliente ou responsavel">
+          </div>
           <div class="field">
             <label for="status">Status</label>
             <select class="select" id="status" name="status">
               <option value="">Todos</option>
               <option value="pendente" <?= $status === 'pendente' ? 'selected' : '' ?>>Pendente</option>
               <option value="em_andamento" <?= $status === 'em_andamento' ? 'selected' : '' ?>>Em andamento</option>
-              <option value="concluida" <?= $status === 'concluida' ? 'selected' : '' ?>>Concluída</option>
+              <option value="concluida" <?= $status === 'concluida' ? 'selected' : '' ?>>Concluida</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="case_filter">Caso</label>
+            <select class="select" id="case_filter" name="case_id">
+              <option value="0">Todos</option>
+              <?php foreach ($cases as $case): ?>
+                <option value="<?= (int) $case['id'] ?>" <?= $caseFilter === (int) $case['id'] ? 'selected' : '' ?>>
+                  <?= e('#' . $case['id'] . ' - ' . $case['titulo']) ?>
+                </option>
+              <?php endforeach; ?>
             </select>
           </div>
           <div class="form-actions">
             <button class="btn btn-primary" type="submit">Filtrar</button>
-            <a class="btn btn-outline" href="<?= $caseFilter > 0 ? 'tarefas.php?case_id=' . (int) $caseFilter : 'tarefas.php' ?>">Limpar</a>
+            <a class="btn btn-outline" href="tarefas.php">Limpar</a>
           </div>
         </form>
       </section>
@@ -137,44 +228,48 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
       <section class="dash-section">
         <div class="dash-section-title">
           <h2>Lista de tarefas</h2>
-          <span class="badge badge-success"><?= e((string) count($tasks)) ?> registros</span>
+          <span class="badge badge-info"><?= e((string) $totalTasks) ?> registros</span>
         </div>
 
         <?php if (!$tasks): ?>
-          <?= empty_state('Nenhuma tarefa encontrada.') ?>
+          <?= empty_state($type === 'estagiario' ? 'Sem tarefas acessiveis para este perfil.' : 'Nenhuma tarefa encontrada para os filtros atuais.') ?>
         <?php else: ?>
-          <div class="table-wrap">
-            <table class="table">
-              <thead><tr><th>Tarefa</th><th>Caso</th><th>Cliente</th><th>Responsável</th><th>Status</th><th>Ação</th></tr></thead>
-              <tbody>
-                <?php foreach ($tasks as $task): ?>
-                  <tr>
-                    <td><strong><?= e($task['titulo']) ?></strong><span class="table-subtext"><?= e($task['descricao'] ?: 'Sem descrição') ?></span></td>
-                    <td><?= e($task['caso']) ?><span class="table-subtext"><?= e(status_label($task['case_status'] ?? '')) ?></span></td>
-                    <td><?= e($task['cliente']) ?></td>
-                    <td><?= e($task['advogado'] ?? 'Sem advogado') ?></td>
-                    <td><span class="badge <?= $task['status'] === 'concluida' ? 'badge-success' : 'badge-warning' ?>"><?= e(status_label($task['status'] ?? '')) ?></span></td>
-                    <td>
-                      <?php if ($canManageTasks): ?>
-                        <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/tasks/update')) ?>" method="post">
-                          <?= csrf_input() ?>
-                          <input type="hidden" name="task_id" value="<?= (int) $task['id'] ?>">
-                          <select class="select select-sm" name="status">
-                            <option value="pendente" <?= $task['status'] === 'pendente' ? 'selected' : '' ?>>Pendente</option>
-                            <option value="em_andamento" <?= $task['status'] === 'em_andamento' ? 'selected' : '' ?>>Em andamento</option>
-                            <option value="concluida" <?= $task['status'] === 'concluida' ? 'selected' : '' ?>>Concluída</option>
-                          </select>
-                          <button class="btn btn-soft btn-sm" type="submit">Salvar</button>
-                          <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $task['case_id'] ?>">Chat</a>
-                        </form>
-                      <?php else: ?>
-                        <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $task['case_id'] ?>">Chat</a>
-                      <?php endif; ?>
-                    </td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
+          <div class="professional-card-grid task-card-grid">
+            <?php foreach ($tasks as $task): ?>
+              <article class="professional-case-card task-card">
+                <div class="case-card-head">
+                  <div>
+                    <span class="badge <?= e(task_status_badge($task['status'] ?? '')) ?>"><?= e(status_label($task['status'] ?? '')) ?></span>
+                    <h3><?= e($task['titulo']) ?></h3>
+                  </div>
+                  <span class="badge <?= e(task_priority_badge($task['prioridade'] ?? '')) ?>"><?= e(status_label($task['prioridade'] ?? '')) ?></span>
+                </div>
+                <p><?= e(task_short($task['descricao'] ?? '')) ?></p>
+                <div class="case-meta-grid">
+                  <div><span>Caso</span><strong><?= e($task['caso']) ?></strong></div>
+                  <div><span>Cliente</span><strong><?= e($task['cliente']) ?></strong></div>
+                  <div><span>Responsavel</span><strong><?= e($task['advogado'] ?? 'Sem advogado') ?></strong></div>
+                  <div><span>Criada</span><strong><?= e(task_datetime($task['created_at'] ?? '')) ?></strong></div>
+                </div>
+                <div class="case-actions">
+                  <?php if ($canManageTasks): ?>
+                    <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/tasks/update')) ?>" method="post">
+                      <?= csrf_input() ?>
+                      <input type="hidden" name="task_id" value="<?= (int) $task['id'] ?>">
+                      <select class="select select-sm" name="status" aria-label="Status da tarefa">
+                        <option value="pendente" <?= ($task['status'] ?? '') === 'pendente' ? 'selected' : '' ?>>Pendente</option>
+                        <option value="em_andamento" <?= ($task['status'] ?? '') === 'em_andamento' ? 'selected' : '' ?>>Em andamento</option>
+                        <option value="concluida" <?= ($task['status'] ?? '') === 'concluida' ? 'selected' : '' ?>>Concluida</option>
+                      </select>
+                      <button class="btn btn-soft btn-sm" type="submit">Salvar</button>
+                    </form>
+                  <?php endif; ?>
+                  <?php if ($type !== 'estagiario'): ?>
+                    <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $task['case_id'] ?>"><?= icon_svg('chat') ?> Chat</a>
+                  <?php endif; ?>
+                </div>
+              </article>
+            <?php endforeach; ?>
           </div>
         <?php endif; ?>
       </section>
