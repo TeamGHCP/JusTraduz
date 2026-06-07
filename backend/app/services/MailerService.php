@@ -57,13 +57,7 @@ class MailerService
         }
 
         $transport = $encryption === 'ssl' ? 'ssl://' : 'tcp://';
-        $socket = @stream_socket_client(
-            $transport . $host . ':' . $port,
-            $errno,
-            $errstr,
-            20,
-            STREAM_CLIENT_CONNECT
-        );
+        $socket = $this->openSocket($transport . $host . ':' . $port, $errno, $errstr);
 
         if (!$socket) {
             error_log("Erro SMTP ao conectar em {$host}:{$port}: {$errstr} ({$errno})");
@@ -149,6 +143,27 @@ class MailerService
         $body .= "--{$boundary}--";
 
         return ['multipart/related; boundary="' . $boundary . '"', $body];
+    }
+
+    private function openSocket(string $address, ?int &$errno, ?string &$errstr)
+    {
+        $warning = null;
+        set_error_handler(static function (int $level, string $message) use (&$warning): bool {
+            $warning = $message;
+            return true;
+        });
+
+        try {
+            $socket = stream_socket_client($address, $errno, $errstr, 20, STREAM_CLIENT_CONNECT);
+        } finally {
+            restore_error_handler();
+        }
+
+        if (!$socket && $warning !== null && ($errstr === null || $errstr === '')) {
+            $errstr = $warning;
+        }
+
+        return $socket;
     }
 
     private function command($socket, string $command, array $expected): string
