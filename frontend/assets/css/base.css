@@ -501,6 +501,211 @@ button {
   color: var(--teal);
 }
 
+/* DEPOIMENTOS */
+
+.testimonials-section {
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.testimonial-marquee {
+  width: 100%;
+  overflow: hidden;
+  padding: 18px 0 24px;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.testimonial-marquee.is-dragging {
+  cursor: grabbing;
+}
+
+.testimonial-track {
+  display: flex;
+  width: max-content;
+  gap: 18px;
+  align-items: stretch;
+  will-change: transform;
+}
+
+.testimonial-card {
+  width: clamp(280px, 28vw, 360px);
+  min-height: 280px;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 1px 0 rgba(23, 32, 51, .02);
+  padding: 22px;
+  opacity: .72;
+  transform: scale(.94);
+  transition:
+    opacity .55s ease,
+    transform .55s ease,
+    box-shadow .55s ease,
+    border-color .55s ease,
+    background-color .55s ease;
+  user-select: none;
+}
+
+.testimonial-card img {
+  pointer-events: none;
+}
+
+.testimonial-card.is-active {
+  background: var(--surface);
+  opacity: 1;
+  transform: translateY(-7px) scale(1);
+  border-color: rgba(17, 138, 126, .42);
+  box-shadow: 0 16px 32px rgba(23, 32, 51, .13);
+}
+
+.testimonial-card.is-active .testimonial-quote {
+  color: var(--teal-2);
+}
+
+.testimonial-card.is-active p {
+  color: var(--navy);
+}
+
+.testimonial-card.is-active .testimonial-user strong {
+  color: var(--teal);
+}
+
+.testimonial-quote {
+  height: 38px;
+  color: var(--teal);
+  font-size: 58px;
+  font-weight: 800;
+  line-height: .8;
+}
+
+.testimonial-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.testimonial-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.testimonial-avatar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  position: relative;
+  border-radius: 50%;
+  background: var(--mint);
+  color: var(--teal);
+  border: 1px solid rgba(17, 138, 126, .22);
+  font-size: 0;
+  overflow: hidden;
+}
+
+.testimonial-avatar::before,
+.testimonial-avatar::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  background: currentColor;
+  transform: translateX(-50%);
+}
+
+.testimonial-avatar::before {
+  top: 10px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+}
+
+.testimonial-avatar::after {
+  bottom: 9px;
+  width: 24px;
+  height: 13px;
+  border-radius: 14px 14px 7px 7px;
+}
+
+.testimonial-avatar img {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.testimonial-avatar img[hidden] {
+  display: none;
+}
+
+.testimonial-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.testimonial-control {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--navy);
+  box-shadow: 0 1px 0 rgba(23, 32, 51, .02);
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease,
+    border-color .2s ease,
+    color .2s ease;
+}
+
+.testimonial-control:hover {
+  transform: translateY(-1px);
+  border-color: var(--teal);
+  color: var(--teal);
+  box-shadow: var(--shadow-sm);
+}
+
+.testimonial-control:active {
+  transform: translateY(0);
+}
+
+.testimonial-control .svg-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.testimonial-user strong,
+.testimonial-user span {
+  display: block;
+}
+
+.testimonial-user strong {
+  color: var(--navy);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.testimonial-user div > span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* CTA */
 
 .form-actions {
@@ -658,6 +863,10 @@ button {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .testimonial-card {
+    width: calc((100vw - 58px) / 2);
+  }
 }
 
 @media (max-width: 720px) {
@@ -681,6 +890,11 @@ button {
 
   .page-section {
     padding: 56px 0;
+  }
+
+  .testimonial-card {
+    width: calc(100vw - 40px);
+    min-height: 320px;
   }
 }
 
