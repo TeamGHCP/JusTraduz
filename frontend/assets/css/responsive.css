@@ -149,7 +149,8 @@
   .admin-filter-requests,
   .audit-filter-wide,
   .health-grid,
-  .donut-wrap {
+  .donut-wrap,
+  .process-detail-layout {
     grid-template-columns: 1fr;
   }
 
@@ -224,7 +225,8 @@
   .notification-item,
   .selected-document-context,
   .dash-section-title,
-  .chat-compose {
+  .chat-compose,
+  .process-detail-hero {
     align-items: flex-start;
     flex-direction: column;
   }

@@ -82,6 +82,8 @@ class AuditService
             'cnpj',
             'document_number',
             'documentnumber',
+            'process_number',
+            'numero_processo',
             'nova_senha',
             'senha_atual',
             'access_token',
@@ -89,8 +91,7 @@ class AuditService
             'id_token',
             'client_secret',
             'gemini_api_key',
-            'jusbrasil_api_key',
-            'jusbrasil_oab_token',
+            'datajud_api_key',
         ];
 
         if (in_array($normalized, $exact, true)) {

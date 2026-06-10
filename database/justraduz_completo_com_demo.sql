@@ -214,8 +214,8 @@ CREATE TABLE IF NOT EXISTS external_processes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     owner_type ENUM('cliente', 'advogado', 'estagiario') NOT NULL,
-    source VARCHAR(40) NOT NULL DEFAULT 'jusbrasil',
-    query_type ENUM('cpf', 'oab') NOT NULL,
+    source VARCHAR(40) NOT NULL DEFAULT 'datajud',
+    query_type ENUM('cpf', 'oab', 'cnj') NOT NULL,
     query_value VARCHAR(40) NOT NULL,
     process_number VARCHAR(40) NOT NULL,
     tribunal VARCHAR(40) NULL,
@@ -248,7 +248,7 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_message_attachments'),
     ('migration_indexes_integrity'),
     ('migration_google_oauth'),
-    ('migration_jusbrasil_processes'),
+    ('migration_datajud_processes'),
     ('migration_case_document');
 
 -- Dados de apresentacao.
@@ -352,7 +352,7 @@ CREATE TEMPORARY TABLE tmp_demo_external_processes (id INT PRIMARY KEY);
 INSERT INTO tmp_demo_external_processes
 SELECT id FROM external_processes
 WHERE user_id IN (SELECT id FROM tmp_demo_users)
-   OR source = 'jusbrasil_demo'
+   OR source = 'datajud_demo'
    OR query_value IN ('11122233344', '22233344455', 'SP123456', 'RJ654321');
 
 DELETE FROM audit_logs WHERE id IN (SELECT id FROM tmp_demo_audit);
@@ -389,12 +389,12 @@ SELECT id INTO @pendente_id FROM users WHERE email = 'pendente@justraduz.demo';
 INSERT INTO external_processes
     (user_id, owner_type, source, query_type, query_value, process_number, tribunal, uf, comarca, tipo_processo, classe_processual, assunto, status_inferido, status_normalizado, link, data_ultima_atualizacao, data_andamento_mais_recente, payload_json, last_synced_at)
 VALUES
-    (@cliente_id, 'cliente', 'jusbrasil_demo', 'cpf', '11122233344', '1001234-56.2024.8.26.0100', 'TJSP', 'SP', 'Sao Paulo', 'civil', 'Procedimento Comum Civel', 'Discussao de multa contratual e notificacao extrajudicial', 'Em andamento', 'em andamento', 'https://www.jusbrasil.com.br/processos/1001234-56.2024.8.26.0100', DATE_SUB(CURDATE(), INTERVAL 9 DAY), DATE_SUB(CURDATE(), INTERVAL 1 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'observacao', 'Processo aberto para a demo do cliente'), DATE_SUB(NOW(), INTERVAL 6 HOUR)),
-    (@cliente_id, 'cliente', 'jusbrasil_demo', 'cpf', '11122233344', '1009876-12.2023.8.26.0100', 'TJSP', 'SP', 'Sao Paulo', 'civil', 'Cumprimento de Sentenca', 'Cobranca contratual arquivada', 'Arquivado definitivamente', 'arquivado', 'https://www.jusbrasil.com.br/processos/1009876-12.2023.8.26.0100', DATE_SUB(CURDATE(), INTERVAL 80 DAY), DATE_SUB(CURDATE(), INTERVAL 35 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'observacao', 'Processo encerrado para demonstrar filtro'), DATE_SUB(NOW(), INTERVAL 6 HOUR)),
-    (@cliente2_id, 'cliente', 'jusbrasil_demo', 'cpf', '22233344455', '5012345-78.2024.8.19.0001', 'TJRJ', 'RJ', 'Rio de Janeiro', 'civil', 'Procedimento do Juizado Especial Civel', 'Revisao de clausula de locacao', 'Em andamento', 'em andamento', 'https://www.jusbrasil.com.br/processos/5012345-78.2024.8.19.0001', DATE_SUB(CURDATE(), INTERVAL 15 DAY), DATE_SUB(CURDATE(), INTERVAL 4 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'observacao', 'Processo aberto para segundo cliente demo'), DATE_SUB(NOW(), INTERVAL 5 HOUR)),
-    (@advogado_id, 'advogado', 'jusbrasil_demo', 'oab', 'SP123456', '1023456-44.2024.8.26.0002', 'TJSP', 'SP', 'Sao Paulo', 'civil', 'Acao de Obrigacao de Fazer', 'Direito do consumidor', 'Concluso para despacho', 'em andamento', 'https://www.jusbrasil.com.br/processos/1023456-44.2024.8.26.0002', DATE_SUB(CURDATE(), INTERVAL 6 DAY), DATE_SUB(CURDATE(), INTERVAL 2 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
-    (@advogado_id, 'advogado', 'jusbrasil_demo', 'oab', 'SP123456', '1034567-21.2022.8.26.0053', 'TJSP', 'SP', 'Santos', 'trabalhista', 'Reclamacao Trabalhista', 'Verbas rescisorias', 'Baixado', 'baixado', 'https://www.jusbrasil.com.br/processos/1034567-21.2022.8.26.0053', DATE_SUB(CURDATE(), INTERVAL 120 DAY), DATE_SUB(CURDATE(), INTERVAL 60 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
-    (@estagiario_id, 'estagiario', 'jusbrasil_demo', 'oab', 'RJ654321', '5043210-33.2024.8.19.0209', 'TJRJ', 'RJ', 'Barra da Tijuca', 'civil', 'Monitoria de Processo', 'Acompanhamento de prazo processual', 'Aguardando publicacao', 'em andamento', 'https://www.jusbrasil.com.br/processos/5043210-33.2024.8.19.0209', DATE_SUB(CURDATE(), INTERVAL 8 DAY), DATE_SUB(CURDATE(), INTERVAL 3 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'estagiario', 'Lucas Estagiario Demo'), DATE_SUB(NOW(), INTERVAL 3 HOUR));
+    (@cliente_id, 'cliente', 'datajud_demo', 'cnj', '10012345620248260100', '1001234-56.2024.8.26.0100', 'TJSP', 'SP', '1 Vara Civel de Sao Paulo', 'G1', 'Procedimento Comum Civel', 'Discussao de multa contratual e notificacao extrajudicial', 'Documento juntado', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 9 DAY), DATE_SUB(CURDATE(), INTERVAL 1 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'justraduz', JSON_OBJECT('resumo_linguagem_simples', 'A ultima movimentacao indica que um documento foi juntado ao processo. Isso significa que alguma parte enviou uma nova informacao ou prova. Agora, o juiz ou a vara deve analisar esse documento antes do proximo andamento.', 'ultimas_movimentacoes', JSON_ARRAY(JSON_OBJECT('dataHora', DATE_SUB(CURDATE(), INTERVAL 1 DAY), 'descricao', 'Documento juntado')))), DATE_SUB(NOW(), INTERVAL 6 HOUR)),
+    (@cliente_id, 'cliente', 'datajud_demo', 'cnj', '10098761220238260100', '1009876-12.2023.8.26.0100', 'TJSP', 'SP', '1 Vara Civel de Sao Paulo', 'G1', 'Cumprimento de Sentenca', 'Cobranca contratual arquivada', 'Arquivado definitivamente', 'encerrado', NULL, DATE_SUB(CURDATE(), INTERVAL 80 DAY), DATE_SUB(CURDATE(), INTERVAL 35 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'justraduz', JSON_OBJECT('resumo_linguagem_simples', 'O processo aparece como encerrado no cache de demonstracao. Em geral, isso indica que nao ha novos andamentos esperados, salvo recurso, reativacao ou outra medida registrada pelo tribunal.', 'ultimas_movimentacoes', JSON_ARRAY(JSON_OBJECT('dataHora', DATE_SUB(CURDATE(), INTERVAL 35 DAY), 'descricao', 'Arquivado definitivamente')))), DATE_SUB(NOW(), INTERVAL 6 HOUR)),
+    (@cliente2_id, 'cliente', 'datajud_demo', 'cnj', '50123457820248190001', '5012345-78.2024.8.19.0001', 'TJRJ', 'RJ', 'Juizado Especial Civel do Rio de Janeiro', 'G1', 'Procedimento do Juizado Especial Civel', 'Revisao de clausula de locacao', 'Concluso para despacho', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 15 DAY), DATE_SUB(CURDATE(), INTERVAL 4 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'justraduz', JSON_OBJECT('resumo_linguagem_simples', 'O processo esta aguardando analise do juiz. A ultima movimentacao indica que os autos foram encaminhados para despacho ou verificacao interna.', 'ultimas_movimentacoes', JSON_ARRAY(JSON_OBJECT('dataHora', DATE_SUB(CURDATE(), INTERVAL 4 DAY), 'descricao', 'Concluso para despacho')))), DATE_SUB(NOW(), INTERVAL 5 HOUR)),
+    (@advogado_id, 'advogado', 'datajud_demo', 'oab', 'SP123456', '1023456-44.2024.8.26.0002', 'TJSP', 'SP', 'Sao Paulo', 'civil', 'Acao de Obrigacao de Fazer', 'Direito do consumidor', 'Concluso para despacho', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 6 DAY), DATE_SUB(CURDATE(), INTERVAL 2 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
+    (@advogado_id, 'advogado', 'datajud_demo', 'oab', 'SP123456', '1034567-21.2022.8.26.0053', 'TJSP', 'SP', 'Santos', 'trabalhista', 'Reclamacao Trabalhista', 'Verbas rescisorias', 'Baixado', 'baixado', NULL, DATE_SUB(CURDATE(), INTERVAL 120 DAY), DATE_SUB(CURDATE(), INTERVAL 60 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
+    (@estagiario_id, 'estagiario', 'datajud_demo', 'oab', 'RJ654321', '5043210-33.2024.8.19.0209', 'TJRJ', 'RJ', 'Barra da Tijuca', 'civil', 'Monitoria de Processo', 'Acompanhamento de prazo processual', 'Aguardando publicacao', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 8 DAY), DATE_SUB(CURDATE(), INTERVAL 3 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'estagiario', 'Lucas Estagiario Demo'), DATE_SUB(NOW(), INTERVAL 3 HOUR));
 
 INSERT INTO documents
     (user_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)

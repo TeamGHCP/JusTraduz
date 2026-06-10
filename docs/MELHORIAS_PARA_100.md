@@ -21,7 +21,7 @@ Este documento lista apenas o que ainda falta para o JusTraduz sair de MVP demon
 
 | Melhoria | Por que falta | Criterio de pronto |
 |---|---|---|
-| Validar Jusbrasil com token real | A estrutura existe, mas chamada real nao foi comprovada no ambiente atual. | Sincronizacao real por CPF/OAB com paginacao, erro amigavel, retry e auditoria. |
+| Evoluir consulta processual | A versao inicial usa DataJud por numero CNJ. Consulta por CPF fica fora do MVP por depender de API juridica paga, contrato, consentimento e auditoria reforcada. | DataJud validado em producao, cache auditavel por CNJ e decisao formal para futura API paga por CPF. |
 | OCR para documentos escaneados | IA sem texto extraido fica fraca para PDF/imagem escaneada. | OCR integrado ao upload com fallback, custo controlado e aviso de qualidade. |
 | Antimalware no upload | Validar MIME/extensao nao basta para producao. | Arquivos passam por scanner antes de visualizacao/processamento. |
 | Storage externo ou fora do webroot | Storage local e aceitavel no MVP, mas fraco para escala e operacao. | S3/MinIO ou pasta privada fora da raiz publica, com download autorizado. |
@@ -58,7 +58,7 @@ Este documento lista apenas o que ainda falta para o JusTraduz sair de MVP demon
 2. LGPD operacional, termos e revisao juridica.
 3. Backup/restore, observabilidade e HTTPS real.
 4. OCR, antimalware e storage externo.
-5. Validacao real Jusbrasil.
+5. Validacao real DataJud em producao.
 6. Filas assicronas e limites de custo.
 7. Planos, cobranca e multiempresa.
 8. Relatorios, RBAC granular e API versionada.
@@ -66,7 +66,7 @@ Este documento lista apenas o que ainda falta para o JusTraduz sair de MVP demon
 
 ## O que nao deve ser vendido como 100%
 
-- Consulta Jusbrasil real enquanto nao houver token validado em ambiente de producao.
+- Consulta por CPF. Ela depende de API juridica paga, CNPJ/contrato, consentimento LGPD e logs de auditoria.
 - LGPD completa enquanto nao houver processo de retencao, exclusao, exportacao e incidentes.
 - SaaS comercial enquanto nao houver billing, multiempresa, suporte, backup e observabilidade.
 - Seguranca de producao enquanto nao houver testes automatizados, HTTPS real, antimalware e monitoramento.

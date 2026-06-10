@@ -1,6 +1,6 @@
 # JusTraduz
 
-Sistema PHP/MySQL para envio de documentos juridicos, analise em linguagem simples, solicitacao de ajuda juridica, agenda, chat, validacao OAB manual e processos demo por CPF/OAB.
+Sistema PHP/MySQL para envio de documentos juridicos, analise em linguagem simples, solicitacao de ajuda juridica, agenda, chat, validacao OAB manual e consulta processual por numero CNJ via DataJud.
 
 ## Documentacao
 
@@ -65,7 +65,7 @@ Principais grupos:
 - E-mail: `MAIL_*`.
 - IA: `GEMINI_API_KEY`, `GEMINI_MODEL`.
 - Google OAuth: `GOOGLE_*`.
-- Jusbrasil: `JUSBRASIL_*`.
+- DataJud/CNJ: `DATAJUD_*`.
 
 ## Limpeza aplicada
 

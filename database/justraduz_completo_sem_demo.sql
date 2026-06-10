@@ -214,8 +214,8 @@ CREATE TABLE IF NOT EXISTS external_processes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     owner_type ENUM('cliente', 'advogado', 'estagiario') NOT NULL,
-    source VARCHAR(40) NOT NULL DEFAULT 'jusbrasil',
-    query_type ENUM('cpf', 'oab') NOT NULL,
+    source VARCHAR(40) NOT NULL DEFAULT 'datajud',
+    query_type ENUM('cpf', 'oab', 'cnj') NOT NULL,
     query_value VARCHAR(40) NOT NULL,
     process_number VARCHAR(40) NOT NULL,
     tribunal VARCHAR(40) NULL,
@@ -248,7 +248,7 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_message_attachments'),
     ('migration_indexes_integrity'),
     ('migration_google_oauth'),
-    ('migration_jusbrasil_processes'),
+    ('migration_datajud_processes'),
     ('migration_case_document');
 
 SELECT 'Banco JusTraduz instalado sem dados demo.' AS resultado;

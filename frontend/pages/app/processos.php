@@ -62,7 +62,7 @@ function process_page_date(?string $date, bool $withTime = false): string
 function process_page_subject(array $process): string
 {
     foreach (['classe_processual', 'assunto', 'tipo_processo'] as $field) {
-        $value = trim((string) ($process[$field] ?? ''));
+        $value = process_page_clean_text($process[$field] ?? '');
         if ($value !== '') {
             return $value;
         }
@@ -73,25 +73,108 @@ function process_page_subject(array $process): string
 
 function process_page_source(array $process): string
 {
-    $source = strtolower(trim((string) ($process['source'] ?? 'jusbrasil')));
-    return str_contains($source, 'demo') ? 'Demo' : 'Jusbrasil';
+    $source = strtolower(trim((string) ($process['source'] ?? 'datajud')));
+    if (str_contains($source, 'demo')) {
+        return 'Demo';
+    }
+
+    return $source === 'datajud' ? 'DataJud/CNJ' : strtoupper($source);
 }
 
-function process_page_env_ready(string $key): bool
+function process_page_payload(array $process): array
 {
-    $value = getenv($key);
-    if ($value === false) {
-        $env = database_env_values(PROJECT_ROOT_PATH . '/backend/.env');
-        $value = $env[$key] ?? '';
+    $payload = json_decode((string) ($process['payload_json'] ?? ''), true);
+    return is_array($payload) ? $payload : [];
+}
+
+function process_page_movements(array $process): array
+{
+    $payload = process_page_payload($process);
+    $movements = $payload['justraduz']['ultimas_movimentacoes'] ?? [];
+    return is_array($movements) ? array_slice($movements, 0, 3) : [];
+}
+
+function process_page_all_movements(array $process): array
+{
+    $payload = process_page_payload($process);
+    $rawMovements = is_array($payload['movimentos'] ?? null)
+        ? $payload['movimentos']
+        : ($payload['justraduz']['ultimas_movimentacoes'] ?? []);
+
+    if (!is_array($rawMovements)) {
+        return [];
     }
 
-    $value = trim((string) $value);
-    if ($value === '') {
-        return false;
+    usort($rawMovements, static fn (array $a, array $b): int => strcmp((string) ($b['dataHora'] ?? ''), (string) ($a['dataHora'] ?? '')));
+
+    $movements = [];
+    foreach ($rawMovements as $movement) {
+        if (!is_array($movement)) {
+            continue;
+        }
+
+        $description = trim((string) ($movement['descricao'] ?? ''));
+        if ($description === '' && is_array($movement['movimentoNacional'] ?? null)) {
+            $description = process_page_named_payload_value($movement['movimentoNacional']);
+        }
+
+        $complements = [];
+        foreach ((array) ($movement['complementosTabelados'] ?? []) as $complement) {
+            $value = process_page_named_payload_value($complement);
+            if ($value !== '') {
+                $complements[] = $value;
+            }
+        }
+
+        if ($complements) {
+            $description .= ($description !== '' ? ' - ' : '') . implode('; ', $complements);
+        }
+
+        $movements[] = [
+            'date' => $movement['dataHora'] ?? null,
+            'description' => $description !== '' ? $description : 'Movimentacao registrada',
+        ];
     }
 
-    $upper = strtoupper($value);
-    return !str_contains($upper, 'COLE_') && !str_contains($upper, 'SUA_CHAVE') && !str_contains($upper, 'SEU_TOKEN');
+    return $movements;
+}
+
+function process_page_simple_summary(array $process): string
+{
+    $payload = process_page_payload($process);
+    return trim((string) ($payload['justraduz']['resumo_linguagem_simples'] ?? ''));
+}
+
+function process_page_named_payload_value($value): string
+{
+    if (is_array($value)) {
+        return process_page_clean_text($value['nome'] ?? $value['descricao'] ?? $value['codigo'] ?? '');
+    }
+
+    return process_page_clean_text($value);
+}
+
+function process_page_clean_text($value): string
+{
+    if (!is_scalar($value)) {
+        return '';
+    }
+
+    return trim(html_entity_decode((string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+}
+
+function process_page_payload_subjects(array $process): string
+{
+    $payload = process_page_payload($process);
+    $subjects = [];
+    foreach ((array) ($payload['assuntos'] ?? []) as $subject) {
+        $value = process_page_named_payload_value($subject);
+        if ($value !== '') {
+            $subjects[] = $value;
+        }
+    }
+
+    return $subjects ? implode('; ', $subjects) : (string) (($process['assunto'] ?? '') ?: '-');
 }
 
 function process_page_mask_cpf(string $digits): string
@@ -105,16 +188,20 @@ function process_page_mask_cpf(string $digits): string
 
 function process_page_scope_label(string $scope): string
 {
-    return match ($scope) {
-        'abertos' => 'Em aberto',
-        'encerrados' => 'Encerrados',
-        default => 'Todos',
-    };
+    if ($scope === 'abertos') {
+        return 'Em aberto';
+    }
+
+    if ($scope === 'encerrados') {
+        return 'Encerrados';
+    }
+
+    return 'Todos';
 }
 
 $processes = [];
 $tableReady = true;
-$queryType = $type === 'cliente' ? 'cpf' : 'oab';
+$queryType = $type === 'cliente' ? 'cnj' : 'oab';
 $ownerType = $type === 'cliente' ? 'cliente' : $type;
 
 try {
@@ -137,11 +224,13 @@ if (!in_array($scope, ['abertos', 'encerrados', 'todos'], true)) {
     $scope = $type === 'cliente' ? 'abertos' : 'todos';
 }
 
-$visibleProcesses = match ($scope) {
-    'abertos' => $openProcesses,
-    'encerrados' => $closedProcesses,
-    default => $processes,
-};
+if ($scope === 'abertos') {
+    $visibleProcesses = $openProcesses;
+} elseif ($scope === 'encerrados') {
+    $visibleProcesses = $closedProcesses;
+} else {
+    $visibleProcesses = $processes;
+}
 
 $search = trim((string) ($_GET['q'] ?? ''));
 if ($search !== '') {
@@ -182,18 +271,15 @@ $oabVerified = (int) ($user['oab_verificado'] ?? 0) === 1;
 $identityReady = $type === 'cliente'
     ? strlen($cpfDigits) === 11
     : ($oabDigits !== '' && $oabUf !== '' && $oabVerified);
-$integrationReady = $type === 'cliente'
-    ? process_page_env_ready('JUSBRASIL_API_KEY')
-    : process_page_env_ready('JUSBRASIL_OAB_TOKEN');
 
 $identityLabel = $type === 'cliente'
     ? 'CPF ' . process_page_mask_cpf($cpfDigits)
     : 'OAB ' . trim($oabUf . ' ' . ($user['oab'] ?? ''));
-$integrationLabel = $integrationReady ? 'Integracao configurada' : 'Modo demo seguro';
-$topbarTitle = $type === 'cliente' ? 'Meus processos' : 'Processos por OAB';
+$integrationLabel = $type === 'cliente' ? 'DataJud/CNJ' : 'Consulta por OAB desativada';
+$topbarTitle = $type === 'cliente' ? 'Meus processos' : 'Processos armazenados';
 $topbarSubtitle = $type === 'cliente'
-    ? 'Listagem armazenada de processos encontrados pelo CPF cadastrado.'
-    : 'Listagem armazenada de processos vinculados a sua OAB validada.';
+    ? 'Consulte pelo numero CNJ. O CPF fica apenas no cadastro e identificacao.'
+    : 'A versao inicial usa DataJud por numero CNJ para clientes.';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -213,9 +299,11 @@ $topbarSubtitle = $type === 'cliente'
 
       <section class="client-command process-command">
         <article class="command-card command-card-primary">
-          <span class="badge <?= $integrationReady ? 'badge-success' : 'badge-info' ?>"><?= e($integrationLabel) ?></span>
-          <h2><?= $type === 'cliente' ? 'Consulta por CPF' : 'Consulta por OAB' ?></h2>
-          <p><strong><?= e($identityLabel) ?></strong></p>
+          <span class="badge badge-success"><?= e($integrationLabel) ?></span>
+          <h2><?= $type === 'cliente' ? 'Consulta por numero CNJ' : 'Consulta externa indisponivel' ?></h2>
+          <?php if ($type !== 'cliente'): ?>
+            <p><strong><?= e($identityLabel) ?></strong></p>
+          <?php endif; ?>
 
           <?php if (!$tableReady): ?>
             <div class="alert is-visible alert-error">A tabela de processos ainda nao existe neste banco. Importe um dos SQLs consolidados em database/.</div>
@@ -223,15 +311,23 @@ $topbarSubtitle = $type === 'cliente'
             <div class="form-actions">
               <a class="btn btn-primary" href="perfil.php"><?= icon_svg('user') ?> Cadastrar CPF</a>
             </div>
-          <?php elseif (!$identityReady): ?>
-            <div class="alert is-visible alert-info">Sua OAB precisa estar validada antes de qualquer sincronizacao externa.</div>
-          <?php elseif (!$integrationReady): ?>
-            <div class="alert is-visible alert-info">A credencial externa nao esta configurada neste ambiente. A tela continua funcionando com processos ja importados e dados demo.</div>
-          <?php else: ?>
-            <form class="form-actions" action="<?= e(app_url('/backend/public/index.php?rota=/processes/sync')) ?>" method="post">
+          <?php elseif ($type === 'cliente'): ?>
+            <form class="process-cnj-form" action="<?= e(app_url('/backend/public/index.php?rota=/processes/sync')) ?>" method="post">
               <?= csrf_input() ?>
-              <button class="btn btn-primary" type="submit"><?= icon_svg('download') ?> Sincronizar Jusbrasil</button>
+              <div class="field">
+                <label for="process-number">Numero do processo</label>
+                <input class="input" id="process-number" name="process_number" type="text" inputmode="numeric" maxlength="25" placeholder="0000000-00.0000.0.00.0000" required>
+              </div>
+              <label class="lgpd-consent">
+                <input type="checkbox" name="lgpd_consent" value="1" required>
+                <span>Autorizo o JusTraduz a consultar dados processuais publicos relacionados a este atendimento, usando o numero de processo informado por mim, exclusivamente para organizar e explicar as informacoes processuais dentro da plataforma.</span>
+              </label>
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit"><?= icon_svg('download') ?> Consultar processo</button>
+              </div>
             </form>
+          <?php else: ?>
+            <div class="alert is-visible alert-info">Consulta por CPF, OAB ou API juridica paga ficou no roadmap futuro. Nesta versao, o fluxo novo e DataJud por numero CNJ para clientes.</div>
           <?php endif; ?>
         </article>
 
@@ -252,7 +348,7 @@ $topbarSubtitle = $type === 'cliente'
         <?= stat_card('Importados', count($processes), 'file') ?>
         <?= stat_card('Em aberto', count($openProcesses), 'case') ?>
         <?= stat_card('Encerrados', count($closedProcesses), 'check') ?>
-        <?= stat_card('Consulta', strtoupper($queryType), 'chart') ?>
+        <?= stat_card('Consulta', $type === 'cliente' ? 'CNJ' : strtoupper($queryType), 'chart') ?>
       </section>
 
       <form class="card admin-filter process-filter" method="get">
@@ -288,7 +384,7 @@ $topbarSubtitle = $type === 'cliente'
         <?php if (!$tableReady): ?>
           <?= empty_state('Execute database/justraduz_completo_sem_demo.sql ou database/justraduz_completo_com_demo.sql para habilitar esta tela.') ?>
         <?php elseif (!$processes): ?>
-          <?= empty_state('Nenhum processo armazenado ainda. Importe o SQL com demo ou configure a integracao externa para sincronizar.') ?>
+          <?= empty_state($type === 'cliente' ? 'Nenhum processo armazenado ainda. Informe o numero CNJ e aceite o termo LGPD para consultar no DataJud.' : 'Nenhum processo armazenado para este perfil.') ?>
         <?php elseif (!$visibleProcesses): ?>
           <?= empty_state('Nenhum processo encontrado para os filtros atuais.') ?>
         <?php else: ?>
@@ -297,11 +393,11 @@ $topbarSubtitle = $type === 'cliente'
               <thead>
                 <tr>
                   <th>Processo</th>
-                  <th>Status</th>
                   <th>Tribunal</th>
-                  <th>Fonte</th>
+                  <th>Dados processuais</th>
                   <th>Ultima atualizacao</th>
-                  <th>Acao</th>
+                  <th>Resumo</th>
+                  <th>Detalhes</th>
                 </tr>
               </thead>
               <tbody>
@@ -309,24 +405,37 @@ $topbarSubtitle = $type === 'cliente'
                   <tr>
                     <td>
                       <strong><?= e($process['process_number'] ?? '') ?></strong>
-                      <span class="table-subtext"><?= e(process_page_subject($process)) ?></span>
+                      <span class="table-subtext"><span class="badge <?= e(process_page_badge($process)) ?>"><?= e(process_page_status($process)) ?></span> <span class="badge <?= process_page_source($process) === 'Demo' ? 'badge-info' : 'badge-success' ?>"><?= e(process_page_source($process)) ?></span></span>
                     </td>
-                    <td><span class="badge <?= e(process_page_badge($process)) ?>"><?= e(process_page_status($process)) ?></span></td>
                     <td>
                       <?= e((string) (($process['tribunal'] ?? '') ?: '-')) ?>
                       <span class="table-subtext"><?= e(trim((string) (($process['uf'] ?? '') . ' ' . ($process['comarca'] ?? ''))) ?: '-') ?></span>
                     </td>
-                    <td><span class="badge <?= process_page_source($process) === 'Demo' ? 'badge-info' : 'badge-success' ?>"><?= e(process_page_source($process)) ?></span></td>
+                    <td>
+                      <strong><?= e((string) (($process['classe_processual'] ?? '') ?: '-')) ?></strong>
+                      <span class="table-subtext"><?= e(process_page_clean_text(($process['assunto'] ?? '') ?: process_page_subject($process))) ?></span>
+                      <span class="table-subtext">Orgao julgador: <?= e((string) (($process['comarca'] ?? '') ?: '-')) ?></span>
+                    </td>
                     <td>
                       <?= e(process_page_date($process['data_andamento_mais_recente'] ?? null)) ?>
                       <span class="table-subtext">Sync: <?= e(process_page_date($process['last_synced_at'] ?? null, true)) ?></span>
+                      <span class="table-subtext">Ajuizamento: <?= e(process_page_date(process_page_payload($process)['dataAjuizamento'] ?? null)) ?></span>
                     </td>
                     <td>
-                      <?php if (!empty($process['link'])): ?>
-                        <a class="btn btn-outline btn-sm" href="<?= e($process['link']) ?>" target="_blank" rel="noopener">Abrir</a>
-                      <?php else: ?>
-                        <span class="text-muted">Sem link</span>
+                      <p class="process-summary"><?= e(process_page_simple_summary($process) ?: 'Resumo ainda nao disponivel para este registro.') ?></p>
+                      <?php $movements = process_page_movements($process); ?>
+                      <?php if ($movements): ?>
+                        <ul class="process-movements">
+                          <?php foreach ($movements as $movement): ?>
+                            <li><?= e(process_page_date($movement['dataHora'] ?? null)) ?> - <?= e((string) ($movement['descricao'] ?? 'Movimentacao registrada')) ?></li>
+                          <?php endforeach; ?>
+                        </ul>
                       <?php endif; ?>
+                    </td>
+                    <td>
+                      <a class="btn btn-outline btn-sm" href="processo-detalhes.php?id=<?= (int) ($process['id'] ?? 0) ?>">
+                        <?= icon_svg('file') ?> Ver detalhes
+                      </a>
                     </td>
                   </tr>
                 <?php endforeach; ?>

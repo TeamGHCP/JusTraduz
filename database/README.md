@@ -29,4 +29,4 @@ Os scripts incrementais antigos foram removidos para nao existir duas formas con
 
 ## Pendencias para producao
 
-As melhorias restantes de banco, backup, LGPD, Jusbrasil real e observabilidade ficam em `../docs/MELHORIAS_PARA_100.md`.
+As melhorias restantes de banco, backup, LGPD, DataJud em producao e observabilidade ficam em `../docs/MELHORIAS_PARA_100.md`.

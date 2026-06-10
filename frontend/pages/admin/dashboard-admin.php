@@ -94,8 +94,7 @@ $failedLoginCount = count_query(
 $externalProcessCount = count_query($pdo, 'SELECT COUNT(*) FROM external_processes');
 $lastExternalSync = fetch_one($pdo, 'SELECT MAX(last_synced_at) AS synced_at FROM external_processes');
 $lastExternalSyncAt = (string) ($lastExternalSync['synced_at'] ?? '');
-$jusbrasilCpfConfigured = admin_env_configured('JUSBRASIL_API_KEY');
-$jusbrasilOabConfigured = admin_env_configured('JUSBRASIL_OAB_TOKEN');
+$datajudConfigured = admin_env_configured('DATAJUD_API_KEY');
 $operationalRisks = [
     [
         'label' => 'OAB pendente',
@@ -236,8 +235,7 @@ $recentAudit = fetch_all(
 
 $geminiService = new GeminiService();
 $healthChecks = [
-    ['label' => 'Jusbrasil CPF', 'status' => $jusbrasilCpfConfigured ? 'ok' : 'warning', 'detail' => $jusbrasilCpfConfigured ? 'Token configurado' : 'Token ausente'],
-    ['label' => 'Jusbrasil OAB', 'status' => $jusbrasilOabConfigured ? 'ok' : 'warning', 'detail' => $jusbrasilOabConfigured ? 'Token configurado' : 'Token ausente'],
+    ['label' => 'DataJud/CNJ', 'status' => $datajudConfigured ? 'ok' : 'warning', 'detail' => $datajudConfigured ? 'Chave configurada' : 'Chave opcional/ausente'],
     ['label' => 'Processos externos', 'status' => $externalProcessCount > 0 ? 'ok' : 'warning', 'detail' => $externalProcessCount > 0 ? $externalProcessCount . ' importado(s)' : 'Sem dados importados'],
     ['label' => 'Banco de dados', 'status' => 'ok', 'detail' => 'Conexão ativa'],
     ['label' => 'Gemini', 'status' => $geminiService->isConfigured() ? 'ok' : 'warning', 'detail' => $geminiService->isConfigured() ? 'Chave configurada' : 'Chave ausente'],

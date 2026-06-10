@@ -2,7 +2,6 @@
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
-require_once dirname(__DIR__) . '/services/JusbrasilService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
 
 class AdminController extends BaseController
@@ -187,32 +186,7 @@ class AdminController extends BaseController
             'justificativa' => $justification,
         ]);
 
-        $syncMessage = '';
-        if ($action === 'approve') {
-            $sync = (new JusbrasilService($this->pdo))->syncOabProcesses(
-                $userId,
-                (string) $professional['nome'],
-                (string) $professional['oab'],
-                (string) $professional['oab_uf'],
-                (string) ($professional['oab_parametro'] ?? ''),
-                (string) $professional['tipo']
-            );
-
-            if (!empty($sync['correlation_id'])) {
-                $stmt = $this->pdo->prepare('UPDATE users SET oab_parametro = ? WHERE id = ?');
-                $stmt->execute([(string) $sync['correlation_id'], $userId]);
-            }
-
-            $this->audit->log('jusbrasil.oab_admin_sync', 'user', $userId, [
-                'success' => (bool) ($sync['success'] ?? false),
-                'configured' => (bool) ($sync['configured'] ?? true),
-                'imported' => (int) ($sync['imported'] ?? 0),
-            ]);
-
-            $syncMessage = ' Jusbrasil: ' . (string) ($sync['message'] ?? 'sincronizacao nao concluida.');
-        }
-
-        $this->response->redirect(app_url('/frontend/admin/validar-oab.php?sucesso=' . urlencode('Revisao profissional atualizada.' . $syncMessage)));
+        $this->response->redirect(app_url('/frontend/admin/validar-oab.php?sucesso=' . urlencode('Revisao profissional atualizada.')));
     }
 
     private function logOabReview(
