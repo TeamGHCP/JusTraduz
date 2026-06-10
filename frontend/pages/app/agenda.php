@@ -187,7 +187,7 @@ $calendarSubtitle = $type === 'cliente'
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Agenda | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
+  <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
   <link rel="stylesheet" href="assets/css/agenda.css?v=module-5">
 </head>
 <body>

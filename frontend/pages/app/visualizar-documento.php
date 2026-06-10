@@ -142,7 +142,7 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Documentos | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
+  <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
 </head>
 <body>
   <div class="app-shell">
