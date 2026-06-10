@@ -22,6 +22,9 @@ $routes = [
     ['POST', '/documents/delete', 'DocumentController', 'delete'],
     ['GET', '/documents/download', 'DocumentController', 'download'],
 
+    ['GET', '/ai/csrf', 'AiController', 'csrf'],
+    ['POST', '/ai/chat', 'AiController', 'chat'],
+
     ['POST', '/cases/create', 'CaseController', 'create'],
     ['POST', '/cases/accept', 'CaseController', 'accept'],
     ['POST', '/cases/status', 'CaseController', 'updateStatus'],

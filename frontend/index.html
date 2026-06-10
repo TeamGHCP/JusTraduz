@@ -6,6 +6,7 @@
   <title>JusTraduz | Direito em linguagem simples</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css?v=testimonials-carousel-8">
+  <link rel="stylesheet" href="assets/css/chatbot.css">
 </head>
 <body>
   <header class="site-header" data-site-header>
@@ -475,6 +476,50 @@
     </div>
   </footer>
 
+  <aside class="ai-chatbot" data-ai-chatbot aria-label="Assistente virtual JusTraduz">
+    <button class="ai-chatbot-toggle" type="button" data-ai-chatbot-toggle aria-label="Abrir chat com IA" aria-expanded="false">
+      <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+        <path d="M8 9h8"/>
+        <path d="M8 13h5"/>
+      </svg>
+      <span>IA</span>
+    </button>
+
+    <section class="ai-chatbot-panel" data-ai-chatbot-panel aria-hidden="true">
+      <header class="ai-chatbot-header">
+        <div>
+          <span>JusTraduz IA</span>
+        </div>
+
+        <button class="ai-chatbot-close" type="button" data-ai-chatbot-close aria-label="Fechar chat">
+          <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 6 6 18"/>
+            <path d="m6 6 12 12"/>
+          </svg>
+        </button>
+      </header>
+
+      <div class="ai-chatbot-messages" data-ai-chatbot-messages aria-live="polite">
+        <article class="ai-chatbot-message ai-chatbot-message-bot">
+          <p>Ola. Posso ajudar com traducao juramentada, documentos para cidadania, estudo, imigracao, orcamento, prazos e envio de arquivos.</p>
+        </article>
+      </div>
+
+      <form class="ai-chatbot-form" data-ai-chatbot-form>
+        <label class="sr-only" for="ai-chatbot-input">Mensagem para a IA</label>
+        <textarea id="ai-chatbot-input" data-ai-chatbot-input rows="2" maxlength="1200" placeholder="Digite sua duvida..."></textarea>
+        <button type="submit" aria-label="Enviar mensagem">
+          <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m22 2-7 20-4-9-9-4Z"/>
+            <path d="M22 2 11 13"/>
+          </svg>
+        </button>
+      </form>
+    </section>
+  </aside>
+
   <script src="assets/js/main.js?v=testimonials-carousel-8"></script>
+  <script src="assets/js/chatbot.js"></script>
 </body>
 </html>
