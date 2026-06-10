@@ -75,6 +75,10 @@ img {
   max-width: 100%;
 }
 
+:root[data-theme="dark"] img[src$="/logo.png"] {
+  content: url("../img/logo-modo-escuro-normalizado.png");
+}
+
 button,
 input,
 select,
