@@ -12,6 +12,48 @@ document.addEventListener("DOMContentLoaded", () => {
     node.textContent = new Date().getFullYear();
   });
 
+  const revealSelectors = [
+    ".page-section .section-head",
+    "#recursos .feature-card",
+    "#fluxo .step-card",
+    "#depoimentos .testimonial-marquee",
+    "#depoimentos .testimonial-controls",
+    "#seguranca .form-actions",
+  ];
+  const revealElements = Array.from(new Set(
+    revealSelectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)))
+  ));
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (revealElements.length > 0) {
+    revealElements.forEach((element, index) => {
+      element.classList.add("reveal-on-scroll");
+      element.style.setProperty("--reveal-delay", `${(index % 3) * 45}ms`);
+    });
+
+    if (prefersReducedMotion) {
+      revealElements.forEach((element) => element.classList.add("is-visible"));
+    } else if ("IntersectionObserver" in window) {
+      const revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        });
+      }, {
+        rootMargin: "0px 0px -70px 0px",
+        threshold: 0.12,
+      });
+
+      revealElements.forEach((element) => revealObserver.observe(element));
+    } else {
+      revealElements.forEach((element) => element.classList.add("is-visible"));
+    }
+  }
+
   document.querySelectorAll("[data-testimonial-carousel]").forEach((carousel) => {
     const track = carousel.querySelector(".testimonial-track");
     const section = carousel.closest(".testimonials-section");
@@ -25,8 +67,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const originalCount = originalCards.length;
+    const prepareImages = (card) => {
+      card.querySelectorAll("img").forEach((image) => {
+        image.loading = "lazy";
+        image.decoding = "async";
+      });
+    };
     const buildCardSet = (hidden = false) => originalCards.map((card) => {
       const clone = card.cloneNode(true);
+
+      clone.classList.remove("is-active");
+      prepareImages(clone);
 
       if (hidden) {
         clone.setAttribute("aria-hidden", "true");
@@ -34,9 +85,10 @@ document.addEventListener("DOMContentLoaded", () => {
         clone.removeAttribute("aria-hidden");
       }
 
-      clone.classList.remove("is-active");
       return clone;
     });
+
+    originalCards.forEach(prepareImages);
 
     track.replaceChildren(
       ...buildCardSet(true),
@@ -50,6 +102,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let timer = null;
     let isPaused = false;
     let isDragging = false;
+    let isCarouselVisible = false;
+    let scrollResumeTimer = null;
     let dragStartX = 0;
     let dragStartOffset = 0;
     let dragOffset = 0;
@@ -93,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const moveTo = (index, animate = true) => {
-      track.style.transition = animate ? "transform .9s cubic-bezier(.16, 1, .3, 1)" : "none";
+      track.style.transition = animate ? "transform .5s cubic-bezier(.16, 1, .3, 1)" : "none";
       track.style.transform = `translateX(${getOffsetForIndex(index)}px)`;
       setActiveCard(index);
     };
@@ -108,13 +162,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const scheduleNext = () => {
       window.clearTimeout(timer);
 
-      if (isPaused) {
+      if (isPaused || !isCarouselVisible) {
         return;
       }
 
       timer = window.setTimeout(() => {
         goTo(1);
       }, 3000);
+    };
+
+    const pauseWhileScrolling = () => {
+      if (!isCarouselVisible) {
+        return;
+      }
+
+      window.clearTimeout(timer);
+      window.clearTimeout(scrollResumeTimer);
+      scrollResumeTimer = window.setTimeout(scheduleNext, 220);
     };
 
     track.addEventListener("transitionend", (event) => {
@@ -210,6 +274,30 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     moveTo(activeIndex, false);
-    scheduleNext();
+
+    if ("IntersectionObserver" in window) {
+      const carouselObserver = new IntersectionObserver((entries) => {
+        isCarouselVisible = entries.some((entry) => entry.isIntersecting);
+
+        if (isCarouselVisible) {
+          carousel.classList.add("is-ready");
+          scheduleNext();
+        } else {
+          carousel.classList.remove("is-ready");
+          window.clearTimeout(timer);
+          window.clearTimeout(scrollResumeTimer);
+        }
+      }, {
+        threshold: 0.18,
+      });
+
+      carouselObserver.observe(carousel);
+    } else {
+      isCarouselVisible = true;
+      carousel.classList.add("is-ready");
+      scheduleNext();
+    }
+
+    window.addEventListener("scroll", pauseWhileScrolling, { passive: true });
   });
 });
