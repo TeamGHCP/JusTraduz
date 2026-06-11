@@ -5,11 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JusTraduz | Direito em linguagem simples</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=carousel-loop-1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=index-premium-15">
   <link rel="stylesheet" href="assets/css/chatbot.css">
 </head>
-<body>
-  <header class="site-header" data-site-header>
+<body class="home-page">
+  <header class="site-header home-header" data-site-header>
     <div class="container nav-bar">
       <a class="brand" href="index.html" aria-label="JusTraduz">
         <img src="assets/img/logo.png" alt="JusTraduz">
@@ -37,65 +40,104 @@
   </header>
 
   <main>
-    <section class="hero product-hero">
-      <div class="container">
-        <div class="hero-copy hero-copy-centered">
-          <h1>JusTraduz</h1>
-          <p>Transforme documentos jurídicos complexos em linguagem simples e conecte o cidadão a profissionais qualificados em um fluxo seguro.</p>
+    <section class="home-hero">
+      <div class="home-hero-lines" aria-hidden="true"></div>
+      <div class="container home-hero-grid">
+        <div class="home-hero-copy">
 
-          <div class="hero-actions justify-center">
-            <a class="btn btn-primary" href="login.html?cadastro">Começar agora</a>
-            <a class="btn btn-outline" href="login.html">Entrar na plataforma</a>
+          <h1>Transforme <em>documentos jurídicos</em> em linguagem simples.</h1>
+          <p>Conecte o cidadão à justiça com clareza, agilidade e segurança. Entenda, aja e resolva.</p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary home-btn-primary" href="login.html?cadastro">
+              Começar agora
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12h14"/>
+                <path d="m13 6 6 6-6 6"/>
+              </svg>
+            </a>
+            <a class="btn btn-outline home-btn-outline" href="login.html">Entrar na plataforma</a>
+          </div>
+
+          <div class="home-trust-row" aria-label="Diferenciais">
+            <span>
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="10" rx="2"/>
+                <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+              </svg>
+              Seguro e confidencial
+            </span>
+            <span>
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m13 2-8 13h7l-1 7 8-13h-7z"/>
+              </svg>
+              Rápido e inteligente
+            </span>
+            <span>
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Feito para todos
+            </span>
           </div>
         </div>
 
-        <div class="product-preview" aria-label="Prévia do sistema JusTraduz">
-          <div class="product-preview-sidebar">
-            <img src="assets/img/logo.png" alt="JusTraduz">
-            <span class="preview-nav active">Análise</span>
-            <span class="preview-nav">Solicitações</span>
-            <span class="preview-nav">Agenda</span>
-            <span class="preview-nav">Auditoria</span>
-          </div>
-
-          <div class="product-preview-main">
-            <div class="preview-topline">
-              <div>
-                <span>Documento analisado</span>
-                <strong>Contrato de locação.pdf</strong>
-              </div>
-              <span class="badge badge-success">Confiança 92%</span>
+        <div class="home-hero-visual" aria-label="Prévia do sistema JusTraduz">
+          <div class="hero-product-stage">
+            <div class="hero-product-mockup">
+              <img src="assets/img/mockup-justraduz.webp" alt="Notebook e smartphone exibindo a interface do JusTraduz" width="2000" height="1000" decoding="async" fetchpriority="high">
             </div>
 
-            <div class="preview-grid">
-              <article class="preview-panel">
-                <span>Resumo objetivo</span>
-                <p>Contrato residencial com multa, reajuste anual e prazo de 30 meses.</p>
-              </article>
+            <div class="hero-float-card float-ai">
+              <span class="float-icon">
+                <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M13 2 9 10l-7 3 7 3 4 8 4-8 7-3-7-3z"/>
+                </svg>
+              </span>
+              <span>IA Jurídica</span>
+            </div>
 
-              <article class="preview-panel preview-panel-accent">
-                <span>Linguagem simples</span>
-                <p>Você precisa avisar antes de sair e pode pagar multa se encerrar antes do prazo.</p>
-              </article>
+            <div class="hero-float-card float-safe">
+              <span class="float-icon">
+                <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="m9 12 2 2 4-5"/>
+                </svg>
+              </span>
+              <span>Seguro</span>
+            </div>
 
-              <article class="preview-panel">
-                <span>Próximo passo</span>
-                <p>Abrir solicitação e agendar conversa com advogado verificado.</p>
-              </article>
+            <div class="hero-float-card float-confidence">
+              <strong>92%</strong>
+              <span>confiança</span>
+            </div>
+
+            <div class="hero-float-card float-verified">
+              <span class="float-icon">
+                <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="m16 11 2 2 4-4"/>
+                </svg>
+              </span>
+              <span>Atendimento verificado</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="recursos" class="page-section">
+    <section id="recursos" class="page-section home-flow-section">
       <div class="container">
-        <div class="section-head">
+        <div class="section-head home-section-head">
           <h2>Um fluxo completo para entender e agir</h2>
           <p>Documento, explicação, solicitação, chat, agenda e auditoria no mesmo sistema.</p>
         </div>
 
-        <div class="grid grid-3">
+        <div class="grid grid-4 home-feature-grid">
           <article class="card feature-card">
             <div class="icon-box">
               <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -105,21 +147,18 @@
                 <path d="M8 17h6"/>
               </svg>
             </div>
-            <h3>Análise por IA</h3>
-            <p>Resumo e explicação em português claro, com consentimento explícito antes de processar documentos sensíveis.</p>
+            <h3>Envie seu documento</h3>
+            <p>Carregue arquivos com total segurança e privacidade.</p>
           </article>
 
           <article class="card feature-card">
             <div class="icon-box">
               <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3v18"/>
-                <path d="M5 7h14"/>
-                <path d="m6 7-4 7h8z"/>
-                <path d="m18 7-4 7h8z"/>
+                <path d="M13 2 9 10l-7 3 7 3 4 8 4-8 7-3-7-3z"/>
               </svg>
             </div>
-            <h3>Profissionais verificados</h3>
-            <p>Cadastro de advogados com OAB e validação administrativa para aumentar confiança no atendimento.</p>
+            <h3>Entenda em segundos</h3>
+            <p>IA traduz o juridiquês para linguagem simples e clara.</p>
           </article>
 
           <article class="card feature-card">
@@ -128,182 +167,79 @@
                 <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
               </svg>
             </div>
-            <h3>Atendimento rastreável</h3>
-            <p>Solicitações, mensagens, tarefas e agenda com histórico organizado para cliente, advogado e administração.</p>
+            <h3>Peça o que precisa</h3>
+            <p>Solicite serviços e converse com o advogado verificado.</p>
+          </article>
+
+          <article class="card feature-card">
+            <div class="icon-box">
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="18" rx="2"/>
+                <path d="M16 2v4"/>
+                <path d="M8 2v4"/>
+                <path d="M3 10h18"/>
+                <path d="M8 14h.01"/>
+                <path d="M12 14h.01"/>
+                <path d="M16 14h.01"/>
+              </svg>
+            </div>
+            <h3>Acompanhe tudo</h3>
+            <p>Agende, receba atualizações e acompanhe cada etapa.</p>
           </article>
         </div>
       </div>
     </section>
 
-    <section id="fluxo" class="page-section section-white">
-      <div class="container">
-        <div class="section-head">
-          <h2>Da dúvida ao atendimento</h2>
-          <p>A demo principal deve mostrar esse caminho sem depender de integrações externas ao vivo.</p>
+    <section id="fluxo" class="page-section section-white home-detail-section">
+      <div class="container home-detail-grid">
+        <div>
+          <span class="home-eyebrow">Fluxo guiado</span>
+          <h2>Da dúvida ao atendimento, sem perder o contexto.</h2>
+          <p>O JusTraduz organiza o primeiro entendimento do documento, transforma dúvidas em solicitações e mantém o histórico pronto para o profissional acompanhar.</p>
         </div>
 
-        <div class="grid grid-4 flow-strip">
-          <article class="card step-card">
-            <h3>Enviar</h3>
-            <p>O cliente envia PDF ou imagem com controle de permissão.</p>
-          </article>
+        <div class="home-steps" data-flow-steps>
+          <div class="flow-preview" aria-live="polite">
+            <article class="flow-preview-card is-active" data-flow-panel="cliente">
+              <span>Cliente</span>
+              <h3>Envia o documento</h3>
+              <p>PDF ou imagem entram com consentimento claro e contexto inicial do problema.</p>
+            </article>
 
-          <article class="card step-card">
-            <h3>Entender</h3>
-            <p>A IA gera resumo, explicação e nível de confiança.</p>
-          </article>
+            <article class="flow-preview-card" data-flow-panel="ia">
+              <span>IA Jurídica</span>
+              <h3>Traduz o juridiquês</h3>
+              <p>Resumo, pontos de atenção e explicação simples aparecem em segundos.</p>
+            </article>
 
-          <article class="card step-card">
-            <h3>Solicitar</h3>
-            <p>O caso vira uma demanda acompanhada por status.</p>
-          </article>
+            <article class="flow-preview-card" data-flow-panel="caso">
+              <span>Caso</span>
+              <h3>Vira solicitação</h3>
+              <p>O atendimento segue organizado por status, histórico e próximo passo.</p>
+            </article>
+          </div>
 
-          <article class="card step-card">
-            <h3>Agendar</h3>
-            <p>O atendimento é marcado com profissional disponível.</p>
-          </article>
+          <button class="flow-step is-active" type="button" data-flow-step="cliente" aria-pressed="true">
+            <strong>01</strong>
+            <span>O cliente envia PDF ou imagem com consentimento claro.</span>
+          </button>
+
+          <button class="flow-step" type="button" data-flow-step="ia" aria-pressed="false">
+            <strong>02</strong>
+            <span>A IA gera resumo, pontos de atenção e explicação simples.</span>
+          </button>
+
+          <button class="flow-step" type="button" data-flow-step="caso" aria-pressed="false">
+            <strong>03</strong>
+            <span>O caso vira uma solicitação acompanhada por status.</span>
+          </button>
         </div>
       </div>
     </section>
 
-    <section id="depoimentos" class="page-section section-white testimonials-section" aria-label="Depoimentos de usuários">
+    <section id="seguranca" class="page-section home-security-section">
       <div class="container">
-        <div class="section-head">
-          <h2>Histórias de quem saiu da dúvida</h2>
-          <p>Feedbacks de pessoas que usaram o JusTraduz para entender documentos e seguir com mais segurança.</p>
-        </div>
-      </div>
-
-      <div class="testimonial-marquee" data-testimonial-carousel aria-label="Lista de depoimentos">
-        <div class="testimonial-track">
-          <article class="testimonial-card">
-            <span class="testimonial-quote" aria-hidden="true">“</span>
-            <p>Recebi um contrato de locação e não entendia vários termos jurídicos. O resumo em linguagem simples me ajudou a compreender os pontos mais importantes rapidamente.</p>
-            <div class="testimonial-user">
-              <span class="testimonial-avatar"><img src="assets/img/depoimentos/mariana-souza.jpg" alt="Mariana Souza" loading="lazy" decoding="async" onerror="this.hidden=true"></span>
-              <div>
-                <strong>Mariana Souza</strong>
-                <span>Joinville • SC</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="testimonial-card">
-            <span class="testimonial-quote" aria-hidden="true">“</span>
-            <p>Eu precisava revisar uma notificação extrajudicial antes de procurar atendimento. A explicação mostrou o que era urgente e o que eu deveria perguntar ao advogado.</p>
-            <div class="testimonial-user">
-              <span class="testimonial-avatar"><img src="assets/img/depoimentos/rafael-costa.jpg" alt="Rafael Costa" loading="lazy" decoding="async" onerror="this.hidden=true"></span>
-              <div>
-                <strong>Rafael Costa</strong>
-                <span>Curitiba • PR</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="testimonial-card">
-            <span class="testimonial-quote" aria-hidden="true">“</span>
-            <p>O documento do inventário parecia impossível de entender. Com o JusTraduz, consegui separar dúvidas reais de palavras difíceis e cheguei mais preparada na conversa.</p>
-            <div class="testimonial-user">
-              <span class="testimonial-avatar"><img src="assets/img/depoimentos/ana-paula-lima.jpg" alt="Ana Paula Lima" loading="lazy" decoding="async" onerror="this.hidden=true"></span>
-              <div>
-                <strong>Ana Paula Lima</strong>
-                <span>Belo Horizonte • MG</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="testimonial-card">
-            <span class="testimonial-quote" aria-hidden="true">“</span>
-            <p>Usei para entender uma cláusula de multa em um acordo. A plataforma não prometeu solução mágica, mas deixou claro o contexto e o próximo passo.</p>
-            <div class="testimonial-user">
-              <span class="testimonial-avatar"><img src="assets/img/depoimentos/felipe-torres.jpg" alt="Felipe Torres" loading="lazy" decoding="async" onerror="this.hidden=true"></span>
-              <div>
-                <strong>Felipe Torres</strong>
-                <span>São Paulo • SP</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="testimonial-card">
-            <span class="testimonial-quote" aria-hidden="true">“</span>
-            <p>Minha mãe recebeu uma cobrança e estava preocupada. O resumo ajudou nossa família a entender o conteúdo sem perder tempo tentando decifrar o juridiquês.</p>
-            <div class="testimonial-user">
-              <span class="testimonial-avatar"><img src="assets/img/depoimentos/camila-lopes.jpeg" alt="Camila Lopes" loading="lazy" decoding="async" onerror="this.hidden=true"></span>
-              <div>
-                <strong>Camila Lopes</strong>
-                <span>Recife • PE</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="testimonial-card">
-            <span class="testimonial-quote" aria-hidden="true">“</span>
-            <p>Gostei porque o atendimento ficou organizado. Enviei o documento, li a explicação e depois consegui abrir uma solicitação com muito mais clareza.</p>
-            <div class="testimonial-user">
-              <span class="testimonial-avatar"><img src="assets/img/depoimentos/gustavo-oliveira.jpg" alt="Gustavo Oliveira" loading="lazy" decoding="async" onerror="this.hidden=true"></span>
-              <div>
-                <strong>Gustavo Oliveira</strong>
-                <span>Florianópolis • SC</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="testimonial-card">
-            <span class="testimonial-quote" aria-hidden="true">“</span>
-            <p>Eu tinha receio de assinar um termo sem entender as consequências. A tradução para linguagem simples destacou os riscos e me ajudou a agir com calma.</p>
-            <div class="testimonial-user">
-              <span class="testimonial-avatar"><img src="assets/img/depoimentos/beatriz-freitas.jpg" alt="Beatriz Freitas" loading="lazy" decoding="async" onerror="this.hidden=true"></span>
-              <div>
-                <strong>Beatriz Freitas</strong>
-                <span>Goiânia • GO</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="testimonial-card">
-            <span class="testimonial-quote" aria-hidden="true">“</span>
-            <p>O melhor foi conseguir levar perguntas mais objetivas para o profissional. Antes eu nem sabia onde começava minha dúvida sobre o contrato.</p>
-            <div class="testimonial-user">
-              <span class="testimonial-avatar"><img src="assets/img/depoimentos/lucas-henrique.jpg" alt="Lucas Henrique" loading="lazy" decoding="async" onerror="this.hidden=true"></span>
-              <div>
-                <strong>Lucas Henrique</strong>
-                <span>Porto Alegre • RS</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="testimonial-card">
-            <span class="testimonial-quote" aria-hidden="true">“</span>
-            <p>Usei em uma rescisão de prestação de serviço. A leitura simples economizou tempo e me deu confiança para pedir orientação adequada.</p>
-            <div class="testimonial-user">
-              <span class="testimonial-avatar"><img src="assets/img/depoimentos/thais-martins.jpg" alt="Thais Martins" loading="lazy" decoding="async" onerror="this.hidden=true"></span>
-              <div>
-                <strong>Thais Martins</strong>
-                <span>Salvador • BA</span>
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-
-      <div class="testimonial-controls" aria-label="Controles dos depoimentos">
-        <button class="testimonial-control" type="button" data-testimonial-prev aria-label="Depoimento anterior">
-          <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m15 18-6-6 6-6"/>
-          </svg>
-        </button>
-
-        <button class="testimonial-control" type="button" data-testimonial-next aria-label="Próximo depoimento">
-          <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m9 18 6-6-6-6"/>
-          </svg>
-        </button>
-      </div>
-    </section>
-
-    <section id="seguranca" class="page-section">
-      <div class="container">
-        <div class="section-head">
+        <div class="section-head home-section-head">
           <h2>Segurança como argumento de produto</h2>
           <p>O JusTraduz não substitui advogado. Ele organiza a compreensão inicial, registra consentimentos e mantém trilha de auditoria.</p>
         </div>
@@ -357,7 +293,7 @@
       </div>
 
       <div class="footer-bottom">
-        <p>© <span data-current-year></span> JusTraduz • Todos os direitos reservados</p>
+        <p>© <span data-current-year></span> JusTraduz - Todos os direitos reservados</p>
 
         <div class="footer-bottom-links">
           <a href="termos.html">Termos de Uso</a>
@@ -401,7 +337,7 @@
 
       <form class="ai-chatbot-form" data-ai-chatbot-form>
         <label class="sr-only" for="ai-chatbot-input">Mensagem para a IA</label>
-        <textarea id="ai-chatbot-input" data-ai-chatbot-input rows="2" maxlength="1200" placeholder="Digite sua duvida..."></textarea>
+        <textarea id="ai-chatbot-input" data-ai-chatbot-input rows="2" maxlength="1200" placeholder="Digite sua dúvida..."></textarea>
         <button type="submit" aria-label="Enviar mensagem">
           <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="m22 2-7 20-4-9-9-4Z"/>
@@ -412,7 +348,7 @@
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=carousel-loop-1"></script>
+  <script src="assets/js/main.js?v=index-premium-15"></script>
   <script src="assets/js/chatbot.js"></script>
 </body>
 </html>
