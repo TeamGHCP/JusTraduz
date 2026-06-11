@@ -13,9 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";
   const backendBase = `${appBasePath}/backend/public/index.php`;
   const backendRoute = (path) => `${backendBase}?rota=${encodeURIComponent(path)}`;
+  const greetingMessage = "Olá, sou o Jus IA! Como eu posso ajudar?";
   const chatHistory = [];
   let csrfToken = "";
   let isSending = false;
+  let hasShownGreeting = false;
 
   function setOpen(open) {
     chatbot.classList.toggle("is-open", open);
@@ -24,12 +26,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (open) {
       window.setTimeout(() => input?.focus(), 120);
+      showGreetingOnce();
     }
   }
 
   function appendMessage(text, type) {
     const item = document.createElement("article");
     item.className = `ai-chatbot-message ai-chatbot-message-${type}`;
+
+    if (type !== "user") {
+      const avatar = document.createElement("span");
+      avatar.className = "ai-chatbot-avatar";
+      avatar.setAttribute("aria-hidden", "true");
+
+      const image = document.createElement("img");
+      image.src = "assets/img/chat-bot-logo.png";
+      image.alt = "";
+      avatar.appendChild(image);
+      item.appendChild(avatar);
+    }
 
     const paragraph = document.createElement("p");
     paragraph.textContent = text;
@@ -52,6 +67,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function delay(ms) {
     return new Promise((resolve) => window.setTimeout(resolve, ms));
+  }
+
+  async function showGreetingOnce() {
+    if (hasShownGreeting) return;
+    hasShownGreeting = true;
+
+    const loading = appendMessage("Digitando...", "loading");
+    await delay(1000 + Math.floor(Math.random() * 1000));
+    loading.remove();
+    appendMessage(greetingMessage, "bot");
   }
 
   function estimateResponseDelay(text) {

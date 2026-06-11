@@ -375,13 +375,18 @@
         <path d="M8 9h8"/>
         <path d="M8 13h5"/>
       </svg>
-      <span>IA</span>
+      <span>Jus IA</span>
     </button>
 
     <section class="ai-chatbot-panel" data-ai-chatbot-panel aria-hidden="true">
       <header class="ai-chatbot-header">
-        <div>
-          <span>JusTraduz IA</span>
+        <div class="ai-chatbot-identity">
+          <span class="ai-chatbot-avatar" aria-hidden="true">
+            <img src="assets/img/chat-bot-logo.png" alt="">
+          </span>
+          <div>
+            <span>JusTraduz IA</span>
+          </div>
         </div>
 
         <button class="ai-chatbot-close" type="button" data-ai-chatbot-close aria-label="Fechar chat">
@@ -392,11 +397,7 @@
         </button>
       </header>
 
-      <div class="ai-chatbot-messages" data-ai-chatbot-messages aria-live="polite">
-        <article class="ai-chatbot-message ai-chatbot-message-bot">
-          <p>Ola. Posso ajudar com traducao juramentada, documentos para cidadania, estudo, imigracao, orcamento, prazos e envio de arquivos.</p>
-        </article>
-      </div>
+      <div class="ai-chatbot-messages" data-ai-chatbot-messages aria-live="polite"></div>
 
       <form class="ai-chatbot-form" data-ai-chatbot-form>
         <label class="sr-only" for="ai-chatbot-input">Mensagem para a IA</label>
