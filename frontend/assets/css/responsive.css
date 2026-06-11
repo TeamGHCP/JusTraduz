@@ -370,14 +370,7 @@
     gap: 14px;
   }
 
-  .topbar-actions,
-  .user-chip {
-    width: 100%;
-  }
-
-  .user-chip {
-    flex: 1;
-  }
+  .topbar-actions { width: auto; }
 
   .form-actions,
   .hero-actions,

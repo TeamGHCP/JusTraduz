@@ -43,6 +43,12 @@ $routes = [
     ['POST', '/schedule/appointments/update', 'ScheduleController', 'updateAppointment'],
     ['GET', '/schedule/calendar', 'ScheduleController', 'calendarData'],
 
+    ['GET', '/onboarding/state', 'OnboardingController', 'state'],
+    ['POST', '/onboarding/start', 'OnboardingController', 'start'],
+    ['POST', '/onboarding/complete', 'OnboardingController', 'complete'],
+    ['POST', '/onboarding/skip', 'OnboardingController', 'skip'],
+    ['POST', '/onboarding/reset', 'OnboardingController', 'reset'],
+
     ['POST', '/admin/users/status', 'AdminController', 'updateUserStatus'],
     ['POST', '/admin/cases/update', 'AdminController', 'updateCase'],
     ['POST', '/admin/professionals/oab', 'AdminController', 'updateProfessionalOab'],

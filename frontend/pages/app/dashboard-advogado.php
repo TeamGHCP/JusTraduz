@@ -185,14 +185,14 @@ $appointments = fetch_all(
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
 </head>
-<body>
+<body data-tour-page="dashboard_advogado">
   <div class="app-shell">
     <?php render_sidebar('advogado', 'dashboard-advogado.php'); ?>
 
-    <main class="app-main">
+    <main class="app-main" data-tour-step="1" data-tour-title="Visão geral do advogado" data-tour-description="Esta mesa reúne fila, casos, documentos, tarefas e agenda profissional.">
       <?php render_topbar('Mesa do advogado', 'Fila, prioridades, documentos, tarefas e agenda em uma unica area de trabalho.', current_user_name()); ?>
 
-      <section class="lawyer-command">
+      <section class="lawyer-command" data-tour-step="2" data-tour-title="Casos atribuídos" data-tour-description="Veja sua carga ativa e mantenha cada atendimento com responsável e próximos passos.">
         <article class="command-card command-card-primary">
           <span class="badge badge-info">Fila juridica</span>
           <h2><?= e((string) $openCount) ?> solicitacoes aguardando aceite</h2>
@@ -215,7 +215,7 @@ $appointments = fetch_all(
         </article>
       </section>
 
-      <section class="grid grid-4">
+      <section class="grid grid-4" data-tour-step="6" data-tour-title="Prioridade e status" data-tour-description="Use os indicadores para identificar urgências, pendências e volume de trabalho.">
         <?= stat_card('Fila aberta', $openCount, 'help') ?>
         <?= stat_card('Alta prioridade', $highPriorityOpenCount, 'shield') ?>
         <?= stat_card('Tarefas abertas', $taskCount, 'check') ?>
@@ -232,9 +232,9 @@ $appointments = fetch_all(
         </div>
       <?php endif; ?>
 
-      <section class="dash-section">
+      <section class="dash-section" data-tour-step="3" data-tour-title="Fila de solicitações" data-tour-description="Aqui aparecem solicitações abertas, ordenadas por urgência e ainda sem responsável.">
         <div class="dash-section-title">
-          <h2>Fila para aceitar</h2>
+          <h2>Fila para aceitar <?= help_icon('Fila para aceitar', 'Mostra solicitações sem responsável. Aceite apenas casos que você pode conduzir com segurança e disponibilidade.') ?></h2>
           <span class="badge badge-warning">Ordenada por urgencia</span>
         </div>
         <?php if (!$openCases): ?>
@@ -265,7 +265,7 @@ $appointments = fetch_all(
                 <?php endif; ?>
                 <div class="case-card-foot">
                   <div class="case-actions">
-                    <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/accept')) ?>" method="post">
+                    <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/accept')) ?>" method="post" data-tour-step="4" data-tour-title="Aceitar caso" data-tour-description="Aceite somente casos que você consegue conduzir com atenção, prazo e responsabilidade.">
                       <?= csrf_input() ?>
                       <input type="hidden" name="case_id" value="<?= (int) $case['id'] ?>">
                       <button class="btn btn-primary btn-sm" type="submit">Aceitar caso</button>
@@ -281,7 +281,7 @@ $appointments = fetch_all(
 
       <section class="dash-section">
         <div class="dash-section-title">
-          <h2>Meus casos ativos</h2>
+          <h2>Meus casos ativos <?= help_icon('Casos ativos', 'Acompanhe status, prioridade, tarefas, documentos e mensagens dos casos sob sua responsabilidade.') ?></h2>
           <a class="btn btn-soft btn-sm" href="acompanhar-solicitacoes.php?scope=meus">Ver todos</a>
         </div>
         <?php if (!$assignedCases): ?>
@@ -321,10 +321,10 @@ $appointments = fetch_all(
         <?php endif; ?>
       </section>
 
-      <section class="grid grid-2 professional-work-grid">
+      <section class="grid grid-2 professional-work-grid" data-tour-step="7" data-tour-title="Tarefas" data-tour-description="Organize os próximos passos dos casos e acompanhe o que ainda está pendente.">
         <article class="dash-section">
           <div class="dash-section-title">
-            <h2>Proximas tarefas</h2>
+            <h2>Proximas tarefas <?= help_icon('Tarefas', 'Registre próximos passos objetivos e evite incluir dados sensíveis desnecessários na descrição.') ?></h2>
             <span class="badge badge-info"><?= e((string) $taskCount) ?> abertas</span>
           </div>
           <?php if (!$tasks): ?>
@@ -373,9 +373,9 @@ $appointments = fetch_all(
         </article>
       </section>
 
-      <section class="dash-section">
+      <section class="dash-section" data-tour-step="5" data-tour-title="Documentos vinculados" data-tour-description="Revise apenas documentos associados aos seus casos e preserve o sigilo do cliente.">
         <div class="dash-section-title">
-          <h2>Documentos para revisar</h2>
+          <h2>Documentos para revisar <?= help_icon('Documentos vinculados', 'Acesse somente documentos dos seus casos. O conteúdo é sensível e deve permanecer protegido.') ?></h2>
           <a class="btn btn-soft btn-sm" href="visualizar-documento.php">Ver documentos</a>
         </div>
         <?php if (!$recentDocuments): ?>
@@ -401,5 +401,6 @@ $appointments = fetch_all(
       </section>
     </main>
   </div>
+  <?php render_onboarding_assets('dashboard_advogado', '2026.06.11', 'advogado'); ?>
 </body>
 </html>

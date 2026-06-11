@@ -45,6 +45,12 @@ function profile_oab_status_meta(array $user): array
 
 $isProfessional = in_array($user['tipo'] ?? '', ['advogado', 'estagiario'], true);
 $oabStatus = $isProfessional ? profile_oab_status_meta($user) : null;
+$profileTourKey = match ($type) {
+    'advogado' => 'dashboard_advogado',
+    'estagiario' => 'dashboard_estagiario',
+    'admin' => 'dashboard_admin',
+    default => 'dashboard_cliente',
+};
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -145,6 +151,19 @@ $oabStatus = $isProfessional ? profile_oab_status_meta($user) : null;
               <button class="btn btn-outline" type="button" data-password-modal-open><?= icon_svg('lock') ?> Redefinir senha</button>
             </div>
           </section>
+
+          <section class="card">
+            <div class="dash-section-title">
+              <div>
+                <h2>Tour do sistema</h2>
+                <p class="text-muted">Redefina o onboarding para vê-lo novamente no próximo acesso à dashboard.</p>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-outline" type="button" data-tour-reset><?= icon_svg('help') ?> Resetar tour</button>
+            </div>
+            <p class="alert alert-success mt-12" data-tour-reset-message hidden></p>
+          </section>
         </div>
       </section>
 
@@ -191,5 +210,6 @@ $oabStatus = $isProfessional ? profile_oab_status_meta($user) : null;
   </div>
   <script src="assets/js/phone-mask.js"></script>
   <script src="assets/js/profile-password.js"></script>
+  <?php render_onboarding_assets($profileTourKey, '2026.06.11', $type, false); ?>
 </body>
 </html>

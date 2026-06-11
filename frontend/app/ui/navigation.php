@@ -161,9 +161,9 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                 [
                     'id' => 'legal-service',
                     'label' => 'Atendimento juridico',
-                    'icon' => 'help',
+                    'icon' => 'case',
                     'items' => [
-                        ['href' => 'solicitar-ajuda.php', 'label' => 'Solicitar ajuda', 'icon' => 'help'],
+                        ['href' => 'solicitar-ajuda.php', 'label' => 'Solicitar ajuda', 'icon' => 'chat'],
                         ['href' => 'acompanhar-solicitacoes.php', 'label' => 'Acompanhar solicitacoes', 'icon' => 'case'],
                         ['href' => 'chat.php', 'label' => 'Chat com advogado', 'icon' => 'chat'],
                         ['href' => 'lista-advogados.php', 'label' => 'Advogados verificados', 'icon' => 'users'],

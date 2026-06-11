@@ -30,15 +30,15 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
 </head>
-<body>
+<body data-tour-page="dashboard_cliente">
   <div class="app-shell">
     <?php render_sidebar('cliente', 'dashboard-cliente.php'); ?>
 
-    <main class="app-main">
+    <main class="app-main" data-tour-step="1" data-tour-title="Bem-vindo ao JusTraduz" data-tour-description="Esta é sua central para entender documentos e acompanhar ajuda jurídica com clareza.">
       <?php render_topbar('Olá, ' . current_user_name(), 'Entenda documentos, peça ajuda e acompanhe seu atendimento.', current_user_name()); ?>
 
-      <section class="client-command">
-        <article class="command-card command-card-primary">
+      <section class="client-command" data-tour-step="2" data-tour-title="Fluxo principal" data-tour-description="Envie documentos, acompanhe análises e peça ajuda jurídica quando precisar.">
+        <article class="command-card command-card-primary" data-tour-step="3" data-tour-title="Enviar documento" data-tour-description="Comece por aqui para enviar contrato, notificação, imagem ou outro documento jurídico.">
           <span class="badge badge-info">Fluxo principal</span>
           <h2>Envie um documento e transforme juridiquês em próximos passos.</h2>
           <p>O JusTraduz organiza análise, solicitação, chat e agenda para você sair da dúvida com segurança.</p>
@@ -74,7 +74,7 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
         </article>
       </section>
 
-      <section class="grid grid-4">
+      <section class="grid grid-4" data-tour-step="7" data-tour-title="Análises e pendências" data-tour-description="Estes indicadores mostram o que já foi analisado e o que ainda aguarda processamento.">
         <?= stat_card('Documentos', $documentCount, 'file') ?>
         <?= stat_card('Análises feitas', $analysisCount, 'chart') ?>
         <?= stat_card('Pendentes de IA', $pendingAnalysisCount, 'help') ?>
@@ -82,11 +82,11 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
       </section>
 
       <section class="dash-section" id="novo-documento">
-        <form class="card upload-card" action="<?= e(app_url('/backend/public/index.php?rota=/documents/upload')) ?>" method="post" enctype="multipart/form-data" data-upload-form>
+        <form class="card upload-card" action="<?= e(app_url('/backend/public/index.php?rota=/documents/upload')) ?>" method="post" enctype="multipart/form-data" data-upload-form data-tour-step="4" data-tour-title="Área de envio" data-tour-description="Selecione PDF ou imagem. A IA ajuda a explicar o texto, mas não substitui um advogado.">
           <?= csrf_input() ?>
           <div class="dash-section-title">
             <div>
-              <h2>Novo documento</h2>
+              <h2>Novo documento <?= help_icon('Enviar documento', 'Use para enviar PDF ou imagem. Confira o arquivo e autorize IA somente quando concordar com o processamento.') ?></h2>
               <p class="text-muted">Envie o arquivo, autorize IA se fizer sentido e acompanhe a análise depois.</p>
             </div>
             <span class="badge badge-success">Máx. 50 MB</span>
@@ -98,7 +98,7 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
             <p data-file-name>PDF, PNG, JPEG ou WebP</p>
             <span class="btn btn-primary">Selecionar arquivo</span>
           </label>
-          <label class="checkline mt-14">
+          <label class="checkline mt-14" data-tour-step="5" data-tour-title="Autorização de IA" data-tour-description="Ative apenas quando concordar com o processamento automático do documento enviado.">
             <input type="checkbox" name="autorizar_ia" value="1">
             <span>Autorizo enviar este documento para análise automática por IA.</span>
           </label>
@@ -107,9 +107,9 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
         </form>
       </section>
 
-      <section class="dash-section">
+      <section class="dash-section" data-tour-step="6" data-tour-title="Histórico de documentos" data-tour-description="Consulte envios anteriores e abra as análises disponíveis.">
         <div class="dash-section-title">
-          <h2>Histórico de documentos</h2>
+          <h2>Histórico de documentos <?= help_icon('Histórico e análise', 'Abra seus envios anteriores para consultar o status e a explicação gerada. A análise não substitui orientação jurídica.') ?></h2>
           <a class="btn btn-soft btn-sm" href="solicitar-ajuda.php"><?= icon_svg('help') ?> Pedir ajuda</a>
         </div>
         <?php if (!$documents): ?>
@@ -135,6 +135,7 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
       </section>
     </main>
   </div>
+  <?php render_onboarding_assets('dashboard_cliente', '2026.06.11', 'cliente'); ?>
   <script src="assets/js/upload.js"></script>
 </body>
 </html>

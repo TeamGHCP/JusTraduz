@@ -66,14 +66,14 @@ $appointments = fetch_all(
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
 </head>
-<body>
+<body data-tour-page="dashboard_estagiario">
   <div class="app-shell">
     <?php render_sidebar('estagiario', 'dashboard-estagiario.php'); ?>
 
-    <main class="app-main">
+    <main class="app-main" data-tour-step="1" data-tour-title="Visão geral do estagiário" data-tour-description="Esta área é assistiva e possui permissões menores que as de um advogado.">
       <?php render_topbar('Mesa do estagiario', 'Acesso assistivo restrito a agenda propria e dados do proprio perfil.', current_user_name()); ?>
 
-      <section class="professional-alert professional-alert-locked">
+      <section class="professional-alert professional-alert-locked" data-tour-step="5" data-tour-title="Limites de atuação" data-tour-description="Sem atribuição formal, você não acessa casos, documentos ou chats de clientes.">
         <div>
           <strong>Permissao limitada de proposito.</strong>
           <span>Sem atribuicao formal, estagiario nao acessa casos, documentos, tarefas ou chat de clientes. Isso protege o cliente e evita papel de admin disfarcido.</span>
@@ -81,7 +81,7 @@ $appointments = fetch_all(
         <a class="btn btn-primary btn-sm" href="agenda.php"><?= icon_svg('calendar') ?> Minha agenda</a>
       </section>
 
-      <section class="grid grid-4">
+      <section class="grid grid-4" data-tour-step="4" data-tour-title="Permissões do perfil" data-tour-description="Os indicadores refletem apenas recursos autorizados para sua conta.">
         <?= stat_card('Horarios futuros', $futureSlotCount, 'calendar') ?>
         <?= stat_card('Livres', $freeSlotCount, 'check') ?>
         <?= stat_card('Agendamentos', $appointmentCount, 'case') ?>
@@ -89,9 +89,9 @@ $appointments = fetch_all(
       </section>
 
       <section class="grid grid-2 professional-work-grid">
-        <article class="dash-section">
+        <article class="dash-section" data-tour-step="2" data-tour-title="Agenda própria" data-tour-description="Cadastre e acompanhe somente os horários vinculados ao seu perfil.">
           <div class="dash-section-title">
-            <h2>Minha agenda</h2>
+            <h2>Minha agenda <?= help_icon('Agenda própria', 'Gerencie somente seus horários autorizados. A agenda não amplia seu acesso a casos ou documentos.') ?></h2>
             <a class="btn btn-soft btn-sm" href="agenda.php">Gerenciar horarios</a>
           </div>
           <?php if (!$slots): ?>
@@ -112,9 +112,9 @@ $appointments = fetch_all(
           <?php endif; ?>
         </article>
 
-        <article class="dash-section">
+        <article class="dash-section" data-tour-step="3" data-tour-title="Agendamentos" data-tour-description="Veja compromissos da sua agenda sem assumir atribuições exclusivas de advogado.">
           <div class="dash-section-title">
-            <h2>Agendamentos</h2>
+            <h2>Agendamentos <?= help_icon('Agendamentos', 'Consulte compromissos da sua agenda e respeite os limites definidos pela supervisão.') ?></h2>
             <span class="badge badge-info"><?= e((string) $appointmentCount) ?> ativos</span>
           </div>
           <?php if (!$appointments): ?>
@@ -138,7 +138,7 @@ $appointments = fetch_all(
 
       <section class="dash-section">
         <div class="dash-section-title">
-          <h2>Permissoes do perfil</h2>
+          <h2>Permissoes do perfil <?= help_icon('Limites de acesso', 'O perfil de estagiário é assistivo e não possui os mesmos poderes de um advogado ou administrador.') ?></h2>
           <span class="badge badge-warning">Acesso assistivo</span>
         </div>
         <div class="permission-grid">
@@ -166,5 +166,6 @@ $appointments = fetch_all(
       </section>
     </main>
   </div>
+  <?php render_onboarding_assets('dashboard_estagiario', '2026.06.11', 'estagiario'); ?>
 </body>
 </html>

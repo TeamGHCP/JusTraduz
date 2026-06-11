@@ -252,14 +252,14 @@ $healthChecks = [
   <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="../assets/css/style.css?v=sidebar-open-button-1">
 </head>
-<body>
+<body data-tour-page="dashboard_admin">
   <div class="app-shell admin-shell">
     <?php render_sidebar('admin', 'dashboard-admin.php', true); ?>
 
-    <main class="app-main">
+    <main class="app-main" data-tour-step="1" data-tour-title="Visão administrativa" data-tour-description="Esta central reúne operação, risco, validação, auditoria e crescimento da plataforma.">
       <?php render_topbar('Administração', 'Operação, risco e crescimento em tempo quase real.', current_user_name()); ?>
 
-      <section class="admin-hero admin-hero-ops">
+      <section class="admin-hero admin-hero-ops" data-tour-step="2" data-tour-title="Indicadores de usuários" data-tour-description="Acompanhe clientes, profissionais ativos e pendências cadastrais.">
         <div>
           <span class="badge badge-info">Central SaaS</span>
           <h2>Comando da plataforma JusTraduz</h2>
@@ -272,14 +272,14 @@ $healthChecks = [
         </div>
       </section>
 
-      <section class="grid grid-4">
+      <section class="grid grid-4" data-tour-step="3" data-tour-title="Validação OAB e CNA" data-tour-description="Monitore profissionais pendentes antes de liberar acesso completo.">
         <?= stat_card('Clientes ativos', $activeClientCount . '/' . $clientCount, 'users') ?>
         <?= stat_card('Advogados ativos', $activeLawyerCount . '/' . $lawyerCount, 'shield') ?>
         <?= stat_card('OAB pendentes', $pendingProfessionalCount, 'help') ?>
         <?= stat_card('Docs analisados', $analyzedDocumentCount . '/' . $documentCount, 'chart') ?>
       </section>
 
-      <section class="admin-alert-strip">
+      <section class="admin-alert-strip" data-tour-step="4" data-tour-title="Solicitações e casos" data-tour-description="Identifique casos críticos, sem responsável e compromissos próximos.">
         <a class="admin-alert-tile" href="solicitacoes.php?prioridade=alta">
           <span>Solicitações críticas</span>
           <strong><?= e((string) $criticalCaseCount) ?></strong>
@@ -298,7 +298,7 @@ $healthChecks = [
         </a>
       </section>
 
-      <section class="admin-risk-board">
+      <section class="admin-risk-board" data-tour-step="7" data-tour-title="Riscos operacionais" data-tour-description="Priorize gargalos que afetam atendimento, segurança e qualidade da operação.">
         <?php foreach ($operationalRisks as $risk): ?>
           <a class="admin-risk-card is-<?= e($risk['level']) ?>" href="<?= e($risk['href']) ?>">
             <div>
@@ -310,7 +310,7 @@ $healthChecks = [
         <?php endforeach; ?>
       </section>
 
-      <section class="admin-dashboard-grid">
+      <section class="admin-dashboard-grid" data-tour-step="8" data-tour-title="Relatórios e tendências" data-tour-description="Use os gráficos para acompanhar volume, perfis, casos e utilização de IA.">
         <article class="card admin-chart-card admin-chart-card-wide">
           <div class="dash-section-title">
             <h2>Documentos enviados por dia</h2>
@@ -329,7 +329,7 @@ $healthChecks = [
 
         <article class="card admin-chart-card">
           <div class="dash-section-title">
-            <h2>Usuários por perfil</h2>
+            <h2>Usuários por perfil <?= help_icon('Usuários', 'Acompanhe a distribuição de contas. Alterações de acesso devem ter finalidade e rastreabilidade.') ?></h2>
           </div>
           <div class="donut-wrap">
             <div class="donut-chart" style="--client-end: <?= $clientDegrees ?>deg; --lawyer-end: <?= $lawyerDegrees ?>deg; --intern-end: <?= $internDegrees ?>deg">
@@ -346,7 +346,7 @@ $healthChecks = [
 
         <article class="card admin-chart-card">
           <div class="dash-section-title">
-            <h2>Solicitações por status</h2>
+            <h2>Solicitações por status <?= help_icon('Solicitações e casos', 'Use os status para identificar gargalos, casos sem responsável e riscos de atendimento.') ?></h2>
             <span class="badge badge-info"><?= e((string) $caseCount) ?> total</span>
           </div>
           <div class="horizontal-bars">
@@ -395,7 +395,7 @@ $healthChecks = [
         </article>
       </section>
 
-      <section class="grid grid-3 admin-work-grid">
+      <section class="grid grid-3 admin-work-grid" data-tour-step="5" data-tour-title="Documentos e IA" data-tour-description="Acompanhe documentos pendentes sem expor conteúdo jurídico ou dados pessoais.">
         <article class="dash-section">
           <div class="dash-section-title">
             <h2>Fila OAB</h2>
@@ -481,10 +481,10 @@ $healthChecks = [
         </article>
       </section>
 
-      <section class="grid grid-2 admin-panels">
+      <section class="grid grid-2 admin-panels" data-tour-step="6" data-tour-title="Auditoria" data-tour-description="Consulte eventos relevantes com rastreabilidade e acesso administrativo responsável.">
         <article class="dash-section">
           <div class="dash-section-title">
-            <h2>Auditoria recente</h2>
+            <h2>Auditoria recente <?= help_icon('Auditoria', 'Consulte eventos operacionais e de segurança sem copiar dados pessoais ou conteúdo de documentos.') ?></h2>
             <a class="btn btn-soft btn-sm" href="auditoria.php">Ver logs</a>
           </div>
           <?php if (!$recentAudit): ?>
@@ -526,5 +526,6 @@ $healthChecks = [
       </section>
     </main>
   </div>
+  <?php render_onboarding_assets('dashboard_admin', '2026.06.11', 'admin'); ?>
 </body>
 </html>
