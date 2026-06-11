@@ -13,8 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const revealSelectors = [
+    ".home-hero-copy",
+    ".hero-product-stage",
     ".page-section .section-head",
     "#recursos .feature-card",
+    ".home-detail-grid > *",
     "#fluxo .step-card",
     "#depoimentos .testimonial-marquee",
     "#depoimentos .testimonial-controls",
@@ -53,6 +56,68 @@ document.addEventListener("DOMContentLoaded", () => {
       revealElements.forEach((element) => element.classList.add("is-visible"));
     }
   }
+
+  document.querySelectorAll("[data-mockup-tilt]").forEach((stage) => {
+    const mockup = stage.querySelector(".hero-product-mockup");
+
+    if (!mockup || prefersReducedMotion) {
+      return;
+    }
+
+    let frame = null;
+
+    const resetTilt = () => {
+      mockup.style.setProperty("--tilt-x", "0deg");
+      mockup.style.setProperty("--tilt-y", "0deg");
+      mockup.style.setProperty("--shift-x", "0px");
+      mockup.style.setProperty("--shift-y", "0px");
+    };
+
+    stage.addEventListener("pointermove", (event) => {
+      window.cancelAnimationFrame(frame);
+
+      frame = window.requestAnimationFrame(() => {
+        const rect = stage.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+
+        mockup.style.setProperty("--tilt-x", `${x * -7}deg`);
+        mockup.style.setProperty("--tilt-y", `${y * 5}deg`);
+        mockup.style.setProperty("--shift-x", `${x * 10}px`);
+        mockup.style.setProperty("--shift-y", `${y * 8}px`);
+      });
+    });
+
+    stage.addEventListener("pointerleave", resetTilt);
+    stage.addEventListener("pointercancel", resetTilt);
+  });
+
+  document.querySelectorAll("[data-flow-steps]").forEach((flow) => {
+    const steps = Array.from(flow.querySelectorAll("[data-flow-step]"));
+    const panels = Array.from(flow.querySelectorAll("[data-flow-panel]"));
+
+    if (steps.length === 0 || panels.length === 0) {
+      return;
+    }
+
+    const activateStep = (target) => {
+      steps.forEach((step) => {
+        const isActive = step.dataset.flowStep === target;
+        step.classList.toggle("is-active", isActive);
+        step.setAttribute("aria-pressed", String(isActive));
+      });
+
+      panels.forEach((panel) => {
+        panel.classList.toggle("is-active", panel.dataset.flowPanel === target);
+      });
+    };
+
+    steps.forEach((step) => {
+      step.addEventListener("click", () => {
+        activateStep(step.dataset.flowStep);
+      });
+    });
+  });
 
   document.querySelectorAll("[data-testimonial-carousel]").forEach((carousel) => {
     const track = carousel.querySelector(".testimonial-track");
