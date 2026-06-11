@@ -60,6 +60,27 @@
   gap: 10px;
 }
 
+.site-header .nav-actions .btn-outline {
+  background: rgba(255, 255, 255, .72);
+  border-color: var(--line-strong);
+  color: var(--navy);
+}
+
+.site-header .nav-actions .btn-outline:hover,
+.site-header .nav-actions .btn-outline:focus-visible {
+  background: #ffffff;
+  border-color: var(--teal);
+  color: var(--teal);
+  box-shadow: 0 16px 30px rgba(23, 32, 51, .10);
+  transform: translateY(-2px);
+}
+
+.site-header .nav-actions .btn-outline:hover *,
+.site-header .nav-actions .btn-outline:focus-visible * {
+  color: inherit;
+  opacity: 1;
+}
+
 .mobile-toggle {
   display: none;
   width: 42px;

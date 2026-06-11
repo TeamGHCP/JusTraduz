@@ -868,12 +868,22 @@ body.has-modal-open {
 
 .home-btn-outline {
   background: rgba(255, 255, 255, .72);
+  color: var(--navy);
 }
 
-.home-btn-outline:hover {
+.home-btn-outline:hover,
+.home-btn-outline:focus-visible {
   transform: translateY(-3px);
   background: #ffffff;
+  border-color: var(--teal);
+  color: var(--teal);
   box-shadow: 0 16px 30px rgba(23, 32, 51, .10);
+}
+
+.home-btn-outline:hover *,
+.home-btn-outline:focus-visible * {
+  color: inherit;
+  opacity: 1;
 }
 
 .home-trust-row {
@@ -908,6 +918,7 @@ body.has-modal-open {
 .hero-product-stage {
   position: absolute;
   inset: 0;
+  transform: translateX(55px);
 }
 
 .home-hero-visual::before {
@@ -996,9 +1007,9 @@ body.has-modal-open {
 }
 
 .float-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  display: grid;
+  place-items: center;
   width: 26px;
   height: 26px;
   flex: 0 0 26px;
@@ -1008,9 +1019,12 @@ body.has-modal-open {
 }
 
 .float-icon .svg-icon {
+  position: absolute;
+  inset: 50% auto auto 50%;
   width: 16px;
   height: 16px;
   display: block;
+  transform: translate(-50%, -50%);
 }
 
 .float-ai {
