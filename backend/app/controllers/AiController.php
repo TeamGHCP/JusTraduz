@@ -22,7 +22,7 @@ class AiController
         }
 
         if (mb_strlen($message) > 1200) {
-            $this->json(['erro' => 'Envie uma mensagem menor, com ate 1200 caracteres.'], 422);
+            $this->json(['erro' => 'Envie uma mensagem menor, com até 1200 caracteres.'], 422);
             return;
         }
 
@@ -110,30 +110,30 @@ class AiController
         $now = new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
 
         if ($this->isUnsafeRequest($normalized)) {
-            return 'Nao posso ajudar com acesso a dados internos, documentos de clientes, senhas, banco de dados, comandos destrutivos ou tentativas de burlar o sistema. Posso ajudar com duvidas sobre traducao, documentos, orcamento e uso do JusTraduz.';
+            return 'Não posso ajudar com acesso a dados internos, documentos de clientes, senhas, banco de dados, comandos destrutivos ou tentativas de burlar o sistema. Posso ajudar com dúvidas sobre tradução, documentos, orçamento e uso do JusTraduz.';
         }
 
         if ($this->isPromptInjection($normalized)) {
-            return 'Nao posso ignorar minhas instrucoes, revelar regras internas ou assumir papel de administrador. Posso continuar ajudando como assistente do JusTraduz para traducao, documentos e atendimento.';
+            return 'Não posso ignorar minhas instruções, revelar regras internas ou assumir papel de administrador. Posso continuar ajudando como assistente do JusTraduz para tradução, documentos e atendimento.';
         }
 
         if ($this->isSmallTalk($normalized)) {
-            return 'Ola! Posso te ajudar com traducao juramentada, documentos para cidadania, estudo, imigracao, orcamento, prazos e envio de arquivos. Me diga qual documento voce precisa traduzir e para qual pais ou idioma.';
+            return 'Olá! Posso te ajudar com tradução juramentada, documentos para cidadania, estudo, imigração, orçamento, prazos e envio de arquivos. Me diga qual documento você precisa traduzir e para qual país ou idioma.';
         }
 
         $asksDate = preg_match('/\b(que dia|qual dia|data de hoje|dia e hoje|hoje e que dia)\b/', $normalized);
         $asksTime = preg_match('/\b(que horas|qual hora|horas sao|hora atual|agora sao)\b/', $normalized);
 
         if ($asksDate && $asksTime) {
-            return 'Hoje e ' . $this->formatDate($now) . ' e agora sao ' . $now->format('H:i') . '.';
+            return 'Hoje é ' . $this->formatDate($now) . ' e agora são ' . $now->format('H:i') . '.';
         }
 
         if ($asksDate) {
-            return 'Hoje e ' . $this->formatDate($now) . '.';
+            return 'Hoje é ' . $this->formatDate($now) . '.';
         }
 
         if ($asksTime) {
-            return 'Agora sao ' . $now->format('H:i') . '.';
+            return 'Agora são ' . $now->format('H:i') . '.';
         }
 
         return $this->answerBusinessQuestion($normalized, $history);
@@ -142,44 +142,49 @@ class AiController
     private function answerBusinessQuestion(string $normalized, array $history): ?string
     {
         if (preg_match('/\b(valor exato|preco exato|quanto custa exatamente|qual o valor exato)\b/', $normalized)) {
-            return 'Para informar valor exato, precisamos analisar o arquivo, o idioma, a quantidade de paginas/laudas, o prazo e se precisa de traducao juramentada. Voce pode enviar o documento pelo JusTraduz para receber um orcamento correto.';
+            return 'Para informar valor exato, precisamos analisar o arquivo, o idioma, a quantidade de páginas/laudas, o prazo e se precisa de tradução juramentada. Você pode enviar o documento pelo JusTraduz para receber um orçamento correto.';
         }
 
         if (preg_match('/\b(garante|garantia|visto sera aprovado|imigracao vai aceitar|sera aceito)\b/', $normalized)) {
-            return 'Nao da para garantir aprovacao de visto, cidadania, imigracao ou aceite por um orgao externo. O correto e conferir as exigencias do destino e fazer a traducao no formato solicitado. O JusTraduz ajuda a analisar o documento e encaminhar para atendimento humano quando necessario.';
-        }
-
-        if (preg_match('/\b(traducao juramentada|traducao publica)\b/', $normalized)) {
-            return 'Traducao juramentada e a traducao oficial feita por tradutor publico habilitado. Ela costuma ser exigida quando o documento precisa ter validade perante orgaos publicos, universidades, cartorios, processos, consulados ou autoridades estrangeiras.';
+            return 'Não dá para garantir aprovação de visto, cidadania, imigração ou aceite por um órgão externo. O correto é conferir as exigências do destino e fazer a tradução no formato solicitado. O JusTraduz ajuda a analisar o documento e encaminhar para atendimento humano quando necessário.';
         }
 
         if (preg_match('/\b(traducao simples|diferenca entre traducao simples e juramentada)\b/', $normalized)) {
-            return 'A traducao simples serve para entendimento, estudo interno ou uso nao oficial. A traducao juramentada tem validade oficial e costuma ser exigida por orgaos, universidades, consulados e processos formais.';
-        }
-
-        if (preg_match('/\b(certidao de nascimento|certidao de casamento|diploma|historico escolar|contrato)\b/', $normalized)) {
-            return 'Esse tipo de documento geralmente pode ser traduzido. Para confirmar se precisa ser juramentado, precisamos saber o pais de destino, o idioma, o orgao que vai receber e se ha alguma exigencia especifica. Voce pode enviar PDF ou foto legivel para analise e orcamento.';
-        }
-
-        if (preg_match('/\b(orcamento|gratuito|quanto custa|preco|desconto|parcelar|pagamento)\b/', $normalized)) {
-            return 'O orcamento pode depender do documento, idioma, volume, urgencia e necessidade de traducao juramentada. Para varios documentos, pode haver avaliacao conjunta. Envie os arquivos para receber uma proposta; formas de pagamento e parcelamento devem ser confirmadas no atendimento.';
-        }
-
-        if (preg_match('/\b(enviar|envio|foto|celular|pdf|arquivo|documento ilegivel|ilegivel)\b/', $normalized)) {
-            return 'Voce pode enviar o documento em PDF ou imagem pelo celular, desde que esteja completo e legivel. Se estiver cortado, borrado ou ilegivel, a analise pode ficar limitada e talvez seja necessario reenviar uma versao melhor.';
-        }
-
-        if (preg_match('/\b(portugal|italiana|italia|espanha|ingles|cidadania|imigracao|estudar|universidade)\b/', $normalized)) {
-            return 'Para estudo, cidadania ou uso no exterior, normalmente e preciso verificar a regra do pais, universidade, consulado ou orgao que recebera o documento. Diploma, historico escolar e certidoes muitas vezes precisam de traducao juramentada, mas a exigencia final depende do destino.';
+            return 'A tradução simples serve para entendimento, estudo interno ou uso não oficial. A tradução juramentada tem validade oficial e costuma ser exigida por órgãos, universidades, consulados e processos formais.';
         }
 
         if (preg_match('/\b(quanto tempo|prazo|urgente|amanha|30 dias)\b/', $normalized)) {
             $context = $this->historyText($history);
-            if (strpos($context, 'diploma') !== false || strpos($context, 'historico') !== false) {
-                return 'Para diploma ou historico escolar, o prazo depende do idioma, volume, legibilidade e necessidade de traducao juramentada. Como voce mencionou esse contexto antes, o ideal e enviar os arquivos para avaliarmos prazo e viabilidade, principalmente se houver urgencia.';
+            if (
+                strpos($normalized, 'diploma') !== false ||
+                strpos($normalized, 'historico') !== false ||
+                strpos($context, 'diploma') !== false ||
+                strpos($context, 'historico') !== false
+            ) {
+                return 'Para diploma ou histórico escolar, o prazo depende do idioma, volume, legibilidade e necessidade de tradução juramentada. Como você mencionou esse contexto, o ideal é enviar os arquivos para avaliarmos prazo e viabilidade, principalmente se houver urgência.';
             }
 
-            return 'O prazo depende do tipo de documento, idioma, volume, legibilidade e urgencia. Para confirmar tempo de entrega, envie o arquivo e informe quando precisa usar a traducao.';
+            return 'O prazo depende do tipo de documento, idioma, volume, legibilidade e urgência. Para confirmar tempo de entrega, envie o arquivo e informe quando precisa usar a tradução.';
+        }
+
+        if (preg_match('/\b(orcamento|gratuito|quanto custa|preco|desconto|parcelar|pagamento)\b/', $normalized)) {
+            return 'O orçamento pode depender do documento, idioma, volume, urgência e necessidade de tradução juramentada. Para vários documentos, pode haver avaliação conjunta. Envie os arquivos para receber uma proposta; formas de pagamento e parcelamento devem ser confirmadas no atendimento.';
+        }
+
+        if (preg_match('/\b(traducao juramentada|traducao publica)\b/', $normalized)) {
+            return 'Tradução juramentada é a tradução oficial feita por tradutor público habilitado. Ela costuma ser exigida quando o documento precisa ter validade perante órgãos públicos, universidades, cartórios, processos, consulados ou autoridades estrangeiras.';
+        }
+
+        if (preg_match('/\b(certidao de nascimento|certidao de casamento|diploma|historico escolar|contrato)\b/', $normalized)) {
+            return 'Esse tipo de documento geralmente pode ser traduzido. Para confirmar se precisa ser juramentado, precisamos saber o país de destino, o idioma, o órgão que vai receber e se há alguma exigência específica. Você pode enviar PDF ou foto legível para análise e orçamento.';
+        }
+
+        if (preg_match('/\b(enviar|envio|foto|celular|pdf|arquivo|documento ilegivel|ilegivel)\b/', $normalized)) {
+            return 'Você pode enviar o documento em PDF ou imagem pelo celular, desde que esteja completo e legível. Se estiver cortado, borrado ou ilegível, a análise pode ficar limitada e talvez seja necessário reenviar uma versão melhor.';
+        }
+
+        if (preg_match('/\b(portugal|italiana|italia|espanha|ingles|cidadania|imigracao|estudar|universidade)\b/', $normalized)) {
+            return 'Para estudo, cidadania ou uso no exterior, normalmente é preciso verificar a regra do país, universidade, consulado ou órgão que receberá o documento. Diploma, histórico escolar e certidões muitas vezes precisam de tradução juramentada, mas a exigência final depende do destino.';
         }
 
         return null;
@@ -192,7 +197,7 @@ class AiController
             return $business;
         }
 
-        return 'Posso te ajudar com traducao juramentada, traducao simples, documentos para cidadania, estudo, imigracao, orcamento, prazos e envio de arquivos. Para eu orientar melhor, me diga: qual documento voce tem, em qual idioma ele esta e onde voce pretende usar?';
+        return 'Posso te ajudar com tradução juramentada, tradução simples, documentos para cidadania, estudo, imigração, orçamento, prazos e envio de arquivos. Para eu orientar melhor, me diga: qual documento você tem, em qual idioma ele está e onde você pretende usar?';
     }
 
     private function isUnsafeRequest(string $normalized): bool
@@ -225,17 +230,17 @@ class AiController
         $weekdays = [
             'Sunday' => 'domingo',
             'Monday' => 'segunda-feira',
-            'Tuesday' => 'terca-feira',
+            'Tuesday' => 'terça-feira',
             'Wednesday' => 'quarta-feira',
             'Thursday' => 'quinta-feira',
             'Friday' => 'sexta-feira',
-            'Saturday' => 'sabado',
+            'Saturday' => 'sábado',
         ];
 
         $months = [
             1 => 'janeiro',
             2 => 'fevereiro',
-            3 => 'marco',
+            3 => 'março',
             4 => 'abril',
             5 => 'maio',
             6 => 'junho',

@@ -15,9 +15,101 @@ document.addEventListener("DOMContentLoaded", () => {
   const backendRoute = (path) => `${backendBase}?rota=${encodeURIComponent(path)}`;
   const greetingMessage = "Olá, sou o Jus IA! Como eu posso ajudar?";
   const chatHistory = [];
+  const guidedTopics = [
+    {
+      label: "Orçamento",
+      children: [
+        {
+          label: "Quanto custa?",
+          answer: "O valor depende do tipo de documento, idioma, quantidade de páginas/laudas, prazo e se precisa de tradução juramentada. Para receber um orçamento correto, envie o arquivo completo e legível pelo JusTraduz.",
+        },
+        {
+          label: "Pagamento",
+          answer: "As formas de pagamento e possível parcelamento devem ser confirmados no atendimento. O ideal é enviar o documento primeiro para a equipe calcular o valor e apresentar a proposta.",
+        },
+        {
+          label: "Desconto",
+          answer: "Quando há vários documentos, a equipe pode avaliar o conjunto antes de confirmar o valor. Envie todos os arquivos para uma proposta mais precisa.",
+        },
+      ],
+    },
+    {
+      label: "Tradução",
+      children: [
+        {
+          label: "Juramentada",
+          answer: "Tradução juramentada é a tradução oficial feita por tradutor público habilitado. Ela costuma ser exigida para documentos usados em órgãos públicos, universidades, cartórios, consulados, processos e autoridades estrangeiras.",
+        },
+        {
+          label: "Simples",
+          answer: "A tradução simples serve para entendimento, estudo interno ou uso sem exigência oficial. Se o documento será entregue a um órgão, universidade, consulado ou processo formal, pode ser necessário confirmar se pedem tradução juramentada.",
+        },
+        {
+          label: "Qual escolher?",
+          answer: "Para escolher entre tradução simples e juramentada, precisamos saber qual documento você tem, em qual idioma ele está, para qual idioma precisa traduzir e onde ele será usado.",
+        },
+      ],
+    },
+    {
+      label: "Documentos",
+      children: [
+        {
+          label: "Certidoes",
+          answer: "Certidões de nascimento, casamento e outros registros civis geralmente podem ser traduzidas. Para confirmar o formato correto, informe o país, idioma e órgão que vai receber o documento.",
+        },
+        {
+          label: "Diploma ou histórico",
+          answer: "Diploma e histórico escolar muitas vezes exigem tradução juramentada para estudo, validação ou uso no exterior. A regra final depende da universidade, consulado ou órgão de destino.",
+        },
+        {
+          label: "Contrato",
+          answer: "Contratos podem ser traduzidos, mas a necessidade de tradução juramentada depende do uso. Envie o arquivo completo e informe onde ele será apresentado.",
+        },
+      ],
+    },
+    {
+      label: "Prazos",
+      children: [
+        {
+          label: "Prazo normal",
+          answer: "O prazo depende do tipo de documento, idioma, volume, legibilidade e necessidade de tradução juramentada. Para confirmar a entrega, envie o arquivo e informe quando precisa usar a tradução.",
+        },
+        {
+          label: "Urgente",
+          answer: "Para urgência, a equipe precisa analisar o documento antes de confirmar viabilidade. Envie o arquivo completo e diga a data limite em que você precisa da tradução.",
+        },
+      ],
+    },
+    {
+      label: "Enviar arquivo",
+      answer: "Você pode enviar PDF ou imagem pelo celular, desde que esteja completo e legível. Se o documento estiver cortado, borrado ou ilegível, talvez seja necessário reenviar uma versão melhor.",
+    },
+    {
+      label: "Uso no exterior",
+      children: [
+        {
+          label: "Cidadania",
+          answer: "Para cidadania, a exigência depende do país, consulado ou órgão responsável. Certidões e documentos pessoais frequentemente pedem tradução juramentada, mas é importante conferir a regra do destino.",
+        },
+        {
+          label: "Estudo",
+          answer: "Para estudo no exterior, diplomas, históricos e documentos acadêmicos podem exigir tradução juramentada. Confirme a exigência da universidade ou instituição antes de finalizar.",
+        },
+        {
+          label: "Imigracao",
+          answer: "Para imigração, não dá para garantir aceite ou aprovação. O caminho seguro é conferir a lista oficial de documentos e traduzir no formato solicitado pelo órgão de destino.",
+        },
+      ],
+    },
+    {
+      label: "Digitar pergunta",
+      action: "free-text",
+    },
+  ];
   let csrfToken = "";
   let isSending = false;
   let hasShownGreeting = false;
+  let freeTextEnabled = false;
 
   function setOpen(open) {
     chatbot.classList.toggle("is-open", open);
@@ -25,7 +117,9 @@ document.addEventListener("DOMContentLoaded", () => {
     panel?.setAttribute("aria-hidden", open ? "false" : "true");
 
     if (open) {
-      window.setTimeout(() => input?.focus(), 120);
+      if (freeTextEnabled) {
+        window.setTimeout(() => input?.focus(), 120);
+      }
       showGreetingOnce();
     }
   }
@@ -54,10 +148,73 @@ document.addEventListener("DOMContentLoaded", () => {
     return item;
   }
 
+  function appendChoiceGroup(title, choices) {
+    const item = document.createElement("article");
+    item.className = "ai-chatbot-message ai-chatbot-message-bot ai-chatbot-message-choices";
+
+    const avatar = document.createElement("span");
+    avatar.className = "ai-chatbot-avatar";
+    avatar.setAttribute("aria-hidden", "true");
+
+    const image = document.createElement("img");
+    image.src = "assets/img/chat-bot-logo.png";
+    image.alt = "";
+    avatar.appendChild(image);
+    item.appendChild(avatar);
+
+    const content = document.createElement("div");
+    content.className = "ai-chatbot-choice-content";
+
+    const paragraph = document.createElement("p");
+    paragraph.textContent = title;
+    content.appendChild(paragraph);
+
+    const list = document.createElement("div");
+    list.className = "ai-chatbot-choice-list";
+
+    choices.forEach((choice) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      if (choice.action === "main-menu") {
+        const arrow = document.createElement("span");
+        arrow.className = "ai-chatbot-choice-arrow";
+        arrow.setAttribute("aria-hidden", "true");
+
+        const label = document.createElement("span");
+        label.textContent = "Voltar";
+
+        button.appendChild(arrow);
+        button.appendChild(label);
+      } else {
+        button.textContent = choice.label;
+      }
+      button.addEventListener("click", () => {
+        list.querySelectorAll("button").forEach((item) => {
+          item.disabled = true;
+        });
+        handleGuidedChoice(choice);
+      });
+      list.appendChild(button);
+    });
+
+    content.appendChild(list);
+    item.appendChild(content);
+    messages.appendChild(item);
+    messages.scrollTop = messages.scrollHeight;
+    return item;
+  }
+
   function setSending(sending) {
     isSending = sending;
-    input.disabled = sending;
-    form.querySelector("button")?.toggleAttribute("disabled", sending);
+    input.disabled = sending || !freeTextEnabled;
+    form.querySelector("button")?.toggleAttribute("disabled", sending || !freeTextEnabled);
+  }
+
+  function setFreeTextEnabled(enabled) {
+    freeTextEnabled = enabled;
+    input.disabled = !enabled;
+    input.placeholder = enabled ? "Digite sua dúvida..." : "Escolha um tópico acima";
+    form.querySelector("button")?.toggleAttribute("disabled", !enabled);
   }
 
   function resizeInput() {
@@ -77,6 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
     await delay(1000 + Math.floor(Math.random() * 1000));
     loading.remove();
     appendMessage(greetingMessage, "bot");
+    appendChoiceGroup("Escolha um assunto para eu te orientar melhor:", guidedTopics);
   }
 
   function estimateResponseDelay(text) {
@@ -86,6 +244,65 @@ document.addEventListener("DOMContentLoaded", () => {
     if (length <= 220) return 1100;
     if (length <= 420) return 1900;
     return 2800;
+  }
+
+  function appendMainTopics() {
+    appendChoiceGroup("Escolha outro assunto:", guidedTopics);
+  }
+
+  function registerGuidedInteraction(label, answer) {
+    chatHistory.push({ papel: "usuario", texto: label });
+    chatHistory.push({ papel: "assistente", texto: answer });
+
+    while (chatHistory.length > 10) {
+      chatHistory.shift();
+    }
+  }
+
+  async function answerGuidedChoice(choice) {
+    const loading = appendMessage("Digitando...", "loading");
+    await delay(estimateResponseDelay(choice.answer || ""));
+    loading.remove();
+    appendMessage(choice.answer, "bot");
+    registerGuidedInteraction(choice.label, choice.answer);
+    appendChoiceGroup("Posso ajudar com mais alguma coisa?", [
+      { label: "Voltar", action: "main-menu" },
+      { label: "Digitar pergunta", action: "free-text" },
+    ]);
+  }
+
+  function handleGuidedChoice(choice) {
+    if (isSending) return;
+
+    if (choice.action === "free-text") {
+      appendMessage("Quero digitar uma pergunta", "user");
+      appendMessage("Claro. Digite sua dúvida no campo abaixo que eu respondo.", "bot");
+      setFreeTextEnabled(true);
+      input.focus();
+      return;
+    }
+
+    if (choice.action === "main-menu") {
+      appendMessage("Voltar", "user");
+      setFreeTextEnabled(false);
+      appendMainTopics();
+      return;
+    }
+
+    setFreeTextEnabled(false);
+    appendMessage(choice.label, "user");
+
+    if (Array.isArray(choice.children) && choice.children.length > 0) {
+      appendChoiceGroup("Escolha uma opção:", [
+        ...choice.children,
+        { label: "Voltar", action: "main-menu" },
+      ]);
+      return;
+    }
+
+    if (choice.answer) {
+      answerGuidedChoice(choice);
+    }
   }
 
   function setMessageText(messageNode, text) {
@@ -111,7 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function sendMessage(message) {
     const token = await ensureCsrfToken();
     if (!token) {
-      throw new Error("Nao foi possivel preparar a seguranca do chat. Recarregue a pagina.");
+      throw new Error("Não foi possível preparar a segurança do chat. Recarregue a página.");
     }
 
     const response = await fetch(backendRoute("/ai/chat"), {
@@ -127,10 +344,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data.erro || "Nao foi possivel falar com a IA agora.");
+      throw new Error(data.erro || "Não foi possível falar com a IA agora.");
     }
 
-    const answer = data.resposta || "Nao consegui montar uma resposta agora.";
+    const answer = data.resposta || "Não consegui montar uma resposta agora.";
     chatHistory.push({ papel: "usuario", texto: message });
     chatHistory.push({ papel: "assistente", texto: answer });
 
@@ -143,6 +360,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   toggle?.addEventListener("click", () => setOpen(true));
   closeButton?.addEventListener("click", () => setOpen(false));
+  setFreeTextEnabled(false);
 
   input?.addEventListener("input", resizeInput);
   input?.addEventListener("keydown", (event) => {
@@ -185,7 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
       appendMessage(answer, "bot");
     } catch (error) {
       loading.remove();
-      appendMessage(error.message || "Nao foi possivel responder agora.", "error");
+      appendMessage(error.message || "Não foi possível responder agora.", "error");
     } finally {
       setSending(false);
       input.focus();
