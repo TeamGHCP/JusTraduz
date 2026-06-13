@@ -21,7 +21,7 @@
       <p class="subtitle">Acesse documentos, solicitacoes, agenda e conversas com seguranca.</p>
 
       <form class="auth-form" action="../backend/public/index.php?rota=/auth/login" method="post">
-        <div class="alert" data-auth-alert></div>
+        <div class="alert" data-auth-alert role="alert" aria-live="assertive" aria-atomic="true"></div>
 
         <div class="field">
           <label for="login-email">E-mail</label>
@@ -68,7 +68,7 @@
       <p class="subtitle">Cliente entra direto. Advogado e estagiario aguardam validacao manual da OAB.</p>
 
       <form class="auth-form" action="../backend/public/index.php?rota=/auth/registrar" method="post">
-        <div class="alert" data-auth-alert></div>
+        <div class="alert" data-auth-alert role="alert" aria-live="assertive" aria-atomic="true"></div>
 
         <div class="field">
           <label for="tipo">Tipo de conta</label>
@@ -188,5 +188,6 @@
 <script src="assets/js/phone-mask.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/auth-novo.js"></script>
+<script src="assets/js/accessibility.js?v=2026.06.13-11"></script>
 </body>
 </html>

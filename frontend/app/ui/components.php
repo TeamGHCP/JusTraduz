@@ -12,7 +12,8 @@ function render_query_alert(): void
         return;
     }
 
-    echo '<div class="alert is-visible ' . query_message_kind() . ' mt-16">' . e($message) . '</div>';
+    $isError = str_contains(query_message_kind(), 'error');
+    echo '<div class="alert is-visible ' . query_message_kind() . ' mt-16" role="' . ($isError ? 'alert' : 'status') . '" aria-live="' . ($isError ? 'assertive' : 'polite') . '">' . e($message) . '</div>';
 }
 
 function render_sidebar(string $type, string $active, bool $isAdminPath = false): void
@@ -120,6 +121,7 @@ function render_sidebar(string $type, string $active, bool $isAdminPath = false)
     <button type="button" class="sidebar-backdrop" data-sidebar-backdrop aria-label="Fechar menu lateral" tabindex="-1"></button>
     <script src="<?= e(sidebar_asset_path($isAdminPath)) ?>"></script>
     <script src="<?= e(theme_asset_path()) ?>" defer></script>
+    <script src="<?= e(accessibility_asset_path($isAdminPath)) ?>" defer></script>
     <link rel="stylesheet" href="<?= e(context_help_asset_path($isAdminPath, 'css')) ?>">
     <script src="<?= e(context_help_asset_path($isAdminPath, 'js')) ?>" defer></script>
     <?php
@@ -316,6 +318,12 @@ function context_help_asset_path(bool $isAdminPath, string $type): string
 {
     $path = $isAdminPath ? '../assets/' : 'assets/';
     return $path . ($type === 'css' ? 'css/onboarding.css' : 'js/context-help.js') . '?v=2026.06.11-7';
+}
+
+function accessibility_asset_path(bool $isAdminPath): string
+{
+    $path = $isAdminPath ? '../assets/js/accessibility.js' : 'assets/js/accessibility.js';
+    return $path . '?v=2026.06.13-11';
 }
 
 function stat_card(string $label, $value, string $icon): string

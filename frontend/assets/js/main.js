@@ -108,7 +108,9 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       panels.forEach((panel) => {
-        panel.classList.toggle("is-active", panel.dataset.flowPanel === target);
+        const isActive = panel.dataset.flowPanel === target;
+        panel.classList.toggle("is-active", isActive);
+        panel.hidden = !isActive;
       });
     };
 
@@ -117,6 +119,8 @@ document.addEventListener("DOMContentLoaded", () => {
         activateStep(step.dataset.flowStep);
       });
     });
+
+    activateStep(steps.find((step) => step.classList.contains("is-active"))?.dataset.flowStep || steps[0].dataset.flowStep);
   });
 
   document.querySelectorAll("[data-testimonial-carousel]").forEach((carousel) => {
@@ -132,6 +136,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const originalCount = originalCards.length;
+    carousel.setAttribute("role", "region");
+    carousel.setAttribute("aria-label", "Depoimentos de usuários");
     const prepareImages = (card) => {
       card.querySelectorAll("img").forEach((image) => {
         image.loading = "lazy";
@@ -330,6 +336,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      isPaused = false;
+      scheduleNext();
+    });
+
+    carousel.addEventListener("focusin", () => {
+      isPaused = true;
+      window.clearTimeout(timer);
+    });
+
+    carousel.addEventListener("focusout", (event) => {
+      if (carousel.contains(event.relatedTarget)) return;
       isPaused = false;
       scheduleNext();
     });
