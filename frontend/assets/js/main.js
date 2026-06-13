@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const revealSelectors = [
     ".home-hero-copy",
-    ".hero-product-stage",
+    ".hero-phone-wrap",
     ".page-section .section-head",
     "#recursos .feature-card",
     ".home-detail-grid > *",
@@ -27,6 +27,79 @@ document.addEventListener("DOMContentLoaded", () => {
     revealSelectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)))
   ));
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  document.querySelectorAll("[data-hero-typewriter]").forEach((typewriter) => {
+    const textElement = typewriter.querySelector("[data-hero-typewriter-text]");
+    const words = (typewriter.dataset.words || "")
+      .split("|")
+      .map((word) => word.trim())
+      .filter(Boolean);
+
+    if (!textElement || words.length === 0) {
+      return;
+    }
+
+    textElement.textContent = words[0];
+
+    if (prefersReducedMotion || words.length === 1) {
+      return;
+    }
+
+    typewriter.classList.add("is-ready");
+
+    const typeSpeed = 68;
+    const deleteSpeed = 36;
+    const waitTime = 1900;
+    const fadeTime = 180;
+    let wordIndex = 0;
+    let charIndex = words[0].length;
+    let isDeleting = false;
+
+    const render = () => {
+      textElement.textContent = words[wordIndex].slice(0, charIndex);
+    };
+
+    const tick = () => {
+      if (isDeleting) {
+        typewriter.classList.add("is-fading");
+
+        if (charIndex > 0) {
+          charIndex -= 1;
+          render();
+          window.setTimeout(tick, deleteSpeed);
+          return;
+        }
+
+        wordIndex = (wordIndex + 1) % words.length;
+        isDeleting = false;
+        typewriter.classList.remove("is-fading");
+        window.setTimeout(tick, 240);
+        return;
+      }
+
+      typewriter.classList.remove("is-fading");
+
+      if (charIndex < words[wordIndex].length) {
+        charIndex += 1;
+        render();
+        window.setTimeout(tick, typeSpeed);
+        return;
+      }
+
+      window.setTimeout(() => {
+        typewriter.classList.add("is-fading");
+        window.setTimeout(() => {
+          isDeleting = true;
+          tick();
+        }, fadeTime);
+      }, waitTime);
+    };
+
+    window.setTimeout(() => {
+      isDeleting = true;
+      tick();
+    }, waitTime + 450);
+  });
 
   if (revealElements.length > 0) {
     revealElements.forEach((element, index) => {
@@ -56,41 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
       revealElements.forEach((element) => element.classList.add("is-visible"));
     }
   }
-
-  document.querySelectorAll("[data-mockup-tilt]").forEach((stage) => {
-    const mockup = stage.querySelector(".hero-product-mockup");
-
-    if (!mockup || prefersReducedMotion) {
-      return;
-    }
-
-    let frame = null;
-
-    const resetTilt = () => {
-      mockup.style.setProperty("--tilt-x", "0deg");
-      mockup.style.setProperty("--tilt-y", "0deg");
-      mockup.style.setProperty("--shift-x", "0px");
-      mockup.style.setProperty("--shift-y", "0px");
-    };
-
-    stage.addEventListener("pointermove", (event) => {
-      window.cancelAnimationFrame(frame);
-
-      frame = window.requestAnimationFrame(() => {
-        const rect = stage.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width - 0.5;
-        const y = (event.clientY - rect.top) / rect.height - 0.5;
-
-        mockup.style.setProperty("--tilt-x", `${x * -7}deg`);
-        mockup.style.setProperty("--tilt-y", `${y * 5}deg`);
-        mockup.style.setProperty("--shift-x", `${x * 10}px`);
-        mockup.style.setProperty("--shift-y", `${y * 8}px`);
-      });
-    });
-
-    stage.addEventListener("pointerleave", resetTilt);
-    stage.addEventListener("pointercancel", resetTilt);
-  });
 
   document.querySelectorAll("[data-flow-steps]").forEach((flow) => {
     const steps = Array.from(flow.querySelectorAll("[data-flow-step]"));
