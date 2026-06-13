@@ -5,7 +5,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector("[data-upload-form]");
   const submit = document.querySelector("[data-upload-submit]");
 
+  if (fileName) {
+    fileName.setAttribute("role", "status");
+    fileName.setAttribute("aria-live", "polite");
+    fileName.setAttribute("aria-atomic", "true");
+  }
+
   if (!drop || !input) return;
+
+  drop.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    input.click();
+  });
 
   ["dragenter", "dragover"].forEach((eventName) => {
     drop.addEventListener(eventName, (event) => {
@@ -26,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!file) return;
     input.files = event.dataTransfer.files;
     if (fileName) fileName.textContent = file.name;
+    input.focus();
   });
 
   input.addEventListener("change", () => {
@@ -37,6 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
       form.classList.add("is-submitting");
       submit.disabled = true;
       submit.textContent = "Enviando e preparando análise...";
+      submit.setAttribute("aria-busy", "true");
     });
   }
 });

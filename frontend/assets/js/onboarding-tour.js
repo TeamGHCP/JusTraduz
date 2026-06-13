@@ -67,6 +67,8 @@
     popover.className = 'onboarding-popover';
     popover.setAttribute('role', 'dialog');
     popover.setAttribute('aria-modal', 'true');
+    popover.setAttribute('aria-labelledby', 'onboarding-step-title');
+    popover.setAttribute('aria-describedby', 'onboarding-step-description');
     document.body.appendChild(overlay);
     document.body.appendChild(spotlight);
     document.body.appendChild(popover);
@@ -90,8 +92,8 @@
     element.classList.add('onboarding-highlight');
     element.scrollIntoView({ behavior: 'smooth', block: 'center' });
     popover.innerHTML =
-      '<h2>' + escapeHtml(element.dataset.tourTitle || 'Conheça esta área') + '</h2>' +
-      '<p>' + escapeHtml(element.dataset.tourDescription || '') + '</p>' +
+      '<h2 id="onboarding-step-title">' + escapeHtml(element.dataset.tourTitle || 'Conheça esta área') + '</h2>' +
+      '<p id="onboarding-step-description">' + escapeHtml(element.dataset.tourDescription || '') + '</p>' +
       '<span class="onboarding-count">Passo ' + (state.index + 1) + ' de ' + state.steps.length + '</span>' +
       '<div class="onboarding-progress"><span style="width:' + (((state.index + 1) / state.steps.length) * 100) + '%"></span></div>' +
       '<div class="onboarding-actions">' +

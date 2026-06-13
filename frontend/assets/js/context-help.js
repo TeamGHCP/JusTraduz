@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  var lastHelpTrigger = null;
+
   function escapeHtml(value) {
     var node = document.createElement('div');
     node.textContent = String(value || '');
@@ -63,6 +65,7 @@
 
     event.preventDefault();
     event.stopPropagation();
+    lastHelpTrigger = button;
 
     var existing = document.querySelector('.context-help-modal');
     if (existing) existing.remove();
@@ -86,7 +89,7 @@
   document.addEventListener('keydown', function (event) {
     if (event.key !== 'Escape') return;
     var modal = document.querySelector('.context-help-modal');
-    if (modal) closeModal(modal, null);
+    if (modal) closeModal(modal, lastHelpTrigger);
   });
 
   if (document.readyState === 'loading') {

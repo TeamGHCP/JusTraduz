@@ -142,12 +142,17 @@ document.addEventListener("DOMContentLoaded", () => {
     chatbot.classList.toggle("is-open", open);
     toggle?.setAttribute("aria-expanded", open ? "true" : "false");
     panel?.setAttribute("aria-hidden", open ? "false" : "true");
+    if (panel) panel.inert = !open;
 
     if (open) {
       if (freeTextEnabled) {
         window.setTimeout(() => input?.focus(), 120);
+      } else {
+        window.setTimeout(() => (hasConsent ? panel.querySelector("button") : ageConfirmation)?.focus(), 120);
       }
       if (hasConsent) showGreetingOnce();
+    } else {
+      toggle?.focus();
     }
   }
 
@@ -397,6 +402,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   toggle?.addEventListener("click", () => setOpen(true));
   closeButton?.addEventListener("click", () => setOpen(false));
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && chatbot.classList.contains("is-open")) setOpen(false);
+  });
   ageConfirmation?.addEventListener("change", updateConsentButton);
   termsConfirmation?.addEventListener("change", updateConsentButton);
   consentButton?.addEventListener("click", () => {

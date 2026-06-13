@@ -310,14 +310,14 @@
       <span class="ai-chatbot-callout-bubble">Consulte o JusIA</span>
     </button>
 
-    <section class="ai-chatbot-panel" data-ai-chatbot-panel aria-hidden="true">
+    <section class="ai-chatbot-panel" data-ai-chatbot-panel role="dialog" aria-modal="false" aria-labelledby="ai-chatbot-title" aria-hidden="true" inert>
       <header class="ai-chatbot-header">
         <div class="ai-chatbot-identity">
           <span class="ai-chatbot-avatar" aria-hidden="true">
             <img src="assets/img/chat-bot-logo.png" alt="">
           </span>
           <div>
-            <span>JusTraduz IA</span>
+            <span id="ai-chatbot-title">JusTraduz IA</span>
             <small>Assistente informativo</small>
           </div>
         </div>
@@ -365,5 +365,16 @@
 
   <script src="assets/js/main.js?v=index-premium-15"></script>
   <script src="assets/js/chatbot.js"></script>
+  <script src="assets/js/accessibility.js?v=2026.06.13-11"></script>
+  <div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+      <div class="vw-plugin-top-wrapper"></div>
+    </div>
+  </div>
+  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+  <script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+  </script>
 </body>
 </html>

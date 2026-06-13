@@ -68,6 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
     alertBoxes.forEach((alertBox) => {
       alertBox.textContent = message;
       alertBox.className = `alert is-visible ${kind === "success" ? "alert-success" : "alert-error"}`;
+      alertBox.setAttribute("role", kind === "success" ? "status" : "alert");
+      alertBox.setAttribute("aria-live", kind === "success" ? "polite" : "assertive");
     });
   }
 
@@ -76,6 +78,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!alertBox || !message) return;
     alertBox.textContent = message;
     alertBox.className = `alert is-visible ${kind === "success" ? "alert-success" : "alert-error"}`;
+    alertBox.setAttribute("role", kind === "success" ? "status" : "alert");
+    alertBox.setAttribute("aria-live", kind === "success" ? "polite" : "assertive");
   }
 
   function countDigits(value) {
@@ -180,12 +184,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (senha && senha2 && senha.value !== senha2.value) {
         showFormMessage(form, "As senhas precisam ser iguais.");
+        senha2.setAttribute("aria-invalid", "true");
         senha2.focus();
         return;
       }
 
       if (formCpf?.required && countDigits(formCpf.value) !== 11) {
         showFormMessage(form, "Informe um CPF completo para continuar.");
+        formCpf.setAttribute("aria-invalid", "true");
         formCpf.focus();
         return;
       }
@@ -193,6 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (["advogado", "estagiario"].includes(formType)) {
         if (!formOab?.value || countDigits(formOab.value) < 4 || !formUf?.value) {
           showFormMessage(form, "Informe numero da OAB e UF para o admin validar seu acesso.");
+          (formOab?.value ? formUf : formOab)?.setAttribute("aria-invalid", "true");
           (formOab?.value ? formUf : formOab)?.focus();
           return;
         }

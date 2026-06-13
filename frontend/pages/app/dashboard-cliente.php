@@ -91,7 +91,7 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
             </div>
             <span class="badge badge-success">Máx. 50 MB</span>
           </div>
-          <label class="upload-box upload-box-featured" data-upload-box>
+          <label class="upload-box upload-box-featured" data-upload-box tabindex="0">
             <input class="sr-only" type="file" name="documento" accept=".pdf,.png,.jpg,.jpeg,.webp" data-upload-input required>
             <?= icon_svg('upload') ?>
             <strong>Arraste seu arquivo ou clique para selecionar</strong>
@@ -117,6 +117,7 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
         <?php else: ?>
           <div class="table-wrap">
             <table class="table">
+              <caption class="sr-only">Histórico dos documentos enviados</caption>
               <thead><tr><th>Documento</th><th>Tipo</th><th>Análise</th><th>Data</th><th>Ação</th></tr></thead>
               <tbody>
                 <?php foreach ($documents as $document): ?>
