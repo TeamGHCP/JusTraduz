@@ -294,6 +294,11 @@
     grid-column: auto;
   }
 
+  .process-detail-history-card,
+  .process-detail-history-card .process-detail-timeline {
+    max-height: 460px;
+  }
+
   .admin-hero,
   .analysis-hero,
   .lawyer-directory-hero,
@@ -368,6 +373,11 @@
 
   .topbar {
     gap: 14px;
+  }
+
+  .process-detail-history-card,
+  .process-detail-history-card .process-detail-timeline {
+    max-height: 380px;
   }
 
   .topbar-actions { width: auto; }

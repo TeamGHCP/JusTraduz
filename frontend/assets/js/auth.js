@@ -26,6 +26,38 @@ document.addEventListener("DOMContentLoaded", () => {
   const professionalNote = document.querySelector("[data-professional-note]");
   const alertBoxes = document.querySelectorAll("[data-auth-alert]");
 
+  function syncAnimatedField(field) {
+    const input = field.querySelector(".jt-input");
+    if (!input) return;
+    const hasValue = input.value !== "";
+    field.classList.toggle("has-value", hasValue);
+    if (input.validity.valid || !input.dataset.touched) {
+      field.classList.remove("has-error");
+      const error = field.querySelector(".jt-error");
+      if (error) error.textContent = "";
+    }
+  }
+
+  document.querySelectorAll(".jt-field").forEach((field) => {
+    const input = field.querySelector(".jt-input");
+    if (!input) return;
+
+    input.addEventListener("focus", () => field.classList.add("is-focused"));
+    input.addEventListener("blur", () => {
+      field.classList.remove("is-focused");
+      input.dataset.touched = "1";
+      syncAnimatedField(field);
+      if (!input.validity.valid) {
+        field.classList.add("has-error");
+        const error = field.querySelector(".jt-error");
+        if (error) error.textContent = input.validationMessage;
+      }
+    });
+    input.addEventListener("input", () => syncAnimatedField(field));
+    input.addEventListener("change", () => syncAnimatedField(field));
+    syncAnimatedField(field);
+  });
+
   function formatOab(value) {
     return String(value || "").replace(/\D+/g, "").slice(0, 7);
   }
@@ -50,16 +82,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (cpfInput) {
       cpfInput.toggleAttribute("required", needsCpf);
       cpfInput.value = needsCpf ? formatCpf(cpfInput.value) : "";
+      cpfInput.closest(".jt-field")?.classList.toggle("has-value", cpfInput.value !== "");
     }
 
     if (oabInput) {
       oabInput.toggleAttribute("required", needsOab);
       oabInput.value = needsOab ? formatOab(oabInput.value) : "";
+      oabInput.closest(".jt-field")?.classList.toggle("has-value", oabInput.value !== "");
     }
 
     if (ufInput) {
       ufInput.toggleAttribute("required", needsOab);
       if (!needsOab) ufInput.value = "";
+      ufInput.closest(".jt-field")?.classList.toggle("has-value", ufInput.value !== "");
     }
   }
 

@@ -41,7 +41,7 @@ if ($onlyAvailable) {
 
 $lawyers = fetch_all(
     $pdo,
-    "SELECT u.id, u.nome, u.email, u.telefone, u.foto_perfil, u.oab, u.oab_uf, u.oab_status,
+    "SELECT u.id, u.nome, u.email, u.telefone, u.foto_perfil, u.google_picture, u.oab, u.oab_uf, u.oab_status,
             (SELECT COUNT(*) FROM cases c WHERE c.advogado_id = u.id AND c.status <> 'finalizado') AS active_cases,
             (SELECT COUNT(*) FROM schedule_slots s WHERE s.professional_id = u.id AND s.status = 'livre' AND s.starts_at >= NOW()) AS free_slots,
             (SELECT MIN(s.starts_at) FROM schedule_slots s WHERE s.professional_id = u.id AND s.status = 'livre' AND s.starts_at >= NOW()) AS next_free_at
@@ -53,8 +53,16 @@ $lawyers = fetch_all(
 
 function directory_lawyer_photo(array $lawyer): string
 {
-    $path = trim((string) ($lawyer['foto_perfil'] ?? ''));
-    return $path !== '' ? '../' . ltrim($path, '/') : '';
+    $localPath = trim((string) ($lawyer['foto_perfil'] ?? ''));
+    $googlePath = trim((string) ($lawyer['google_picture'] ?? ''));
+    $path = ($localPath !== '' && (preg_match('#^https?://#i', $localPath) || is_file(PROJECT_ROOT_PATH . '/' . ltrim($localPath, '/'))))
+        ? $localPath
+        : $googlePath;
+    if ($path === '') {
+        return '';
+    }
+
+    return preg_match('#^https?://#i', $path) ? $path : '../' . ltrim($path, '/');
 }
 
 function directory_datetime(?string $value): string
@@ -134,10 +142,9 @@ function directory_datetime(?string $value): string
               <article class="lawyer-directory-card">
                 <div class="lawyer-directory-head">
                   <div class="lawyer-avatar lawyer-avatar-large">
+                    <span class="avatar-initial"><?= e(strtoupper(substr((string) $lawyer['nome'], 0, 1))) ?></span>
                     <?php if ($photoUrl): ?>
-                      <img src="<?= e($photoUrl) ?>" alt="<?= e($lawyer['nome']) ?>">
-                    <?php else: ?>
-                      <?= e(strtoupper(substr((string) $lawyer['nome'], 0, 1))) ?>
+                      <img src="<?= e($photoUrl) ?>" alt="<?= e($lawyer['nome']) ?>" referrerpolicy="no-referrer" onerror="this.remove()">
                     <?php endif; ?>
                   </div>
                   <div>

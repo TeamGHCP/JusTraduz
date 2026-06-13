@@ -5,12 +5,19 @@ require_login();
 $type = current_user_type();
 $user = fetch_one(
     $pdo,
-    'SELECT nome, email, tipo, telefone, cpf, foto_perfil, oab, oab_uf, oab_status, oab_verificado, status_cna, cna_validado_em, cna_origem, cna_ultimo_erro
+    'SELECT nome, email, tipo, telefone, cpf, foto_perfil, google_picture, oab, oab_uf, oab_status, oab_verificado, status_cna, cna_validado_em, cna_origem, cna_ultimo_erro
      FROM users
      WHERE id = ?',
     [current_user_id()]
 );
-$photoUrl = !empty($user['foto_perfil']) ? '../' . ltrim((string) $user['foto_perfil'], '/') : '';
+$localProfilePhoto = trim((string) ($user['foto_perfil'] ?? ''));
+$googleProfilePhoto = trim((string) ($user['google_picture'] ?? ''));
+$profilePhotoPath = ($localProfilePhoto !== '' && (preg_match('#^https?://#i', $localProfilePhoto) || is_file(PROJECT_ROOT_PATH . '/' . ltrim($localProfilePhoto, '/'))))
+    ? $localProfilePhoto
+    : $googleProfilePhoto;
+$photoUrl = $profilePhotoPath !== ''
+    ? (preg_match('#^https?://#i', $profilePhotoPath) ? $profilePhotoPath : '../' . ltrim($profilePhotoPath, '/'))
+    : '';
 
 function profile_oab_status_meta(array $user): array
 {
@@ -71,10 +78,9 @@ $profileTourKey = match ($type) {
       <section class="profile-layout">
         <aside class="card text-center">
           <div class="profile-photo">
+            <span class="avatar-initial"><?= e(substr($user['nome'] ?? 'U', 0, 1)) ?></span>
             <?php if ($photoUrl): ?>
-              <img src="<?= e($photoUrl) ?>" alt="<?= e($user['nome'] ?? 'Foto de perfil') ?>">
-            <?php else: ?>
-              <?= e(substr($user['nome'] ?? 'U', 0, 1)) ?>
+              <img src="<?= e($photoUrl) ?>" alt="<?= e($user['nome'] ?? 'Foto de perfil') ?>" referrerpolicy="no-referrer" onerror="this.remove()">
             <?php endif; ?>
           </div>
           <h3><?= e($user['nome'] ?? '') ?></h3>

@@ -1,7 +1,8 @@
-﻿-- JusTraduz - instalador SQL consolidado.
+-- JusTraduz - instalador SQL consolidado.
 -- Contem schema final, migrations incorporadas e dados de apresentacao.
 -- ATENCAO: este arquivo recria o banco justraduz do zero.
 -- Nao execute em uma base com dados reais sem backup.
+-- Migration de onboarding/tour incorporada e registrada em schema_migrations.
 
 DROP DATABASE IF EXISTS justraduz;
 CREATE DATABASE IF NOT EXISTS justraduz
@@ -15,7 +16,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
--- usuÃ¡rios
+-- usuários
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -26,6 +27,10 @@ CREATE TABLE IF NOT EXISTS users (
     oab VARCHAR(20),
     oab_uf VARCHAR(10),
     oab_status VARCHAR(50),
+    oab_rejection_reason TEXT NULL,
+    oab_submitted_at DATETIME NULL,
+    oab_validated_at DATETIME NULL,
+    oab_validated_by INT NULL,
     oab_parametro TEXT,
     oab_verificado BOOLEAN DEFAULT FALSE,
 
@@ -44,9 +49,17 @@ CREATE TABLE IF NOT EXISTS users (
     google_sub VARCHAR(255) UNIQUE,
     google_picture VARCHAR(255),
     google_linked_at DATETIME NULL,
+    provider VARCHAR(30) NULL,
+    profile_completed BOOLEAN DEFAULT TRUE,
+    email_verified_at DATETIME NULL,
     status ENUM('ativo','inativo') DEFAULT 'ativo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_users_tipo_status (tipo, status)
+    updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_users_tipo_status (tipo, status),
+    INDEX idx_users_oab_status (oab_status),
+    INDEX idx_users_provider (provider),
+    INDEX idx_users_google_sub (google_sub),
+    FOREIGN KEY (oab_validated_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS user_onboarding_progress (
@@ -94,7 +107,7 @@ CREATE TABLE IF NOT EXISTS ai_results (
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8mb4;
 
--- casos (solicitaÃ§Ãµes de ajuda)
+-- casos (solicitações de ajuda)
 CREATE TABLE IF NOT EXISTS cases (
     id INT AUTO_INCREMENT PRIMARY KEY,
     cliente_id INT NOT NULL,
@@ -172,7 +185,7 @@ CREATE TABLE IF NOT EXISTS appointments (
     INDEX idx_appointments_status (status, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
--- notificaÃ§Ãµes (CORRIGIDO: Sintaxe finalizada e fechamento correto)
+-- notificações (CORRIGIDO: Sintaxe finalizada e fechamento correto)
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -269,7 +282,9 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_indexes_integrity'),
     ('migration_google_oauth'),
     ('migration_datajud_processes'),
-    ('migration_case_document');
+    ('migration_case_document'),
+    ('2026_06_11_create_user_onboarding_progress'),
+    ('2026_06_13_google_oab_profile_fields');
 
 -- Dados de apresentacao.
 USE justraduz;
@@ -513,7 +528,7 @@ SET @appointment_id = LAST_INSERT_ID();
 
 INSERT INTO notifications (user_id, mensagem, lida, created_at)
 VALUES
-    (@cliente_id, 'Documento notificaÃ§Ã£o-extrajudicial-demo.png analisado com IA.', FALSE, DATE_SUB(NOW(), INTERVAL 4 DAY)),
+    (@cliente_id, 'Documento notificação-extrajudicial-demo.png analisado com IA.', FALSE, DATE_SUB(NOW(), INTERVAL 4 DAY)),
     (@cliente_id, 'Atendimento agendado com Dra. Marina Costa.', FALSE, DATE_SUB(NOW(), INTERVAL 12 HOUR)),
     (@advogado_id, 'Novo caso de prioridade alta atribuido.', FALSE, DATE_SUB(NOW(), INTERVAL 3 DAY)),
     (@admin_id, 'Profissional pendente aguardando validacao OAB.', FALSE, DATE_SUB(NOW(), INTERVAL 2 DAY));
@@ -538,4 +553,3 @@ VALUES
     (NULL, 'auth.login_failed', 'user', NULL, JSON_OBJECT('email', 'tentativa@demo.local', 'reason', 'wrong_password'), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 2 HOUR));
 
 SELECT 'Seed demo aplicado. Senha das contas: Demo@2026!' AS resultado;
-

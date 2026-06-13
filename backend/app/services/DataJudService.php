@@ -63,10 +63,7 @@ class DataJudService
     private function findProcess(string $cnj, string $preferredTribunal): array
     {
         $errors = [];
-        $tribunals = array_values(array_unique(array_filter(array_merge(
-            [$preferredTribunal],
-            $this->allTribunalAliases()
-        ))));
+        $tribunals = $this->candidateTribunalsForCnj($cnj, $preferredTribunal);
 
         foreach ($tribunals as $tribunal) {
             $response = $this->queryTribunal($cnj, $tribunal);
@@ -99,6 +96,27 @@ class DataJudService
             'hit' => [],
             'errors' => $errors,
         ];
+    }
+
+    private function candidateTribunalsForCnj(string $cnj, string $preferredTribunal): array
+    {
+        if ($preferredTribunal !== '') {
+            return [$preferredTribunal];
+        }
+
+        $branch = substr($cnj, 13, 1);
+        return match ($branch) {
+            '4' => array_map(static fn (int $region): string => 'trf' . $region, range(1, 6)),
+            '5' => array_merge(['tst'], array_map(static fn (int $region): string => 'trt' . $region, range(1, 24))),
+            '6' => array_merge(['tse'], array_map(static fn (string $uf): string => 'tre-' . strtolower($uf === 'DF' ? 'dft' : $uf), array_values($this->stateUfAliases()))),
+            '8' => array_values($this->stateCourtAliases()),
+            '9' => ['tjmmg', 'tjmrs', 'tjmsp'],
+            '1' => ['stf'],
+            '2' => ['cnj'],
+            '3' => ['stj'],
+            '7' => ['stm'],
+            default => [],
+        };
     }
 
     private function queryTribunal(string $cnj, string $tribunal): array
@@ -479,8 +497,8 @@ class DataJudService
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => strtoupper($method),
             CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_TIMEOUT => 35,
+            CURLOPT_CONNECTTIMEOUT => $this->connectTimeout(),
+            CURLOPT_TIMEOUT => $this->requestTimeout(),
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_SSL_VERIFYPEER => $this->sslVerify(),
             CURLOPT_SSL_VERIFYHOST => $this->sslVerify() ? 2 : 0,
@@ -551,6 +569,18 @@ class DataJudService
     {
         $value = strtolower($this->envValue('DATAJUD_SSL_VERIFY'));
         return !in_array($value, ['0', 'false', 'no', 'off'], true);
+    }
+
+    private function connectTimeout(): int
+    {
+        $value = (int) $this->envValue('DATAJUD_CONNECT_TIMEOUT');
+        return $value > 0 ? min($value, 15) : 5;
+    }
+
+    private function requestTimeout(): int
+    {
+        $value = (int) $this->envValue('DATAJUD_TIMEOUT');
+        return $value > 0 ? min($value, 60) : 12;
     }
 
     private function envValue(string $key): string

@@ -41,7 +41,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
 $pendingProfessionals = fetch_all(
     $pdo,
-    "SELECT id, nome, email, telefone, tipo, oab, oab_uf, oab_status, status_cna, cna_origem, cna_ultimo_erro, created_at
+    "SELECT id, nome, email, telefone, tipo, foto_perfil, google_picture, oab, oab_uf, oab_status, status_cna, cna_origem, cna_ultimo_erro, created_at
      FROM users
      WHERE tipo IN ('advogado', 'estagiario')
        AND status = 'ativo'
@@ -87,7 +87,7 @@ $recentReviews = fetch_all(
     <?php render_sidebar('admin', 'validar-oab.php', true); ?>
 
     <main class="app-main">
-      <?php render_topbar('Validar OAB', 'Aprove profissionais reais e exclua contas com OAB invalida.', current_user_name()); ?>
+      <?php render_topbar('Validar OAB', 'Aprove profissionais reais e rejeite cadastros inconsistentes com motivo registrado.', current_user_name()); ?>
 
       <?php if ($successMessage !== ''): ?>
         <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
@@ -116,7 +116,7 @@ $recentReviews = fetch_all(
         <article>
           <?= icon_svg('lock') ?>
           <strong>3. Justificar tudo</strong>
-          <span>Aprovacao ou exclusao precisa de justificativa para auditoria e defesa tecnica.</span>
+          <span>Aprovacao ou rejeicao precisa de justificativa para auditoria e defesa tecnica.</span>
         </article>
       </section>
 
@@ -149,8 +149,26 @@ $recentReviews = fetch_all(
                   ?>
                   <tr>
                     <td>
-                      <strong><?= e($professional['nome']) ?></strong>
-                      <span class="table-subtext"><?= e($professional['tipo'] === 'advogado' ? 'Advogado' : 'Estagiário') ?></span>
+                      <div class="table-user">
+                        <span class="table-avatar">
+                          <?php
+                            $initial = mb_strtoupper(mb_substr((string) $professional['nome'], 0, 1));
+                            $localAvatar = trim((string) ($professional['foto_perfil'] ?? ''));
+                            $googleAvatar = trim((string) ($professional['google_picture'] ?? ''));
+                            $avatar = ($localAvatar !== '' && (preg_match('#^https?://#i', $localAvatar) || is_file(PROJECT_ROOT_PATH . '/' . ltrim($localAvatar, '/'))))
+                                ? $localAvatar
+                                : $googleAvatar;
+                          ?>
+                          <span class="avatar-initial"><?= e($initial) ?></span>
+                          <?php if ($avatar !== ''): ?>
+                            <img src="<?= e(preg_match('#^https?://#i', $avatar) ? $avatar : '../../' . ltrim($avatar, '/')) ?>" alt="" referrerpolicy="no-referrer" onerror="this.remove()">
+                          <?php endif; ?>
+                        </span>
+                        <span>
+                          <strong><?= e($professional['nome']) ?></strong>
+                          <span class="table-subtext"><?= e($professional['tipo'] === 'advogado' ? 'Advogado' : 'Estagiário') ?></span>
+                        </span>
+                      </div>
                     </td>
                     <td>
                       <?= e($professional['email']) ?>
@@ -199,12 +217,12 @@ $recentReviews = fetch_all(
                           <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
                         </form>
 
-                        <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar esta OAB vai excluir a conta do profissional. Continuar?');">
+                        <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Rejeitar este cadastro manterá a conta bloqueada e enviará o motivo ao usuário. Continuar?');">
                           <?= csrf_input() ?>
                           <input type="hidden" name="user_id" value="<?= (int) $professional['id'] ?>">
                           <input type="hidden" name="action" value="reject">
                           <input class="input admin-reason-input" name="justificativa" placeholder="Motivo da reprovacao" required>
-                          <button class="btn btn-outline btn-sm" type="submit">Excluir por OAB inválida</button>
+                          <button class="btn btn-outline btn-sm" type="submit">Rejeitar cadastro</button>
                         </form>
                       </div>
                     </td>

@@ -23,16 +23,24 @@ function require_validated_professional_access(): void
     }
 
     global $pdo;
-    $stmt = $pdo->prepare("SELECT oab_verificado FROM users WHERE id = ? AND status = 'ativo'");
+    $stmt = $pdo->prepare("SELECT oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason FROM users WHERE id = ? AND status = 'ativo'");
     $stmt->execute([current_user_id()]);
+    $user = $stmt->fetch();
 
-    if ((int) ($stmt->fetchColumn() ?: 0) === 1) {
+    if ($user && (int) ($user['oab_verificado'] ?? 0) === 1) {
         return;
+    }
+
+    $status = (string) (($user['oab_status'] ?? '') ?: ($user['status_cna'] ?? 'pending'));
+    $message = 'Seu cadastro profissional esta aguardando aprovacao do administrador interno. Voce recebera um e-mail quando for aprovado.';
+    if (in_array($status, ['rejected', 'invalido', 'nao_encontrado'], true)) {
+        $reason = trim((string) (($user['oab_rejection_reason'] ?? '') ?: ($user['cna_ultimo_erro'] ?? '')));
+        $message = 'Seu cadastro profissional nao foi aprovado.' . ($reason !== '' ? ' Motivo: ' . $reason : '');
     }
 
     secure_session_destroy_current();
 
-    header('Location: ' . app_url('/frontend/login.html?erro=' . urlencode('Sua OAB ainda precisa ser validada pela administracao.')));
+    header('Location: ' . app_url('/frontend/login.html?erro=' . urlencode($message)));
     exit;
 }
 

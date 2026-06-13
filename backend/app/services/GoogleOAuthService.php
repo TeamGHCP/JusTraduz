@@ -5,6 +5,7 @@ class GoogleOAuthService
     private const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
     private const TOKEN_URL = 'https://oauth2.googleapis.com/token';
     private const JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
+    private const USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
 
     private string $clientId;
     private string $clientSecret;
@@ -85,6 +86,18 @@ class GoogleOAuthService
         }
 
         return $payload;
+    }
+
+    public function fetchUserInfo(string $accessToken): array
+    {
+        if ($accessToken === '') {
+            return [];
+        }
+
+        return $this->httpJson(self::USERINFO_URL, [], [
+            'Authorization: Bearer ' . $accessToken,
+            'Accept: application/json',
+        ]);
     }
 
     private function verifySignature(string $kid, string $signedData, string $signature): void
@@ -257,14 +270,14 @@ class GoogleOAuthService
         return $decoded;
     }
 
-    private function httpJson(string $url, array $postFields = []): array
+    private function httpJson(string $url, array $postFields = [], array $headers = ['Accept: application/json']): array
     {
         if (function_exists('curl_init')) {
             $ch = curl_init($url);
             curl_setopt_array($ch, [
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_TIMEOUT => 15,
-                CURLOPT_HTTPHEADER => ['Accept: application/json'],
+                CURLOPT_HTTPHEADER => $headers,
             ]);
 
             if ($postFields !== []) {
@@ -281,7 +294,13 @@ class GoogleOAuthService
             $error = curl_error($ch);
             curl_close($ch);
         } else {
-            $context = null;
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'GET',
+                    'header' => implode("\r\n", $headers) . "\r\n",
+                    'timeout' => 15,
+                ],
+            ]);
             if ($postFields !== []) {
                 $context = stream_context_create([
                     'http' => [

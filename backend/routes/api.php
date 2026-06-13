@@ -9,6 +9,7 @@ $routes = [
     ['POST', '/auth/login', 'AuthController', 'login'],
     ['GET', '/auth/google', 'AuthController', 'googleRedirect'],
     ['GET', '/auth/google/callback', 'AuthController', 'googleCallback'],
+    ['POST', '/auth/google/complete-profile', 'AuthController', 'completeGoogleProfile'],
     ['GET', '/auth/csrf', 'AuthController', 'csrf'],
     ['POST', '/auth/force-logout', 'AuthController', 'forceLogout'],
     ['POST', '/auth/admin-login', 'AuthController', 'adminLogin'],

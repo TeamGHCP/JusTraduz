@@ -254,10 +254,9 @@ function render_topbar(string $title, string $subtitle, string $roleLabel): void
       </div>
       <div class="topbar-actions">
         <span class="avatar topbar-avatar" title="<?= e(current_user_name()) ?>" aria-label="Usuário: <?= e(current_user_name()) ?>">
+          <span class="avatar-initial"><?= e($initial) ?></span>
           <?php if ($photoUrl): ?>
-            <img src="<?= e($photoUrl) ?>" alt="<?= e(current_user_name()) ?>">
-          <?php else: ?>
-            <?= e($initial) ?>
+            <img src="<?= e($photoUrl) ?>" alt="<?= e(current_user_name()) ?>" referrerpolicy="no-referrer" onerror="this.remove()">
           <?php endif; ?>
         </span>
       </div>
@@ -275,14 +274,26 @@ function current_user_photo_url(): string
 
         if (is_logged_in()) {
             global $pdo;
-            $stmt = $pdo->prepare('SELECT foto_perfil FROM users WHERE id = ?');
+            $stmt = $pdo->prepare('SELECT foto_perfil, google_picture FROM users WHERE id = ?');
             $stmt->execute([current_user_id()]);
-            $photoPath = (string) ($stmt->fetchColumn() ?: '');
+            $userPhoto = $stmt->fetch();
+            $localPhoto = trim((string) ($userPhoto['foto_perfil'] ?? ''));
+            $googlePhoto = trim((string) ($userPhoto['google_picture'] ?? ''));
+
+            if ($localPhoto !== '' && (preg_match('#^https?://#i', $localPhoto) || is_file(PROJECT_ROOT_PATH . '/' . ltrim($localPhoto, '/')))) {
+                $photoPath = $localPhoto;
+            } else {
+                $photoPath = $googlePhoto;
+            }
         }
     }
 
     if ($photoPath === '') {
         return '';
+    }
+
+    if (preg_match('#^https?://#i', $photoPath)) {
+        return $photoPath;
     }
 
     $prefix = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') ? '../../' : '../';

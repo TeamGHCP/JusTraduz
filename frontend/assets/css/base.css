@@ -18,6 +18,9 @@
   --info: #2f5f98;
   --shadow: 0 22px 48px rgba(23, 32, 51, .12);
   --shadow-sm: 0 8px 22px rgba(23, 32, 51, .07);
+  --avatar-bg: #0f1b33;
+  --avatar-text: #ffffff;
+  --avatar-ring: #ffffff;
   --radius: 8px;
   --radius-sm: 6px;
   --font: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
@@ -43,6 +46,9 @@
   --info: #93c5fd;
   --shadow: 0 22px 48px rgba(0, 0, 0, .32);
   --shadow-sm: 0 8px 22px rgba(0, 0, 0, .22);
+  --avatar-bg: #eff5ff;
+  --avatar-text: #152033;
+  --avatar-ring: #23314a;
   color-scheme: dark;
 }
 

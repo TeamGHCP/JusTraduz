@@ -96,6 +96,39 @@ function process_detail_source(array $process): string
     return $source === 'datajud' ? 'DataJud/CNJ' : strtoupper($source);
 }
 
+function process_detail_uf(array $process, array $payload): string
+{
+    $uf = strtoupper(process_detail_clean_text($process['uf'] ?? ''));
+    if (preg_match('/^[A-Z]{2}$/', $uf)) {
+        return $uf;
+    }
+
+    foreach (['uf', 'UF', 'estado', 'siglaUf', 'siglaUF'] as $key) {
+        $payloadUf = strtoupper(process_detail_clean_text($payload[$key] ?? ''));
+        if (preg_match('/^[A-Z]{2}$/', $payloadUf)) {
+            return $payloadUf;
+        }
+    }
+
+    $tribunal = strtoupper(process_detail_clean_text(($process['tribunal'] ?? '') ?: ($payload['tribunal'] ?? '')));
+    if (preg_match('/(?:TJ|TRE|TRT|TRF)([A-Z]{2})$/', $tribunal, $matches)) {
+        return $matches[1];
+    }
+
+    if (preg_match('/^TRF([1-6])$/', $tribunal, $matches)) {
+        return [
+            '1' => 'DF',
+            '2' => 'RJ',
+            '3' => 'SP',
+            '4' => 'RS',
+            '5' => 'PE',
+            '6' => 'MG',
+        ][$matches[1]] ?? '-';
+    }
+
+    return '-';
+}
+
 function process_detail_movements(array $process): array
 {
     $payload = process_detail_payload($process);
@@ -218,7 +251,7 @@ $topbarSubtitle = (string) (($process['process_number'] ?? '') ?: 'Processo arma
             </article>
           <?php endif; ?>
 
-          <article class="process-detail-card">
+          <article class="process-detail-card process-detail-history-card">
             <div class="process-detail-section-title">
               <span>Historico</span>
               <h3>Movimentacoes</h3>
@@ -247,7 +280,7 @@ $topbarSubtitle = (string) (($process['process_number'] ?? '') ?: 'Processo arma
             <dl class="process-detail-list">
               <div><dt>Numero</dt><dd><?= e((string) (($process['process_number'] ?? '') ?: '-')) ?></dd></div>
               <div><dt>Tribunal</dt><dd><?= e((string) (($process['tribunal'] ?? '') ?: '-')) ?></dd></div>
-              <div><dt>UF</dt><dd><?= e((string) (($process['uf'] ?? '') ?: '-')) ?></dd></div>
+              <div><dt>UF</dt><dd><?= e(process_detail_uf($process, $payload)) ?></dd></div>
               <div><dt>Grau / tipo</dt><dd><?= e(process_detail_clean_text(($process['tipo_processo'] ?? '') ?: ($payload['grau'] ?? '-')) ?: '-') ?></dd></div>
               <div><dt>Classe</dt><dd><?= e(process_detail_clean_text($process['classe_processual'] ?? '-') ?: '-') ?></dd></div>
               <div><dt>Assunto</dt><dd><?= e(process_detail_subjects($process)) ?></dd></div>

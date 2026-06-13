@@ -30,7 +30,7 @@ class AuthController extends BaseController
         $tipo   = (string) $this->request->post('tipo', 'cliente');
         $oab    = preg_replace('/\D+/', '', (string) $this->request->post('inscricao', ''));
         $oab_uf = strtoupper(trim((string) $this->request->post('oab_uf', '')));
-        $oab_status = null;
+        $oab_status = 'not_required';
         $oab_parametro = null;
         $oab_verificado = false;
         $oab_tipo = null;
@@ -48,7 +48,7 @@ class AuthController extends BaseController
         }
 
         $telefone = preg_replace('/[^\d()+\-\s]/', '', $telefone) ?? '';
-        if ($telefone !== '' && strlen(preg_replace('/\D+/', '', $telefone) ?? '') < 10) {
+        if ($telefone === '' || strlen(preg_replace('/\D+/', '', $telefone) ?? '') < 10) {
             $this->response->redirectWithError($frontUrl, 'Informe um telefone válido com DDD.');
         }
 
@@ -84,7 +84,7 @@ class AuthController extends BaseController
                 $this->response->redirectWithError($frontUrl, 'Informe a UF da OAB.');
             }
 
-            $oab_status = 'Aguardando validacao administrativa.';
+            $oab_status = 'pending';
             $oab_tipo = $tipo;
             $status_cna = 'pendente';
         } else {
@@ -102,8 +102,8 @@ class AuthController extends BaseController
         // Insere no banco
         $senhaCriptografada = password_hash($senha, PASSWORD_DEFAULT);
 
-        $sql = "INSERT INTO users (nome, email, senha, tipo, telefone, cpf, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna)
-                VALUES (:nome, :email, :senha, :tipo, :telefone, :cpf, :oab, :oab_uf, :oab_status, :oab_parametro, :oab_verificado, :oab_tipo, :status_cna)";
+        $sql = "INSERT INTO users (nome, email, senha, tipo, telefone, cpf, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna, oab_submitted_at, profile_completed)
+                VALUES (:nome, :email, :senha, :tipo, :telefone, :cpf, :oab, :oab_uf, :oab_status, :oab_parametro, :oab_verificado, :oab_tipo, :status_cna, :oab_submitted_at, 1)";
 
         try {
             $stmt = $this->pdo->prepare($sql);
@@ -121,6 +121,7 @@ class AuthController extends BaseController
                 ':oab_verificado' => $oab_verificado ? 1 : 0,
                 ':oab_tipo' => $oab_tipo,
                 ':status_cna' => $status_cna,
+                ':oab_submitted_at' => $isProfessional ? date('Y-m-d H:i:s') : null,
             ]);
             $userId = (int) $this->pdo->lastInsertId();
             $this->audit->log('auth.register', 'user', $userId, [
@@ -130,6 +131,7 @@ class AuthController extends BaseController
             ]);
             if (in_array($tipo, ['advogado', 'estagiario'], true)) {
                 $this->logOabValidation($userId, 'cadastro', null, 'pendente', 'admin_manual', $oab_status);
+                $this->sendProfessionalPendingEmail($email, $nome, $tipo);
             }
         } catch (PDOException $e) {
             if ($e->getCode() === '42S22') {
@@ -143,7 +145,7 @@ class AuthController extends BaseController
         }
 
         $success = $isProfessional
-            ? 'Cadastro recebido. Sua OAB precisa ser validada pela administracao antes do acesso ao sistema.'
+            ? 'Cadastro recebido. Seu acesso profissional aguardara aprovacao interna.'
             : 'conta_criada';
 
         $this->response->redirect(APP_URL . '/frontend/login.html?sucesso=' . urlencode($success));
@@ -170,7 +172,9 @@ class AuthController extends BaseController
         }
 
         $stmt = $this->pdo->prepare(
-            "SELECT id, nome, senha, tipo, oab_verificado FROM users WHERE email = ? AND status = 'ativo'"
+            "SELECT id, nome, email, senha, tipo, oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason, profile_completed
+             FROM users
+             WHERE email = ? AND status = 'ativo'"
         );
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
@@ -185,9 +189,15 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'Credenciais inválidas.');
         }
 
-        if (in_array((string) $usuario['tipo'], ['advogado', 'estagiario'], true) && (int) ($usuario['oab_verificado'] ?? 0) !== 1) {
-            $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'oab_pending']);
-            $this->response->redirectWithError($frontUrl, 'Sua OAB ainda precisa ser validada pela administracao.');
+        if ((int) ($usuario['profile_completed'] ?? 1) !== 1) {
+            $_SESSION['google_pending_user_id'] = (int) $usuario['id'];
+            $this->response->redirect(APP_URL . '/frontend/completar-cadastro-google.php');
+        }
+
+        $professionalBlockMessage = $this->professionalBlockMessage($usuario);
+        if ($professionalBlockMessage !== null) {
+            $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'oab_blocked']);
+            $this->response->redirectWithError($frontUrl, $professionalBlockMessage);
         }
 
         // Cria sessão
@@ -266,7 +276,33 @@ class AuthController extends BaseController
 
             $token = $google->fetchToken($code, $this->googleRedirectUri());
             $claims = $google->validateIdToken((string) ($token['id_token'] ?? ''), $expectedNonce);
+            $userInfo = [];
+            try {
+                $userInfo = $google->fetchUserInfo((string) ($token['access_token'] ?? ''));
+            } catch (Throwable $userInfoError) {
+                error_log('Google userinfo error: ' . $userInfoError->getMessage());
+            }
+            if ($userInfo !== []) {
+                $claims = array_merge($claims, array_filter([
+                    'name' => $userInfo['name'] ?? null,
+                    'email' => $userInfo['email'] ?? null,
+                    'picture' => $userInfo['picture'] ?? null,
+                ], static fn ($value) => $value !== null && $value !== ''));
+            }
             $usuario = $this->findOrCreateGoogleUser($claims);
+
+            if ((int) ($usuario['profile_completed'] ?? 1) !== 1) {
+                $_SESSION['google_pending_user_id'] = (int) $usuario['id'];
+                $this->audit->log('auth.google_profile_required', 'user', (int) $usuario['id'], ['email' => $usuario['email'] ?? null]);
+                $this->response->redirect(APP_URL . '/frontend/completar-cadastro-google.php');
+            }
+
+            $professionalBlockMessage = $this->professionalBlockMessage($usuario);
+            if ($professionalBlockMessage !== null) {
+                $this->audit->log('auth.google_login_blocked', 'user', (int) $usuario['id'], ['email' => $usuario['email'] ?? null]);
+                $this->response->redirectWithError($frontUrl, $professionalBlockMessage);
+            }
+
             $this->signInUser($usuario);
             $this->audit->log('auth.google_login', 'user', (int) $usuario['id'], ['email' => $usuario['email'] ?? null]);
             $this->response->redirect(APP_URL . $this->dashboardPathFor((string) $usuario['tipo']));
@@ -282,6 +318,115 @@ class AuthController extends BaseController
             error_log('Google OAuth error: ' . $e->getMessage());
             $this->response->redirectWithError($frontUrl, 'Não foi possível entrar com Google agora.');
         }
+    }
+
+    // -------------------------------------------------------
+    // POST /auth/google/complete-profile
+    // -------------------------------------------------------
+    public function completeGoogleProfile(): void
+    {
+        $this->startSession();
+
+        $pendingUserId = (int) ($_SESSION['google_pending_user_id'] ?? 0);
+        $frontUrl = APP_URL . '/frontend/completar-cadastro-google.php';
+
+        if ($pendingUserId <= 0) {
+            $this->response->redirectWithError(APP_URL . '/frontend/login.html', 'Sessao Google expirada. Entre com Google novamente.');
+        }
+
+        $tipo = (string) $this->request->post('tipo', '');
+        $telefone = preg_replace('/[^\d()+\-\s]/', '', trim((string) $this->request->post('telefone', ''))) ?? '';
+        $cpf = preg_replace('/\D+/', '', (string) $this->request->post('cpf', '')) ?? '';
+        $oab = preg_replace('/\D+/', '', (string) $this->request->post('inscricao', '')) ?? '';
+        $oabUf = strtoupper(trim((string) $this->request->post('oab_uf', '')));
+
+        if (!in_array($tipo, ['cliente', 'advogado', 'estagiario'], true)) {
+            $this->response->redirectWithError($frontUrl, 'Escolha o tipo de conta.');
+        }
+
+        if ($telefone === '' || strlen(preg_replace('/\D+/', '', $telefone) ?? '') < 10) {
+            $this->response->redirectWithError($frontUrl, 'Informe um telefone valido com DDD.');
+        }
+
+        $validUfs = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+        $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
+
+        if ($tipo === 'cliente') {
+            if (strlen($cpf) !== 11) {
+                $this->response->redirectWithError($frontUrl, 'Informe um CPF valido para consultar seus processos.');
+            }
+            $oab = null;
+            $oabUf = null;
+            $oabStatus = 'not_required';
+            $statusCna = null;
+            $oabVerified = 0;
+            $submittedAt = null;
+        } else {
+            $cpf = null;
+            if ($oab === '') {
+                $this->response->redirectWithError($frontUrl, 'Numero da OAB e obrigatorio.');
+            }
+            if (!in_array($oabUf, $validUfs, true)) {
+                $this->response->redirectWithError($frontUrl, 'Informe a UF da OAB.');
+            }
+            $oabStatus = 'pending';
+            $statusCna = 'pendente';
+            $oabVerified = 0;
+            $submittedAt = date('Y-m-d H:i:s');
+        }
+
+        $stmt = $this->pdo->prepare(
+            "SELECT id, nome, email, tipo, profile_completed
+             FROM users
+             WHERE id = ? AND status = 'ativo'
+             LIMIT 1"
+        );
+        $stmt->execute([$pendingUserId]);
+        $usuario = $stmt->fetch();
+
+        if (!$usuario || (int) ($usuario['profile_completed'] ?? 1) === 1) {
+            unset($_SESSION['google_pending_user_id']);
+            $this->response->redirectWithError(APP_URL . '/frontend/login.html', 'Cadastro Google ja foi concluido.');
+        }
+
+        $stmt = $this->pdo->prepare(
+            'UPDATE users
+             SET tipo = ?, telefone = ?, cpf = ?, oab = ?, oab_uf = ?, oab_status = ?,
+                 oab_verificado = ?, oab_tipo = ?, status_cna = ?, oab_submitted_at = ?,
+                 profile_completed = 1, updated_at = NOW()
+             WHERE id = ? AND profile_completed = 0'
+        );
+        $stmt->execute([
+            $tipo,
+            $telefone,
+            $cpf ?: null,
+            $oab,
+            $oabUf,
+            $oabStatus,
+            $oabVerified,
+            $isProfessional ? $tipo : null,
+            $statusCna,
+            $submittedAt,
+            $pendingUserId,
+        ]);
+
+        unset($_SESSION['google_pending_user_id']);
+        $usuario['tipo'] = $tipo;
+        $usuario['telefone'] = $telefone;
+        $usuario['oab_verificado'] = $oabVerified;
+        $usuario['oab_status'] = $oabStatus;
+        $usuario['status_cna'] = $statusCna;
+        $usuario['profile_completed'] = 1;
+
+        if ($isProfessional) {
+            $this->logOabValidation($pendingUserId, 'google_cadastro', null, 'pendente', 'admin_manual', 'pending');
+            $this->sendProfessionalPendingEmail((string) $usuario['email'], (string) $usuario['nome'], $tipo);
+            $this->response->redirectWithSuccess(APP_URL . '/frontend/login.html', 'Cadastro recebido. Seu acesso profissional aguardara aprovacao interna.');
+        }
+
+        $this->signInUser($usuario);
+        $this->audit->log('auth.google_profile_completed', 'user', $pendingUserId, ['tipo' => $tipo]);
+        $this->response->redirect(APP_URL . $this->dashboardPathFor($tipo));
     }
 
     // -------------------------------------------------------
@@ -925,13 +1070,13 @@ HTML;
         $googleSub = (string) $claims['sub'];
         $email = strtolower(trim((string) $claims['email']));
         $nome = trim((string) ($claims['name'] ?? ''));
-        $picture = trim((string) ($claims['picture'] ?? ''));
+        $picture = $this->normalizeGooglePictureUrl(trim((string) ($claims['picture'] ?? '')));
 
         if ($nome === '') {
             $nome = explode('@', $email)[0] ?: 'Usuário Google';
         }
 
-        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo FROM users WHERE google_sub = ? AND status = 'ativo' LIMIT 1");
+        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo, oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason, profile_completed FROM users WHERE google_sub = ? AND status = 'ativo' LIMIT 1");
         $stmt->execute([$googleSub]);
         $usuario = $stmt->fetch();
 
@@ -940,7 +1085,7 @@ HTML;
             return $usuario;
         }
 
-        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo FROM users WHERE email = ? AND status = 'ativo' LIMIT 1");
+        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo, oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason, profile_completed FROM users WHERE email = ? AND status = 'ativo' LIMIT 1");
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
 
@@ -950,8 +1095,8 @@ HTML;
         }
 
         $stmt = $this->pdo->prepare(
-            "INSERT INTO users (nome, email, senha, tipo, google_sub, google_picture, google_linked_at, status)
-             VALUES (?, ?, ?, 'cliente', ?, ?, NOW(), 'ativo')"
+            "INSERT INTO users (nome, email, senha, tipo, google_sub, google_picture, google_linked_at, provider, oab_status, profile_completed, email_verified_at, status)
+             VALUES (?, ?, ?, 'cliente', ?, ?, NOW(), 'google', 'not_required', 0, NOW(), 'ativo')"
         );
         $stmt->execute([
             mb_substr($nome, 0, 100),
@@ -969,17 +1114,39 @@ HTML;
             'nome' => mb_substr($nome, 0, 100),
             'email' => $email,
             'tipo' => 'cliente',
+            'oab_verificado' => 0,
+            'oab_status' => 'not_required',
+            'status_cna' => null,
+            'profile_completed' => 0,
         ];
     }
 
     private function updateGoogleProfile(int $userId, string $googleSub, string $picture): void
     {
         $stmt = $this->pdo->prepare(
-            'UPDATE users
-             SET google_sub = ?, google_picture = ?, google_linked_at = COALESCE(google_linked_at, NOW())
-             WHERE id = ?'
+            "UPDATE users
+             SET google_sub = ?,
+                 google_picture = ?,
+                 google_linked_at = COALESCE(google_linked_at, NOW()),
+                 provider = COALESCE(provider, 'google'),
+                 email_verified_at = COALESCE(email_verified_at, NOW()),
+                 updated_at = NOW()
+             WHERE id = ?"
         );
         $stmt->execute([$googleSub, $picture !== '' ? mb_substr($picture, 0, 255) : null, $userId]);
+    }
+
+    private function normalizeGooglePictureUrl(string $picture): string
+    {
+        if ($picture === '' || !preg_match('#^https://#i', $picture)) {
+            return '';
+        }
+
+        if (str_contains($picture, '/a/default-user')) {
+            return '';
+        }
+
+        return (string) preg_replace('/=s\d+(?:-c)?$/', '=s160-c', $picture);
     }
 
     private function signInUser(array $usuario): void
@@ -1002,6 +1169,61 @@ HTML;
         ];
 
         return $destinos[$tipo] ?? '/frontend/dashboard-cliente.php';
+    }
+
+    private function professionalBlockMessage(array $usuario): ?string
+    {
+        $tipo = (string) ($usuario['tipo'] ?? '');
+        if (!in_array($tipo, ['advogado', 'estagiario'], true)) {
+            return null;
+        }
+
+        if ((int) ($usuario['oab_verificado'] ?? 0) === 1) {
+            return null;
+        }
+
+        $status = (string) (($usuario['oab_status'] ?? '') ?: ($usuario['status_cna'] ?? 'pending'));
+        if (in_array($status, ['rejected', 'invalido', 'nao_encontrado'], true)) {
+            $reason = trim((string) (($usuario['oab_rejection_reason'] ?? '') ?: ($usuario['cna_ultimo_erro'] ?? '')));
+            return 'Seu cadastro profissional nao foi aprovado.' . ($reason !== '' ? ' Motivo: ' . $reason : '');
+        }
+
+        return 'Seu cadastro profissional esta aguardando aprovacao do administrador interno. Voce recebera um e-mail quando for aprovado.';
+    }
+
+    private function sendProfessionalPendingEmail(string $email, string $name, string $type): void
+    {
+        $subject = 'Cadastro recebido - aguardando validacao da OAB';
+        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $safeType = $type === 'estagiario' ? 'estagiario' : 'advogado';
+        $message = "<p>Ola, {$safeName}.</p><p>Recebemos seu cadastro como {$safeType}. O acesso profissional ao JusTraduz depende da aprovacao do administrador interno apos validacao da OAB/registro informado.</p><p>Voce recebera um e-mail quando a revisao for concluida.</p>";
+        $this->sendSystemEmail($email, $subject, $message);
+    }
+
+    private function sendProfessionalApprovedEmail(string $email, string $name): void
+    {
+        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $message = "<p>Ola, {$safeName}.</p><p>Seu cadastro profissional foi aprovado no JusTraduz. O acesso profissional esta liberado.</p>";
+        $this->sendSystemEmail($email, 'Cadastro aprovado no JusTraduz', $message);
+    }
+
+    private function sendProfessionalRejectedEmail(string $email, string $name, string $reason): void
+    {
+        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $safeReason = htmlspecialchars($reason, ENT_QUOTES, 'UTF-8');
+        $message = "<p>Ola, {$safeName}.</p><p>Seu cadastro profissional nao foi aprovado.</p><p><strong>Motivo:</strong> {$safeReason}</p><p>Se necessario, entre em contato com o suporte para corrigir os dados enviados.</p>";
+        $this->sendSystemEmail($email, 'Cadastro profissional nao aprovado', $message);
+    }
+
+    private function sendSystemEmail(string $email, string $subject, string $message): void
+    {
+        try {
+            if (!(new MailerService())->send($email, $subject, $message, true)) {
+                error_log('MailerService failed for subject: ' . $subject);
+            }
+        } catch (Throwable $e) {
+            error_log('MailerService error: ' . $e->getMessage());
+        }
     }
 
     private function googleRedirectUri(): string

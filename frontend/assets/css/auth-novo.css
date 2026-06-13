@@ -63,10 +63,104 @@ body {
   gap: 15px;
 }
 
+.jt-field {
+  position: relative;
+}
+
+.jt-field .jt-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 18px 14px 8px;
+  border: 1px solid rgba(137, 151, 174, .42);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .92);
+  color: var(--text);
+  box-shadow: 0 1px 0 rgba(23, 32, 51, .02);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.jt-field select.jt-input {
+  appearance: none;
+  padding-right: 42px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, #617097 50%),
+    linear-gradient(135deg, #617097 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) 25px,
+    calc(100% - 14px) 25px;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.jt-field textarea.jt-input {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.jt-field .jt-input:hover {
+  border-color: rgba(17, 138, 126, .45);
+}
+
+.jt-field.is-focused .jt-input {
+  background: #ffffff;
+  border-color: rgba(17, 138, 126, .78);
+  box-shadow: 0 0 0 4px rgba(17, 138, 126, .12);
+}
+
+.jt-field .jt-label {
+  position: absolute;
+  left: 13px;
+  top: 26px;
+  z-index: 1;
+  margin: 0;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: transparent;
+  color: #687792;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transform-origin: left top;
+  transition: top .18s ease, transform .18s ease, color .18s ease, font-size .18s ease;
+}
+
+.jt-field.is-focused .jt-label,
+.jt-field.has-value .jt-label {
+  top: 8px;
+  background: #ffffff;
+  color: var(--teal);
+  font-size: 11px;
+  transform: translateY(0);
+}
+
+.jt-field.has-error .jt-input {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(203, 57, 57, .12);
+}
+
+.jt-field.has-error .jt-label,
+.jt-field.has-error .jt-error {
+  color: var(--danger);
+}
+
+.jt-error {
+  display: none;
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.jt-field.has-error .jt-error:not(:empty) {
+  display: block;
+}
+
 .field-help {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
+  margin-top: 6px;
 }
 
 .auth-note {
@@ -116,6 +210,16 @@ body {
 .auth-cadastro-panel .input,
 .auth-cadastro-panel .select {
   min-height: 40px;
+}
+
+.auth-cadastro-panel .jt-field .jt-input {
+  min-height: 48px;
+  padding-top: 17px;
+}
+
+.auth-cadastro-panel .jt-field.is-focused .jt-label,
+.auth-cadastro-panel .jt-field.has-value .jt-label {
+  top: 7px;
 }
 
 .auth-cadastro-panel .auth-divider {
@@ -301,6 +405,229 @@ body {
 .auth-redirect-page .auth-panel {
   width: min(560px, 100%);
   margin: 0 auto;
+}
+
+.auth-google-complete-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(480px, 1fr) minmax(380px, .82fr);
+  background: #f4f8f8;
+  overflow: visible;
+}
+
+.auth-google-complete-html,
+.auth-google-complete-body {
+  overflow: auto;
+}
+
+.auth-google-complete-page .auth-panel {
+  min-height: 100vh;
+  padding: clamp(28px, 5vh, 46px) clamp(28px, 7vw, 112px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.google-complete-brand {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 22px;
+}
+
+.google-complete-brand img {
+  width: 172px;
+  height: auto;
+}
+
+.google-complete-card {
+  width: min(560px, 100%);
+  max-height: none;
+  overflow-y: visible;
+  overflow-x: hidden;
+  padding: 0;
+}
+
+.google-complete-card h1 {
+  margin: 0 0 8px;
+  color: var(--navy);
+  font-size: clamp(30px, 4vw, 42px);
+  line-height: 1.08;
+}
+
+.google-complete-card .subtitle {
+  margin: 0 0 24px;
+  max-width: 500px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.google-complete-card .auth-form {
+  display: grid;
+  gap: 13px;
+}
+
+.google-complete-card .form-grid {
+  gap: 12px;
+}
+
+.google-complete-card .google-oab-grid {
+  grid-template-columns: minmax(0, 1fr) 118px;
+  align-items: start;
+}
+
+.jt-field-uf .jt-input {
+  padding-left: 12px;
+  padding-right: 30px;
+  font-weight: 800;
+  text-align: center;
+  text-align-last: center;
+  letter-spacing: 0;
+}
+
+.jt-field-uf select.jt-input {
+  background-position:
+    calc(100% - 16px) 25px,
+    calc(100% - 10px) 25px;
+}
+
+.jt-field-uf .jt-label {
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.jt-field-uf.is-focused .jt-label,
+.jt-field-uf.has-value .jt-label {
+  transform: translateX(-50%);
+}
+
+.google-complete-card .checkline {
+  margin-top: 2px;
+}
+
+.google-complete-card .btn-block {
+  min-height: 52px;
+}
+
+.auth-google-art {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(42px, 6vw, 70px);
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(23, 32, 51, .97), rgba(17, 138, 126, .82)),
+    var(--navy);
+}
+
+.auth-google-art .auth-art-inner {
+  width: min(620px, 100%);
+  text-align: center;
+  color: #fff;
+}
+
+.auth-google-art h2 {
+  margin: 0 0 18px;
+  color: #fff;
+  font-size: clamp(34px, 3.7vw, 52px);
+  line-height: 1.13;
+}
+
+.auth-google-art p {
+  margin: 0 auto;
+  max-width: 560px;
+  color: rgba(255, 255, 255, .86);
+  font-size: 16px;
+  line-height: 1.7;
+}
+
+@media (max-width: 1100px) {
+  .auth-google-complete-page {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 100vh;
+  }
+
+  .auth-google-complete-page .auth-panel {
+    align-items: center;
+    padding: 34px 28px 42px;
+  }
+
+  .google-complete-brand {
+    align-self: flex-start;
+    margin-left: max(0px, calc((100% - 560px) / 2));
+  }
+
+  .auth-google-art {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .auth-google-complete-page {
+    display: block;
+    min-height: 100vh;
+    overflow: auto;
+  }
+
+  .auth-google-complete-page .auth-panel {
+    min-height: 100vh;
+    padding: 30px 20px 38px;
+  }
+
+  .google-complete-card {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+
+  .auth-google-art {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .google-complete-brand {
+    margin-left: 0;
+    margin-bottom: 18px;
+  }
+
+  .google-complete-brand img {
+    width: 150px;
+  }
+
+  .google-complete-card h1 {
+    font-size: 30px;
+  }
+
+  .google-complete-card .subtitle {
+    margin-bottom: 20px;
+    font-size: 15px;
+  }
+
+  .google-complete-card .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .google-complete-card .google-oab-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .jt-field-uf .jt-label {
+    left: 13px;
+    transform: translateY(-50%);
+  }
+
+  .jt-field-uf.is-focused .jt-label,
+  .jt-field-uf.has-value .jt-label {
+    transform: translateY(0);
+  }
+
+  .jt-field-uf .jt-input {
+    text-align: left;
+    text-align-last: left;
+  }
 }
 
 .auth-reset-page {
