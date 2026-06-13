@@ -8,12 +8,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const messages = chatbot.querySelector("[data-ai-chatbot-messages]");
   const form = chatbot.querySelector("[data-ai-chatbot-form]");
   const input = chatbot.querySelector("[data-ai-chatbot-input]");
+  const consentPanel = chatbot.querySelector("[data-ai-chatbot-consent]");
+  const ageConfirmation = chatbot.querySelector("[data-ai-chatbot-age]");
+  const termsConfirmation = chatbot.querySelector("[data-ai-chatbot-terms]");
+  const consentButton = chatbot.querySelector("[data-ai-chatbot-consent-button]");
   const frontendMarker = "/frontend/";
   const frontendIndex = window.location.pathname.indexOf(frontendMarker);
   const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";
   const backendBase = `${appBasePath}/backend/public/index.php`;
   const backendRoute = (path) => `${backendBase}?rota=${encodeURIComponent(path)}`;
-  const greetingMessage = "Olá, sou o Jus IA! Como eu posso ajudar?";
+  const consentVersion = "2026-06-13-v1";
+  const consentStorageKey = `justraduz-ai-consent:${consentVersion}`;
+  const greetingMessage = "Olá, sou o Jus IA, um assistente informativo. Como eu posso ajudar?";
   const chatHistory = [];
   const guidedTopics = [
     {
@@ -110,6 +116,27 @@ document.addEventListener("DOMContentLoaded", () => {
   let isSending = false;
   let hasShownGreeting = false;
   let freeTextEnabled = false;
+  let hasConsent = false;
+
+  try {
+    hasConsent = window.localStorage.getItem(consentStorageKey) === "accepted";
+  } catch (error) {
+    hasConsent = false;
+  }
+
+  function applyConsentState() {
+    consentPanel.hidden = hasConsent;
+    messages.hidden = !hasConsent;
+    form.hidden = !hasConsent;
+
+    if (hasConsent) {
+      showGreetingOnce();
+    }
+  }
+
+  function updateConsentButton() {
+    consentButton.disabled = !(ageConfirmation.checked && termsConfirmation.checked);
+  }
 
   function setOpen(open) {
     chatbot.classList.toggle("is-open", open);
@@ -120,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (freeTextEnabled) {
         window.setTimeout(() => input?.focus(), 120);
       }
-      showGreetingOnce();
+      if (hasConsent) showGreetingOnce();
     }
   }
 
@@ -326,6 +353,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function sendMessage(message) {
+    if (!hasConsent) {
+      throw new Error("Confirme sua maioridade e aceite os termos antes de usar o chat.");
+    }
+
     const token = await ensureCsrfToken();
     if (!token) {
       throw new Error("Não foi possível preparar a segurança do chat. Recarregue a página.");
@@ -339,7 +370,13 @@ document.addEventListener("DOMContentLoaded", () => {
         "Content-Type": "application/json",
         "X-CSRF-Token": token,
       },
-      body: JSON.stringify({ mensagem: message, historico: chatHistory.slice(-8) }),
+      body: JSON.stringify({
+        mensagem: message,
+        historico: chatHistory.slice(-8),
+        autorizar_ia: true,
+        confirmar_maioridade: true,
+        versao_consentimento: consentVersion,
+      }),
     });
 
     const data = await response.json().catch(() => ({}));
@@ -360,7 +397,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
   toggle?.addEventListener("click", () => setOpen(true));
   closeButton?.addEventListener("click", () => setOpen(false));
+  ageConfirmation?.addEventListener("change", updateConsentButton);
+  termsConfirmation?.addEventListener("change", updateConsentButton);
+  consentButton?.addEventListener("click", () => {
+    if (!ageConfirmation.checked || !termsConfirmation.checked) return;
+
+    hasConsent = true;
+    try {
+      window.localStorage.setItem(consentStorageKey, "accepted");
+    } catch (error) {
+      // The backend still validates consent for every request.
+    }
+    applyConsentState();
+  });
   setFreeTextEnabled(false);
+  applyConsentState();
 
   input?.addEventListener("input", resizeInput);
   input?.addEventListener("keydown", (event) => {

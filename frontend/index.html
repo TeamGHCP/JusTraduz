@@ -318,6 +318,7 @@
           </span>
           <div>
             <span>JusTraduz IA</span>
+            <small>Assistente informativo</small>
           </div>
         </div>
 
@@ -329,9 +330,27 @@
         </button>
       </header>
 
-      <div class="ai-chatbot-messages" data-ai-chatbot-messages aria-live="polite"></div>
+      <div class="ai-chatbot-consent" data-ai-chatbot-consent>
+        <strong>Antes de conversar</strong>
+        <p>
+          Este chat usa inteligência artificial e pode enviar sua mensagem ao Google Gemini.
+          Não informe nomes completos, CPF, dados de processos, documentos, senhas ou informações sigilosas.
+        </p>
+        <label>
+          <input type="checkbox" data-ai-chatbot-age>
+          <span>Confirmo que tenho 18 anos ou mais.</span>
+        </label>
+        <label>
+          <input type="checkbox" data-ai-chatbot-terms>
+          <span>Li e aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
+        </label>
+        <button type="button" data-ai-chatbot-consent-button disabled>Continuar</button>
+        <small>O Jus IA não substitui advogado e não calcula prazos processuais.</small>
+      </div>
 
-      <form class="ai-chatbot-form" data-ai-chatbot-form>
+      <div class="ai-chatbot-messages" data-ai-chatbot-messages aria-live="polite" hidden></div>
+
+      <form class="ai-chatbot-form" data-ai-chatbot-form hidden>
         <label class="sr-only" for="ai-chatbot-input">Mensagem para a IA</label>
         <textarea id="ai-chatbot-input" data-ai-chatbot-input rows="2" maxlength="1200" placeholder="Digite sua dúvida..."></textarea>
         <button type="submit" aria-label="Enviar mensagem">

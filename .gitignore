@@ -32,6 +32,7 @@ backend/vendor/
 .phpunit.result.cache
 .phpunit.cache/
 coverage/
+backend/storage/rate-limits/
 
 # Sistema operacional
 .DS_Store

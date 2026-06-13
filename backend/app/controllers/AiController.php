@@ -1,10 +1,13 @@
 <?php
 
 require_once dirname(__DIR__) . '/services/GeminiService.php';
+require_once dirname(__DIR__) . '/services/AiRateLimiter.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
 
 class AiController
 {
+    private const CONSENT_VERSION = '2026-06-13-v1';
+
     public function csrf(): void
     {
         $this->json(['csrf' => CsrfMiddleware::token()]);
@@ -16,6 +19,13 @@ class AiController
         $message = $payload['message'];
         $history = $payload['history'];
 
+        if (!$payload['authorized'] || !$payload['adult'] || $payload['consent_version'] !== self::CONSENT_VERSION) {
+            $this->json([
+                'erro' => 'Confirme sua maioridade e aceite os Termos de Uso e a Política de Privacidade antes de usar o Jus IA.',
+            ], 403);
+            return;
+        }
+
         if ($message === '') {
             $this->json(['erro' => 'Digite uma mensagem para conversar com a IA.'], 422);
             return;
@@ -23,6 +33,15 @@ class AiController
 
         if (mb_strlen($message) > 1200) {
             $this->json(['erro' => 'Envie uma mensagem menor, com até 1200 caracteres.'], 422);
+            return;
+        }
+
+        $rateLimit = (new AiRateLimiter())->consume();
+        if (!$rateLimit['allowed']) {
+            header('Retry-After: ' . (string) $rateLimit['retry_after']);
+            $this->json([
+                'erro' => 'Muitas mensagens em pouco tempo. Aguarde alguns minutos e tente novamente.',
+            ], 429);
             return;
         }
 
@@ -53,6 +72,8 @@ class AiController
             return;
         }
 
+        $answer = $this->validateGeneratedAnswer($answer);
+
         $this->json([
             'resposta' => $answer,
             'modelo' => $gemini->modelName(),
@@ -74,6 +95,9 @@ class AiController
         return [
             'message' => trim((string) ($payload['mensagem'] ?? '')),
             'history' => $this->sanitizeHistory($payload['historico'] ?? []),
+            'authorized' => filter_var($payload['autorizar_ia'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'adult' => filter_var($payload['confirmar_maioridade'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            'consent_version' => trim((string) ($payload['versao_consentimento'] ?? '')),
         ];
     }
 
@@ -108,6 +132,18 @@ class AiController
     {
         $normalized = $this->normalizeText($message);
         $now = new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
+
+        if ($this->containsSensitiveData($message)) {
+            return 'Para proteger sua privacidade, não envie CPF, e-mail, telefone, número de processo, senha ou outros dados pessoais neste chat público. Remova esses dados e descreva apenas o tipo de documento e a dúvida de forma geral.';
+        }
+
+        if ($this->isLegalEmergency($normalized)) {
+            return 'O Jus IA não atende urgências jurídicas. Se houver risco imediato à integridade de alguém, procure o serviço público de emergência adequado. Para prisão, audiência próxima, intimação ou prazo possivelmente em curso, contate imediatamente um advogado, a Defensoria Pública ou o canal oficial do órgão responsável.';
+        }
+
+        if ($this->isRestrictedLegalAdvice($normalized)) {
+            return 'Não posso calcular prazo processual, avaliar chance de vitória, definir estratégia, redigir defesa ou substituir a análise de um profissional. Posso explicar termos em linguagem simples ou ajudar com dúvidas gerais sobre tradução de documentos. Para esse caso, procure um advogado ou a Defensoria Pública.';
+        }
 
         if ($this->isUnsafeRequest($normalized)) {
             return 'Não posso ajudar com acesso a dados internos, documentos de clientes, senhas, banco de dados, comandos destrutivos ou tentativas de burlar o sistema. Posso ajudar com dúvidas sobre tradução, documentos, orçamento e uso do JusTraduz.';
@@ -203,6 +239,51 @@ class AiController
     private function isUnsafeRequest(string $normalized): bool
     {
         return preg_match('/\b(senha|administrador|admin|banco de dados|database|delete|drop table|todos os usuarios|dados de outros clientes|documentos do sistema|acesso total)\b/', $normalized) === 1;
+    }
+
+    private function containsSensitiveData(string $message): bool
+    {
+        $patterns = [
+            '/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/',
+            '/\b\d{7}-?\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}\b/',
+            '/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i',
+            '/(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?(?:9\s*)?\d{4}[-\s]?\d{4}\b/',
+            '/\b(?:senha|password|token|chave de acesso)\s*[:=]\s*\S+/iu',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $message) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function isLegalEmergency(string $normalized): bool
+    {
+        return preg_match(
+            '/\b(preso|prisao|mandado de prisao|violencia|ameaca|risco de vida|audiencia (?:e )?(hoje|amanha)|intimacao (?:e )?(hoje|agora)|prazo vence (hoje|amanha)|medida protetiva urgente)\b/',
+            $normalized
+        ) === 1;
+    }
+
+    private function isRestrictedLegalAdvice(string $normalized): bool
+    {
+        return preg_match(
+            '/\b(calcul(?:e|ar|o) (?:o )?prazo processual|prazo para (?:recorrer|contestar|apelar)|chance(?:s)? de (?:ganhar|vencer|exito)|qual estrategia|estrategia processual|como burlar|como esconder bens|redija (?:uma|um)|faca (?:uma|um) (?:peticao|recurso|defesa|contestacao)|peticao inicial|contestacao judicial|recurso judicial|parecer juridico|devo processar|posso processar|qual crime|qual pena)\b/',
+            $normalized
+        ) === 1;
+    }
+
+    private function validateGeneratedAnswer(string $answer): string
+    {
+        $normalized = $this->normalizeText($answer);
+        if (preg_match('/\b(garanto|garantimos|com certeza voce vai|chance de 100%|resultado garantido)\b/', $normalized) === 1) {
+            return 'Não tenho segurança para responder isso sem criar uma expectativa indevida. Procure atendimento humano para confirmar as exigências e avaliar o seu caso.';
+        }
+
+        return rtrim($answer) . "\n\nInformação geral: confirme exigências oficiais e decisões importantes com um profissional habilitado.";
     }
 
     private function isPromptInjection(string $normalized): bool
