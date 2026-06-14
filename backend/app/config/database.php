@@ -33,6 +33,14 @@ if (!function_exists('database_connection')) {
 
         $env = database_env_values(dirname(__DIR__, 2) . '/.env');
 
+        $dsn = getenv('DB_DSN') ?: ($env['DB_DSN'] ?? '');
+        if (is_string($dsn) && $dsn !== '') {
+            $connection = new PDO($dsn);
+            $connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            return $connection;
+        }
+
         $host = getenv('DB_HOST') ?: ($env['DB_HOST'] ?? 'localhost');
         $dbname = getenv('DB_NAME') ?: ($env['DB_NAME'] ?? 'justraduz');
         $usuario = getenv('DB_USER') ?: ($env['DB_USER'] ?? 'root');
@@ -53,6 +61,29 @@ if (!function_exists('database_connection')) {
         }
 
         return $connection;
+    }
+}
+
+if (!function_exists('database_table_has_column')) {
+    function database_table_has_column(PDO $pdo, string $table, string $column): bool
+    {
+        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $safeTable = preg_replace('/[^A-Za-z0-9_]/', '', $table);
+
+        if ($driver === 'sqlite') {
+            $stmt = $pdo->query("PRAGMA table_info(" . $safeTable . ")");
+            foreach ($stmt->fetchAll() as $row) {
+                if (($row['name'] ?? '') === $column) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $stmt = $pdo->prepare("SHOW COLUMNS FROM `$safeTable` WHERE Field = ?");
+        $stmt->execute([$column]);
+        return (bool) $stmt->fetch();
     }
 }
 

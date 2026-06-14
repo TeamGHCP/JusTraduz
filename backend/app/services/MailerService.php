@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__DIR__) . '/config/database.php';
+
 class MailerService
 {
     private array $env;
@@ -11,10 +13,19 @@ class MailerService
 
     public function send(string $to, string $subject, string $message, bool $isHtml = false, array $inlineImages = []): bool
     {
+        if (filter_var($this->env('MAIL_LOG_ONLY', 'false'), FILTER_VALIDATE_BOOLEAN)) {
+            $this->logMail($to, $subject, 'log_only', true, null);
+            return true;
+        }
+
         $host = $this->env('MAIL_HOST', '');
+        $sent = false;
+        $transport = $host !== '' ? 'smtp' : 'mail';
 
         if ($host !== '') {
-            return $this->sendSmtp($to, $subject, $message, $isHtml, $inlineImages);
+            $sent = $this->sendSmtp($to, $subject, $message, $isHtml, $inlineImages);
+            $this->logMail($to, $subject, $transport, $sent, $sent ? null : 'Falha no envio SMTP. Consulte error_log.');
+            return $sent;
         }
 
         $body = $message;
@@ -30,7 +41,9 @@ class MailerService
             'Content-Type: ' . $contentType,
         ];
 
-        return @mail($to, $this->encodedHeader($subject), $body, implode("\r\n", $headers));
+        $sent = @mail($to, $this->encodedHeader($subject), $body, implode("\r\n", $headers));
+        $this->logMail($to, $subject, $transport, $sent, $sent ? null : 'Falha no envio via mail().');
+        return $sent;
     }
 
     private function sendSmtp(string $to, string $subject, string $message, bool $isHtml = false, array $inlineImages = []): bool
@@ -261,5 +274,30 @@ class MailerService
         }
 
         return $values;
+    }
+
+    private function logMail(string $to, string $subject, string $transport, bool $sent, ?string $error): void
+    {
+        try {
+            $pdo = database_connection();
+            if (!database_table_has_column($pdo, 'mail_logs', 'recipient')) {
+                return;
+            }
+
+            $stmt = $pdo->prepare(
+                'INSERT INTO mail_logs (recipient, subject, transport, status, error_message, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([
+                mb_substr($to, 0, 190),
+                mb_substr($subject, 0, 190),
+                mb_substr($transport, 0, 40),
+                $sent ? 'sent' : 'failed',
+                $error,
+                date('Y-m-d H:i:s'),
+            ]);
+        } catch (Throwable $exception) {
+            error_log('Mail log error: ' . $exception->getMessage());
+        }
     }
 }

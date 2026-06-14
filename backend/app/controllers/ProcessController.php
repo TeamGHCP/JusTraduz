@@ -4,6 +4,7 @@ require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/DataJudService.php';
+require_once dirname(__DIR__) . '/services/UsageLimiter.php';
 
 class ProcessController extends BaseController
 {
@@ -39,7 +40,16 @@ class ProcessController extends BaseController
 
             $processNumber = (string) $this->request->post('process_number', '');
             $lgpdConsent = $this->request->post('lgpd_consent', '') === '1';
+            $usage = new UsageLimiter($this->pdo);
+            $quota = $usage->allow($userId, 'datajud_cnj');
+            if (!$quota['allowed']) {
+                $this->response->redirect(app_url('/frontend/processos.php?erro=' . urlencode('Limite diario de consultas DataJud atingido. Tente novamente amanha.')));
+            }
+
             $result = $service->syncProcessByCnj($userId, $cpf, $processNumber, $lgpdConsent);
+            if ($result['success'] ?? false) {
+                $usage->record($userId, 'datajud_cnj', 1, null, ['process_number' => preg_replace('/\D+/', '', $processNumber) ?? '']);
+            }
             $this->audit->log('datajud.cnj_sync', 'user', $userId, [
                 'success' => (bool) $result['success'],
                 'imported' => (int) ($result['imported'] ?? 0),

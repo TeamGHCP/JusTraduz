@@ -14,6 +14,6 @@
 
 Paginas HTML antigas da area logada foram removidas. Para novas telas autenticadas, crie a implementacao em `pages/app/` ou `pages/admin/` e, se precisar de URL estavel na raiz, crie apenas um wrapper PHP fino.
 
-## Pendencias para 100%
+## Pendencias atuais
 
-Validacao visual final, acessibilidade, estados vazios, responsividade completa e demais melhorias de produto ficam centralizadas em `../docs/MELHORIAS_PARA_100.md`.
+As pendencias reais restantes depois de P0/P1 ficam em `../docs/O_QUE_FALTA_AGORA.md`.

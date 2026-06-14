@@ -3,20 +3,29 @@
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/GeminiService.php';
+require_once dirname(__DIR__) . '/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
+require_once dirname(__DIR__) . '/services/OcrService.php';
 require_once dirname(__DIR__) . '/services/PdfTextExtractor.php';
+require_once dirname(__DIR__) . '/services/StorageService.php';
+require_once dirname(__DIR__) . '/services/UploadScannerService.php';
+require_once dirname(__DIR__) . '/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
 
 class DocumentController extends BaseController
 {
     private NotificationService $notifications;
     private AuditService $audit;
+    private StorageService $storage;
+    private UsageLimiter $usage;
 
     public function __construct()
     {
         parent::__construct();
         $this->notifications = new NotificationService($this->pdo);
         $this->audit = new AuditService($this->pdo);
+        $this->storage = new StorageService();
+        $this->usage = new UsageLimiter($this->pdo);
     }
 
     public function upload(): void
@@ -35,6 +44,12 @@ class DocumentController extends BaseController
         }
 
         $file = $_FILES['documento'];
+        $userId = (int) $_SESSION['id'];
+        $quota = $this->usage->allow($userId, 'document_upload');
+        if (!$quota['allowed']) {
+            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('Limite diario de uploads atingido. Tente novamente amanha.')));
+        }
+
         $maxSize = 50 * 1024 * 1024;
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'webp'];
@@ -49,8 +64,17 @@ class DocumentController extends BaseController
             $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('Formato não permitido.')));
         }
 
-        $userId = (int) $_SESSION['id'];
-        $storageDir = dirname(__DIR__, 2) . '/storage/documents/' . $userId;
+        $scanner = new UploadScannerService();
+        if (!$scanner->scan((string) $file['tmp_name'], (string) $file['name'], $mime)) {
+            $this->audit->log('document.upload_blocked', 'document', null, [
+                'nome_arquivo' => $file['name'],
+                'mime' => $mime,
+                'reason' => $scanner->lastError(),
+            ]);
+            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode($scanner->lastError() ?: 'Arquivo reprovado pelo scanner de seguranca.')));
+        }
+
+        $storageDir = $this->storage->documentDirectory($userId);
 
         if (!is_dir($storageDir)) {
             mkdir($storageDir, 0775, true);
@@ -63,7 +87,7 @@ class DocumentController extends BaseController
             $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('Não foi possível salvar o arquivo.')));
         }
 
-        $relativePath = 'backend/storage/documents/' . $userId . '/' . $safeName;
+        $relativePath = $this->storage->documentReference($userId, $safeName);
 
         $textoExtraido = null;
         if ($extension === 'pdf') {
@@ -71,6 +95,11 @@ class DocumentController extends BaseController
             if ($textoExtraido === '') {
                 $textoExtraido = 'Não foi possível extrair texto selecionável deste PDF. O arquivo pode estar escaneado como imagem e precisar de OCR.';
             }
+        } elseif (str_starts_with($mime, 'image/')) {
+            $textoExtraido = $this->extractWithOcrOrFallback($destination, $mime, $userId);
+        }
+        if ($extension === 'pdf' && $this->isExtractionFailure((string) $textoExtraido)) {
+            $textoExtraido = $this->extractWithOcrOrFallback($destination, $mime, $userId);
         }
 
         $stmt = $this->pdo->prepare(
@@ -78,9 +107,19 @@ class DocumentController extends BaseController
         );
         $stmt->execute([$userId, $file['name'], $extension, $relativePath, $textoExtraido]);
         $documentId = (int) $this->pdo->lastInsertId();
+        $this->usage->record($userId, 'document_upload', 1, $documentId, ['tipo_arquivo' => $extension]);
 
         $aiAuthorized = (string) $this->request->post('autorizar_ia', '') === '1';
-        $analysis = $aiAuthorized ? $this->generateAnalysis($destination, $mime, $textoExtraido) : null;
+        $queued = false;
+        $analysis = null;
+        if ($aiAuthorized) {
+            if ($this->asyncJobsEnabled()) {
+                $this->enqueueDocumentAnalysis($documentId, $userId);
+                $queued = true;
+            } else {
+                $analysis = $this->generateAnalysisForUser($documentId, $destination, $mime, $textoExtraido, $userId);
+            }
+        }
         if ($analysis) {
             $this->saveAnalysis($documentId, $analysis);
         }
@@ -89,6 +128,10 @@ class DocumentController extends BaseController
             ? 'Documento enviado e analisado com IA.'
             : 'Documento enviado com sucesso. A análise por IA pode ser gerada ao abrir o documento.';
 
+        if ($queued) {
+            $message = 'Documento enviado. A analise por IA entrou na fila de processamento.';
+        }
+
         $this->notifications->notify($userId, $message . ' Arquivo: ' . $file['name']);
         $this->notifications->notifyMany($this->notifications->activeAdmins(), 'Novo documento enviado por ' . (string) $_SESSION['nome'] . ': ' . $file['name']);
         $this->audit->log('document.upload', 'document', $documentId, [
@@ -96,6 +139,8 @@ class DocumentController extends BaseController
             'tipo_arquivo' => $extension,
             'ai_authorized' => $aiAuthorized,
             'analysis_generated' => (bool) $analysis,
+            'analysis_queued' => $queued,
+            'private_storage' => $this->storage->isDocumentStorageOutsideWebroot(),
         ]);
 
         $this->response->redirect(app_url('/frontend/dashboard-cliente.php?sucesso=' . urlencode($message)));
@@ -126,7 +171,7 @@ class DocumentController extends BaseController
             $this->response->redirect(app_url('/frontend/visualizar-documento.php?erro=' . urlencode('Documento não encontrado ou indisponível para seu perfil.')));
         }
 
-        $absolutePath = dirname(__DIR__, 3) . '/' . ltrim(str_replace('\\', '/', (string) $document['caminho']), '/');
+        $absolutePath = $this->documentPath($document);
         $mime = is_file($absolutePath) ? (mime_content_type($absolutePath) ?: '') : '';
         $textoExtraido = (string) ($document['texto_extraido'] ?? '');
 
@@ -134,8 +179,18 @@ class DocumentController extends BaseController
             $textoExtraido = '';
         }
 
-        $analysis = $this->generateAnalysis($absolutePath, $mime, $textoExtraido);
         $redirect = app_url('/frontend/visualizar-documento.php?id=' . $documentId);
+
+        if ($this->asyncJobsEnabled()) {
+            $this->enqueueDocumentAnalysis($documentId, (int) $document['user_id']);
+            $this->response->redirect($redirect . '&sucesso=' . urlencode('Analise por IA enfileirada. Atualize a pagina apos o processamento.'));
+        }
+
+        if ($absolutePath === null) {
+            $this->response->redirect($redirect . '&erro=' . urlencode('Arquivo original nao encontrado para analise.'));
+        }
+
+        $analysis = $this->generateAnalysisForUser($documentId, $absolutePath, $mime, $textoExtraido, (int) $document['user_id']);
 
         if (!$analysis) {
             $this->response->redirect($redirect . '&erro=' . urlencode('Não foi possível gerar a análise por IA agora. Confira a chave/modelo da Gemini ou tente novamente.'));
@@ -246,6 +301,46 @@ class DocumentController extends BaseController
         return null;
     }
 
+    public function processQueuedAnalysis(int $documentId): bool
+    {
+        $document = $this->findDocumentById($documentId);
+        if (!$document) {
+            return false;
+        }
+
+        $path = $this->documentPath($document);
+        if ($path === null || !is_file($path)) {
+            return false;
+        }
+
+        $mime = mime_content_type($path) ?: '';
+        $analysis = $this->generateAnalysisForUser($documentId, $path, $mime, (string) ($document['texto_extraido'] ?? ''), (int) $document['user_id']);
+        if (!$analysis) {
+            return false;
+        }
+
+        $this->saveAnalysis($documentId, $analysis);
+        $this->notifications->notify((int) $document['user_id'], 'Analise por IA concluida para o documento: ' . (string) $document['nome_arquivo']);
+        $this->audit->log('document.analyze_queued_completed', 'document', $documentId);
+        return true;
+    }
+
+    private function generateAnalysisForUser(int $documentId, string $filePath, string $mime, ?string $textoExtraido, int $userId): ?array
+    {
+        $quota = $this->usage->allow($userId, 'document_ai');
+        if (!$quota['allowed']) {
+            $this->audit->log('usage.limit_blocked', 'document', $documentId, ['feature' => 'document_ai']);
+            return null;
+        }
+
+        $analysis = $this->generateAnalysis($filePath, $mime, $textoExtraido);
+        if ($analysis) {
+            $this->usage->record($userId, 'document_ai', 1, $documentId, ['mime' => $mime]);
+        }
+
+        return $analysis;
+    }
+
     private function saveAnalysis(int $documentId, array $analysis): void
     {
         $this->pdo->prepare('DELETE FROM ai_results WHERE document_id = ?')->execute([$documentId]);
@@ -291,8 +386,8 @@ class DocumentController extends BaseController
             return $hasColumns;
         }
 
-        $stmt = $this->pdo->query("SHOW COLUMNS FROM ai_results WHERE Field IN ('modelo', 'prompt_versao')");
-        $hasColumns = count($stmt->fetchAll()) === 2;
+        $hasColumns = database_table_has_column($this->pdo, 'ai_results', 'modelo')
+            && database_table_has_column($this->pdo, 'ai_results', 'prompt_versao');
         return $hasColumns;
     }
 
@@ -335,20 +430,18 @@ class DocumentController extends BaseController
         return $document ?: null;
     }
 
+    private function findDocumentById(int $documentId): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM documents WHERE id = ?');
+        $stmt->execute([$documentId]);
+        $document = $stmt->fetch();
+
+        return $document ?: null;
+    }
+
     private function documentPath(array $document): ?string
     {
-        $projectRoot = dirname(__DIR__, 3);
-        $storageRoot = realpath($projectRoot . '/backend/storage/documents');
-        $relativePath = ltrim(str_replace('\\', '/', (string) ($document['caminho'] ?? '')), '/');
-        $absolutePath = realpath($projectRoot . '/' . $relativePath);
-        $storageRoot = $storageRoot ? rtrim($storageRoot, "\\/") . DIRECTORY_SEPARATOR : false;
-        $absolutePrefix = $absolutePath ? rtrim(dirname($absolutePath), "\\/") . DIRECTORY_SEPARATOR : false;
-
-        if (!$storageRoot || !$absolutePath || !$absolutePrefix || !str_starts_with($absolutePrefix, $storageRoot)) {
-            return null;
-        }
-
-        return $absolutePath;
+        return $this->storage->documentPathFromReference((string) ($document['caminho'] ?? ''));
     }
 
     private function canDeleteDocument(array $document): bool
@@ -363,5 +456,42 @@ class DocumentController extends BaseController
     {
         $filename = trim(preg_replace('/[^\w.\- ]+/u', '_', $filename) ?? '');
         return $filename !== '' ? $filename : 'documento';
+    }
+
+    private function extractWithOcrOrFallback(string $path, string $mime, int $userId): string
+    {
+        $ocr = new OcrService();
+        $quota = $this->usage->allow($userId, 'ocr');
+        if ($quota['allowed']) {
+            $text = $ocr->extract($path, $mime);
+            if ($text !== '') {
+                $this->usage->record($userId, 'ocr', 1, null, ['mime' => $mime]);
+                return $text;
+            }
+        }
+
+        return $ocr->fallbackMessage($mime);
+    }
+
+    private function enqueueDocumentAnalysis(int $documentId, int $userId): void
+    {
+        $queue = new JobQueueService($this->pdo);
+        if ($queue->pendingCountForEntity('document_analysis', 'document_id', $documentId) > 0) {
+            return;
+        }
+
+        $jobId = $queue->enqueue('document_analysis', ['document_id' => $documentId], $userId);
+        $this->audit->log('job.enqueued', 'document', $documentId, ['job_id' => $jobId, 'type' => 'document_analysis']);
+    }
+
+    private function asyncJobsEnabled(): bool
+    {
+        $value = getenv('ASYNC_JOBS_ENABLED');
+        if ($value === false) {
+            $env = function_exists('database_env_values') ? database_env_values(dirname(__DIR__, 2) . '/.env') : [];
+            $value = $env['ASYNC_JOBS_ENABLED'] ?? 'false';
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 }

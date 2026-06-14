@@ -53,6 +53,7 @@ $action = trim((string) ($_GET['action'] ?? ''));
 $entity = trim((string) ($_GET['entity_type'] ?? ''));
 $daté = trim((string) ($_GET['date'] ?? ''));
 $severityFilter = $_GET['severity'] ?? '';
+$date = trim((string) ($_GET['date'] ?? ''));
 $where = [];
 $params = [];
 
@@ -162,6 +163,7 @@ $infoCount = max(0, count($logs) - $criticalCount - $warningCount);
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">Filtrar</button>
           <a class="btn btn-outline" href="auditoria.php">Limpar</a>
+          <a class="btn btn-outline" href="<?= e(app_url('/backend/public/index.php?rota=/admin/audit/export&' . http_build_query($_GET))) ?>"><?= icon_svg('download') ?> CSV</a>
         </div>
       </form>
 

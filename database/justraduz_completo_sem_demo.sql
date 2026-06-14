@@ -271,6 +271,49 @@ CREATE TABLE IF NOT EXISTS external_processes (
     INDEX idx_external_processes_user_status (user_id, status_normalizado),
     INDEX idx_external_processes_query (source, query_type, query_value)
 ) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS job_queue (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    type VARCHAR(80) NOT NULL,
+    status ENUM('pending', 'running', 'completed', 'failed') NOT NULL DEFAULT 'pending',
+    payload_json LONGTEXT NOT NULL,
+    user_id INT NULL,
+    priority INT NOT NULL DEFAULT 0,
+    attempts INT NOT NULL DEFAULT 0,
+    max_attempts INT NOT NULL DEFAULT 3,
+    last_error TEXT NULL,
+    available_at DATETIME NOT NULL,
+    locked_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_job_queue_status (status, available_at, priority),
+    INDEX idx_job_queue_user (user_id, created_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS usage_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    feature VARCHAR(80) NOT NULL,
+    units INT NOT NULL DEFAULT 1,
+    entity_id INT NULL,
+    metadata_json LONGTEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_usage_user_feature (user_id, feature, created_at),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS mail_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    recipient VARCHAR(190) NOT NULL,
+    subject VARCHAR(190) NOT NULL,
+    transport VARCHAR(40) NOT NULL,
+    status ENUM('sent', 'failed') NOT NULL,
+    error_message TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_mail_logs_status (status, created_at),
+    INDEX idx_mail_logs_recipient (recipient, created_at)
+) DEFAULT CHARSET=utf8mb4;
 -- Registro das migrations ja incorporadas neste schema consolidado.
 INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_telefone'),
@@ -278,6 +321,7 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_password_reset_codes'),
     ('migration_oab'),
     ('migration_ai_metadata'),
+    ('migration_p1_operations'),
     ('migration_message_attachments'),
     ('migration_indexes_integrity'),
     ('migration_google_oauth'),

@@ -2,6 +2,7 @@
 
 require_once dirname(__DIR__) . '/services/GeminiService.php';
 require_once dirname(__DIR__) . '/services/AiRateLimiter.php';
+require_once dirname(__DIR__) . '/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
 
 class AiController
@@ -45,6 +46,18 @@ class AiController
             return;
         }
 
+        $userId = (int) ($_SESSION['id'] ?? 0);
+        $usage = null;
+        if ($userId > 0) {
+            require_once dirname(__DIR__) . '/config/database.php';
+            $usage = new UsageLimiter(database_connection());
+            $quota = $usage->allow($userId, 'ai_chat');
+            if (!$quota['allowed']) {
+                $this->json(['erro' => 'Limite diario de mensagens com IA atingido. Tente novamente amanha.'], 429);
+                return;
+            }
+        }
+
         $localAnswer = $this->answerLocalQuestion($message, $history);
         if ($localAnswer !== null) {
             $this->json([
@@ -78,6 +91,9 @@ class AiController
             'resposta' => $answer,
             'modelo' => $gemini->modelName(),
         ]);
+        if ($usage !== null) {
+            $usage->record($userId, 'ai_chat', 1, null, ['model' => $gemini->modelName()]);
+        }
     }
 
     private function readPayload(): array

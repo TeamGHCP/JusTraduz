@@ -161,6 +161,29 @@ $profileTourKey = match ($type) {
           <section class="card">
             <div class="dash-section-title">
               <div>
+                <h2>Privacidade e LGPD</h2>
+                <p class="text-muted">Exporte seus dados ou solicite o encerramento da conta.</p>
+              </div>
+            </div>
+            <div class="form-actions">
+              <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/export')) ?>" method="post">
+                <?= csrf_input() ?>
+                <button class="btn btn-outline" type="submit"><?= icon_svg('download') ?> Baixar meus dados</button>
+              </form>
+            </div>
+            <form class="auth-form mt-16" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/delete-account')) ?>" method="post" onsubmit="return confirm('Encerrar a conta remove dados pessoais e nao pode ser desfeito. Continuar?');">
+              <?= csrf_input() ?>
+              <div class="field">
+                <label for="privacy_delete_confirm">Digite EXCLUIR para encerrar a conta</label>
+                <input class="input" id="privacy_delete_confirm" name="confirmacao" autocomplete="off" placeholder="EXCLUIR">
+              </div>
+              <button class="btn btn-outline" type="submit"><?= icon_svg('trash') ?> Encerrar conta</button>
+            </form>
+          </section>
+
+          <section class="card">
+            <div class="dash-section-title">
+              <div>
                 <h2>Tour do sistema</h2>
                 <p class="text-muted">Redefina o onboarding para vê-lo novamente no próximo acesso à dashboard.</p>
               </div>

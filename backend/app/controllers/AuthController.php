@@ -911,9 +911,9 @@ class AuthController extends BaseController
             'SELECT COUNT(*) FROM audit_logs
              WHERE action = ?
              AND ip_address = ?
-             AND created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)'
+             AND created_at >= ?'
         );
-        $stmt->execute([$action, $ip]);
+        $stmt->execute([$action, $ip, date('Y-m-d H:i:s', time() - 900)]);
 
         return (int) $stmt->fetchColumn() >= 10;
     }
@@ -924,9 +924,9 @@ class AuthController extends BaseController
             'SELECT COUNT(*) FROM password_reset_codes
              WHERE user_id = ?
              AND email = ?
-             AND created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)'
+             AND created_at >= ?'
         );
-        $stmt->execute([$userId, $email]);
+        $stmt->execute([$userId, $email, date('Y-m-d H:i:s', time() - 900)]);
 
         return (int) $stmt->fetchColumn() >= 3;
     }

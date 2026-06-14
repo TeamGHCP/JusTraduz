@@ -5,6 +5,7 @@ require_once dirname(__DIR__) . '/app/core/Router.php';
 $router = new Router();
 
 $routes = [
+    ['GET', '/health', 'HealthController', 'show'],
     ['POST', '/auth/registrar', 'AuthController', 'registrar'],
     ['POST', '/auth/login', 'AuthController', 'login'],
     ['GET', '/auth/google', 'AuthController', 'googleRedirect'],
@@ -18,6 +19,8 @@ $routes = [
     ['POST', '/profile/update', 'AuthController', 'updateProfile'],
     ['POST', '/profile/password-code', 'AuthController', 'profilePasswordCode'],
     ['POST', '/profile/password-reset', 'AuthController', 'profilePasswordReset'],
+    ['POST', '/privacy/export', 'PrivacyController', 'export'],
+    ['POST', '/privacy/delete-account', 'PrivacyController', 'deleteAccount'],
     ['POST', '/documents/upload', 'DocumentController', 'upload'],
     ['POST', '/documents/analyze', 'DocumentController', 'analyze'],
     ['POST', '/documents/delete', 'DocumentController', 'delete'],
@@ -53,6 +56,7 @@ $routes = [
     ['POST', '/admin/users/status', 'AdminController', 'updateUserStatus'],
     ['POST', '/admin/cases/update', 'AdminController', 'updateCase'],
     ['POST', '/admin/professionals/oab', 'AdminController', 'updateProfessionalOab'],
+    ['GET', '/admin/audit/export', 'AuditExportController', 'csv'],
 ];
 
 foreach ($routes as [$method, $path, $controller, $action]) {

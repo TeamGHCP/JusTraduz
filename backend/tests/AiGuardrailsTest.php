@@ -1,20 +1,10 @@
 <?php
 
+require_once __DIR__ . '/bootstrap.php';
 require_once dirname(__DIR__) . '/app/controllers/AiController.php';
 require_once dirname(__DIR__) . '/app/services/AiRateLimiter.php';
 
-function assertTrue(bool $condition, string $message): void
-{
-    if (!$condition) {
-        throw new RuntimeException($message);
-    }
-}
-
-function callPrivate(object|string $target, string $method, array $arguments = [])
-{
-    $reflection = new ReflectionMethod($target, $method);
-    return $reflection->invoke(is_object($target) ? $target : null, ...$arguments);
-}
+build_test_schema(test_pdo());
 
 $controller = new AiController();
 
@@ -53,6 +43,10 @@ assertTrue(str_contains($prompt, 'dados nao confiaveis'), 'Prompt deve tratar en
 
 $_SERVER['REMOTE_ADDR'] = '127.0.0.240';
 $_SESSION['_ai_chat_attempts'] = [];
+$rateLimitPath = dirname(__DIR__) . '/storage/rate-limits/ai-' . hash('sha256', $_SERVER['REMOTE_ADDR']) . '.json';
+if (is_file($rateLimitPath)) {
+    unlink($rateLimitPath);
+}
 $limiter = new AiRateLimiter();
 for ($index = 0; $index < 10; $index++) {
     assertTrue($limiter->consume()['allowed'] === true, 'As dez primeiras mensagens deveriam ser permitidas.');

@@ -33,6 +33,8 @@ backend/vendor/
 .phpunit.cache/
 coverage/
 backend/storage/rate-limits/
+backups/
+*.sql.enc
 
 # Sistema operacional
 .DS_Store

@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, pdo_sqlite, mbstring, fileinfo
+
+      - name: PHP lint
+        run: find backend frontend scripts -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Import SQL without demo
+        run: mysql -h 127.0.0.1 -P 3306 -uroot < database/justraduz_completo_sem_demo.sql
+
+      - name: Import SQL with demo
+        run: mysql -h 127.0.0.1 -P 3306 -uroot < database/justraduz_completo_com_demo.sql
+
+      - name: Run automated tests
+        run: php backend/tests/run.php
+
+      - name: Check local references
+        run: php scripts/check-references.php
+
+      - name: Check production readiness template
+        run: php scripts/check-production-readiness.php --env=backend/.env.example --allow-placeholders

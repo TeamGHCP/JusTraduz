@@ -8,6 +8,10 @@ A documentacao ativa fica em `docs/`:
 
 - `docs/README.md`
 - `docs/MELHORIAS_PARA_100.md`
+- `docs/PRODUCAO_P0.md`
+- `docs/LGPD_E_REVISAO_JURIDICA_P0.md`
+- `docs/P1_OPERACIONAL.md`
+- `docs/O_QUE_FALTA_AGORA.md`
 
 Os documentos antigos de banca, pitch, plano modular e status foram removidos para evitar varias versoes da verdade. O documento ativo mostra apenas o que ainda falta para o sistema ficar pronto para uso real/comercial.
 
@@ -73,3 +77,29 @@ Principais grupos:
 - Scripts SQL incrementais antigos foram removidos; ficaram apenas os dois instaladores consolidados.
 - Documentos antigos foram consolidados em `docs/MELHORIAS_PARA_100.md`.
 - Uploads locais orfaos fora do seed demo foram removidos.
+
+## Qualidade e producao
+
+Suite P0 local:
+
+```powershell
+C:\xampp\php\php.exe backend\tests\run.php
+```
+
+Checagem de referencias:
+
+```powershell
+C:\xampp\php\php.exe scripts\check-references.php
+```
+
+Prontidao P0 de producao:
+
+```powershell
+C:\xampp\php\php.exe scripts\check-production-readiness.php --env=backend/.env
+```
+
+Health check:
+
+```text
+/backend/public/index.php?rota=/health
+```

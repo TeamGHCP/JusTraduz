@@ -35,6 +35,17 @@ class DataJudService
             return $this->failure('Informe um numero de processo CNJ valido.');
         }
 
+        $cached = $this->cachedProcess($userId, $cnj);
+        if ($cached) {
+            return [
+                'success' => true,
+                'configured' => true,
+                'imported' => 0,
+                'cached' => true,
+                'message' => 'Processo encontrado no cache auditavel por CNJ.',
+            ];
+        }
+
         $tribunal = $this->tribunalFromCnj($cnj) ?: '';
 
         $search = $this->findProcess($cnj, $tribunal);
@@ -223,6 +234,28 @@ class DataJudService
         ]);
 
         return true;
+    }
+
+    private function cachedProcess(int $userId, string $cnj): ?array
+    {
+        $ttlHours = (int) ($this->envValue('DATAJUD_CACHE_TTL_HOURS') ?: 24);
+        if ($ttlHours <= 0) {
+            return null;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM external_processes
+             WHERE user_id = ?
+               AND source = "datajud"
+               AND query_type = "cnj"
+               AND query_value = ?
+               AND last_synced_at >= ?
+             LIMIT 1'
+        );
+        $stmt->execute([$userId, $cnj, date('Y-m-d H:i:s', time() - ($ttlHours * 3600))]);
+        $row = $stmt->fetch();
+
+        return $row ?: null;
     }
 
     private function ensureCnjQueryType(): void

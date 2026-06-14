@@ -3,6 +3,8 @@
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
+require_once dirname(__DIR__) . '/services/StorageService.php';
+require_once dirname(__DIR__) . '/services/UploadScannerService.php';
 
 class CaseController extends BaseController
 {
@@ -21,12 +23,14 @@ class CaseController extends BaseController
 
     private NotificationService $notifications;
     private AuditService $audit;
+    private StorageService $storage;
 
     public function __construct()
     {
         parent::__construct();
         $this->notifications = new NotificationService($this->pdo);
         $this->audit = new AuditService($this->pdo);
+        $this->storage = new StorageService();
     }
 
     public function create(): void
@@ -421,8 +425,7 @@ class CaseController extends BaseController
             return $hasColumn;
         }
 
-        $stmt = $this->pdo->query("SHOW COLUMNS FROM cases WHERE Field = 'document_id'");
-        $hasColumn = (bool) $stmt->fetch();
+        $hasColumn = database_table_has_column($this->pdo, 'cases', 'document_id');
         return $hasColumn;
     }
 
@@ -462,7 +465,17 @@ class CaseController extends BaseController
             $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Formato de anexo nao permitido.')));
         }
 
-        $storageDir = dirname(__DIR__, 2) . '/storage/message-attachments/' . $caseId;
+        $scanner = new UploadScannerService();
+        if (!$scanner->scan($tmpName, $originalName, $mime)) {
+            $this->audit->log('message.attachment_blocked', 'case', $caseId, [
+                'sender_id' => $userId,
+                'attachment_name' => $originalName,
+                'reason' => $scanner->lastError(),
+            ]);
+            $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode($scanner->lastError() ?: 'Anexo reprovado pelo scanner de seguranca.')));
+        }
+
+        $storageDir = $this->storage->attachmentDirectory($caseId);
         if (!is_dir($storageDir)) {
             mkdir($storageDir, 0775, true);
         }
@@ -476,7 +489,7 @@ class CaseController extends BaseController
 
         return [
             'original_name' => $this->safeAttachmentName($originalName),
-            'path' => 'backend/storage/message-attachments/' . $caseId . '/' . $safeName,
+            'path' => $this->storage->attachmentReference($caseId, $safeName),
             'mime' => $mime,
             'size' => $size,
         ];
@@ -484,18 +497,7 @@ class CaseController extends BaseController
 
     private function messageAttachmentPath(array $message): ?string
     {
-        $projectRoot = dirname(__DIR__, 3);
-        $storageRoot = realpath($projectRoot . '/backend/storage/message-attachments');
-        $relativePath = ltrim(str_replace('\\', '/', (string) ($message['attachment_path'] ?? '')), '/');
-        $absolutePath = realpath($projectRoot . '/' . $relativePath);
-        $storageRoot = $storageRoot ? rtrim($storageRoot, "\\/") . DIRECTORY_SEPARATOR : false;
-        $absolutePrefix = $absolutePath ? rtrim(dirname($absolutePath), "\\/") . DIRECTORY_SEPARATOR : false;
-
-        if (!$storageRoot || !$absolutePath || !$absolutePrefix || !str_starts_with($absolutePrefix, $storageRoot)) {
-            return null;
-        }
-
-        return $absolutePath;
+        return $this->storage->attachmentPathFromReference((string) ($message['attachment_path'] ?? ''));
     }
 
     private function safeAttachmentName(string $filename): string
