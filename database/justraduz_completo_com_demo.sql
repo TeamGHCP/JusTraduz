@@ -359,8 +359,11 @@ DROP TEMPORARY TABLE IF EXISTS tmp_demo_cases;
 CREATE TEMPORARY TABLE tmp_demo_cases (id INT PRIMARY KEY);
 INSERT INTO tmp_demo_cases
 SELECT id FROM cases
-WHERE cliente_id IN (SELECT id FROM tmp_demo_users)
-   OR advogado_id IN (SELECT id FROM tmp_demo_users);
+WHERE EXISTS (
+    SELECT 1 FROM tmp_demo_users
+    WHERE tmp_demo_users.id = cases.cliente_id
+       OR tmp_demo_users.id = cases.advogado_id
+);
 
 DROP TEMPORARY TABLE IF EXISTS tmp_demo_documents;
 CREATE TEMPORARY TABLE tmp_demo_documents (id INT PRIMARY KEY);
@@ -412,8 +415,11 @@ DROP TEMPORARY TABLE IF EXISTS tmp_demo_audit;
 CREATE TEMPORARY TABLE tmp_demo_audit (id INT PRIMARY KEY);
 INSERT INTO tmp_demo_audit
 SELECT id FROM audit_logs
-WHERE user_id IN (SELECT id FROM tmp_demo_users)
-   OR (entity_type = 'user' AND entity_id IN (SELECT id FROM tmp_demo_users))
+WHERE EXISTS (
+    SELECT 1 FROM tmp_demo_users
+    WHERE tmp_demo_users.id = audit_logs.user_id
+       OR (audit_logs.entity_type = 'user' AND tmp_demo_users.id = audit_logs.entity_id)
+)
    OR (entity_type = 'document' AND entity_id IN (SELECT id FROM tmp_demo_documents))
    OR (entity_type = 'case' AND entity_id IN (SELECT id FROM tmp_demo_cases))
    OR (entity_type = 'schedule_slot' AND entity_id IN (SELECT id FROM tmp_demo_slots))
@@ -423,8 +429,11 @@ DROP TEMPORARY TABLE IF EXISTS tmp_demo_oab_logs;
 CREATE TEMPORARY TABLE tmp_demo_oab_logs (id INT PRIMARY KEY);
 INSERT INTO tmp_demo_oab_logs
 SELECT id FROM cna_validacao_logs
-WHERE profissional_id IN (SELECT id FROM tmp_demo_users)
-   OR admin_id IN (SELECT id FROM tmp_demo_users);
+WHERE EXISTS (
+    SELECT 1 FROM tmp_demo_users
+    WHERE tmp_demo_users.id = cna_validacao_logs.profissional_id
+       OR tmp_demo_users.id = cna_validacao_logs.admin_id
+);
 
 DROP TEMPORARY TABLE IF EXISTS tmp_demo_external_processes;
 CREATE TEMPORARY TABLE tmp_demo_external_processes (id INT PRIMARY KEY);
