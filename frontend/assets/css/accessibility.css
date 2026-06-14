@@ -1,4 +1,10 @@
 /* Global accessibility helpers and user preferences. */
+:root {
+  --floating-a11y-size: 52px;
+  --floating-a11y-gap: 12px;
+  --floating-a11y-right: 18px;
+}
+
 .skip-link {
   position: fixed;
   top: 10px;
@@ -18,15 +24,18 @@
 
 .a11y-launcher {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
-  z-index: 9000;
+  right: var(--floating-a11y-right);
+  top: calc(50% - var(--floating-a11y-size) - (var(--floating-a11y-gap) / 2));
+  bottom: auto;
+  z-index: 100000;
   display: grid;
   place-items: center;
-  width: 58px;
-  min-width: 58px;
-  height: 58px;
-  min-height: 58px;
+  width: var(--floating-a11y-size);
+  min-width: var(--floating-a11y-size);
+  max-width: var(--floating-a11y-size);
+  height: var(--floating-a11y-size);
+  min-height: var(--floating-a11y-size);
+  max-height: var(--floating-a11y-size);
   padding: 0;
   border: 2px solid rgba(255, 255, 255, .88);
   border-radius: 50%;
@@ -38,10 +47,10 @@
     0 0 0 0 rgba(17, 138, 126, .22);
   animation: a11y-launcher-enter .7s ease .35s both;
   isolation: isolate;
-  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+  transition: box-shadow .2s ease, filter .2s ease;
 }
 
-.ai-chatbot ~ .a11y-launcher { bottom: 94px; }
+.ai-chatbot ~ .a11y-launcher { bottom: auto; }
 
 .a11y-launcher.has-entered {
   animation: none;
@@ -51,8 +60,8 @@
 }
 
 .a11y-launcher.is-aligned-vlibras .a11y-launcher-icon {
-  width: 58%;
-  height: 58%;
+  width: 32px;
+  height: 32px;
 }
 
 .a11y-launcher::before {
@@ -68,7 +77,7 @@
 .a11y-launcher:focus-visible,
 .a11y-launcher[aria-expanded="true"] {
   filter: saturate(1.14) brightness(1.05);
-  transform: translateY(-4px) scale(1.06);
+  transform: none;
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, .5),
     0 18px 42px rgba(7, 27, 73, .34),
@@ -78,7 +87,7 @@
 .a11y-launcher.has-entered:hover,
 .a11y-launcher.has-entered:focus-visible,
 .a11y-launcher.has-entered[aria-expanded="true"] {
-  transform: translateY(-4px) scale(1.06);
+  transform: none;
 }
 
 .a11y-launcher-glow {
@@ -93,9 +102,9 @@
 .a11y-launcher-icon {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
-  transition: transform .22s ease;
+  width: 32px;
+  height: 32px;
+  transition: none;
 }
 
 .a11y-launcher-icon svg,
@@ -114,7 +123,7 @@
 .a11y-panel-symbol svg circle { stroke: none; }
 
 .a11y-launcher:hover .a11y-launcher-icon,
-.a11y-launcher:focus-visible .a11y-launcher-icon { transform: scale(1.08) rotate(-3deg); }
+.a11y-launcher:focus-visible .a11y-launcher-icon { transform: none; }
 
 .a11y-launcher-label {
   position: absolute;
@@ -164,7 +173,7 @@
 .a11y-panel-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 9100;
+  z-index: 100010;
   display: grid;
   place-items: center;
   padding: 18px;
@@ -329,6 +338,43 @@ html[data-a11y-contrast="true"] {
 }
 
 html[data-a11y-contrast="true"] img { filter: contrast(1.08); }
+[vw] {
+  position: fixed !important;
+  top: 50% !important;
+  left: auto !important;
+  right: 0 !important;
+  bottom: auto !important;
+  z-index: 99999 !important;
+  transform: none !important;
+}
+
+[vw-access-button] {
+  z-index: 99999 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  cursor: pointer !important;
+}
+
+html body div[vw].enabled div[vw-plugin-wrapper] {
+  position: fixed !important;
+  top: 50% !important;
+  right: calc(var(--floating-a11y-right) + var(--floating-a11y-size) + 12px) !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: 300px !important;
+  height: 450px !important;
+  min-height: 0 !important;
+  max-width: calc(100vw - 88px) !important;
+  max-height: calc(100vh - 24px) !important;
+  overflow: hidden !important;
+  border-radius: 14px !important;
+  transform: translateY(-50%) !important;
+  z-index: 99998 !important;
+}
+
+html body div[vw].enabled div[vw-plugin-wrapper].active {
+  display: block !important;
+}
 html[data-a11y-contrast="true"] .badge { border: 1px solid currentColor; }
 html[data-a11y-contrast="true"] a:not(.btn):not(.sidebar-submenu-link) { text-decoration: underline; text-underline-offset: 3px; }
 
@@ -423,6 +469,12 @@ html[data-a11y-motion="reduce"] *::after {
   }
 }
 
+@media (max-height: 520px) {
+  html body div[vw].enabled div[vw-plugin-wrapper] {
+    height: calc(100vh - 24px) !important;
+  }
+}
+
 .field-error-message { margin: 5px 0 0; color: var(--danger); font-weight: 750; }
 [aria-invalid="true"] { border-color: var(--danger) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent) !important; }
 .password-field-wrap { position: relative; }
@@ -432,10 +484,24 @@ html[data-a11y-motion="reduce"] *::after {
 .table-wrap[tabindex="0"]:focus-visible { border-radius: 8px; }
 
 @media (max-width: 720px) {
-  .a11y-launcher { right: 12px; bottom: 12px; width: 54px; min-width: 54px; height: 54px; min-height: 54px; }
+  :root {
+    --floating-a11y-size: 48px;
+    --floating-a11y-gap: 10px;
+    --floating-a11y-right: 12px;
+  }
+
+  .a11y-launcher { bottom: auto; }
   .a11y-launcher-label { display: none; }
-  .ai-chatbot ~ .a11y-launcher { bottom: 82px; }
+  .ai-chatbot ~ .a11y-launcher { bottom: auto; }
   .a11y-launcher.is-aligned-vlibras { bottom: auto; }
+  [vw-access-button] { bottom: auto !important; }
+  html body div[vw].enabled div[vw-plugin-wrapper] {
+    right: calc(var(--floating-a11y-right) + var(--floating-a11y-size) + 8px) !important;
+    width: min(280px, calc(100vw - 76px)) !important;
+    height: 410px !important;
+    max-width: calc(100vw - 76px) !important;
+    max-height: calc(100vh - 20px) !important;
+  }
   .a11y-panel { padding: 20px; border-radius: 16px; }
 }
 

@@ -17,7 +17,7 @@
       </a>
       <div class="auth-card">
         <h1>Cadastro</h1>
-        <p class="subtitle">O cadastro agora usa a entrada principal do JusTraduz para manter a experiencia consistente.</p>
+        <p class="subtitle">O cadastro agora usa a entrada principal do JusTraduz para manter a experiência consistente.</p>
         <a class="btn btn-primary btn-block" href="login.html?cadastro">Abrir cadastro</a>
         <p class="auth-footer">Ja tem conta? <a href="login.html">Entrar</a></p>
       </div>
@@ -26,6 +26,16 @@
   <script>
     window.location.replace("login.html?cadastro");
   </script>
-  <script src="assets/js/accessibility.js?v=2026.06.13-11"></script>
+  <script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
+  <div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+      <div class="vw-plugin-top-wrapper"></div>
+    </div>
+  </div>
+  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+  <script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+  </script>
 </body>
 </html>

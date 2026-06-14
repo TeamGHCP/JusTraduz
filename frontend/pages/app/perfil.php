@@ -29,7 +29,7 @@ function profile_oab_status_meta(array $user): array
             'label' => 'OAB validada',
             'badge' => 'badge-success',
             'alert' => 'alert-success',
-            'message' => 'Seu cadastro profissional esta validado. O acesso a casos, documentos e agenda profissional esta liberado.',
+            'message' => 'Seu cadastro profissional está validado. O acesso a casos, documentos e agenda profissional está liberado.',
         ];
     }
 
@@ -43,10 +43,10 @@ function profile_oab_status_meta(array $user): array
     }
 
     return [
-        'label' => 'Aguardando validacao',
+        'label' => 'Aguardando validação',
         'badge' => 'badge-warning',
         'alert' => 'alert-info',
-        'message' => 'Sua OAB ainda depende de revisao administrativa. Enquanto isso, o acesso profissional completo permanece bloqueado.',
+        'message' => 'Sua OAB ainda depende de revisão administrativa. Enquanto isso, o acesso profissional completo permanece bloqueado.',
     ];
 }
 
@@ -120,7 +120,7 @@ $profileTourKey = match ($type) {
               <div class="dash-section-title">
                 <div>
                   <h2>Status profissional</h2>
-                  <p class="text-muted">Validacao manual da OAB vinculada ao seu cadastro.</p>
+                  <p class="text-muted">Validação manual da OAB vinculada ao seu cadastro.</p>
                 </div>
                 <span class="badge <?= e($oabStatus['badge']) ?>"><?= e($oabStatus['label']) ?></span>
               </div>
@@ -137,7 +137,7 @@ $profileTourKey = match ($type) {
                   <strong><?= e(($user['cna_origem'] ?? '') ?: 'admin_manual') ?></strong>
                 </div>
                 <div>
-                  <span>Ultima validacao</span>
+                  <span>Última validação</span>
                   <strong><?= !empty($user['cna_validado_em']) ? e(date('d/m/Y H:i', strtotime((string) $user['cna_validado_em']))) : '-' ?></strong>
                 </div>
               </div>
@@ -193,7 +193,7 @@ $profileTourKey = match ($type) {
             <p class="profile-password-step" data-password-code-hint>Envie o código para habilitar a atualização da senha.</p>
             <div class="field">
               <label for="profile_password_code">Código recebido</label>
-              <input class="input" id="profile_password_code" name="codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+              <input class="input" id="profile_password_code" name="código" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
             </div>
             <div class="form-grid">
               <div class="field">
@@ -217,5 +217,6 @@ $profileTourKey = match ($type) {
   <script src="assets/js/phone-mask.js"></script>
   <script src="assets/js/profile-password.js"></script>
   <?php render_onboarding_assets($profileTourKey, '2026.06.11', $type, false); ?>
+  <?php render_vlibras(); ?>
 </body>
 </html>

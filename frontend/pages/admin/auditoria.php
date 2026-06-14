@@ -51,7 +51,7 @@ function audit_pretty_details(?string $details): string
 $userId = (int) ($_GET['user_id'] ?? 0);
 $action = trim((string) ($_GET['action'] ?? ''));
 $entity = trim((string) ($_GET['entity_type'] ?? ''));
-$date = trim((string) ($_GET['date'] ?? ''));
+$daté = trim((string) ($_GET['date'] ?? ''));
 $severityFilter = $_GET['severity'] ?? '';
 $where = [];
 $params = [];
@@ -71,7 +71,7 @@ if ($entity !== '') {
     $params[] = $entity;
 }
 
-if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+if ($daté !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
     $where[] = 'DATE(a.created_at) = ?';
     $params[] = $date;
 }
@@ -197,5 +197,6 @@ $infoCount = max(0, count($logs) - $criticalCount - $warningCount);
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>

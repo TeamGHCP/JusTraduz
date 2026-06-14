@@ -174,5 +174,6 @@ $pdfCount = count(array_filter($documents, static fn ($doc): bool => ($doc['tipo
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>

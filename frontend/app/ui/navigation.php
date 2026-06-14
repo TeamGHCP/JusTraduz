@@ -21,11 +21,11 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
             return [
                 [
                     'id' => 'overview',
-                    'label' => 'Visao geral',
+                    'label' => 'Visão geral',
                     'icon' => 'home',
                     'items' => [
                         ['href' => 'dashboard-advogado.php', 'label' => 'Dashboard', 'icon' => 'chart'],
-                        ['href' => 'notificacoes.php', 'label' => 'Notificacoes', 'icon' => 'bell'],
+                        ['href' => 'notificacoes.php', 'label' => 'Notificações', 'icon' => 'bell'],
                     ],
                 ],
                 [
@@ -33,14 +33,14 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                     'label' => 'Atendimentos',
                     'icon' => 'case',
                     'items' => [
-                        ['href' => 'acompanhar-solicitacoes.php', 'label' => 'Casos e solicitacoes', 'icon' => 'case'],
+                        ['href' => 'acompanhar-solicitacoes.php', 'label' => 'Casos e solicitações', 'icon' => 'case'],
                         ['href' => 'chat.php', 'label' => 'Chat por caso', 'icon' => 'chat'],
                         ['href' => 'lista-advogados.php', 'label' => 'Rede de advogados', 'icon' => 'users'],
                     ],
                 ],
                 [
                     'id' => 'work',
-                    'label' => 'Trabalho juridico',
+                    'label' => 'Trabalho jurídico',
                     'icon' => 'folder',
                     'items' => [
                         ['href' => 'processos.php', 'label' => 'Processos', 'icon' => 'file'],
@@ -62,11 +62,11 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
             return [
                 [
                     'id' => 'overview',
-                    'label' => 'Visao geral',
+                    'label' => 'Visão geral',
                     'icon' => 'home',
                     'items' => [
                         ['href' => 'dashboard-estagiario.php', 'label' => 'Dashboard', 'icon' => 'chart'],
-                        ['href' => 'notificacoes.php', 'label' => 'Notificacoes', 'icon' => 'bell'],
+                        ['href' => 'notificacoes.php', 'label' => 'Notificações', 'icon' => 'bell'],
                     ],
                 ],
                 [
@@ -94,26 +94,26 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
             return [
                 [
                     'id' => 'overview',
-                    'label' => 'Visao geral',
+                    'label' => 'Visão geral',
                     'icon' => 'chart',
                     'items' => [
                         ['href' => $adminPrefix . 'dashboard-admin.php', 'label' => 'Dashboard admin', 'icon' => 'chart'],
-                        ['href' => $appPrefix . 'notificacoes.php', 'label' => 'Notificacoes', 'icon' => 'bell'],
+                        ['href' => $appPrefix . 'notificacoes.php', 'label' => 'Notificações', 'icon' => 'bell'],
                     ],
                 ],
                 [
                     'id' => 'management',
-                    'label' => 'Gestao',
+                    'label' => 'Gestão',
                     'icon' => 'users',
                     'items' => [
-                        ['href' => $adminPrefix . 'usuarios.php', 'label' => 'Usuarios', 'icon' => 'users'],
-                        ['href' => $adminPrefix . 'validar-oab.php', 'label' => 'Validacao OAB', 'icon' => 'shield'],
-                        ['href' => $adminPrefix . 'solicitacoes.php', 'label' => 'Solicitacoes', 'icon' => 'case'],
+                        ['href' => $adminPrefix . 'usuarios.php', 'label' => 'Usuários', 'icon' => 'users'],
+                        ['href' => $adminPrefix . 'validar-oab.php', 'label' => 'Validação OAB', 'icon' => 'shield'],
+                        ['href' => $adminPrefix . 'solicitacoes.php', 'label' => 'Solicitações', 'icon' => 'case'],
                     ],
                 ],
                 [
                     'id' => 'operation',
-                    'label' => 'Operacao',
+                    'label' => 'Operação',
                     'icon' => 'folder',
                     'items' => [
                         ['href' => $adminPrefix . 'documentos.php', 'label' => 'Documentos', 'icon' => 'folder'],
@@ -123,7 +123,7 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                 ],
                 [
                     'id' => 'security',
-                    'label' => 'Seguranca',
+                    'label' => 'Segurança',
                     'icon' => 'shield',
                     'items' => [
                         ['href' => $adminPrefix . 'auditoria.php', 'label' => 'Auditoria', 'icon' => 'shield'],
@@ -142,11 +142,11 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
             return [
                 [
                     'id' => 'overview',
-                    'label' => 'Visao geral',
+                    'label' => 'Visão geral',
                     'icon' => 'home',
                     'items' => [
                         ['href' => 'dashboard-cliente.php', 'label' => 'Dashboard', 'icon' => 'chart'],
-                        ['href' => 'notificacoes.php', 'label' => 'Notificacoes', 'icon' => 'bell'],
+                        ['href' => 'notificacoes.php', 'label' => 'Notificações', 'icon' => 'bell'],
                     ],
                 ],
                 [
@@ -160,18 +160,18 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                 ],
                 [
                     'id' => 'legal-service',
-                    'label' => 'Atendimento juridico',
+                    'label' => 'Atendimento jurídico',
                     'icon' => 'case',
                     'items' => [
                         ['href' => 'solicitar-ajuda.php', 'label' => 'Solicitar ajuda', 'icon' => 'chat'],
-                        ['href' => 'acompanhar-solicitacoes.php', 'label' => 'Acompanhar solicitacoes', 'icon' => 'case'],
+                        ['href' => 'acompanhar-solicitacoes.php', 'label' => 'Acompanhar solicitações', 'icon' => 'case'],
                         ['href' => 'chat.php', 'label' => 'Chat com advogado', 'icon' => 'chat'],
                         ['href' => 'lista-advogados.php', 'label' => 'Advogados verificados', 'icon' => 'users'],
                     ],
                 ],
                 [
                     'id' => 'organization',
-                    'label' => 'Organizacao',
+                    'label' => 'Organização',
                     'icon' => 'calendar',
                     'items' => [
                         ['href' => 'tarefas.php', 'label' => 'Tarefas', 'icon' => 'check'],

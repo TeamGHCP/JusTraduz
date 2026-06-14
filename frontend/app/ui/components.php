@@ -127,6 +127,46 @@ function render_sidebar(string $type, string $active, bool $isAdminPath = false)
     <?php
 }
 
+function render_vlibras(): void
+{
+    static $rendered = false;
+
+    if ($rendered) {
+        return;
+    }
+
+    $rendered = true;
+    ?>
+    <div vw class="enabled">
+      <div vw-access-button class="active"></div>
+      <div vw-plugin-wrapper>
+        <div class="vw-plugin-top-wrapper"></div>
+      </div>
+    </div>
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script>
+      (function startVlibrasWidget() {
+        var attempts = 0;
+
+        function start() {
+          if (window.JusTraduzVlibrasStarted) return;
+          if (!window.VLibras || !window.VLibras.Widget) {
+            attempts++;
+            if (attempts < 20) window.setTimeout(start, 250);
+            return;
+          }
+
+          window.JusTraduzVlibrasStarted = true;
+          new window.VLibras.Widget('https://vlibras.gov.br/app');
+        }
+
+        start();
+        window.addEventListener('load', start);
+      }());
+    </script>
+    <?php
+}
+
 function help_icon(string $title, string $description): string
 {
     return '<button type="button" class="help-dot"'
@@ -180,25 +220,25 @@ function sidebar_tour_meta(string $type, string $label): ?array
             'Solicitar ajuda' => [8, 'Pedir ajuda', 'Quando a análise não for suficiente, solicite orientação de um profissional.'],
             'Chat com advogado' => [9, 'Chat com profissional', 'Converse dentro do caso para manter o histórico e o contexto organizados.'],
             'Agenda' => [10, 'Agenda', 'Consulte e organize seus próximos atendimentos.'],
-            'Notificacoes' => [11, 'Notificações', 'Acompanhe novidades sobre documentos, casos e mensagens.'],
+            'Notificações' => [11, 'Notificações', 'Acompanhe novidades sobre documentos, casos e mensagens.'],
             'Perfil' => [12, 'Perfil e segurança', 'Atualize seus dados, proteja sua senha e redefina o tour quando precisar.'],
         ],
         'advogado' => [
             'Chat por caso' => [8, 'Chat por caso', 'Centralize a comunicação no caso e preserve o sigilo dos dados do cliente.'],
             'Agenda' => [9, 'Agenda', 'Organize atendimentos e compromissos vinculados ao trabalho jurídico.'],
             'Perfil profissional' => [10, 'Perfil profissional', 'Mantenha seus dados profissionais e sua situação cadastral atualizados.'],
-            'Notificacoes' => [11, 'Notificações', 'Acompanhe novos casos, mensagens e atualizações importantes.'],
+            'Notificações' => [11, 'Notificações', 'Acompanhe novos casos, mensagens e atualizações importantes.'],
             'Documentos' => [12, 'Sigilo e LGPD', 'Documentos de clientes são sensíveis. Acesse somente o necessário e não os exponha.'],
         ],
         'admin' => [
             'Auditoria' => [9, 'Segurança e auditoria', 'Investigue eventos críticos e tentativas de acesso sem expor dados sensíveis.'],
             'Tarefas' => [10, 'Operação', 'Acompanhe ações necessárias para manter a plataforma funcionando.'],
-            'Notificacoes' => [11, 'Notificações administrativas', 'Veja alertas relevantes para a operação e a segurança.'],
+            'Notificações' => [11, 'Notificações administrativas', 'Veja alertas relevantes para a operação e a segurança.'],
             'Meu perfil' => [12, 'LGPD e governança', 'Use privilégios administrativos com finalidade, rastreabilidade e acesso mínimo.'],
         ],
         'estagiario' => [
             'Perfil' => [6, 'Perfil', 'Mantenha seus dados profissionais corretos e atualizados.'],
-            'Notificacoes' => [7, 'Notificações', 'Consulte apenas avisos relacionados às funções permitidas ao seu perfil.'],
+            'Notificações' => [7, 'Notificações', 'Consulte apenas avisos relacionados às funções permitidas ao seu perfil.'],
             'Processos' => [8, 'Limites de acesso', 'O acesso é assistivo e não equivale às permissões de um advogado.'],
             'Agenda' => [9, 'Segurança e responsabilidade', 'Use somente dados necessários e preserve o sigilo profissional.'],
             'Dashboard' => [10, 'Encerramento', 'Use a área assistiva dentro dos limites definidos pela supervisão.'],
@@ -334,7 +374,7 @@ function context_help_asset_path(bool $isAdminPath, string $type): string
 function accessibility_asset_path(bool $isAdminPath): string
 {
     $path = $isAdminPath ? '../assets/js/accessibility.js' : 'assets/js/accessibility.js';
-    return $path . '?v=2026.06.13-11';
+    return $path . '?v=2026.06.14-06';
 }
 
 function stat_card(string $label, $value, string $icon): string

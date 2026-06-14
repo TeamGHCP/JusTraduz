@@ -20,6 +20,10 @@
   font-family: var(--font);
 }
 
+.ai-chatbot.is-open {
+  z-index: 100020;
+}
+
 .ai-chatbot-callout {
   position: absolute;
   left: 50%;

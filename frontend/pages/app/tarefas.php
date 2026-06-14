@@ -138,13 +138,13 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
     <?php render_sidebar($type, 'tarefas.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Tarefas', 'Proximos passos com caso, cliente, prioridade e responsavel visiveis.', current_user_name()); ?>
+      <?php render_topbar('Tarefas', 'Próximos passos com caso, cliente, prioridade e responsável visiveis.', current_user_name()); ?>
 
       <?php if ($type === 'estagiario'): ?>
         <section class="professional-alert professional-alert-locked">
           <div>
             <strong>Tarefas bloqueadas para este perfil.</strong>
-            <span>Sem atribuicao formal, estagiario nao cria, altera ou consulta tarefas de casos. Isso e regra de responsabilidade, nao detalhe visual.</span>
+            <span>Sem atribuição formal, estagiario não cria, altera ou consulta tarefas de casos. Isso é regra de responsabilidade, não detalhe visual.</span>
           </div>
           <a class="btn btn-primary btn-sm" href="agenda.php">Minha agenda</a>
         </section>
@@ -165,7 +165,7 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
             <span class="badge badge-success"><?= e((string) count($cases)) ?> casos ativos</span>
           </div>
           <?php if (!$cases): ?>
-            <p class="text-muted">Nenhum caso ativo disponivel para criar tarefas.</p>
+            <p class="text-muted">Nenhum caso ativo disponível para criar tarefas.</p>
           <?php else: ?>
             <div class="form-grid">
               <div class="field">
@@ -185,7 +185,7 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
             </div>
             <div class="field">
               <label for="descricao">Descricao</label>
-              <textarea class="textarea" id="descricao" name="descricao" placeholder="O que precisa acontecer, por que importa e qual e a proxima evidencia esperada."></textarea>
+              <textarea class="textarea" id="descricao" name="descricao" placeholder="O que precisa acontecer, por que importa e qual e a proxima evidência esperada."></textarea>
             </div>
             <button class="btn btn-primary" type="submit"><?= icon_svg('check') ?> Criar tarefa</button>
           <?php endif; ?>
@@ -196,7 +196,7 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
         <form class="card admin-filter task-filter-grid" method="get">
           <div class="field">
             <label for="q">Busca</label>
-            <input class="input" id="q" name="q" value="<?= e($q) ?>" placeholder="Tarefa, caso, cliente ou responsavel">
+            <input class="input" id="q" name="q" value="<?= e($q) ?>" placeholder="Tarefa, caso, cliente ou responsável">
           </div>
           <div class="field">
             <label for="status">Status</label>
@@ -232,7 +232,7 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
         </div>
 
         <?php if (!$tasks): ?>
-          <?= empty_state($type === 'estagiario' ? 'Sem tarefas acessiveis para este perfil.' : 'Nenhuma tarefa encontrada para os filtros atuais.') ?>
+          <?= empty_state($type === 'estagiario' ? 'Sem tarefas acessíveis para este perfil.' : 'Nenhuma tarefa encontrada para os filtros atuais.') ?>
         <?php else: ?>
           <div class="professional-card-grid task-card-grid">
             <?php foreach ($tasks as $task): ?>
@@ -248,7 +248,7 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
                 <div class="case-meta-grid">
                   <div><span>Caso</span><strong><?= e($task['caso']) ?></strong></div>
                   <div><span>Cliente</span><strong><?= e($task['cliente']) ?></strong></div>
-                  <div><span>Responsavel</span><strong><?= e($task['advogado'] ?? 'Sem advogado') ?></strong></div>
+                  <div><span>Responsável</span><strong><?= e($task['advogado'] ?? 'Sem advogado') ?></strong></div>
                   <div><span>Criada</span><strong><?= e(task_datetime($task['created_at'] ?? '')) ?></strong></div>
                 </div>
                 <div class="case-actions">
@@ -275,5 +275,6 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>

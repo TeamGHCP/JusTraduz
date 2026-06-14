@@ -4,7 +4,7 @@ require_role(['admin']);
 
 function admin_oab_validation_type_label(string $type): string
 {
-    return $type === 'estagiario' ? 'Estagiario' : 'Advogado';
+    return $type === 'estagiario' ? 'Estagiário' : 'Advogado';
 }
 
 function admin_oab_validation_clipboard_text(array $professional): string
@@ -31,7 +31,7 @@ function admin_oab_status_label(string $status): string
     return match ($status) {
         'verificado' => 'Validado',
         'invalido' => 'Invalido',
-        'nao_encontrado' => 'Nao encontrado',
+        'nao_encontrado' => 'Não encontrado',
         default => 'Pendente',
     };
 }
@@ -110,7 +110,7 @@ $recentReviews = fetch_all(
         </article>
         <article>
           <?= icon_svg('check') ?>
-          <strong>2. Decidir com evidencia</strong>
+          <strong>2. Decidir com evidência</strong>
           <span>Aprove apenas quando a inscricao estiver ativa e compatível com nome, UF e tipo.</span>
         </article>
         <article>
@@ -213,7 +213,7 @@ $recentReviews = fetch_all(
                           <?= csrf_input() ?>
                           <input type="hidden" name="user_id" value="<?= (int) $professional['id'] ?>">
                           <input type="hidden" name="action" value="approve">
-                          <input class="input admin-reason-input" name="justificativa" placeholder="Fonte da validacao" required>
+                          <input class="input admin-reason-input" name="justificativa" placeholder="Fonte da validação" required>
                           <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
                         </form>
 
@@ -287,5 +287,6 @@ $recentReviews = fetch_all(
     </main>
   </div>
   <script src="../assets/js/admin-oab-validation.js"></script>
+  <?php render_vlibras(); ?>
 </body>
 </html>

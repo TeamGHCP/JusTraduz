@@ -50,7 +50,7 @@ function document_analysis_sections(string $text): array
             $current = match (true) {
                 str_contains($heading, 'pontos importantes') => 'important',
                 str_contains($heading, 'riscos') || str_contains($heading, 'atencao') => 'risks',
-                str_contains($heading, 'proximos passos') => 'steps',
+                str_contains($heading, 'próximos passos') => 'steps',
                 str_contains($heading, 'aviso') => 'notice',
                 default => 'simple',
             };
@@ -150,8 +150,8 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
 
     <main class="app-main">
       <?php render_topbar(
-          $document ? 'Analise do documento' : 'Documentos',
-          $document ? 'Resumo, explicacao simples, riscos e proximos passos.' : 'Consulte os documentos disponiveis para seu perfil.',
+          $document ? 'Análise do documento' : 'Documentos',
+          $document ? 'Resumo, explicacao simples, riscos e próximos passos.' : 'Consulte os documentos disponíveis para seu perfil.',
           current_user_name()
       ); ?>
 
@@ -162,11 +162,11 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
             <span class="badge badge-success"><?= e((string) count($documents)) ?> registros</span>
           </div>
           <?php if (!$documents): ?>
-            <?= empty_state('Nenhum documento disponivel no momento.') ?>
+            <?= empty_state('Nenhum documento disponível no momento.') ?>
           <?php else: ?>
             <div class="table-wrap">
               <table class="table">
-                <thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th>Analise</th><th>Confianca</th><th>Enviado em</th><th>Acao</th></tr></thead>
+                <thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th>Análise</th><th>Confianca</th><th>Enviado em</th><th>Acao</th></tr></thead>
                 <tbody>
                   <?php foreach ($documents as $item): ?>
                     <?php $itemConfidence = $item['confianca'] !== null ? max(0, min(100, (float) $item['confianca'])) : null; ?>
@@ -186,11 +186,11 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
           <?php endif; ?>
         </section>
       <?php elseif (!$document): ?>
-        <?= empty_state('Documento nao encontrado ou indisponivel para seu perfil.') ?>
+        <?= empty_state('Documento não encontrado ou indisponível para seu perfil.') ?>
       <?php else: ?>
         <section class="analysis-hero">
           <div>
-            <span class="badge <?= $hasAnalysis ? 'badge-success' : 'badge-warning' ?>"><?= $hasAnalysis ? 'Analise disponivel' : 'Analise pendente' ?></span>
+            <span class="badge <?= $hasAnalysis ? 'badge-success' : 'badge-warning' ?>"><?= $hasAnalysis ? 'Análise disponível' : 'Análise pendente' ?></span>
             <h2><?= e($document['nome_arquivo']) ?></h2>
             <p>Cliente: <?= e($document['cliente']) ?> | Enviado em <?= e(date('d/m/Y H:i', strtotime($document['created_at']))) ?></p>
             <?php if ($hasAnalysis): ?>
@@ -215,7 +215,7 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
 
         <section class="doc-toolbar">
           <?php if (in_array($type, ['cliente', 'admin'], true)): ?>
-            <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/documents/delete')) ?>" method="post" data-confirm-delete="Excluir este documento? Esta acao nao pode ser desfeita.">
+            <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/documents/delete')) ?>" method="post" data-confirm-delete="Excluir este documento? Esta acao não pode ser desfeita.">
               <?= csrf_input() ?>
               <input type="hidden" name="document_id" value="<?= (int) $document['id'] ?>">
               <button class="btn btn-outline btn-sm" type="submit"><?= icon_svg('trash') ?> Excluir</button>
@@ -227,9 +227,9 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
               <input type="hidden" name="document_id" value="<?= (int) $document['id'] ?>">
               <label class="checkline checkline-inline">
                 <input type="checkbox" name="autorizar_ia" value="1" required>
-                <span>Autorizo analise por IA</span>
+                <span>Autorizo análise por IA</span>
               </label>
-              <button class="btn btn-soft btn-sm" type="submit"><?= icon_svg('chart') ?> <?= $hasAnalysis ? 'Regerar analise' : 'Gerar analise' ?></button>
+              <button class="btn btn-soft btn-sm" type="submit"><?= icon_svg('chart') ?> <?= $hasAnalysis ? 'Regerar análise' : 'Gerar análise' ?></button>
             </form>
           <?php endif; ?>
           <?php if ($type === 'cliente'): ?>
@@ -242,8 +242,8 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
             <?php if (!$hasAnalysis): ?>
               <div class="analysis-empty">
                 <?= icon_svg('chart') ?>
-                <h2>Analise ainda nao gerada</h2>
-                <p>Autorize a IA acima para transformar o documento em resumo, linguagem simples, riscos e proximos passos.</p>
+                <h2>Análise ainda não gerada</h2>
+                <p>Autorize a IA acima para transformar o documento em resumo, linguagem simples, riscos e próximos passos.</p>
               </div>
             <?php else: ?>
               <div class="analysis-summary-card">
@@ -277,13 +277,13 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
                     <?= icon_svg('shield') ?>
                     <h3>Riscos e atencao</h3>
                   </div>
-                  <?php render_analysis_text_block($analysisSections['risks'] ?: 'Sem riscos destacados automaticamente. Isso nao elimina a necessidade de revisao profissional.'); ?>
+                  <?php render_analysis_text_block($analysisSections['risks'] ?: 'Sem riscos destacados automaticamente. Isso não elimina a necessidade de revisão profissional.'); ?>
                 </section>
 
                 <section class="analysis-section">
                   <div class="analysis-section-head">
                     <?= icon_svg('help') ?>
-                    <h3>Proximos passos</h3>
+                    <h3>Próximos passos</h3>
                   </div>
                   <?php render_analysis_text_block($analysisSections['steps'] ?: 'Separe documentos relacionados e converse com um profissional antes de decidir.'); ?>
                 </section>
@@ -291,16 +291,16 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
                 <section class="analysis-section">
                   <div class="analysis-section-head">
                     <?= icon_svg('shield') ?>
-                    <h3>Limite da analise</h3>
+                    <h3>Limite da análise</h3>
                   </div>
-                  <?php render_analysis_text_block($analysisSections['notice'] ?: 'Esta analise e informativa e nao substitui orientacao juridica profissional.'); ?>
+                  <?php render_analysis_text_block($analysisSections['notice'] ?: 'Esta análise é informativa e não substitui orientação juridica profissional.'); ?>
                 </section>
               </div>
             <?php endif; ?>
 
             <div class="analysis-disclaimer">
               <?= icon_svg('shield') ?>
-              <span>Uso informativo: a IA ajuda a entender o texto, mas nao decide seu caso nem substitui advogado.</span>
+              <span>Uso informativo: a IA ajuda a entender o texto, mas não decide seu caso nem substitui advogado.</span>
             </div>
           </article>
 
@@ -321,7 +321,7 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
             <?php else: ?>
               <div class="analysis-empty">
                 <?= icon_svg('file') ?>
-                <h2>Preview indisponivel</h2>
+                <h2>Preview indisponível</h2>
                 <p>Abra o arquivo original para consultar este formato.</p>
               </div>
             <?php endif; ?>
@@ -331,5 +331,6 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
     </main>
   </div>
   <script src="assets/js/documento.js"></script>
+  <?php render_vlibras(); ?>
 </body>
 </html>

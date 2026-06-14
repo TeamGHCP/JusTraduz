@@ -62,7 +62,7 @@ $appointments = fetch_all(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mesa do estagiario | JusTraduz</title>
+  <title>Mesa do estagiário | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
 </head>
@@ -71,18 +71,18 @@ $appointments = fetch_all(
     <?php render_sidebar('estagiario', 'dashboard-estagiario.php'); ?>
 
     <main class="app-main" data-tour-step="1" data-tour-title="Visão geral do estagiário" data-tour-description="Esta área é assistiva e possui permissões menores que as de um advogado.">
-      <?php render_topbar('Mesa do estagiario', 'Acesso assistivo restrito a agenda propria e dados do proprio perfil.', current_user_name()); ?>
+      <?php render_topbar('Mesa do estagiário', 'Acesso assistivo restrito à agenda própria e aos dados do próprio perfil.', current_user_name()); ?>
 
       <section class="professional-alert professional-alert-locked" data-tour-step="5" data-tour-title="Limites de atuação" data-tour-description="Sem atribuição formal, você não acessa casos, documentos ou chats de clientes.">
         <div>
           <strong>Permissao limitada de proposito.</strong>
-          <span>Sem atribuicao formal, estagiario nao acessa casos, documentos, tarefas ou chat de clientes. Isso protege o cliente e evita papel de admin disfarcido.</span>
+          <span>Sem atribuição formal, estagiario não acessa casos, documentos, tarefas ou chat de clientes. Isso protege o cliente e evita papel de admin disfarcido.</span>
         </div>
         <a class="btn btn-primary btn-sm" href="agenda.php"><?= icon_svg('calendar') ?> Minha agenda</a>
       </section>
 
       <section class="grid grid-4" data-tour-step="4" data-tour-title="Permissões do perfil" data-tour-description="Os indicadores refletem apenas recursos autorizados para sua conta.">
-        <?= stat_card('Horarios futuros', $futureSlotCount, 'calendar') ?>
+        <?= stat_card('Horários futuros', $futureSlotCount, 'calendar') ?>
         <?= stat_card('Livres', $freeSlotCount, 'check') ?>
         <?= stat_card('Agendamentos', $appointmentCount, 'case') ?>
         <?= stat_card('Bloqueados', $blockedSlotCount, 'shield') ?>
@@ -92,18 +92,18 @@ $appointments = fetch_all(
         <article class="dash-section" data-tour-step="2" data-tour-title="Agenda própria" data-tour-description="Cadastre e acompanhe somente os horários vinculados ao seu perfil.">
           <div class="dash-section-title">
             <h2>Minha agenda <?= help_icon('Agenda própria', 'Gerencie somente seus horários autorizados. A agenda não amplia seu acesso a casos ou documentos.') ?></h2>
-            <a class="btn btn-soft btn-sm" href="agenda.php">Gerenciar horarios</a>
+            <a class="btn btn-soft btn-sm" href="agenda.php">Gerenciar horários</a>
           </div>
           <?php if (!$slots): ?>
-            <?= empty_state('Nenhum horario futuro cadastrado na sua agenda.') ?>
+            <?= empty_state('Nenhum horário futuro cadastrado na sua agenda.') ?>
           <?php else: ?>
             <div class="professional-list">
               <?php foreach ($slots as $slot): ?>
                 <article class="professional-list-item">
                   <div>
                     <span class="badge <?= e(intern_slot_badge($slot['status'] ?? '')) ?>"><?= e(status_label($slot['status'] ?? '')) ?></span>
-                    <strong><?= e($slot['titulo'] ?: 'Horario de atendimento') ?></strong>
-                    <small><?= e(intern_datetime($slot['starts_at'] ?? '')) ?> ate <?= e(date('H:i', strtotime((string) $slot['ends_at']))) ?></small>
+                    <strong><?= e($slot['titulo'] ?: 'Horário de atendimento') ?></strong>
+                    <small><?= e(intern_datetime($slot['starts_at'] ?? '')) ?> até <?= e(date('H:i', strtotime((string) $slot['ends_at']))) ?></small>
                   </div>
                   <a class="btn btn-outline btn-sm" href="agenda.php">Abrir</a>
                 </article>
@@ -144,8 +144,8 @@ $appointments = fetch_all(
         <div class="permission-grid">
           <article class="permission-card is-allowed">
             <?= icon_svg('calendar') ?>
-            <strong>Agenda propria</strong>
-            <span>Criar, bloquear e acompanhar horarios do proprio usuario.</span>
+            <strong>Agenda própria</strong>
+            <span>Criar, bloquear e acompanhar horários do próprio usuário.</span>
           </article>
           <article class="permission-card is-allowed">
             <?= icon_svg('user') ?>
@@ -155,7 +155,7 @@ $appointments = fetch_all(
           <article class="permission-card is-denied">
             <?= icon_svg('case') ?>
             <strong>Casos de clientes</strong>
-            <span>Bloqueado ate existir atribuicao formal no sistema.</span>
+            <span>Bloqueado até existir atribuição formal no sistema.</span>
           </article>
           <article class="permission-card is-denied">
             <?= icon_svg('file') ?>
@@ -167,5 +167,6 @@ $appointments = fetch_all(
     </main>
   </div>
   <?php render_onboarding_assets('dashboard_estagiario', '2026.06.11', 'estagiario'); ?>
+  <?php render_vlibras(); ?>
 </body>
 </html>

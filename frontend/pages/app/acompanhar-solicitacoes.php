@@ -111,7 +111,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Solicitacoes | JusTraduz</title>
+  <title>Solicitações | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
 </head>
@@ -120,7 +120,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
     <?php render_sidebar($type, 'acompanhar-solicitacoes.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Acompanhar solicitacoes', 'Fila de casos, responsaveis, chat e proximas acoes.', current_user_name()); ?>
+      <?php render_topbar('Acompanhar solicitações', 'Fila de casos, responsaveis, chat e proximas acoes.', current_user_name()); ?>
 
       <section class="grid grid-4">
         <?= stat_card('Resultado filtrado', $total, 'case') ?>
@@ -156,7 +156,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
           <div class="field">
             <label for="scope">Fila</label>
             <select class="select" id="scope" name="scope">
-              <option value="">Todos acessiveis</option>
+              <option value="">Todos acessíveis</option>
               <option value="meus" <?= $scope === 'meus' ? 'selected' : '' ?>>Meus casos</option>
               <option value="abertos" <?= $scope === 'abertos' ? 'selected' : '' ?>>Abertos</option>
             </select>
@@ -172,7 +172,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
       </form>
 
       <?php if ($unassignedCount > 0 && in_array($type, ['advogado', 'admin'], true)): ?>
-        <div class="alert is-visible alert-info">Existem <?= e((string) $unassignedCount) ?> caso(s) sem responsavel. Priorize aceitar ou atribuir antes de abrir novas frentes.</div>
+        <div class="alert is-visible alert-info">Existem <?= e((string) $unassignedCount) ?> caso(s) sem responsável. Priorize aceitar ou atribuir antes de abrir novas frentes.</div>
       <?php endif; ?>
 
       <section class="dash-section">
@@ -203,7 +203,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
 
                 <div class="case-meta-grid">
                   <div><span>Cliente</span><strong><?= e($case['cliente'] ?? '-') ?></strong></div>
-                  <div><span>Responsavel</span><strong><?= e($case['advogado'] ?? 'Aguardando') ?></strong></div>
+                  <div><span>Responsável</span><strong><?= e($case['advogado'] ?? 'Aguardando') ?></strong></div>
                   <div><span>Mensagens</span><strong><?= e((string) (int) $case['message_count']) ?></strong></div>
                   <div><span>Tarefas</span><strong><?= e((string) (int) $case['task_count']) ?></strong></div>
                 </div>
@@ -259,5 +259,6 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>

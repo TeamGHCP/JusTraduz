@@ -5,7 +5,7 @@ require_login();
 $type = current_user_type();
 $q = trim((string) ($_GET['q'] ?? ''));
 $uf = strtoupper(trim((string) ($_GET['uf'] ?? '')));
-$onlyAvailable = (string) ($_GET['disponivel'] ?? '') === '1';
+$onlyAvailable = (string) ($_GET['disponível'] ?? '') === '1';
 
 $ufs = fetch_all(
     $pdo,
@@ -68,7 +68,7 @@ function directory_lawyer_photo(array $lawyer): string
 function directory_datetime(?string $value): string
 {
     if (!$value) {
-        return 'Sem horario livre';
+        return 'Sem horário livre';
     }
 
     return date('d/m/Y H:i', strtotime($value));
@@ -88,7 +88,7 @@ function directory_datetime(?string $value): string
     <?php render_sidebar($type, 'lista-advogados.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Advogados verificados', 'Profissionais ativos, validados e prontos para receber solicitacoes.', current_user_name()); ?>
+      <?php render_topbar('Advogados verificados', 'Profissionais ativos, validados e prontos para receber solicitações.', current_user_name()); ?>
 
       <section class="lawyer-directory-hero">
         <div>
@@ -119,8 +119,8 @@ function directory_datetime(?string $value): string
           </select>
         </div>
         <label class="checkline directory-check">
-          <input type="checkbox" name="disponivel" value="1" <?= $onlyAvailable ? 'checked' : '' ?>>
-          <span>Com horario livre</span>
+          <input type="checkbox" name="disponível" value="1" <?= $onlyAvailable ? 'checked' : '' ?>>
+          <span>Com horário livre</span>
         </label>
         <div class="form-actions">
           <button class="btn btn-primary" type="submit">Filtrar</button>
@@ -156,9 +156,9 @@ function directory_datetime(?string $value): string
 
                 <div class="case-meta-grid lawyer-directory-meta">
                   <div><span>Casos ativos</span><strong><?= e((string) (int) $lawyer['active_cases']) ?></strong></div>
-                  <div><span>Horarios livres</span><strong><?= e((string) (int) $lawyer['free_slots']) ?></strong></div>
+                  <div><span>Horários livres</span><strong><?= e((string) (int) $lawyer['free_slots']) ?></strong></div>
                   <div><span>Proximo livre</span><strong><?= e(directory_datetime($lawyer['next_free_at'] ?? null)) ?></strong></div>
-                  <div><span>Contato</span><strong><?= e($lawyer['telefone'] ?: 'Nao informado') ?></strong></div>
+                  <div><span>Contato</span><strong><?= e($lawyer['telefone'] ?: 'Não informado') ?></strong></div>
                 </div>
 
                 <p class="text-muted"><?= e($lawyer['oab_status'] ?: 'Profissional ativo e aprovado pela administracao.') ?></p>
@@ -180,5 +180,6 @@ function directory_datetime(?string $value): string
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>

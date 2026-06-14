@@ -25,7 +25,7 @@ function agenda_time_range(array $row): string
 
 function agenda_role_label(?string $role): string
 {
-    return $role === 'advogado' ? 'Advogado' : ($role === 'estagiario' ? 'Estagiario' : 'Profissional');
+    return $role === 'advogado' ? 'Advogado' : ($role === 'estagiario' ? 'Estagiário' : 'Profissional');
 }
 
 function agenda_status_badge_class(string $status): string
@@ -177,8 +177,8 @@ $activeAppointments = count(array_filter($appointments, static function (array $
 }));
 $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
 $calendarSubtitle = $type === 'cliente'
-    ? 'Encontre horario livre, vincule a um caso e confirme atendimento.'
-    : ($type === 'admin' ? 'Visao operacional de disponibilidade e atendimentos.' : 'Crie horarios, bloqueie agenda e acompanhe atendimentos.');
+    ? 'Encontre horário livre, vincule a um caso e confirme atendimento.'
+    : ($type === 'admin' ? 'Visao operacional de disponibilidade e atendimentos.' : 'Crie horários, bloqueie agenda e acompanhe atendimentos.');
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -206,7 +206,7 @@ $calendarSubtitle = $type === 'cliente'
 
       <section class="grid grid-4">
         <?php if ($type === 'cliente'): ?>
-          <?= stat_card('Horarios livres', count($freeSlots), 'calendar') ?>
+          <?= stat_card('Horários livres', count($freeSlots), 'calendar') ?>
           <?= stat_card('Meus atendimentos', count($appointments), 'case') ?>
           <?= stat_card('Ativos', $activeAppointments, 'chat') ?>
           <?= stat_card('Casos abertos', count($clientsCases), 'help') ?>
@@ -237,7 +237,7 @@ $calendarSubtitle = $type === 'cliente'
               <select class="select" id="perfil" name="perfil">
                 <option value="">Todos</option>
                 <option value="advogado" <?= $roleFilter === 'advogado' ? 'selected' : '' ?>>Advogado</option>
-                <option value="estagiario" <?= $roleFilter === 'estagiario' ? 'selected' : '' ?>>Estagiario</option>
+                <option value="estagiario" <?= $roleFilter === 'estagiario' ? 'selected' : '' ?>>Estagiário</option>
               </select>
             </div>
             <div class="form-actions">
@@ -253,8 +253,8 @@ $calendarSubtitle = $type === 'cliente'
           <div class="card agenda-create-card">
             <div>
               <span class="badge badge-info">Disponibilidade</span>
-              <h2>Abrir horario de atendimento</h2>
-              <p>Crie horarios livres para clientes ou bloqueios internos. Conflitos de horario sao recusados pelo backend.</p>
+              <h2>Abrir horário de atendimento</h2>
+              <p>Crie horários livres para clientes ou bloqueios internos. Conflitos de horário sao recusados pelo backend.</p>
             </div>
             <form class="agenda-inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/schedule/slots/create')) ?>" method="post">
               <?= csrf_input() ?>
@@ -277,7 +277,7 @@ $calendarSubtitle = $type === 'cliente'
                   <option value="bloqueado">Bloqueio interno</option>
                 </select>
               </div>
-              <button class="btn btn-primary" type="submit"><?= icon_svg('calendar') ?> Criar horario</button>
+              <button class="btn btn-primary" type="submit"><?= icon_svg('calendar') ?> Criar horário</button>
             </form>
           </div>
         </section>
@@ -294,12 +294,12 @@ $calendarSubtitle = $type === 'cliente'
       <?php if ($type === 'cliente'): ?>
         <section class="dash-section">
           <div class="dash-section-title">
-            <h2>Horarios disponiveis</h2>
+            <h2>Horários disponíveis</h2>
             <span class="badge badge-success"><?= e((string) count($freeSlots)) ?> livres</span>
           </div>
 
           <?php if (!$freeSlots): ?>
-            <?= empty_state('Nenhum horario livre encontrado para os filtros atuais.') ?>
+            <?= empty_state('Nenhum horário livre encontrado para os filtros atuais.') ?>
           <?php else: ?>
             <div class="agenda-slot-grid">
               <?php foreach ($freeSlots as $slot): ?>
@@ -307,7 +307,7 @@ $calendarSubtitle = $type === 'cliente'
                   <div class="agenda-slot-head">
                     <div>
                       <span class="badge badge-success">Livre</span>
-                      <h3><?= e($slot['titulo'] ?: 'Atendimento juridico') ?></h3>
+                      <h3><?= e($slot['titulo'] ?: 'Atendimento jurídico') ?></h3>
                     </div>
                     <strong><?= e(agenda_time_range($slot)) ?></strong>
                   </div>
@@ -352,7 +352,7 @@ $calendarSubtitle = $type === 'cliente'
           </div>
 
           <?php if (!$appointments): ?>
-            <?= empty_state('Voce ainda nao tem atendimentos agendados.') ?>
+            <?= empty_state('Você ainda não tem atendimentos agendados.') ?>
           <?php else: ?>
             <div class="agenda-list">
               <?php foreach ($appointments as $appointment): ?>
@@ -383,7 +383,7 @@ $calendarSubtitle = $type === 'cliente'
           </div>
 
           <?php if (!$slots): ?>
-            <?= empty_state($type === 'admin' ? 'Nenhum horario encontrado para os filtros atuais.' : 'Voce ainda nao cadastrou horarios.') ?>
+            <?= empty_state($type === 'admin' ? 'Nenhum horário encontrado para os filtros atuais.' : 'Você ainda não cadastrou horários.') ?>
           <?php else: ?>
             <div class="agenda-list">
               <?php foreach ($slots as $slot): ?>
@@ -395,7 +395,7 @@ $calendarSubtitle = $type === 'cliente'
                 <article class="agenda-row">
                   <div>
                     <span class="badge <?= e(agenda_status_badge_class($slotStatus)) ?>"><?= e(agenda_status_label($slotStatus)) ?></span>
-                    <h3><?= e($slot['assunto'] ?: ($slot['titulo'] ?: 'Horario de agenda')) ?></h3>
+                    <h3><?= e($slot['assunto'] ?: ($slot['titulo'] ?: 'Horário de agenda')) ?></h3>
                     <p>
                       <?= e(agenda_datetime_label($slot['starts_at'])) ?> | <?= e(agenda_time_range($slot)) ?>
                       <?php if ($type === 'admin' && !empty($slot['profissional'])): ?>
@@ -446,7 +446,7 @@ $calendarSubtitle = $type === 'cliente'
       <div id="slot-modal" class="modal" style="display:none;">
         <div class="modal-backdrop" data-slot-modal-close></div>
         <div class="modal-card">
-          <h3 id="slot-modal-title">Novo horario</h3>
+          <h3 id="slot-modal-title">Novo horário</h3>
           <form id="slot-modal-form">
             <?= csrf_input() ?>
             <input type="hidden" name="slot_id" id="slot-modal-id" value="">
@@ -482,7 +482,7 @@ $calendarSubtitle = $type === 'cliente'
       <div id="day-slots-modal" class="modal" style="display:none;">
         <div class="modal-backdrop" data-day-modal-close></div>
         <div class="modal-card day-slots-card">
-          <h3 id="day-slots-title">Horarios do dia</h3>
+          <h3 id="day-slots-title">Horários do dia</h3>
           <div id="day-slots-content" class="day-slots-content"></div>
           <div class="form-actions">
             <button type="button" id="day-slots-close" class="btn btn-outline">Fechar</button>
@@ -496,5 +496,6 @@ $calendarSubtitle = $type === 'cliente'
     window.CURRENT_USER_TYPE = '<?= e((string) current_user_type()) ?>';
   </script>
   <script src="assets/js/agenda.js?v=module-5"></script>
+  <?php render_vlibras(); ?>
 </body>
 </html>

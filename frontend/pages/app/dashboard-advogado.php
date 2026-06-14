@@ -195,8 +195,8 @@ $appointments = fetch_all(
       <section class="lawyer-command" data-tour-step="2" data-tour-title="Casos atribuídos" data-tour-description="Veja sua carga ativa e mantenha cada atendimento com responsável e próximos passos.">
         <article class="command-card command-card-primary">
           <span class="badge badge-info">Fila juridica</span>
-          <h2><?= e((string) $openCount) ?> solicitacoes aguardando aceite</h2>
-          <p><?= e((string) $highPriorityOpenCount) ?> estao em prioridade alta. Aceite o que voce consegue conduzir com resposta, tarefa e agenda.</p>
+          <h2><?= e((string) $openCount) ?> solicitações aguardando aceite</h2>
+          <p><?= e((string) $highPriorityOpenCount) ?> estao em prioridade alta. Aceite o que você consegue conduzir com resposta, tarefa e agenda.</p>
           <div class="form-actions">
             <a class="btn btn-primary" href="acompanhar-solicitacoes.php?scope=abertos"><?= icon_svg('case') ?> Ver fila</a>
             <a class="btn btn-outline" href="tarefas.php"><?= icon_svg('check') ?> Tarefas</a>
@@ -209,9 +209,9 @@ $appointments = fetch_all(
           <p>Casos sob sua responsabilidade que ainda precisam de acompanhamento.</p>
         </article>
         <article class="command-card">
-          <span>Proximos compromissos</span>
+          <span>Próximos compromissos</span>
           <strong><?= e((string) $appointmentCount) ?></strong>
-          <p>Atendimentos agendados para nao deixar o caso morrer no chat.</p>
+          <p>Atendimentos agendados para não deixar o caso morrer no chat.</p>
         </article>
       </section>
 
@@ -285,7 +285,7 @@ $appointments = fetch_all(
           <a class="btn btn-soft btn-sm" href="acompanhar-solicitacoes.php?scope=meus">Ver todos</a>
         </div>
         <?php if (!$assignedCases): ?>
-          <?= empty_state('Voce ainda nao possui casos ativos atribuidos.') ?>
+          <?= empty_state('Você ainda não possui casos ativos atribuidos.') ?>
         <?php else: ?>
           <div class="professional-card-grid">
             <?php foreach ($assignedCases as $case): ?>
@@ -383,7 +383,7 @@ $appointments = fetch_all(
         <?php else: ?>
           <div class="table-wrap">
             <table class="table compact-table">
-              <thead><tr><th>Documento</th><th>Cliente</th><th>Caso</th><th>Analise</th><th>Acao</th></tr></thead>
+              <thead><tr><th>Documento</th><th>Cliente</th><th>Caso</th><th>Análise</th><th>Acao</th></tr></thead>
               <tbody>
                 <?php foreach ($recentDocuments as $document): ?>
                   <tr>
@@ -402,5 +402,6 @@ $appointments = fetch_all(
     </main>
   </div>
   <?php render_onboarding_assets('dashboard_advogado', '2026.06.11', 'advogado'); ?>
+  <?php render_vlibras(); ?>
 </body>
 </html>

@@ -164,7 +164,7 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
       <?php endif; ?>
 
       <?php if (!$cases): ?>
-        <?= empty_state($type === 'cliente' ? 'Nenhum chat disponivel. Abra uma solicitacao para iniciar o atendimento.' : 'Nenhum caso aceito para conversar no momento.') ?>
+        <?= empty_state($type === 'cliente' ? 'Nenhum chat disponível. Abra uma solicitacao para iniciar o atendimento.' : 'Nenhum caso aceito para conversar no momento.') ?>
       <?php else: ?>
         <section class="chat-layout">
           <aside class="chat-list">
@@ -207,7 +207,7 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
 
                 <div class="chat-context-grid">
                   <div><span>Cliente</span><strong><?= e($selectedCase['cliente'] ?? '-') ?></strong></div>
-                  <div><span>Responsavel</span><strong><?= e($selectedCase['advogado'] ?? 'Aguardando') ?></strong></div>
+                  <div><span>Responsável</span><strong><?= e($selectedCase['advogado'] ?? 'Aguardando') ?></strong></div>
                   <div><span>Mensagens</span><strong><?= e((string) (int) $selectedCase['message_count']) ?></strong></div>
                   <div><span>Criado em</span><strong><?= e(date('d/m/Y H:i', strtotime((string) $selectedCase['created_at']))) ?></strong></div>
                 </div>
@@ -286,7 +286,7 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
               <?php else: ?>
                 <div class="chat-compose chat-compose-locked">
                   <span class="badge badge-success">Caso finalizado</span>
-                  <p>Novas mensagens estao bloqueadas para manter o historico encerrado.</p>
+                  <p>Novas mensagens estao bloqueadas para manter o histórico encerrado.</p>
                 </div>
               <?php endif; ?>
             <?php endif; ?>
@@ -317,5 +317,6 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
     </section>
   </div>
   <script src="assets/js/chat.js"></script>
+  <?php render_vlibras(); ?>
 </body>
 </html>

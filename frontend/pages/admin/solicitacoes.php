@@ -4,7 +4,7 @@ require_role(['admin']);
 
 $status = trim((string) ($_GET['status'] ?? ''));
 $priority = trim((string) ($_GET['prioridade'] ?? ''));
-$responsible = trim((string) ($_GET['responsavel'] ?? ''));
+$responsible = trim((string) ($_GET['responsável'] ?? ''));
 $scope = trim((string) ($_GET['scope'] ?? ''));
 $q = trim((string) ($_GET['q'] ?? ''));
 $successMessage = trim((string) ($_GET['sucesso'] ?? ''));
@@ -106,7 +106,7 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Solicitacoes | Admin JusTraduz</title>
+  <title>Solicitações | Admin JusTraduz</title>
   <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="../assets/css/style.css?v=sidebar-open-button-1">
 </head>
@@ -115,7 +115,7 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
     <?php render_sidebar('admin', 'solicitacoes.php', true); ?>
 
     <main class="app-main">
-      <?php render_topbar('Solicitacoes', 'Fila de ajuda juridica com prioridade, responsavel, documento e chat.', current_user_name()); ?>
+      <?php render_topbar('Solicitações', 'Fila de ajuda juridica com prioridade, responsável, documento e chat.', current_user_name()); ?>
 
       <?php if ($successMessage !== ''): ?>
         <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
@@ -128,7 +128,7 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
         <?= stat_card('Abertas', $openCount, 'help') ?>
         <?= stat_card('Em andamento', $progressCount, 'case') ?>
         <?= stat_card('Prioridade alta', $criticalCount, 'shield') ?>
-        <?= stat_card('Sem responsavel', $unassignedCount, 'users') ?>
+        <?= stat_card('Sem responsável', $unassignedCount, 'users') ?>
       </section>
 
       <form class="card admin-filter admin-filter-requests" method="get">
@@ -155,11 +155,11 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
           </select>
         </div>
         <div class="field">
-          <label for="responsavel">Responsavel</label>
-          <select class="select" id="responsavel" name="responsavel">
+          <label for="responsável">Responsável</label>
+          <select class="select" id="responsável" name="responsável">
             <option value="">Todos</option>
-            <option value="sem" <?= $responsible === 'sem' ? 'selected' : '' ?>>Sem responsavel</option>
-            <option value="com" <?= $responsible === 'com' ? 'selected' : '' ?>>Com responsavel</option>
+            <option value="sem" <?= $responsible === 'sem' ? 'selected' : '' ?>>Sem responsável</option>
+            <option value="com" <?= $responsible === 'com' ? 'selected' : '' ?>>Com responsável</option>
           </select>
         </div>
         <div class="field">
@@ -176,7 +176,7 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
       </form>
 
       <?php if ($unassignedCount > 0): ?>
-        <div class="alert is-visible alert-info">Ha <?= e((string) $unassignedCount) ?> caso(s) sem responsavel. Isso e gargalo operacional, nao detalhe visual.</div>
+        <div class="alert is-visible alert-info">Ha <?= e((string) $unassignedCount) ?> caso(s) sem responsável. Isso é gargalo operacional, não detalhe visual.</div>
       <?php endif; ?>
 
       <section class="dash-section">
@@ -194,10 +194,10 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
                 <tr>
                   <th>Caso</th>
                   <th>Cliente</th>
-                  <th>Responsavel</th>
+                  <th>Responsável</th>
                   <th>Documento</th>
                   <th>Status</th>
-                  <th>Operacao</th>
+                  <th>Operação</th>
                   <th>Acao</th>
                 </tr>
               </thead>
@@ -209,7 +209,7 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
                       <span class="table-subtext"><?= e($case['descricao'] ?: 'Sem descricao') ?></span>
                     </td>
                     <td><?= e($case['cliente']) ?></td>
-                    <td><?= e($case['advogado'] ?? 'Aguardando responsavel') ?></td>
+                    <td><?= e($case['advogado'] ?? 'Aguardando responsável') ?></td>
                     <td>
                       <?php if (!empty($case['document_id'])): ?>
                         <a href="../visualizar-documento.php?id=<?= (int) $case['document_id'] ?>"><?= e($case['document_name'] ?? 'Documento') ?></a>
@@ -229,7 +229,7 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
                       <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/cases/update')) ?>" method="post">
                         <?= csrf_input() ?>
                         <input type="hidden" name="case_id" value="<?= (int) $case['id'] ?>">
-                        <select class="select select-sm" name="advogado_id" aria-label="Advogado responsavel">
+                        <select class="select select-sm" name="advogado_id" aria-label="Advogado responsável">
                           <option value="">Sem advogado</option>
                           <?php foreach ($lawyers as $lawyer): ?>
                             <option value="<?= (int) $lawyer['id'] ?>" <?= (int) ($case['advogado_id'] ?? 0) === (int) $lawyer['id'] ? 'selected' : '' ?>><?= e($lawyer['nome']) ?></option>
@@ -260,5 +260,6 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>

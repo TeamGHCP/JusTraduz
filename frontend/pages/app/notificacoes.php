@@ -69,5 +69,6 @@ $unreadCount = count_query($pdo, 'SELECT COUNT(*) FROM notifications WHERE user_
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>

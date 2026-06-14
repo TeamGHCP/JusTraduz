@@ -138,5 +138,6 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
   </div>
   <?php render_onboarding_assets('dashboard_cliente', '2026.06.11', 'cliente'); ?>
   <script src="assets/js/upload.js"></script>
+  <?php render_vlibras(); ?>
 </body>
 </html>

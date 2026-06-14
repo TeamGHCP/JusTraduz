@@ -99,12 +99,12 @@ $operationalRisks = [
     [
         'label' => 'OAB pendente',
         'value' => $pendingProfessionalCount,
-        'detail' => 'Profissional sem validacao nao entra no sistema completo.',
+        'detail' => 'Profissional sem validação não entra no sistema completo.',
         'href' => 'validar-oab.php',
         'level' => admin_risk_level($pendingProfessionalCount),
     ],
     [
-        'label' => 'Casos sem responsavel',
+        'label' => 'Casos sem responsável',
         'value' => $unassignedCaseCount,
         'detail' => 'Fila aberta sem dono vira gargalo de atendimento.',
         'href' => 'solicitacoes.php?responsavel=sem',
@@ -113,7 +113,7 @@ $operationalRisks = [
     [
         'label' => 'Documentos sem IA',
         'value' => $pendingDocumentCount,
-        'detail' => 'Documento sem analise enfraquece a promessa central.',
+        'detail' => 'Documento sem análise enfraquece a promessa central.',
         'href' => 'documentos.php?analysis=pendente',
         'level' => admin_risk_level($pendingDocumentCount),
     ],
@@ -417,10 +417,10 @@ $healthChecks = [
                       <?= csrf_input() ?>
                       <input type="hidden" name="user_id" value="<?= (int) $professional['id'] ?>">
                       <input type="hidden" name="action" value="approve">
-                      <input type="hidden" name="justificativa" value="Aprovado pela central admin apos validacao manual.">
+                      <input type="hidden" name="justificativa" value="Aprovado pela central admin após validação manual.">
                       <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
                     </form>
-                    <form action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar esta OAB vai excluir a conta do profissional. Continuar?');">
+                    <form action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar está OAB vai excluir a conta do profissional. Continuar?');">
                       <?= csrf_input() ?>
                       <input type="hidden" name="user_id" value="<?= (int) $professional['id'] ?>">
                       <input type="hidden" name="action" value="reject">
@@ -527,5 +527,6 @@ $healthChecks = [
     </main>
   </div>
   <?php render_onboarding_assets('dashboard_admin', '2026.06.11', 'admin'); ?>
+  <?php render_vlibras(); ?>
 </body>
 </html>

@@ -41,7 +41,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
             <select class="select jt-input" id="tipo" name="tipo" data-account-type required>
               <option value="cliente">Cliente</option>
               <option value="advogado">Advogado</option>
-              <option value="estagiario">Estagiario</option>
+              <option value="estagiario">Estagiário</option>
             </select>
             <label class="jt-label" for="tipo">Tipo de conta</label>
             <small class="jt-error"></small>
@@ -57,13 +57,13 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
             <input class="input jt-input" type="text" id="cpf" name="cpf" inputmode="numeric" autocomplete="off" maxlength="14" required>
             <label class="jt-label" for="cpf">CPF</label>
             <small class="jt-error"></small>
-            <small class="field-help">Usado para identificar documentos e processos quando a integracao estiver habilitada.</small>
+            <small class="field-help">Usado para identificar documentos e processos quando a integração estiver habilitada.</small>
           </div>
 
           <div class="form-grid oab-fields google-oab-grid" data-oab-fields>
             <div class="field jt-field">
               <input class="input jt-input" type="text" id="inscricao" name="inscricao" inputmode="numeric" autocomplete="off" maxlength="7">
-              <label class="jt-label" for="inscricao">Numero da OAB</label>
+              <label class="jt-label" for="inscricao">Número da OAB</label>
               <small class="jt-error"></small>
             </div>
 
@@ -112,5 +112,16 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
   <script src="assets/js/phone-mask.js"></script>
   <script src="assets/js/auth.js"></script>
+  <script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
+  <div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+      <div class="vw-plugin-top-wrapper"></div>
+    </div>
+  </div>
+  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+  <script>
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
+  </script>
 </body>
 </html>

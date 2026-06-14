@@ -32,10 +32,10 @@ function require_validated_professional_access(): void
     }
 
     $status = (string) (($user['oab_status'] ?? '') ?: ($user['status_cna'] ?? 'pending'));
-    $message = 'Seu cadastro profissional esta aguardando aprovacao do administrador interno. Voce recebera um e-mail quando for aprovado.';
+    $message = 'Seu cadastro profissional está aguardando aprovação do administrador interno. Você receberá um e-mail quando for aprovado.';
     if (in_array($status, ['rejected', 'invalido', 'nao_encontrado'], true)) {
         $reason = trim((string) (($user['oab_rejection_reason'] ?? '') ?: ($user['cna_ultimo_erro'] ?? '')));
-        $message = 'Seu cadastro profissional nao foi aprovado.' . ($reason !== '' ? ' Motivo: ' . $reason : '');
+        $message = 'Seu cadastro profissional não foi aprovado.' . ($reason !== '' ? ' Motivo: ' . $reason : '');
     }
 
     secure_session_destroy_current();

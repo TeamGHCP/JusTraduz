@@ -36,7 +36,7 @@ function process_detail_payload(array $process): array
 function process_detail_named_value($value): string
 {
     if (is_array($value)) {
-        return process_detail_clean_text($value['nome'] ?? $value['descricao'] ?? $value['codigo'] ?? '');
+        return process_detail_clean_text($value['nome'] ?? $value['descricao'] ?? $value['código'] ?? '');
     }
 
     return process_detail_clean_text($value);
@@ -190,7 +190,7 @@ $process = $processId > 0
     : null;
 
 if (!$process) {
-    header('Location: processos.php?erro=' . urlencode('Processo nao encontrado ou sem permissao de acesso.'));
+    header('Location: processos.php?erro=' . urlencode('Processo não encontrado ou sem permissao de acesso.'));
     exit;
 }
 
@@ -226,7 +226,7 @@ $topbarSubtitle = (string) (($process['process_number'] ?? '') ?: 'Processo arma
           <p><?= e(process_detail_clean_text($process['classe_processual'] ?? '') ?: 'Processo consultado pelo numero CNJ') ?></p>
           <div class="process-detail-meta">
             <span><?= e((string) (($process['tribunal'] ?? '') ?: '-')) ?></span>
-            <span><?= e(process_detail_clean_text(($process['comarca'] ?? '') ?: process_detail_named_value($payload['orgaoJulgador'] ?? null)) ?: 'Orgao julgador nao informado') ?></span>
+            <span><?= e(process_detail_clean_text(($process['comarca'] ?? '') ?: process_detail_named_value($payload['orgaoJulgador'] ?? null)) ?: 'Orgao julgador não informado') ?></span>
             <span>Ajuizamento: <?= e(process_detail_date($payload['dataAjuizamento'] ?? null)) ?></span>
           </div>
         </div>
@@ -240,7 +240,7 @@ $topbarSubtitle = (string) (($process['process_number'] ?? '') ?: 'Processo arma
               <span>Explicacao</span>
               <h3>Resumo em linguagem simples</h3>
             </div>
-            <p><?= e(process_detail_summary($process) ?: 'Resumo ainda nao disponivel para este registro.') ?></p>
+            <p><?= e(process_detail_summary($process) ?: 'Resumo ainda não disponível para este registro.') ?></p>
           </article>
 
           <?php if ($lastMovement): ?>
@@ -253,7 +253,7 @@ $topbarSubtitle = (string) (($process['process_number'] ?? '') ?: 'Processo arma
 
           <article class="process-detail-card process-detail-history-card">
             <div class="process-detail-section-title">
-              <span>Historico</span>
+              <span>Histórico</span>
               <h3>Movimentacoes</h3>
             </div>
             <?php if ($movements): ?>
@@ -303,5 +303,6 @@ $topbarSubtitle = (string) (($process['process_number'] ?? '') ?: 'Processo arma
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>

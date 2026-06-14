@@ -148,7 +148,7 @@ function process_page_simple_summary(array $process): string
 function process_page_named_payload_value($value): string
 {
     if (is_array($value)) {
-        return process_page_clean_text($value['nome'] ?? $value['descricao'] ?? $value['codigo'] ?? '');
+        return process_page_clean_text($value['nome'] ?? $value['descricao'] ?? $value['código'] ?? '');
     }
 
     return process_page_clean_text($value);
@@ -180,7 +180,7 @@ function process_page_payload_subjects(array $process): string
 function process_page_mask_cpf(string $digits): string
 {
     if (strlen($digits) !== 11) {
-        return $digits !== '' ? $digits : 'Nao informado';
+        return $digits !== '' ? $digits : 'Não informado';
     }
 
     return preg_replace('/(\d{3})(\d{3})(\d{3})(\d{2})/', '$1.$2.$3-$4', $digits) ?: $digits;
@@ -300,13 +300,13 @@ $topbarSubtitle = $type === 'cliente'
       <section class="client-command process-command">
         <article class="command-card command-card-primary">
           <span class="badge badge-success"><?= e($integrationLabel) ?></span>
-          <h2><?= $type === 'cliente' ? 'Consulta por numero CNJ' : 'Consulta externa indisponivel' ?></h2>
+          <h2><?= $type === 'cliente' ? 'Consulta por numero CNJ' : 'Consulta externa indisponível' ?></h2>
           <?php if ($type !== 'cliente'): ?>
             <p><strong><?= e($identityLabel) ?></strong></p>
           <?php endif; ?>
 
           <?php if (!$tableReady): ?>
-            <div class="alert is-visible alert-error">A tabela de processos ainda nao existe neste banco. Importe um dos SQLs consolidados em database/.</div>
+            <div class="alert is-visible alert-error">A tabela de processos ainda não existe neste banco. Importe um dos SQLs consolidados em database/.</div>
           <?php elseif (!$identityReady && $type === 'cliente'): ?>
             <div class="form-actions">
               <a class="btn btn-primary" href="perfil.php"><?= icon_svg('user') ?> Cadastrar CPF</a>
@@ -327,7 +327,7 @@ $topbarSubtitle = $type === 'cliente'
               </div>
             </form>
           <?php else: ?>
-            <div class="alert is-visible alert-info">Consulta por CPF, OAB ou API juridica paga ficou no roadmap futuro. Nesta versao, o fluxo novo e DataJud por numero CNJ para clientes.</div>
+            <div class="alert is-visible alert-info">Consulta por CPF, OAB ou API jurídica paga ficou no roadmap futuro. Nesta versão, o fluxo novo é DataJud por número CNJ para clientes.</div>
           <?php endif; ?>
         </article>
 
@@ -340,7 +340,7 @@ $topbarSubtitle = $type === 'cliente'
         <article class="command-card">
           <span>Ultima sincronizacao</span>
           <strong><?= e($lastSync ? process_page_date($lastSync, true) : '-') ?></strong>
-          <p><?= $demoCount > 0 ? e((string) $demoCount) . ' registro(s) de demo disponiveis.' : 'Sem dados demo nesta consulta.' ?></p>
+          <p><?= $demoCount > 0 ? e((string) $demoCount) . ' registro(s) de demo disponíveis.' : 'Sem dados demo nesta consulta.' ?></p>
         </article>
       </section>
 
@@ -382,7 +382,7 @@ $topbarSubtitle = $type === 'cliente'
         </div>
 
         <?php if (!$tableReady): ?>
-          <?= empty_state('Execute database/justraduz_completo_sem_demo.sql ou database/justraduz_completo_com_demo.sql para habilitar esta tela.') ?>
+          <?= empty_state('Execute database/justraduz_completo_sem_demo.sql ou database/justraduz_completo_com_demo.sql para habilitar está tela.') ?>
         <?php elseif (!$processes): ?>
           <?= empty_state($type === 'cliente' ? 'Nenhum processo armazenado ainda. Informe o numero CNJ e aceite o termo LGPD para consultar no DataJud.' : 'Nenhum processo armazenado para este perfil.') ?>
         <?php elseif (!$visibleProcesses): ?>
@@ -422,7 +422,7 @@ $topbarSubtitle = $type === 'cliente'
                       <span class="table-subtext">Ajuizamento: <?= e(process_page_date(process_page_payload($process)['dataAjuizamento'] ?? null)) ?></span>
                     </td>
                     <td>
-                      <p class="process-summary"><?= e(process_page_simple_summary($process) ?: 'Resumo ainda nao disponivel para este registro.') ?></p>
+                      <p class="process-summary"><?= e(process_page_simple_summary($process) ?: 'Resumo ainda não disponível para este registro.') ?></p>
                       <?php $movements = process_page_movements($process); ?>
                       <?php if ($movements): ?>
                         <ul class="process-movements">
@@ -446,5 +446,6 @@ $topbarSubtitle = $type === 'cliente'
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>

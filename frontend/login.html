@@ -18,7 +18,7 @@
 
     <div class="auth-card">
       <h1>Bem-vindo de volta</h1>
-      <p class="subtitle">Acesse documentos, solicitacoes, agenda e conversas com seguranca.</p>
+      <p class="subtitle">Acesse documentos, solicitações, agenda e conversas com segurança.</p>
 
       <form class="auth-form" action="../backend/public/index.php?rota=/auth/login" method="post">
         <div class="alert" data-auth-alert role="alert" aria-live="assertive" aria-atomic="true"></div>
@@ -67,7 +67,7 @@
   <section class="auth-panel auth-cadastro-panel">
     <div class="auth-card cadastro-card">
       <h1>Crie sua conta</h1>
-      <p class="subtitle">Cliente entra direto. Advogado e estagiario aguardam validacao manual da OAB.</p>
+      <p class="subtitle">Cliente entra direto. Advogado e estagiário aguardam validação manual da OAB.</p>
 
       <form class="auth-form" action="../backend/public/index.php?rota=/auth/registrar" method="post">
         <div class="alert" data-auth-alert role="alert" aria-live="assertive" aria-atomic="true"></div>
@@ -104,7 +104,7 @@
           <input class="input jt-input" type="text" id="cpf" name="cpf" inputmode="numeric" autocomplete="off" maxlength="14">
           <label class="jt-label" for="cpf">CPF</label>
           <small class="jt-error"></small>
-          <small class="field-help">Usado para identificar seus documentos e processos quando a integracao estiver habilitada.</small>
+          <small class="field-help">Usado para identificar seus documentos e processos quando a integração estiver habilitada.</small>
         </div>
 
         <div class="form-grid oab-fields" data-oab-fields>
@@ -131,7 +131,7 @@
         </div>
 
         <div class="auth-note" data-professional-note hidden>
-          O acesso profissional fica bloqueado ate o admin validar a OAB informada. Isso protege clientes e evita profissional sem verificacao dentro do sistema.
+          O acesso profissional fica bloqueado até o admin validar a OAB informada. Isso protege clientes e evita profissional sem verificação dentro do sistema.
         </div>
 
         <div class="form-grid">
@@ -185,12 +185,12 @@
 
       <div class="auth-art-text login-art-text">
         <h2>Acesse sem perder o controle.</h2>
-        <p>Documentos, solicitacoes, agenda e atendimento ficam no mesmo fluxo.</p>
+        <p>Documentos, solicitações, agenda e atendimento ficam no mesmo fluxo.</p>
       </div>
 
       <div class="auth-art-text cadastro-art-text">
         <h2>Cadastro com regra clara.</h2>
-        <p>Clientes entram para enviar documentos. Profissionais aguardam validacao OAB antes do acesso completo.</p>
+        <p>Clientes entram para enviar documentos. Profissionais aguardam validação OAB antes do acesso completo.</p>
       </div>
     </div>
   </aside>
@@ -199,6 +199,16 @@
 <script src="assets/js/phone-mask.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/auth-novo.js"></script>
-<script src="assets/js/accessibility.js?v=2026.06.13-11"></script>
+<script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
+<div vw class="enabled">
+  <div vw-access-button class="active"></div>
+  <div vw-plugin-wrapper>
+    <div class="vw-plugin-top-wrapper"></div>
+  </div>
+</div>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>
+  new window.VLibras.Widget('https://vlibras.gov.br/app');
+</script>
 </body>
 </html>

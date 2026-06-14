@@ -138,11 +138,32 @@ document.addEventListener("DOMContentLoaded", () => {
     consentButton.disabled = !(ageConfirmation.checked && termsConfirmation.checked);
   }
 
+  function syncFloatingAccessibilityLayers(open) {
+    const vlibrasRoot = document.querySelector("[vw]");
+    const vlibrasButton = document.querySelector("[vw-access-button]");
+    const vlibrasWrapper = document.querySelector("[vw-plugin-wrapper]");
+    const accessibilityButton = document.querySelector(".a11y-launcher");
+
+    if (open) {
+      vlibrasRoot?.style.setProperty("z-index", "99990", "important");
+      vlibrasButton?.style.setProperty("z-index", "99990", "important");
+      vlibrasWrapper?.style.setProperty("z-index", "99989", "important");
+      accessibilityButton?.style.setProperty("z-index", "99991", "important");
+      return;
+    }
+
+    vlibrasRoot?.style.setProperty("z-index", "99999", "important");
+    vlibrasButton?.style.setProperty("z-index", "99999", "important");
+    vlibrasWrapper?.style.setProperty("z-index", "99998", "important");
+    accessibilityButton?.style.setProperty("z-index", "100000", "important");
+  }
+
   function setOpen(open) {
     chatbot.classList.toggle("is-open", open);
     toggle?.setAttribute("aria-expanded", open ? "true" : "false");
     panel?.setAttribute("aria-hidden", open ? "false" : "true");
     if (panel) panel.inert = !open;
+    syncFloatingAccessibilityLayers(open);
 
     if (open) {
       if (freeTextEnabled) {

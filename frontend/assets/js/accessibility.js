@@ -84,47 +84,118 @@
     alignLauncherWithVlibras();
   }
 
+  function ensureVlibras() {
+    var existingWidget = document.querySelector('[vw]');
+    var existingScript = document.querySelector('script[src*="vlibras-plugin.js"]');
+    var startAttempts = 0;
+
+    if (!existingWidget) {
+      var widget = document.createElement('div');
+      widget.setAttribute('vw', '');
+      widget.className = 'enabled';
+      widget.innerHTML =
+        '<div vw-access-button class="active"></div>' +
+        '<div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>';
+      document.body.appendChild(widget);
+    }
+
+    function startWidget() {
+      if (window.JusTraduzVlibrasStarted) return;
+      if (!window.VLibras || !window.VLibras.Widget) {
+        startAttempts++;
+        if (startAttempts < 20) window.setTimeout(startWidget, 250);
+        return;
+      }
+      window.JusTraduzVlibrasStarted = true;
+      new window.VLibras.Widget('https://vlibras.gov.br/app');
+    }
+
+    if (window.VLibras && window.VLibras.Widget) {
+      startWidget();
+      return;
+    }
+
+    if (existingScript) {
+      startWidget();
+      window.addEventListener('load', startWidget);
+      return;
+    }
+
+    var script = document.createElement('script');
+    script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
+    script.onload = startWidget;
+    document.body.appendChild(script);
+  }
+
   function finishLauncherEntrance() {
     if (!launcher) return;
     launcher.classList.add('has-entered');
   }
 
+  function fitVlibrasWidget() {
+    var wrapper = document.querySelector('[vw-plugin-wrapper]');
+    if (!wrapper) return;
+
+    var compact = window.innerWidth <= 720;
+    var buttonSize = compact ? 48 : 52;
+    var right = compact ? 12 : 18;
+    var sideGap = compact ? 8 : 12;
+    var widthLimit = compact ? 76 : 88;
+    var heightLimit = compact ? 20 : 24;
+    var width = Math.max(220, Math.min(compact ? 280 : 300, window.innerWidth - widthLimit));
+    var height = Math.max(320, Math.min(compact ? 410 : 450, window.innerHeight - heightLimit));
+
+    wrapper.style.setProperty('position', 'fixed', 'important');
+    wrapper.style.setProperty('top', '50%', 'important');
+    wrapper.style.setProperty('right', (right + buttonSize + sideGap) + 'px', 'important');
+    wrapper.style.setProperty('bottom', 'auto', 'important');
+    wrapper.style.setProperty('left', 'auto', 'important');
+    wrapper.style.setProperty('width', width + 'px', 'important');
+    wrapper.style.setProperty('height', height + 'px', 'important');
+    wrapper.style.setProperty('min-height', '0', 'important');
+    wrapper.style.setProperty('max-width', (window.innerWidth - widthLimit) + 'px', 'important');
+    wrapper.style.setProperty('max-height', (window.innerHeight - heightLimit) + 'px', 'important');
+    wrapper.style.setProperty('overflow', 'hidden', 'important');
+    wrapper.style.setProperty('border-radius', '14px', 'important');
+    wrapper.style.setProperty('transform', 'translateY(-50%)', 'important');
+    wrapper.style.setProperty('z-index', '99998', 'important');
+  }
+
+  function enforceVlibrasLayout() {
+    fitVlibrasWidget();
+    window.setTimeout(fitVlibrasWidget, 250);
+    window.setTimeout(fitVlibrasWidget, 1000);
+    window.setTimeout(fitVlibrasWidget, 2500);
+  }
+
+  function bindVlibrasFallbackToggle() {
+    var button = document.querySelector('[vw-access-button]');
+    if (!button || button.dataset.justraduzVlibrasToggle === 'true') return;
+
+    button.dataset.justraduzVlibrasToggle = 'true';
+    button.addEventListener('click', function () {
+      window.setTimeout(function () {
+        var wrapper = document.querySelector('[vw-plugin-wrapper]');
+        if (!wrapper) return;
+
+        var rect = wrapper.getBoundingClientRect();
+        var isClosed = !wrapper.classList.contains('active') || rect.width === 0 || rect.height === 0;
+        if (isClosed) {
+          wrapper.classList.add('active');
+          wrapper.style.setProperty('display', 'block', 'important');
+        }
+        fitVlibrasWidget();
+      }, 80);
+    });
+  }
+
   function alignLauncherWithVlibras() {
-    var attempts = 0;
-
-    function syncPosition() {
-      var vlibrasButton = document.querySelector('[vw-access-button]');
-      attempts++;
-
-      if (!vlibrasButton) {
-        if (attempts < 12) window.setTimeout(syncPosition, 250);
-        return;
-      }
-
-      var rect = vlibrasButton.getBoundingClientRect();
-      if (!rect.width || !rect.height) {
-        if (attempts < 12) window.setTimeout(syncPosition, 250);
-        return;
-      }
-
-      var buttonStyles = window.getComputedStyle(vlibrasButton);
-      var gap = 14;
-      launcher.classList.add('is-aligned-vlibras');
-      launcher.style.width = rect.width + 'px';
-      launcher.style.minWidth = rect.width + 'px';
-      launcher.style.height = rect.height + 'px';
-      launcher.style.minHeight = rect.height + 'px';
-      var centerX = rect.left + (rect.width / 2);
-      launcher.style.left = (centerX - (rect.width / 2)) + 'px';
-      launcher.style.right = 'auto';
-      launcher.style.top = Math.max(8, rect.top - rect.height - gap) + 'px';
-      launcher.style.bottom = 'auto';
-      launcher.style.borderRadius = buttonStyles.borderRadius;
-    }
-
-    syncPosition();
-    window.addEventListener('resize', syncPosition);
-    window.setTimeout(syncPosition, 1000);
+    if (!launcher) return;
+    launcher.classList.add('is-aligned-vlibras');
+    enforceVlibrasLayout();
+    bindVlibrasFallbackToggle();
+    window.setTimeout(bindVlibrasFallbackToggle, 1000);
+    window.addEventListener('resize', fitVlibrasWidget);
   }
 
   function openPanel() {
@@ -478,6 +549,7 @@
   function init() {
     apply();
     makeSkipLink();
+    ensureVlibras();
     buildLauncher();
     enhanceTables();
     enhancePasswords();

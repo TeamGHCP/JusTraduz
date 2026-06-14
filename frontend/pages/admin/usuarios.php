@@ -200,7 +200,7 @@ $pendingProfessionalTotal = count_query(
                             <?= csrf_input() ?>
                             <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
                             <input type="hidden" name="action" value="approve">
-                            <input class="input admin-reason-input" name="justificativa" placeholder="Fonte da validacao" required>
+                            <input class="input admin-reason-input" name="justificativa" placeholder="Fonte da validação" required>
                             <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
                           </form>
                           <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post">
@@ -209,7 +209,7 @@ $pendingProfessionalTotal = count_query(
                             <input type="hidden" name="action" value="pending">
                             <button class="btn btn-soft btn-sm" type="submit">Revisar</button>
                           </form>
-                          <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar esta OAB vai excluir a conta do profissional. Continuar?');">
+                          <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar está OAB vai excluir a conta do profissional. Continuar?');">
                             <?= csrf_input() ?>
                             <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
                             <input type="hidden" name="action" value="reject">
@@ -228,5 +228,6 @@ $pendingProfessionalTotal = count_query(
       </section>
     </main>
   </div>
+  <?php render_vlibras(); ?>
 </body>
 </html>
