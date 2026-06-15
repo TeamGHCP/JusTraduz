@@ -5,8 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Entrar | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
-  <link rel="stylesheet" href="assets/css/auth-novo.css?v=11">
+  <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-6-eye">
+  <link rel="stylesheet" href="assets/css/auth-novo.css?v=18-slower-labels">
+  <style>
+    .auth-switch-page .auth-card .btn.btn-block {
+      min-height: 48px !important;
+      height: auto !important;
+      padding: 10px 18px !important;
+      border-radius: 8px !important;
+      line-height: 1.2 !important;
+    }
+
+    .auth-switch-page .auth-card .btn-primary {
+      background: var(--teal) !important;
+      color: #fff !important;
+    }
+
+    .auth-switch-page .auth-card .btn-google {
+      background: #fff !important;
+      color: var(--navy) !important;
+    }
+
+    .auth-switch-page input:focus,
+    .auth-switch-page select:focus,
+    .auth-switch-page textarea:focus,
+    .auth-switch-page button:focus {
+      outline: 0 !important;
+    }
+  </style>
 </head>
 <body>
 
@@ -20,7 +46,7 @@
       <h1>Bem-vindo de volta</h1>
       <p class="subtitle">Acesse documentos, solicitações, agenda e conversas com segurança.</p>
 
-      <form class="auth-form" action="../backend/public/index.php?rota=/auth/login" method="post">
+      <form class="auth-form" action="../backend/public/index.php?rota=/auth/login" method="post" novalidate>
         <div class="alert" data-auth-alert role="alert" aria-live="assertive" aria-atomic="true"></div>
 
         <div class="field jt-field">
@@ -69,7 +95,7 @@
       <h1>Crie sua conta</h1>
       <p class="subtitle">Cliente entra direto. Advogado e estagiário aguardam validação manual da OAB.</p>
 
-      <form class="auth-form" action="../backend/public/index.php?rota=/auth/registrar" method="post">
+      <form class="auth-form" action="../backend/public/index.php?rota=/auth/registrar" method="post" novalidate>
         <div class="alert" data-auth-alert role="alert" aria-live="assertive" aria-atomic="true"></div>
 
         <div class="field jt-field">
@@ -197,9 +223,9 @@
 </main>
 
 <script src="assets/js/phone-mask.js"></script>
-<script src="assets/js/auth.js"></script>
+<script src="assets/js/auth.js?v=auth-label-wave-1"></script>
 <script src="assets/js/auth-novo.js"></script>
-<script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
+<script src="assets/js/accessibility.js?v=2026.06.15-eye"></script>
 <div vw class="enabled">
   <div vw-access-button class="active"></div>
   <div vw-plugin-wrapper>

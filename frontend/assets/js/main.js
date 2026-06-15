@@ -13,12 +13,20 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   const revealSelectors = [
-    ".home-hero-copy",
+    ".home-hero h1",
+    ".home-hero-copy > p",
+    ".home-hero .hero-actions",
+    ".home-trust-row",
     ".hero-phone-wrap",
     ".page-section .section-head",
+    ".home-flow-timeline",
     "#recursos .feature-card",
+    ".home-flow-summary",
     ".home-detail-grid > *",
-    "#fluxo .step-card",
+    ".home-feedback-copy",
+    ".feedback-columns",
+    ".flow-preview",
+    "#fluxo .flow-step",
     "#depoimentos .testimonial-marquee",
     "#depoimentos .testimonial-controls",
     "#seguranca .form-actions",
@@ -27,6 +35,207 @@ document.addEventListener("DOMContentLoaded", () => {
     revealSelectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)))
   ));
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  document.querySelectorAll("[data-feedback-marquee] .feedback-track").forEach((track) => {
+    const group = track.querySelector(".feedback-group");
+
+    if (!group || track.dataset.feedbackReady === "true") {
+      return;
+    }
+
+    const clone = group.cloneNode(true);
+    clone.setAttribute("aria-hidden", "true");
+    clone.querySelectorAll("img").forEach((image) => {
+      image.loading = "lazy";
+      image.decoding = "async";
+    });
+
+    group.querySelectorAll("img").forEach((image) => {
+      image.loading = "lazy";
+      image.decoding = "async";
+    });
+
+    track.appendChild(clone);
+    track.dataset.feedbackReady = "true";
+  });
+
+  document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
+    const cards = Array.from(flow.querySelectorAll(".home-feature-grid-interactive .feature-card"));
+    const stepLabel = flow.querySelector("[data-flow-step-label]");
+    const metric = flow.querySelector("[data-flow-metric]");
+    const title = flow.querySelector("[data-flow-title]");
+    const copy = flow.querySelector("[data-flow-copy]");
+    const status = flow.querySelector("[data-flow-status]");
+    const percent = flow.querySelector("[data-flow-percent]");
+    const progress = flow.querySelector("[data-flow-progress]");
+    const timeline = flow.querySelector("[data-flow-progress-timeline]");
+    const timelineSteps = Array.from(flow.querySelectorAll("[data-timeline-step]"));
+
+    if (cards.length === 0) {
+      return;
+    }
+
+    const featureStates = [
+      {
+        step: "Etapa 01",
+        metric: "Documento seguro",
+        title: "Documento recebido",
+        copy: "Upload protegido, consentimento claro e contexto inicial organizados no mesmo lugar.",
+        status: "Arquivo protegido",
+        percent: "25%",
+        progress: 25,
+      },
+      {
+        step: "Etapa 02",
+        metric: "IA em leitura",
+        title: "Clareza em segundos",
+        copy: "A IA transforma termos difíceis em resumo simples, pontos de atenção e próximos passos.",
+        status: "Resumo gerado",
+        percent: "50%",
+        progress: 50,
+      },
+      {
+        step: "Etapa 03",
+        metric: "Solicitação pronta",
+        title: "Pedido com contexto",
+        copy: "Sua dúvida vira uma solicitação estruturada para o profissional entender sem retrabalho.",
+        status: "Atendimento conectado",
+        percent: "75%",
+        progress: 75,
+      },
+      {
+        step: "Etapa 04",
+        metric: "Tudo acompanhado",
+        title: "Histórico vivo",
+        copy: "Agenda, chat, atualizações e auditoria ficam conectados para você acompanhar cada etapa.",
+        status: "Fluxo completo",
+        percent: "100%",
+        progress: 100,
+      },
+    ];
+
+    let activeIndex = 0;
+    let animationStarted = false;
+    const animationTimers = [];
+
+    const timelineProgressFor = (index) => {
+      if (cards.length <= 1) {
+        return 100;
+      }
+
+      return Math.round((index / (cards.length - 1)) * 100);
+    };
+
+    const activateFeature = (index) => {
+      const card = cards[index];
+      const state = featureStates[index] || {};
+
+      if (!card) {
+        return;
+      }
+
+      activeIndex = index;
+      cards.forEach((item, itemIndex) => {
+        const isActive = itemIndex === index;
+        item.classList.toggle("is-active", isActive);
+        item.setAttribute("aria-pressed", String(isActive));
+      });
+
+      timelineSteps.forEach((step, stepIndex) => {
+        const isActive = stepIndex === index;
+        const isComplete = stepIndex <= index;
+        step.classList.toggle("is-active", isActive);
+        step.classList.toggle("is-complete", isComplete);
+        step.setAttribute("aria-current", isActive ? "step" : "false");
+      });
+
+      timeline?.style.setProperty("--timeline-progress", `${timelineProgressFor(index)}%`);
+      if (stepLabel) stepLabel.textContent = state.step || `Etapa ${String(index + 1).padStart(2, "0")}`;
+      if (metric) metric.textContent = state.metric || "";
+      if (title) title.textContent = state.title || card.querySelector("h3")?.textContent || "";
+      if (copy) copy.textContent = state.copy || card.querySelector("p")?.textContent || "";
+      if (status) status.textContent = state.status || "";
+      if (percent) percent.textContent = state.percent || "";
+      if (progress) progress.style.width = `${state.progress || 0}%`;
+    };
+
+    const runFlowAnimation = () => {
+      if (animationStarted) {
+        return;
+      }
+
+      animationStarted = true;
+      animationTimers.forEach((timer) => window.clearTimeout(timer));
+
+      if (prefersReducedMotion) {
+        activateFeature(cards.length - 1);
+        return;
+      }
+
+      cards.forEach((_, index) => {
+        const timer = window.setTimeout(() => {
+          activateFeature(index);
+        }, index * 780);
+
+        animationTimers.push(timer);
+      });
+    };
+
+    cards.forEach((card, index) => {
+      card.tabIndex = 0;
+      card.setAttribute("role", "button");
+      card.setAttribute("aria-pressed", String(index === 0));
+
+      card.addEventListener("mouseenter", () => {
+        activateFeature(index);
+      });
+
+      card.addEventListener("click", () => {
+        activateFeature(index);
+      });
+
+      card.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        event.preventDefault();
+        activateFeature(index);
+      });
+    });
+
+    timelineSteps.forEach((step, index) => {
+      step.addEventListener("click", () => {
+        activateFeature(index);
+      });
+
+      step.addEventListener("mouseenter", () => {
+        activateFeature(index);
+      });
+    });
+
+    activateFeature(0);
+
+    if ("IntersectionObserver" in window) {
+      const flowObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          runFlowAnimation();
+          observer.unobserve(entry.target);
+        });
+      }, {
+        rootMargin: "0px 0px -18% 0px",
+        threshold: 0.32,
+      });
+
+      flowObserver.observe(flow);
+    } else {
+      runFlowAnimation();
+    }
+  });
 
   document.querySelectorAll("[data-hero-typewriter]").forEach((typewriter) => {
     const textElement = typewriter.querySelector("[data-hero-typewriter-text]");
@@ -104,7 +313,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (revealElements.length > 0) {
     revealElements.forEach((element, index) => {
       element.classList.add("reveal-on-scroll");
-      element.style.setProperty("--reveal-delay", `${(index % 3) * 45}ms`);
+      const isHero = element.closest(".home-hero");
+      const delay = isHero ? index * 110 : (index % 4) * 55;
+      element.style.setProperty("--reveal-delay", `${delay}ms`);
     });
 
     if (prefersReducedMotion) {

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=index-premium-25-avatar">
+  <link rel="stylesheet" href="assets/css/style.css?v=index-premium-40-hero-boot">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
 </head>
 <body class="home-page">
@@ -68,11 +68,13 @@
 
           <div class="hero-actions">
             <a class="btn btn-primary home-btn-primary" href="login.html?cadastro">
-              Começar agora
-              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 12h14"/>
-                <path d="m13 6 6 6-6 6"/>
-              </svg>
+              <span class="home-btn-label">Começar agora</span>
+              <span class="home-btn-icon" aria-hidden="true">
+                <svg class="svg-icon" viewBox="0 0 24 24">
+                  <path d="M5 12h14"/>
+                  <path d="m13 6 6 6-6 6"/>
+                </svg>
+              </span>
             </a>
             <a class="btn btn-outline home-btn-outline" href="login.html">Entrar na plataforma</a>
           </div>
@@ -156,8 +158,39 @@
           <p>Documento, explicação, solicitação, chat, agenda e auditoria no mesmo sistema.</p>
         </div>
 
-        <div class="grid grid-4 home-feature-grid">
-          <article class="card feature-card">
+        <div class="home-flow-experience" data-home-feature-flow>
+          <div class="home-flow-timeline" data-flow-progress-timeline aria-label="Progresso do fluxo JusTraduz">
+            <div class="home-flow-timeline-track" aria-hidden="true">
+              <span data-flow-timeline-fill></span>
+            </div>
+
+            <button class="home-flow-timeline-step is-active" type="button" data-timeline-step="0">
+              <strong>01</strong>
+              <small>Envie seu documento</small>
+              <span>Seu documento entra protegido e pronto para análise.</span>
+            </button>
+
+            <button class="home-flow-timeline-step" type="button" data-timeline-step="1">
+              <strong>02</strong>
+              <small>Entenda em segundos</small>
+              <span>A IA resume os pontos importantes e destaca o que merece atenção.</span>
+            </button>
+
+            <button class="home-flow-timeline-step" type="button" data-timeline-step="2">
+              <strong>03</strong>
+              <small>Peça o que precisa</small>
+              <span>Sua dúvida vira um pedido estruturado com contexto para o profissional.</span>
+            </button>
+
+            <button class="home-flow-timeline-step" type="button" data-timeline-step="3">
+              <strong>04</strong>
+              <small>Acompanhe tudo</small>
+              <span>Chat, agenda, status e histórico conectados até o atendimento terminar.</span>
+            </button>
+          </div>
+
+          <div class="grid grid-4 home-feature-grid home-feature-grid-interactive">
+          <article class="card feature-card" data-flow-card-number="01">
             <div class="icon-box">
               <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -167,30 +200,57 @@
               </svg>
             </div>
             <h3>Envie seu documento</h3>
-            <p>Carregue arquivos com total segurança e privacidade.</p>
+            <p>O documento entra protegido, organizado e pronto para virar entendimento claro.</p>
+            <div class="home-flow-card-status">
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3 19 6v5c0 4.5-2.8 8-7 10-4.2-2-7-5.5-7-10V6z"/>
+                <path d="m9 12 2 2 4-5"/>
+              </svg>
+              <span>Documento recebido</span>
+            </div>
           </article>
 
-          <article class="card feature-card">
+          <article class="card feature-card" data-flow-card-number="02">
             <div class="icon-box">
               <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M13 2 9 10l-7 3 7 3 4 8 4-8 7-3-7-3z"/>
               </svg>
             </div>
             <h3>Entenda em segundos</h3>
-            <p>IA traduz o juridiquês para linguagem simples e clara.</p>
+            <p>A IA resume os pontos importantes e mostra o que merece atenção sem enrolação.</p>
+            <div class="home-flow-card-status">
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2v4"/>
+                <path d="M12 18v4"/>
+                <path d="m4.93 4.93 2.83 2.83"/>
+                <path d="m16.24 16.24 2.83 2.83"/>
+                <path d="M2 12h4"/>
+                <path d="M18 12h4"/>
+                <path d="m4.93 19.07 2.83-2.83"/>
+                <path d="m16.24 7.76 2.83-2.83"/>
+              </svg>
+              <span>Analisando com IA</span>
+            </div>
           </article>
 
-          <article class="card feature-card">
+          <article class="card feature-card" data-flow-card-number="03">
             <div class="icon-box">
               <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
               </svg>
             </div>
             <h3>Peça o que precisa</h3>
-            <p>Solicite serviços e converse com o advogado verificado.</p>
+            <p>Sua dúvida vira um pedido estruturado, com contexto para o profissional agir melhor.</p>
+            <div class="home-flow-card-status">
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m22 2-7 20-4-9-9-4z"/>
+                <path d="M22 2 11 13"/>
+              </svg>
+              <span>Pedido em construção</span>
+            </div>
           </article>
 
-          <article class="card feature-card">
+          <article class="card feature-card" data-flow-card-number="04">
             <div class="icon-box">
               <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -203,8 +263,55 @@
               </svg>
             </div>
             <h3>Acompanhe tudo</h3>
-            <p>Agende, receba atualizações e acompanhe cada etapa.</p>
+            <p>Chat, agenda, status e histórico ficam conectados até o atendimento terminar.</p>
+            <div class="home-flow-card-status">
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <path d="m9 11 3 3L22 4"/>
+              </svg>
+              <span>Acompanhamento ativo</span>
+            </div>
           </article>
+          </div>
+
+          <div class="home-flow-summary">
+            <div class="home-flow-summary-main">
+              <span class="home-flow-summary-icon" aria-hidden="true">
+                <svg class="svg-icon" viewBox="0 0 24 24">
+                  <path d="M13 2 9 10l-7 3 7 3 4 8 4-8 7-3-7-3z"/>
+                </svg>
+              </span>
+              <div>
+                <h3>Tudo conectado, do início ao fim.</h3>
+                <p>Você não perde o contexto. Nós organizamos as informações para que o profissional já entenda o que importa.</p>
+              </div>
+            </div>
+
+            <div class="home-flow-summary-list" aria-label="Diferenciais do fluxo">
+              <span>
+                <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3 19 6v5c0 4.5-2.8 8-7 10-4.2-2-7-5.5-7-10V6z"/>
+                  <path d="m9 12 2 2 4-5"/>
+                </svg>
+                Seguro e confidencial
+              </span>
+              <span>
+                <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M13 2 3 14h8l-1 8 11-14h-8z"/>
+                </svg>
+                Rápido e eficiente
+              </span>
+              <span>
+                <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                Feito para você
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -252,6 +359,144 @@
             <strong>03</strong>
             <span>O caso vira uma solicitação acompanhada por status.</span>
           </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="feedbacks" class="page-section home-feedback-section" aria-labelledby="feedback-title">
+      <div class="container home-feedback-grid">
+        <div class="home-feedback-copy">
+          <span class="home-eyebrow">Feedbacks</span>
+          <h2 id="feedback-title">Quem usa o JusTraduz recomenda.</h2>
+          <p>Relatos de pessoas que transformaram documentos difíceis em próximos passos claros, com mais segurança para conversar, decidir e agir.</p>
+        </div>
+
+        <div class="feedback-columns" data-feedback-marquee aria-label="Depoimentos de usuários">
+          <div class="feedback-column" style="--feedback-speed: 28s;">
+            <div class="feedback-track">
+              <div class="feedback-group">
+                <article class="feedback-card">
+                  <div class="feedback-person">
+                    <img src="assets/img/feedback-ana.svg" alt="Foto de Ana Ribeiro">
+                    <div>
+                      <strong>Ana Ribeiro</strong>
+                      <span>Curitiba, PR</span>
+                    </div>
+                  </div>
+                  <p>"Enviei uma notificação que eu não entendia e saí com um resumo claro, riscos e o que fazer primeiro."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">★★★★★</div>
+                </article>
+
+                <article class="feedback-card">
+                  <div class="feedback-person">
+                    <img src="assets/img/feedback-bruno.svg" alt="Foto de Bruno Martins">
+                    <div>
+                      <strong>Bruno Martins</strong>
+                      <span>Belo Horizonte, MG</span>
+                    </div>
+                  </div>
+                  <p>"A linguagem é simples sem perder seriedade. Ficou muito mais fácil explicar meu caso para o advogado."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">★★★★★</div>
+                </article>
+
+                <article class="feedback-card">
+                  <div class="feedback-person">
+                    <img src="assets/img/feedback-carol.svg" alt="Foto de Carolina Lima">
+                    <div>
+                      <strong>Carolina Lima</strong>
+                      <span>São Paulo, SP</span>
+                    </div>
+                  </div>
+                  <p>"O fluxo me deu confiança. Eu sabia quais documentos separar e quais perguntas fazer no atendimento."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">★★★★★</div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <div class="feedback-column" style="--feedback-speed: 34s;">
+            <div class="feedback-track">
+              <div class="feedback-group">
+                <article class="feedback-card">
+                  <div class="feedback-person">
+                    <img src="assets/img/feedback-diego.svg" alt="Foto de Diego Souza">
+                    <div>
+                      <strong>Diego Souza</strong>
+                      <span>Recife, PE</span>
+                    </div>
+                  </div>
+                  <p>"Antes eu travava com qualquer termo jurídico. Agora consigo entender o essencial antes de tomar decisão."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">★★★★★</div>
+                </article>
+
+                <article class="feedback-card">
+                  <div class="feedback-person">
+                    <img src="assets/img/feedback-elisa.svg" alt="Foto de Elisa Nogueira">
+                    <div>
+                      <strong>Elisa Nogueira</strong>
+                      <span>Florianópolis, SC</span>
+                    </div>
+                  </div>
+                  <p>"A organização do histórico ajudou demais. Nada ficou perdido entre conversa, agenda e solicitação."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">★★★★★</div>
+                </article>
+
+                <article class="feedback-card">
+                  <div class="feedback-person">
+                    <img src="assets/img/feedback-felipe.svg" alt="Foto de Felipe Azevedo">
+                    <div>
+                      <strong>Felipe Azevedo</strong>
+                      <span>Goiânia, GO</span>
+                    </div>
+                  </div>
+                  <p>"Gostei porque o sistema não promete milagre. Ele explica, organiza e deixa claro quando preciso de advogado."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">★★★★★</div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <div class="feedback-column" style="--feedback-speed: 31s;">
+            <div class="feedback-track">
+              <div class="feedback-group">
+                <article class="feedback-card">
+                  <div class="feedback-person">
+                    <img src="assets/img/feedback-gabi.svg" alt="Foto de Gabriela Rocha">
+                    <div>
+                      <strong>Gabriela Rocha</strong>
+                      <span>Salvador, BA</span>
+                    </div>
+                  </div>
+                  <p>"Usei para entender um contrato. O resumo destacou pontos que eu nem sabia que precisava observar."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">★★★★★</div>
+                </article>
+
+                <article class="feedback-card">
+                  <div class="feedback-person">
+                    <img src="assets/img/feedback-helena.svg" alt="Foto de Helena Duarte">
+                    <div>
+                      <strong>Helena Duarte</strong>
+                      <span>Campinas, SP</span>
+                    </div>
+                  </div>
+                  <p>"A experiência é bonita, mas principalmente útil. Em poucos minutos eu já tinha clareza do caminho."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">★★★★★</div>
+                </article>
+
+                <article class="feedback-card">
+                  <div class="feedback-person">
+                    <img src="assets/img/feedback-igor.svg" alt="Foto de Igor Almeida">
+                    <div>
+                      <strong>Igor Almeida</strong>
+                      <span>Porto Alegre, RS</span>
+                    </div>
+                  </div>
+                  <p>"O JusTraduz deixou o atendimento mais objetivo. Cheguei na conversa sabendo explicar meu problema."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">★★★★★</div>
+                </article>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -382,7 +627,7 @@
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=index-premium-21"></script>
+  <script src="assets/js/main.js?v=index-premium-40-hero-boot"></script>
   <script src="assets/js/chatbot.js?v=2026.06.14-06"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>

@@ -63,6 +63,19 @@ body {
   gap: 15px;
 }
 
+.auth-switch-page .auth-card .btn-block {
+  min-height: 48px !important;
+  padding: 0 18px !important;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.auth-switch-page .auth-card .btn-google {
+  gap: 10px;
+  background: #ffffff;
+}
+
 .jt-field {
   position: relative;
 }
@@ -90,6 +103,123 @@ body {
     calc(100% - 14px) 25px;
   background-size: 6px 6px, 6px 6px;
   background-repeat: no-repeat;
+}
+
+.jt-field.has-custom-select {
+  z-index: 3;
+}
+
+.jt-field.has-custom-select .jt-native-select-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.jt-select-button {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 18px 14px 8px;
+  border: 1px solid rgba(137, 151, 174, .42);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .94);
+  color: var(--text);
+  text-align: left;
+  box-shadow: 0 1px 0 rgba(23, 32, 51, .02);
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.jt-select-button:hover {
+  border-color: rgba(17, 138, 126, .45);
+}
+
+.jt-field.is-focused .jt-select-button,
+.jt-field.is-custom-select-open .jt-select-button {
+  border-color: rgba(17, 138, 126, .78);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(17, 138, 126, .12);
+}
+
+.jt-select-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jt-select-chevron {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: #617097;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .18s ease, stroke .18s ease;
+}
+
+.jt-field.is-custom-select-open .jt-select-chevron {
+  stroke: var(--teal);
+  transform: rotate(180deg);
+}
+
+.jt-select-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 20;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid rgba(17, 138, 126, .24);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .98);
+  box-shadow: 0 18px 34px rgba(23, 32, 51, .14);
+}
+
+.jt-select-list[hidden] {
+  display: none;
+}
+
+.jt-select-option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 38px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font-weight: 700;
+  transition: background .16s ease, color .16s ease;
+}
+
+.jt-select-option:hover,
+.jt-select-option:focus-visible {
+  outline: 0;
+  background: rgba(17, 138, 126, .09);
+  color: var(--teal-2);
+}
+
+.jt-select-option.is-selected {
+  background: var(--teal);
+  color: #ffffff;
 }
 
 .jt-field textarea.jt-input {
@@ -126,6 +256,17 @@ body {
   transition: top .18s ease, transform .18s ease, color .18s ease, font-size .18s ease;
 }
 
+.jt-label-char {
+  display: inline-block;
+  color: inherit;
+  transform: translateY(0);
+  transition:
+    transform .58s cubic-bezier(.2, .8, .2, 1),
+    color .28s ease;
+  transition-delay: calc(var(--char-index, 0) * 52ms);
+  will-change: transform;
+}
+
 .jt-field.is-focused .jt-label,
 .jt-field.has-value .jt-label {
   top: 8px;
@@ -133,6 +274,12 @@ body {
   color: var(--teal);
   font-size: 11px;
   transform: translateY(0);
+}
+
+.jt-field.is-focused .jt-label-char,
+.jt-field.has-value .jt-label-char {
+  color: var(--teal);
+  transform: translateY(-30%);
 }
 
 .jt-field.has-error .jt-input {
@@ -143,6 +290,16 @@ body {
 .jt-field.has-error .jt-label,
 .jt-field.has-error .jt-error {
   color: var(--danger);
+}
+
+.jt-field.has-error .jt-label-char {
+  color: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jt-label-char {
+    transition: none;
+  }
 }
 
 .jt-error {
@@ -203,6 +360,14 @@ body {
   gap: 9px;
 }
 
+.auth-cadastro-panel .auth-card .btn-block {
+  min-height: 48px !important;
+}
+
+.auth-cadastro-panel .auth-card .btn-primary {
+  box-shadow: 0 12px 24px rgba(17, 138, 126, .18);
+}
+
 .auth-cadastro-panel .field label {
   margin-bottom: 4px;
 }
@@ -215,6 +380,17 @@ body {
 .auth-cadastro-panel .jt-field .jt-input {
   min-height: 48px;
   padding-top: 17px;
+}
+
+.auth-cadastro-panel .password-field-wrap .jt-input {
+  padding-right: 52px;
+}
+
+.auth-cadastro-panel .password-toggle {
+  right: 8px;
+  width: 34px;
+  min-height: 32px;
+  padding: 0;
 }
 
 .auth-cadastro-panel .jt-field.is-focused .jt-label,

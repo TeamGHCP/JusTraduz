@@ -26,6 +26,163 @@ document.addEventListener("DOMContentLoaded", () => {
   const professionalNote = document.querySelector("[data-professional-note]");
   const alertBoxes = document.querySelectorAll("[data-auth-alert]");
 
+  function enhanceAnimatedLabels() {
+    document.querySelectorAll(".auth-switch-page .jt-label").forEach((label) => {
+      if (label.dataset.animatedLabel === "true") return;
+
+      const text = label.textContent || "";
+      label.dataset.animatedLabel = "true";
+      label.textContent = "";
+
+      Array.from(text).forEach((char, index) => {
+        const span = document.createElement("span");
+        span.className = "jt-label-char";
+        span.style.setProperty("--char-index", index);
+        span.textContent = char === " " ? "\u00A0" : char;
+        label.appendChild(span);
+      });
+    });
+  }
+
+  function enhanceAccountTypeSelect() {
+    if (!typeSelect || typeSelect.dataset.customSelect === "true") return;
+
+    const field = typeSelect.closest(".jt-field");
+    if (!field) return;
+
+    typeSelect.dataset.customSelect = "true";
+    typeSelect.classList.add("jt-native-select-hidden");
+    typeSelect.tabIndex = -1;
+    typeSelect.setAttribute("aria-hidden", "true");
+    field.classList.add("has-custom-select", "has-value");
+
+    const options = Array.from(typeSelect.options);
+    const button = document.createElement("button");
+    const list = document.createElement("div");
+    const valueLabel = document.createElement("span");
+    const buttonId = `${typeSelect.id || "account-type"}-custom-button`;
+    const listId = `${typeSelect.id || "account-type"}-custom-list`;
+
+    button.type = "button";
+    button.id = buttonId;
+    button.className = "jt-select-button";
+    button.setAttribute("aria-haspopup", "listbox");
+    button.setAttribute("aria-expanded", "false");
+    button.setAttribute("aria-controls", listId);
+    button.setAttribute("aria-label", "Tipo de conta");
+
+    valueLabel.className = "jt-select-value";
+    button.appendChild(valueLabel);
+    button.insertAdjacentHTML("beforeend", '<svg class="jt-select-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>');
+
+    list.id = listId;
+    list.className = "jt-select-list";
+    list.setAttribute("role", "listbox");
+    list.setAttribute("aria-labelledby", buttonId);
+    list.hidden = true;
+
+    const optionNodes = options.map((option) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "jt-select-option";
+      item.setAttribute("role", "option");
+      item.dataset.value = option.value;
+      item.textContent = option.textContent;
+      list.appendChild(item);
+      return item;
+    });
+
+    function syncSelected() {
+      const selectedOption = options.find((option) => option.value === typeSelect.value) || options[0];
+      valueLabel.textContent = selectedOption?.textContent || "";
+
+      optionNodes.forEach((item) => {
+        const isSelected = item.dataset.value === typeSelect.value;
+        item.classList.toggle("is-selected", isSelected);
+        item.setAttribute("aria-selected", String(isSelected));
+      });
+    }
+
+    function closeSelect() {
+      list.hidden = true;
+      field.classList.remove("is-custom-select-open", "is-focused");
+      button.setAttribute("aria-expanded", "false");
+    }
+
+    function openSelect() {
+      list.hidden = false;
+      field.classList.add("is-custom-select-open", "is-focused");
+      button.setAttribute("aria-expanded", "true");
+    }
+
+    function chooseValue(value) {
+      typeSelect.value = value;
+      typeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      syncSelected();
+      closeSelect();
+      button.focus();
+    }
+
+    button.addEventListener("click", () => {
+      if (list.hidden) {
+        openSelect();
+      } else {
+        closeSelect();
+      }
+    });
+
+    button.addEventListener("keydown", (event) => {
+      if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
+        event.preventDefault();
+        openSelect();
+        const selected = optionNodes.find((item) => item.classList.contains("is-selected")) || optionNodes[0];
+        selected?.focus();
+      }
+    });
+
+    optionNodes.forEach((item, index) => {
+      item.addEventListener("click", () => chooseValue(item.dataset.value));
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeSelect();
+          button.focus();
+          return;
+        }
+
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          chooseValue(item.dataset.value);
+          return;
+        }
+
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          const direction = event.key === "ArrowDown" ? 1 : -1;
+          const nextIndex = (index + direction + optionNodes.length) % optionNodes.length;
+          optionNodes[nextIndex]?.focus();
+        }
+      });
+    });
+
+    document.addEventListener("pointerdown", (event) => {
+      if (!field.contains(event.target)) {
+        closeSelect();
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeSelect();
+      }
+    });
+
+    typeSelect.addEventListener("change", syncSelected);
+    typeSelect.insertAdjacentElement("afterend", button);
+    button.insertAdjacentElement("afterend", list);
+    syncSelected();
+  }
+
   function syncAnimatedField(field) {
     const input = field.querySelector(".jt-input");
     if (!input) return;
@@ -37,6 +194,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (error) error.textContent = "";
     }
   }
+
+  enhanceAnimatedLabels();
+  enhanceAccountTypeSelect();
 
   document.querySelectorAll(".jt-field").forEach((field) => {
     const input = field.querySelector(".jt-input");
@@ -136,6 +296,54 @@ document.addEventListener("DOMContentLoaded", () => {
     button.disabled = false;
   }
 
+  function markInvalidField(field) {
+    if (!field) return;
+
+    field.setAttribute("aria-invalid", "true");
+    field.dataset.touched = "1";
+
+    const wrapper = field.closest(".jt-field");
+    const error = wrapper?.querySelector(".jt-error");
+
+    wrapper?.classList.add("has-error");
+    if (error) {
+      error.textContent = field.validationMessage || "Preencha este campo.";
+    }
+  }
+
+  function validateFormFields(form) {
+    const fields = Array.from(form.querySelectorAll("input, select, textarea"))
+      .filter((field) => field.type !== "hidden" && !field.disabled);
+
+    let firstInvalid = null;
+
+    fields.forEach((field) => {
+      const wrapper = field.closest(".jt-field");
+      const error = wrapper?.querySelector(".jt-error");
+
+      if (field.checkValidity()) {
+        field.removeAttribute("aria-invalid");
+        wrapper?.classList.remove("has-error");
+        if (error) error.textContent = "";
+        return;
+      }
+
+      if (!firstInvalid) {
+        firstInvalid = field;
+      }
+
+      markInvalidField(field);
+    });
+
+    if (firstInvalid) {
+      firstInvalid.focus({ preventScroll: true });
+      firstInvalid.scrollIntoView({ block: "center", behavior: "smooth" });
+      return false;
+    }
+
+    return true;
+  }
+
   async function ensureCsrfToken() {
     if (csrfToken) return csrfToken;
 
@@ -212,8 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const formOab = form.querySelector('input[name="inscricao"]');
       const formUf = form.querySelector('select[name="oab_uf"]');
 
-      if (!form.checkValidity()) {
-        form.reportValidity();
+      if (!validateFormFields(form)) {
         return;
       }
 

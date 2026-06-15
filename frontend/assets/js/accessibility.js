@@ -457,6 +457,21 @@
   }
 
   function enhancePasswords() {
+    function eyeIcon(hidden) {
+      if (hidden) {
+        return '<svg class="password-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 4.2A10.6 10.6 0 0 1 12 4c5.5 0 9 5 10 8a13.2 13.2 0 0 1-2.2 3.7"/><path d="M6.6 6.7C4.3 8.2 2.8 10.5 2 12c1 3 4.5 8 10 8 1.7 0 3.2-.4 4.5-1.1"/></svg>';
+      }
+
+      return '<svg class="password-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+
+    function setPasswordToggleState(button, visible) {
+      button.innerHTML = eyeIcon(visible);
+      button.setAttribute('aria-label', visible ? 'Ocultar senha' : 'Mostrar senha');
+      button.setAttribute('title', visible ? 'Ocultar senha' : 'Mostrar senha');
+      button.setAttribute('aria-pressed', String(visible));
+    }
+
     document.querySelectorAll('input[type="password"]').forEach(function (input, index) {
       if (input.dataset.a11yPassword) return;
       input.dataset.a11yPassword = 'true';
@@ -468,14 +483,12 @@
       var button = document.createElement('button');
       button.type = 'button';
       button.className = 'password-toggle';
-      button.textContent = 'Mostrar';
       button.setAttribute('aria-controls', input.id);
-      button.setAttribute('aria-pressed', 'false');
+      setPasswordToggleState(button, false);
       button.addEventListener('click', function () {
         var visible = input.type === 'text';
         input.type = visible ? 'password' : 'text';
-        button.textContent = visible ? 'Mostrar' : 'Ocultar';
-        button.setAttribute('aria-pressed', String(!visible));
+        setPasswordToggleState(button, !visible);
       });
       wrap.appendChild(button);
     });
