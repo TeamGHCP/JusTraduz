@@ -112,9 +112,94 @@ function build_test_schema(PDO $pdo): void
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT
         )',
+        'CREATE TABLE organizations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            slug TEXT NOT NULL UNIQUE,
+            owner_user_id INTEGER,
+            status TEXT DEFAULT "active",
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
+        )',
+        'CREATE TABLE organization_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            role TEXT DEFAULT "member",
+            status TEXT DEFAULT "active",
+            invited_by INTEGER,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT,
+            UNIQUE (organization_id, user_id)
+        )',
+        'CREATE TABLE organization_invites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER NOT NULL,
+            email TEXT NOT NULL,
+            role TEXT DEFAULT "member",
+            token_hash TEXT NOT NULL,
+            status TEXT DEFAULT "pending",
+            invited_by INTEGER,
+            expires_at TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            accepted_at TEXT
+        )',
+        'CREATE TABLE plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT NOT NULL UNIQUE,
+            name TEXT NOT NULL,
+            description TEXT,
+            monthly_price_cents INTEGER DEFAULT 0,
+            yearly_price_cents INTEGER DEFAULT 0,
+            limits_json TEXT NOT NULL,
+            features_json TEXT,
+            active INTEGER DEFAULT 1,
+            sort_order INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
+        )',
+        'CREATE TABLE subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            organization_id INTEGER,
+            plan_id INTEGER NOT NULL,
+            billing_cycle TEXT DEFAULT "monthly",
+            status TEXT DEFAULT "active",
+            provider TEXT DEFAULT "manual",
+            provider_subscription_id TEXT,
+            current_period_start TEXT,
+            current_period_end TEXT,
+            canceled_at TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
+        )',
+        'CREATE TABLE payment_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            subscription_id INTEGER,
+            user_id INTEGER,
+            provider TEXT DEFAULT "manual",
+            provider_event_id TEXT,
+            event_type TEXT NOT NULL,
+            amount_cents INTEGER DEFAULT 0,
+            currency TEXT DEFAULT "BRL",
+            status TEXT DEFAULT "pending",
+            payload_json TEXT,
+            processed_at TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )',
+        'CREATE TABLE user_permissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            permission_key TEXT NOT NULL,
+            allowed INTEGER DEFAULT 1,
+            granted_by INTEGER,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (user_id, permission_key)
+        )',
         'CREATE TABLE documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
+            organization_id INTEGER,
             nome_arquivo TEXT,
             tipo_arquivo TEXT,
             caminho TEXT,
@@ -133,6 +218,7 @@ function build_test_schema(PDO $pdo): void
         )',
         'CREATE TABLE cases (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER,
             cliente_id INTEGER NOT NULL,
             advogado_id INTEGER,
             document_id INTEGER,
@@ -140,6 +226,8 @@ function build_test_schema(PDO $pdo): void
             descricao TEXT,
             status TEXT DEFAULT "aberto",
             prioridade TEXT DEFAULT "media",
+            sla_due_at TEXT,
+            sla_status TEXT DEFAULT "sem_sla",
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         )',
         'CREATE TABLE messages (
@@ -163,6 +251,7 @@ function build_test_schema(PDO $pdo): void
         )',
         'CREATE TABLE schedule_slots (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER,
             professional_id INTEGER NOT NULL,
             starts_at TEXT NOT NULL,
             ends_at TEXT NOT NULL,
@@ -173,6 +262,7 @@ function build_test_schema(PDO $pdo): void
         )',
         'CREATE TABLE appointments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER,
             slot_id INTEGER NOT NULL,
             client_id INTEGER NOT NULL,
             case_id INTEGER,
@@ -307,6 +397,15 @@ function seed_test_data(PDO $pdo): void
     foreach ($users as $user) {
         $stmt->execute([$user[0], $user[1], $user[2], $password, $user[3], $user[4], $user[5], $user[6], $user[7]]);
     }
+
+    $pdo->exec("INSERT INTO plans (id, slug, name, description, monthly_price_cents, yearly_price_cents, limits_json, features_json, active, sort_order) VALUES
+        (1, 'essencial', 'Essencial', 'Teste', 2900, 27900, '{\"document_upload\":10,\"document_ai\":10,\"ai_chat\":30,\"datajud_cnj\":20,\"ocr\":5}', '[\"Teste\"]', 1, 10),
+        (2, 'pro', 'Pro', 'Teste', 7900, 75900, '{\"document_upload\":60,\"document_ai\":60,\"ai_chat\":200,\"datajud_cnj\":100,\"ocr\":40}', '[\"Teste\"]', 1, 20)");
+    $pdo->exec("INSERT INTO organizations (id, name, slug, owner_user_id, status) VALUES (1, 'Escritorio Teste', 'escritorio-teste', 3, 'active')");
+    $pdo->exec("INSERT INTO organization_members (organization_id, user_id, role, status) VALUES
+        (1, 1, 'member', 'active'),
+        (1, 3, 'owner', 'active'),
+        (1, 6, 'member', 'active')");
 
     $pdo->exec("INSERT INTO documents (id, user_id, nome_arquivo, tipo_arquivo, caminho) VALUES
         (1, 1, 'cliente-um.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-um.pdf'),

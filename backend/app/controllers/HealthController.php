@@ -16,6 +16,10 @@ class HealthController extends BaseController
             'job_queue' => $this->tableOk('job_queue'),
             'mail_logs' => $this->tableOk('mail_logs'),
             'usage_events' => $this->tableOk('usage_events'),
+            'plans' => $this->tableOk('plans'),
+            'subscriptions' => $this->tableOk('subscriptions'),
+            'organizations' => $this->tableOk('organizations'),
+            'user_permissions' => $this->tableOk('user_permissions'),
         ];
 
         $ok = !in_array(false, $checks, true);

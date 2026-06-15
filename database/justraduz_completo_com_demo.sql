@@ -82,16 +82,131 @@ CREATE TABLE IF NOT EXISTS user_onboarding_progress (
     CONSTRAINT fk_user_onboarding_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS organizations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(160) NOT NULL,
+    slug VARCHAR(190) NOT NULL UNIQUE,
+    owner_user_id INT NULL,
+    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_organizations_status (status, created_at)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS organization_members (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role ENUM('owner', 'admin', 'member', 'viewer') NOT NULL DEFAULT 'member',
+    status ENUM('invited', 'active', 'suspended') NOT NULL DEFAULT 'active',
+    invited_by INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_organization_user (organization_id, user_id),
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_organization_members_user (user_id, status)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS organization_invites (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NOT NULL,
+    email VARCHAR(190) NOT NULL,
+    role ENUM('admin', 'member', 'viewer') NOT NULL DEFAULT 'member',
+    token_hash VARCHAR(255) NOT NULL,
+    status ENUM('pending', 'accepted', 'revoked', 'expired') NOT NULL DEFAULT 'pending',
+    invited_by INT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    accepted_at DATETIME NULL,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_organization_invites_email (email, status)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS plans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slug VARCHAR(80) NOT NULL UNIQUE,
+    name VARCHAR(120) NOT NULL,
+    description TEXT NULL,
+    monthly_price_cents INT NOT NULL DEFAULT 0,
+    yearly_price_cents INT NOT NULL DEFAULT 0,
+    limits_json JSON NOT NULL,
+    features_json JSON NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    organization_id INT NULL,
+    plan_id INT NOT NULL,
+    billing_cycle ENUM('monthly', 'yearly') NOT NULL DEFAULT 'monthly',
+    status ENUM('trialing', 'active', 'past_due', 'canceled', 'expired') NOT NULL DEFAULT 'active',
+    provider VARCHAR(60) NOT NULL DEFAULT 'manual',
+    provider_subscription_id VARCHAR(190) NULL,
+    current_period_start DATETIME NULL,
+    current_period_end DATETIME NULL,
+    canceled_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    FOREIGN KEY (plan_id) REFERENCES plans(id),
+    INDEX idx_subscriptions_user_status (user_id, status),
+    INDEX idx_subscriptions_org_status (organization_id, status),
+    INDEX idx_subscriptions_provider (provider, provider_subscription_id)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS payment_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    subscription_id INT NULL,
+    user_id INT NULL,
+    provider VARCHAR(60) NOT NULL DEFAULT 'manual',
+    provider_event_id VARCHAR(190) NULL,
+    event_type VARCHAR(120) NOT NULL,
+    amount_cents INT NOT NULL DEFAULT 0,
+    currency CHAR(3) NOT NULL DEFAULT 'BRL',
+    status ENUM('pending', 'paid', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
+    payload_json JSON NULL,
+    processed_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_payment_events_status (status, created_at),
+    INDEX idx_payment_events_provider (provider, provider_event_id)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    permission_key VARCHAR(120) NOT NULL,
+    allowed BOOLEAN NOT NULL DEFAULT TRUE,
+    granted_by INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_user_permission (user_id, permission_key),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
 -- documentos
 CREATE TABLE IF NOT EXISTS documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    organization_id INT NULL,
     nome_arquivo VARCHAR(255),
     tipo_arquivo VARCHAR(20),
     caminho VARCHAR(255),
     texto_extraido LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    INDEX idx_documents_organization (organization_id, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- resultados da ia
@@ -110,6 +225,7 @@ CREATE TABLE IF NOT EXISTS ai_results (
 -- casos (solicitações de ajuda)
 CREATE TABLE IF NOT EXISTS cases (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     cliente_id INT NOT NULL,
     advogado_id INT NULL,
     document_id INT NULL,
@@ -117,12 +233,17 @@ CREATE TABLE IF NOT EXISTS cases (
     descricao TEXT,
     status ENUM('aberto', 'em_andamento', 'finalizado') DEFAULT 'aberto',
     prioridade ENUM('baixa', 'media', 'alta') DEFAULT 'media',
+    sla_due_at DATETIME NULL,
+    sla_status ENUM('ok', 'em_risco', 'vencido', 'sem_sla') DEFAULT 'sem_sla',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (cliente_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (advogado_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE SET NULL,
     INDEX idx_cases_cliente_status (cliente_id, status),
     INDEX idx_cases_advogado_status (advogado_id, status),
+    INDEX idx_cases_organization_status (organization_id, status),
+    INDEX idx_cases_sla (sla_status, sla_due_at),
     INDEX idx_cases_document (document_id)
 ) DEFAULT CHARSET=utf8mb4;
 
@@ -155,6 +276,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 -- agenda de profissionais
 CREATE TABLE IF NOT EXISTS schedule_slots (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     professional_id INT NOT NULL,
     starts_at DATETIME NOT NULL,
     ends_at DATETIME NOT NULL,
@@ -162,7 +284,9 @@ CREATE TABLE IF NOT EXISTS schedule_slots (
     titulo VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (professional_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_schedule_organization (organization_id, starts_at),
     INDEX idx_schedule_professional (professional_id, starts_at),
     INDEX idx_schedule_status (status, starts_at)
 ) DEFAULT CHARSET=utf8mb4;
@@ -170,6 +294,7 @@ CREATE TABLE IF NOT EXISTS schedule_slots (
 -- agendamentos feitos por clientes
 CREATE TABLE IF NOT EXISTS appointments (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     slot_id INT NOT NULL,
     client_id INT NOT NULL,
     case_id INT NULL,
@@ -178,10 +303,12 @@ CREATE TABLE IF NOT EXISTS appointments (
     status ENUM('agendado', 'cancelado', 'concluido') DEFAULT 'agendado',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (slot_id) REFERENCES schedule_slots(id) ON DELETE CASCADE,
     FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE SET NULL,
     INDEX idx_appointments_client (client_id, created_at),
+    INDEX idx_appointments_organization (organization_id, created_at),
     INDEX idx_appointments_status (status, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
@@ -328,7 +455,27 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_case_document'),
     ('migration_p1_operations'),
     ('2026_06_11_create_user_onboarding_progress'),
-    ('2026_06_13_google_oab_profile_fields');
+    ('2026_06_13_google_oab_profile_fields'),
+    ('2026_06_15_p2_saas');
+
+INSERT INTO plans (slug, name, description, monthly_price_cents, yearly_price_cents, limits_json, features_json, sort_order) VALUES
+    ('essencial', 'Essencial', 'Para começar com documentos e IA jurídica em baixo volume.', 2900, 27900,
+     JSON_OBJECT('document_upload', 10, 'document_ai', 10, 'ai_chat', 30, 'datajud_cnj', 20, 'ocr', 5),
+     JSON_ARRAY('Documentos essenciais', 'IA jurídica em linguagem simples', 'Consulta CNJ'), 10),
+    ('pro', 'Pro', 'Para usuários recorrentes e equipes pequenas.', 7900, 75900,
+     JSON_OBJECT('document_upload', 60, 'document_ai', 60, 'ai_chat', 200, 'datajud_cnj', 100, 'ocr', 40),
+     JSON_ARRAY('OCR ampliado', 'Atendimento prioritário', 'Agenda e tarefas'), 20),
+    ('escritorio', 'Escritório', 'Para operação jurídica com governança, auditoria e escala.', 19900, 191000,
+     JSON_OBJECT('document_upload', 300, 'document_ai', 300, 'ai_chat', 1000, 'datajud_cnj', 500, 'ocr', 200),
+     JSON_ARRAY('Multiempresa', 'Relatórios gerenciais', 'SLA e auditoria'), 30)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    description = VALUES(description),
+    monthly_price_cents = VALUES(monthly_price_cents),
+    yearly_price_cents = VALUES(yearly_price_cents),
+    limits_json = VALUES(limits_json),
+    features_json = VALUES(features_json),
+    sort_order = VALUES(sort_order);
 
 -- Dados de apresentacao.
 USE justraduz;
@@ -474,6 +621,21 @@ SELECT id INTO @advogado_id FROM users WHERE email = 'advogado@justraduz.demo';
 SELECT id INTO @estagiario_id FROM users WHERE email = 'estagiario@justraduz.demo';
 SELECT id INTO @pendente_id FROM users WHERE email = 'pendente@justraduz.demo';
 
+INSERT INTO organizations (name, slug, owner_user_id, status)
+VALUES ('Costa & Tamanini Demo', 'costa-tamanini-demo', @advogado_id, 'active')
+ON DUPLICATE KEY UPDATE owner_user_id = VALUES(owner_user_id), status = 'active';
+SELECT id INTO @org_demo_id FROM organizations WHERE slug = 'costa-tamanini-demo';
+
+INSERT INTO organization_members (organization_id, user_id, role, status, invited_by) VALUES
+    (@org_demo_id, @advogado_id, 'owner', 'active', @admin_id),
+    (@org_demo_id, @estagiario_id, 'member', 'active', @admin_id),
+    (@org_demo_id, @cliente_id, 'member', 'active', @admin_id)
+ON DUPLICATE KEY UPDATE role = VALUES(role), status = 'active';
+
+SELECT id INTO @plan_pro_id FROM plans WHERE slug = 'pro';
+INSERT INTO subscriptions (user_id, organization_id, plan_id, billing_cycle, status, provider, current_period_start, current_period_end)
+VALUES (@cliente_id, @org_demo_id, @plan_pro_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH));
+
 INSERT INTO external_processes
     (user_id, owner_type, source, query_type, query_value, process_number, tribunal, uf, comarca, tipo_processo, classe_processual, assunto, status_inferido, status_normalizado, link, data_ultima_atualizacao, data_andamento_mais_recente, payload_json, last_synced_at)
 VALUES
@@ -485,9 +647,9 @@ VALUES
     (@estagiario_id, 'estagiario', 'datajud_demo', 'oab', 'RJ654321', '5043210-33.2024.8.19.0209', 'TJRJ', 'RJ', 'Barra da Tijuca', 'civil', 'Monitoria de Processo', 'Acompanhamento de prazo processual', 'Aguardando publicacao', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 8 DAY), DATE_SUB(CURDATE(), INTERVAL 3 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'estagiario', 'Lucas Estagiario Demo'), DATE_SUB(NOW(), INTERVAL 3 HOUR));
 
 INSERT INTO documents
-    (user_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
+    (user_id, organization_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
 VALUES
-    (@cliente_id, 'notificacao-extrajudicial-demo.png', 'png', 'backend/storage/documents/demo/notificacao-extrajudicial-demo.png',
+    (@cliente_id, @org_demo_id, 'notificacao-extrajudicial-demo.png', 'png', 'backend/storage/documents/demo/notificacao-extrajudicial-demo.png',
      'Notificacao extrajudicial cobrando multa contratual por atraso. O documento informa prazo de 5 dias para resposta e menciona possibilidade de medidas judiciais se nao houver contato.',
      DATE_SUB(NOW(), INTERVAL 4 DAY));
 SET @doc1_id = LAST_INSERT_ID();
@@ -529,9 +691,9 @@ VALUES
      DATE_SUB(NOW(), INTERVAL 4 DAY));
 
 INSERT INTO cases
-    (cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, created_at)
+    (organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, sla_due_at, sla_status, created_at)
 VALUES
-    (@cliente_id, @advogado_id, @doc1_id, 'Revisar notificacao extrajudicial', 'Cliente recebeu cobranca com prazo de 5 dias e quer entender se deve responder imediatamente.', 'em_andamento', 'alta', DATE_SUB(NOW(), INTERVAL 3 DAY));
+    (@org_demo_id, @cliente_id, @advogado_id, @doc1_id, 'Revisar notificacao extrajudicial', 'Cliente recebeu cobranca com prazo de 5 dias e quer entender se deve responder imediatamente.', 'em_andamento', 'alta', DATE_SUB(NOW(), INTERVAL 2 DAY), 'vencido', DATE_SUB(NOW(), INTERVAL 3 DAY));
 SET @case1_id = LAST_INSERT_ID();
 
 INSERT INTO cases
@@ -559,24 +721,24 @@ VALUES
     (@case1_id, 'Preparar minuta de resposta', 'Rascunhar resposta objetiva para envio dentro do prazo.', 'pendente', DATE_SUB(NOW(), INTERVAL 1 DAY)),
     (@case3_id, 'Registrar orientacao final', 'Fechar atendimento com resumo da orientacao prestada.', 'concluida', DATE_SUB(NOW(), INTERVAL 5 DAY));
 
-INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo, created_at)
-VALUES (@advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL 10 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL 11 HOUR), 'livre', 'Atendimento inicial', DATE_SUB(NOW(), INTERVAL 1 DAY));
+INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at, status, titulo, created_at)
+VALUES (@org_demo_id, @advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL 10 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL 11 HOUR), 'livre', 'Atendimento inicial', DATE_SUB(NOW(), INTERVAL 1 DAY));
 SET @slot_free_id = LAST_INSERT_ID();
 
-INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo, created_at)
-VALUES (@advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 15 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 16 HOUR), 'ocupado', 'Consulta sobre notificacao', DATE_SUB(NOW(), INTERVAL 1 DAY));
+INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at, status, titulo, created_at)
+VALUES (@org_demo_id, @advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 15 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 16 HOUR), 'ocupado', 'Consulta sobre notificacao', DATE_SUB(NOW(), INTERVAL 1 DAY));
 SET @slot_booked_id = LAST_INSERT_ID();
 
-INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo, created_at)
-VALUES (@advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 13 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 14 HOUR), 'bloqueado', 'Bloqueio interno para revisao', DATE_SUB(NOW(), INTERVAL 1 DAY));
+INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at, status, titulo, created_at)
+VALUES (@org_demo_id, @advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 13 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 14 HOUR), 'bloqueado', 'Bloqueio interno para revisao', DATE_SUB(NOW(), INTERVAL 1 DAY));
 SET @slot_blocked_id = LAST_INSERT_ID();
 
-INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo, created_at)
-VALUES (@estagiario_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 3 DAY), INTERVAL 9 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 3 DAY), INTERVAL 10 HOUR), 'livre', 'Triagem juridica', DATE_SUB(NOW(), INTERVAL 1 DAY));
+INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at, status, titulo, created_at)
+VALUES (@org_demo_id, @estagiario_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 3 DAY), INTERVAL 9 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 3 DAY), INTERVAL 10 HOUR), 'livre', 'Triagem juridica', DATE_SUB(NOW(), INTERVAL 1 DAY));
 SET @slot_intern_id = LAST_INSERT_ID();
 
-INSERT INTO appointments (slot_id, client_id, case_id, assunto, observacoes, status, created_at)
-VALUES (@slot_booked_id, @cliente_id, @case1_id, 'Consulta sobre notificacao extrajudicial', 'Demo: atendimento marcado para explicar prazo e resposta.', 'agendado', DATE_SUB(NOW(), INTERVAL 12 HOUR));
+INSERT INTO appointments (organization_id, slot_id, client_id, case_id, assunto, observacoes, status, created_at)
+VALUES (@org_demo_id, @slot_booked_id, @cliente_id, @case1_id, 'Consulta sobre notificacao extrajudicial', 'Demo: atendimento marcado para explicar prazo e resposta.', 'agendado', DATE_SUB(NOW(), INTERVAL 12 HOUR));
 SET @appointment_id = LAST_INSERT_ID();
 
 INSERT INTO notifications (user_id, mensagem, lida, created_at)

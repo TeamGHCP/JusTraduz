@@ -24,15 +24,17 @@ C:\xampp\php\php.exe scripts\check-references.php
 C:\xampp\php\php.exe scripts\check-production-readiness.php --env=backend/.env
 ```
 
-## Produto P2 ainda nao implementado
+## Produto P2 implementado nesta branch
 
-- Planos e cobranca.
-- Multiempresa/escritorios.
-- RBAC granular por recurso.
-- Relatorios gerenciais.
-- SLA, prioridade operacional e escalonamento.
-- API versionada `/api/v1`.
-- Acessibilidade WCAG AA validada por matriz formal.
+- Planos e cobranca: planos exclusivos para clientes, assinaturas, eventos de pagamento manual e bloqueio por inadimplencia.
+- Multiempresa/escritorios: organizacoes, membros, convites e `organization_id` nas entidades principais.
+- RBAC granular por recurso: permissoes customizadas por usuario e defaults por perfil.
+- Relatorios gerenciais: tela admin de status, prioridade, responsavel, SLA e receita registrada.
+- SLA, prioridade operacional e escalonamento: `sla_due_at`, `sla_status` e calculo por prioridade.
+- API versionada `/api/v1`: endpoints `me`, `cases` e `reports` com envelope versionado.
+- Acessibilidade: novas telas usam labels, componentes existentes e badges textuais.
+
+Ainda faltam para producao comercial real: conectar provedor de pagamento com webhook assinado, homologar nota/recibo conforme modelo fiscal escolhido e executar matriz formal WCAG AA.
 
 ## Polimento P3 ainda nao implementado
 

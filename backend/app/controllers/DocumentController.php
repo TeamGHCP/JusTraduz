@@ -6,8 +6,10 @@ require_once dirname(__DIR__) . '/services/GeminiService.php';
 require_once dirname(__DIR__) . '/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
 require_once dirname(__DIR__) . '/services/OcrService.php';
+require_once dirname(__DIR__) . '/services/OrganizationService.php';
 require_once dirname(__DIR__) . '/services/PdfTextExtractor.php';
 require_once dirname(__DIR__) . '/services/StorageService.php';
+require_once dirname(__DIR__) . '/services/SubscriptionService.php';
 require_once dirname(__DIR__) . '/services/UploadScannerService.php';
 require_once dirname(__DIR__) . '/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
@@ -16,7 +18,9 @@ class DocumentController extends BaseController
 {
     private NotificationService $notifications;
     private AuditService $audit;
+    private OrganizationService $organizations;
     private StorageService $storage;
+    private SubscriptionService $subscriptions;
     private UsageLimiter $usage;
 
     public function __construct()
@@ -24,7 +28,9 @@ class DocumentController extends BaseController
         parent::__construct();
         $this->notifications = new NotificationService($this->pdo);
         $this->audit = new AuditService($this->pdo);
+        $this->organizations = new OrganizationService($this->pdo);
         $this->storage = new StorageService();
+        $this->subscriptions = new SubscriptionService($this->pdo);
         $this->usage = new UsageLimiter($this->pdo);
     }
 
@@ -45,6 +51,10 @@ class DocumentController extends BaseController
 
         $file = $_FILES['documento'];
         $userId = (int) $_SESSION['id'];
+        if ($this->subscriptions->isBlocked($userId)) {
+            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Regularize seu plano para enviar documentos.')));
+        }
+
         $quota = $this->usage->allow($userId, 'document_upload');
         if (!$quota['allowed']) {
             $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('Limite diario de uploads atingido. Tente novamente amanha.')));
@@ -102,10 +112,18 @@ class DocumentController extends BaseController
             $textoExtraido = $this->extractWithOcrOrFallback($destination, $mime, $userId);
         }
 
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO documents (user_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido) VALUES (?, ?, ?, ?, ?)'
-        );
-        $stmt->execute([$userId, $file['name'], $extension, $relativePath, $textoExtraido]);
+        $organizationId = $this->organizations->currentOrganizationId($userId);
+        if (database_table_has_column($this->pdo, 'documents', 'organization_id')) {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO documents (user_id, organization_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido) VALUES (?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([$userId, $organizationId, $file['name'], $extension, $relativePath, $textoExtraido]);
+        } else {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO documents (user_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido) VALUES (?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([$userId, $file['name'], $extension, $relativePath, $textoExtraido]);
+        }
         $documentId = (int) $this->pdo->lastInsertId();
         $this->usage->record($userId, 'document_upload', 1, $documentId, ['tipo_arquivo' => $extension]);
 

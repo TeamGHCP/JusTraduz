@@ -112,16 +112,6 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
   <script src="assets/js/phone-mask.js"></script>
   <script src="assets/js/auth.js"></script>
-  <script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
-  <div vw class="enabled">
-    <div vw-access-button class="active"></div>
-    <div vw-plugin-wrapper>
-      <div class="vw-plugin-top-wrapper"></div>
-    </div>
-  </div>
-  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-  <script>
-    new window.VLibras.Widget('https://vlibras.gov.br/app');
-  </script>
+  <script src="assets/js/accessibility.js?v=2026.06.15-02"></script>
 </body>
 </html>

@@ -1,0 +1,149 @@
+<?php
+require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
+require_login();
+require_once PROJECT_ROOT_PATH . '/backend/app/services/SubscriptionService.php';
+
+$type = current_user_type();
+if ($type !== 'cliente') {
+    redirect(dashboard_url($type) . '?erro=' . urlencode('Planos são exclusivos para clientes.'));
+}
+
+$billing = new SubscriptionService($pdo);
+$plans = $billing->plans();
+$currentSubscription = $billing->ensureDefaultSubscription(current_user_id());
+$errorMessage = trim((string) ($_GET['erro'] ?? ''));
+
+function pricing_money(int $cents): string
+{
+    return 'R$ ' . number_format($cents / 100, 0, ',', '.');
+}
+
+function pricing_features(array $plan): array
+{
+    $features = json_decode((string) ($plan['features_json'] ?? ''), true);
+    if (is_array($features) && $features) {
+        return array_map('strval', $features);
+    }
+
+    $limits = json_decode((string) ($plan['limits_json'] ?? ''), true);
+    if (!is_array($limits)) {
+        return ['Limites configuráveis por plano'];
+    }
+
+    return [
+        ((int) ($limits['document_upload'] ?? 0)) . ' documentos por período',
+        ((int) ($limits['document_ai'] ?? 0)) . ' análises com IA',
+        ((int) ($limits['ai_chat'] ?? 0)) . ' mensagens com IA jurídica',
+        ((int) ($limits['ocr'] ?? 0)) . ' processamentos OCR',
+    ];
+}
+
+$currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] ?? '') === 'yearly') ? 'yearly' : 'monthly';
+?>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subir de plano | JusTraduz</title>
+  <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="assets/css/style.css?v=pricing-cycle-toggle-2">
+</head>
+<body>
+  <div class="app-shell">
+    <?php render_sidebar($type, 'subir-plano.php'); ?>
+
+    <main class="app-main">
+      <?php render_topbar('Subir de plano', 'Escolha o plano ideal para usar o JusTraduz com mais volume e prioridade.', current_user_name()); ?>
+
+      <section class="pricing-page">
+        <?php if ($errorMessage !== ''): ?>
+          <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
+        <?php endif; ?>
+
+        <div class="pricing-hero card">
+          <span class="pricing-kicker"><?= icon_svg('sparkles') ?> Planos mensais e anuais</span>
+          <h2>Planos que crescem junto com sua demanda jurídica.</h2>
+          <p>Compare limites, escolha a cobrança mensal ou anual e veja qual nível combina com seu momento. Nesta branch, o checkout registra pagamento simulado para homologação e já muda seus limites.</p>
+          <button
+            class="pricing-cycle-toggle<?= $currentCycle === 'yearly' ? ' is-yearly' : '' ?>"
+            type="button"
+            data-pricing-cycle-toggle
+            aria-label="Alternar entre cobrança mensal e anual"
+            aria-pressed="<?= $currentCycle === 'yearly' ? 'true' : 'false' ?>"
+          >
+            <span class="pricing-cycle-option pricing-cycle-monthly">Mensal</span>
+            <span class="pricing-cycle-thumb" aria-hidden="true"></span>
+            <span class="pricing-cycle-option pricing-cycle-yearly">Anual <strong>-20%</strong></span>
+          </button>
+        </div>
+
+        <div class="pricing-grid">
+          <?php foreach ($plans as $plan): ?>
+            <?php
+              $isCurrent = $currentSubscription && (int) ($currentSubscription['plan_id'] ?? 0) === (int) $plan['id'];
+              $isHighlighted = ($plan['slug'] ?? '') === 'pro';
+            ?>
+            <article class="pricing-card<?= $isHighlighted ? ' pricing-card-featured' : '' ?>">
+              <?php if ($isHighlighted): ?>
+                <span class="pricing-popular">Mais escolhido</span>
+              <?php endif; ?>
+
+              <div class="pricing-card-head">
+                <div>
+                  <h3><?= e($plan['name']) ?></h3>
+                  <p><?= $isCurrent ? 'Seu plano atual' : 'Upgrade disponível' ?></p>
+                </div>
+              </div>
+
+              <div class="pricing-price-row">
+                <div>
+                  <span
+                    class="pricing-price"
+                    data-monthly-price="<?= e(pricing_money((int) $plan['monthly_price_cents'])) ?>"
+                    data-yearly-price="<?= e(pricing_money((int) $plan['yearly_price_cents'])) ?>"
+                  ><?= e(pricing_money((int) ($currentCycle === 'yearly' ? $plan['yearly_price_cents'] : $plan['monthly_price_cents']))) ?></span>
+                  <span class="pricing-period" data-pricing-period><?= $currentCycle === 'yearly' ? '/ano' : '/mês' ?></span>
+                </div>
+                <small
+                  data-pricing-note
+                  data-monthly-cents="<?= (int) $plan['monthly_price_cents'] ?>"
+                  data-yearly-cents="<?= (int) $plan['yearly_price_cents'] ?>"
+                ><?= $currentCycle === 'yearly' ? 'Cobrança anual com desconto aplicado' : e(pricing_money((int) $plan['yearly_price_cents'])) . '/ano · desconto anual' ?></small>
+              </div>
+
+              <p class="pricing-description"><?= e($plan['description']) ?></p>
+
+              <ul class="pricing-features">
+                <?php foreach (pricing_features($plan) as $feature): ?>
+                  <li><?= icon_svg('check') ?> <?= e($feature) ?></li>
+                <?php endforeach; ?>
+              </ul>
+
+              <form class="auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/billing/subscribe')) ?>" method="post">
+                <?= csrf_input() ?>
+                <input type="hidden" name="plan_id" value="<?= (int) $plan['id'] ?>">
+                <input type="hidden" name="billing_cycle" value="<?= e($currentCycle) ?>" data-billing-cycle-input>
+                <button class="btn <?= $isHighlighted ? 'btn-primary' : 'btn-outline' ?> btn-block" type="submit">
+                  <?= $isCurrent ? 'Renovar este plano' : 'Assinar ' . e($plan['name']) ?>
+                </button>
+              </form>
+            </article>
+          <?php endforeach; ?>
+        </div>
+
+        <section class="pricing-note card">
+          <div>
+            <h2>Próxima etapa</h2>
+            <p class="text-muted">O P2 já registra assinatura e evento de pagamento manual. Para produção, troque o provedor manual por Mercado Pago, Stripe ou outro PSP com webhook assinado.</p>
+          </div>
+          <span class="badge badge-success">P2 ativo</span>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <?php render_vlibras(); ?>
+  <script src="assets/js/pricing.js?v=pricing-cycle-toggle-2"></script>
+</body>
+</html>

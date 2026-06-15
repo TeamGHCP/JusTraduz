@@ -45,7 +45,7 @@ if (!function_exists('database_connection')) {
         $dbname = getenv('DB_NAME') ?: ($env['DB_NAME'] ?? 'justraduz');
         $usuario = getenv('DB_USER') ?: ($env['DB_USER'] ?? 'root');
         $senha = getenv('DB_PASS') ?: ($env['DB_PASS'] ?? '');
-        $port = getenv('DB_PORT') ?: ($env['DB_PORT'] ?? '3306');
+        $port = getenv('DB_PORT') ?: ($env['DB_PORT'] ?? '3307');
 
         try {
             $connection = new PDO(
@@ -83,6 +83,24 @@ if (!function_exists('database_table_has_column')) {
 
         $stmt = $pdo->prepare("SHOW COLUMNS FROM `$safeTable` WHERE Field = ?");
         $stmt->execute([$column]);
+        return (bool) $stmt->fetch();
+    }
+}
+
+if (!function_exists('database_table_exists')) {
+    function database_table_exists(PDO $pdo, string $table): bool
+    {
+        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $safeTable = preg_replace('/[^A-Za-z0-9_]/', '', $table);
+
+        if ($driver === 'sqlite') {
+            $stmt = $pdo->prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?");
+            $stmt->execute([$safeTable]);
+            return (bool) $stmt->fetch();
+        }
+
+        $stmt = $pdo->prepare('SHOW TABLES LIKE ?');
+        $stmt->execute([$safeTable]);
         return (bool) $stmt->fetch();
     }
 }

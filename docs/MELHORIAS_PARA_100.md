@@ -66,6 +66,16 @@ Este documento lista apenas o que ainda falta para o JusTraduz sair de MVP demon
 | API versionada | Rotas atuais funcionam, mas nao tem contrato versionado. | `/api/v1`, padrao de resposta, erros, docs e compatibilidade. |
 | Internacionalizacao/acessibilidade | Para uso publico, acessibilidade vira requisito serio. | WCAG AA nas telas principais, navegacao por teclado e contraste validado. |
 
+### Entregaveis P2 no repositorio
+
+- Planos e cobranca: `plans`, `subscriptions`, `payment_events`, tela `frontend/subir-plano.php` exclusiva para clientes, admin `frontend/admin/assinaturas.php` e checkout manual em `/backend/public/index.php?rota=/billing/subscribe`.
+- Multiempresa/escritorios: `organizations`, `organization_members`, `organization_invites`, admin `frontend/admin/organizacoes.php` e preenchimento de `organization_id` em documentos, casos, agenda e agendamentos.
+- RBAC granular: `user_permissions`, `backend/app/services/RbacService.php` e admin `frontend/admin/permissoes.php`.
+- Relatorios gerenciais: `frontend/admin/relatorios.php` e endpoint `/backend/public/index.php?rota=/api/v1/reports`.
+- SLA e prioridade operacional: campos `sla_due_at` e `sla_status` em `cases`, calculo em `SlaService` e atualizacao por status/prioridade.
+- API versionada: endpoints `/api/v1/me`, `/api/v1/cases` e `/api/v1/reports` com envelope `api_version`.
+- Acessibilidade/internacionalizacao: novas telas reaproveitam componentes acessiveis existentes, labels de formulario, badges sem depender apenas de cor e navegacao via sidebar.
+
 ## P3 - Polimento final
 
 | Melhoria | Por que falta | Criterio de pronto |

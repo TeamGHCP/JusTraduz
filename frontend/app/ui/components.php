@@ -143,27 +143,6 @@ function render_vlibras(): void
         <div class="vw-plugin-top-wrapper"></div>
       </div>
     </div>
-    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-    <script>
-      (function startVlibrasWidget() {
-        var attempts = 0;
-
-        function start() {
-          if (window.JusTraduzVlibrasStarted) return;
-          if (!window.VLibras || !window.VLibras.Widget) {
-            attempts++;
-            if (attempts < 20) window.setTimeout(start, 250);
-            return;
-          }
-
-          window.JusTraduzVlibrasStarted = true;
-          new window.VLibras.Widget('https://vlibras.gov.br/app');
-        }
-
-        start();
-        window.addEventListener('load', start);
-      }());
-    </script>
     <?php
 }
 
@@ -374,7 +353,7 @@ function context_help_asset_path(bool $isAdminPath, string $type): string
 function accessibility_asset_path(bool $isAdminPath): string
 {
     $path = $isAdminPath ? '../assets/js/accessibility.js' : 'assets/js/accessibility.js';
-    return $path . '?v=2026.06.14-06';
+    return $path . '?v=2026.06.15-02';
 }
 
 function stat_card(string $label, $value, string $icon): string

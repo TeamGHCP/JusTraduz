@@ -3,7 +3,10 @@
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
+require_once dirname(__DIR__) . '/services/OrganizationService.php';
+require_once dirname(__DIR__) . '/services/SlaService.php';
 require_once dirname(__DIR__) . '/services/StorageService.php';
+require_once dirname(__DIR__) . '/services/SubscriptionService.php';
 require_once dirname(__DIR__) . '/services/UploadScannerService.php';
 
 class CaseController extends BaseController
@@ -22,15 +25,19 @@ class CaseController extends BaseController
     ];
 
     private NotificationService $notifications;
+    private OrganizationService $organizations;
     private AuditService $audit;
     private StorageService $storage;
+    private SubscriptionService $subscriptions;
 
     public function __construct()
     {
         parent::__construct();
         $this->notifications = new NotificationService($this->pdo);
+        $this->organizations = new OrganizationService($this->pdo);
         $this->audit = new AuditService($this->pdo);
         $this->storage = new StorageService();
+        $this->subscriptions = new SubscriptionService($this->pdo);
     }
 
     public function create(): void
@@ -51,6 +58,10 @@ class CaseController extends BaseController
             $this->response->redirect(app_url('/frontend/solicitar-ajuda.php?erro=' . urlencode('Preencha titulo e descricao.')));
         }
 
+        if ($this->subscriptions->isBlocked((int) $_SESSION['id'])) {
+            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Regularize seu plano para abrir novas solicitações.')));
+        }
+
         if (!in_array($prioridade, ['baixa', 'media', 'alta'], true)) {
             $prioridade = 'media';
         }
@@ -69,7 +80,17 @@ class CaseController extends BaseController
         }
 
         $status = $advogadoId ? 'em_andamento' : 'aberto';
-        if ($documentId > 0 && $this->casesHasDocumentIdColumn()) {
+        $organizationId = $this->organizations->currentOrganizationId((int) $_SESSION['id']);
+        $slaDueAt = SlaService::deadlineForPriority($prioridade);
+        $hasOrganizationColumn = database_table_has_column($this->pdo, 'cases', 'organization_id');
+        $hasSlaColumn = database_table_has_column($this->pdo, 'cases', 'sla_due_at');
+
+        if ($hasOrganizationColumn && $hasSlaColumn && $this->casesHasDocumentIdColumn()) {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO cases (organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, sla_due_at, sla_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([$organizationId, (int) $_SESSION['id'], $advogadoId ? (int) $advogadoId : null, $documentId > 0 ? $documentId : null, $titulo, $descricao, $status, $prioridade, $slaDueAt, SlaService::status($slaDueAt, $status)]);
+        } elseif ($documentId > 0 && $this->casesHasDocumentIdColumn()) {
             $stmt = $this->pdo->prepare(
                 'INSERT INTO cases (cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade) VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
@@ -96,6 +117,8 @@ class CaseController extends BaseController
             'advogado_id' => $advogadoId ? (int) $advogadoId : null,
             'document_id' => $documentId > 0 ? $documentId : null,
             'status' => $status,
+            'organization_id' => $organizationId,
+            'sla_due_at' => $slaDueAt,
         ]);
 
         $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&sucesso=' . urlencode('Solicitacao criada. Use o chat para acompanhar o atendimento.')));
@@ -118,13 +141,20 @@ class CaseController extends BaseController
             $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Caso invalido.')));
         }
 
+        $case = $this->caseById($caseId);
+        if (!$case || !$this->canJoinCase($case)) {
+            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Caso indisponivel para seu escritório ou perfil.')));
+        }
+
+        $statusSql = database_table_has_column($this->pdo, 'cases', 'sla_status')
+            ? ", sla_status = CASE WHEN sla_due_at < NOW() THEN 'vencido' ELSE 'ok' END"
+            : '';
         $stmt = $this->pdo->prepare(
-            "UPDATE cases SET advogado_id = ?, status = 'em_andamento' WHERE id = ? AND advogado_id IS NULL AND status = 'aberto'"
+            "UPDATE cases SET advogado_id = ?, status = 'em_andamento' {$statusSql} WHERE id = ? AND advogado_id IS NULL AND status = 'aberto'"
         );
         $stmt->execute([(int) $_SESSION['id'], $caseId]);
 
         if ($stmt->rowCount() > 0) {
-            $case = $this->caseById($caseId);
             $this->notifications->notify((int) ($case['cliente_id'] ?? 0), 'Um advogado aceitou sua solicitacao: ' . (string) ($case['titulo'] ?? 'Caso'));
             $this->audit->log('case.accept', 'case', $caseId, ['advogado_id' => (int) $_SESSION['id']]);
         }
@@ -164,8 +194,14 @@ class CaseController extends BaseController
             $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Casos sem advogado nao podem ir para em andamento.')));
         }
 
-        $stmt = $this->pdo->prepare('UPDATE cases SET status = ? WHERE id = ?');
-        $stmt->execute([$status, $caseId]);
+        if (database_table_has_column($this->pdo, 'cases', 'sla_status')) {
+            $slaStatus = SlaService::status($case['sla_due_at'] ?? null, $status);
+            $stmt = $this->pdo->prepare('UPDATE cases SET status = ?, sla_status = ? WHERE id = ?');
+            $stmt->execute([$status, $slaStatus, $caseId]);
+        } else {
+            $stmt = $this->pdo->prepare('UPDATE cases SET status = ? WHERE id = ?');
+            $stmt->execute([$status, $caseId]);
+        }
 
         $this->notifications->notifyMany(
             $this->notifications->caseParticipantIds($caseId),
@@ -400,6 +436,21 @@ class CaseController extends BaseController
             'cliente' => (int) ($case['cliente_id'] ?? 0) === $userId,
             default => false,
         };
+    }
+
+    private function canJoinCase(array $case): bool
+    {
+        $userId = (int) ($_SESSION['id'] ?? 0);
+        if (!database_table_has_column($this->pdo, 'cases', 'organization_id')) {
+            return true;
+        }
+
+        $caseOrganizationId = (int) ($case['organization_id'] ?? 0);
+        if ($caseOrganizationId <= 0) {
+            return true;
+        }
+
+        return $this->organizations->currentOrganizationId($userId) === $caseOrganizationId;
     }
 
     private function currentProfessionalIsVerified(): bool

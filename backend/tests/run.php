@@ -4,6 +4,7 @@ $tests = [
     __DIR__ . '/AiGuardrailsTest.php',
     __DIR__ . '/PermissionAndCriticalFlowsTest.php',
     __DIR__ . '/P1OperationsTest.php',
+    __DIR__ . '/P2SaasTest.php',
 ];
 
 foreach ($tests as $test) {

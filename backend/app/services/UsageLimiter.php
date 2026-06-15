@@ -3,15 +3,21 @@
 class UsageLimiter
 {
     private PDO $pdo;
+    private ?SubscriptionService $subscriptions = null;
 
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
+        $subscriptionFile = __DIR__ . '/SubscriptionService.php';
+        if (is_file($subscriptionFile)) {
+            require_once $subscriptionFile;
+            $this->subscriptions = new SubscriptionService($pdo);
+        }
     }
 
     public function allow(int $userId, string $feature, int $units = 1): array
     {
-        $limit = $this->limitFor($feature);
+        $limit = $this->limitFor($feature, $userId);
         if ($limit <= 0) {
             return ['allowed' => true, 'limit' => 0, 'used' => 0, 'remaining' => null];
         }
@@ -55,7 +61,7 @@ class UsageLimiter
         return (int) $stmt->fetchColumn();
     }
 
-    private function limitFor(string $feature): int
+    private function limitFor(string $feature, int $userId): int
     {
         $map = [
             'document_upload' => 'USAGE_DAILY_DOCUMENT_UPLOADS',
@@ -68,6 +74,13 @@ class UsageLimiter
         $key = $map[$feature] ?? '';
         if ($key === '') {
             return 0;
+        }
+
+        if ($this->subscriptions !== null) {
+            $planLimit = $this->subscriptions->featureLimit($userId, $feature);
+            if ($planLimit > 0) {
+                return $planLimit;
+            }
         }
 
         $value = getenv($key);

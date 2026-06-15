@@ -21,6 +21,7 @@ $routes = [
     ['POST', '/profile/password-reset', 'AuthController', 'profilePasswordReset'],
     ['POST', '/privacy/export', 'PrivacyController', 'export'],
     ['POST', '/privacy/delete-account', 'PrivacyController', 'deleteAccount'],
+    ['POST', '/billing/subscribe', 'BillingController', 'subscribe'],
     ['POST', '/documents/upload', 'DocumentController', 'upload'],
     ['POST', '/documents/analyze', 'DocumentController', 'analyze'],
     ['POST', '/documents/delete', 'DocumentController', 'delete'],
@@ -56,7 +57,14 @@ $routes = [
     ['POST', '/admin/users/status', 'AdminController', 'updateUserStatus'],
     ['POST', '/admin/cases/update', 'AdminController', 'updateCase'],
     ['POST', '/admin/professionals/oab', 'AdminController', 'updateProfessionalOab'],
+    ['POST', '/admin/p2/subscriptions/update', 'P2AdminController', 'updateSubscription'],
+    ['POST', '/admin/p2/organizations/create', 'P2AdminController', 'createOrganization'],
+    ['POST', '/admin/p2/organizations/member', 'P2AdminController', 'addOrganizationMember'],
+    ['POST', '/admin/p2/permissions/update', 'P2AdminController', 'updatePermission'],
     ['GET', '/admin/audit/export', 'AuditExportController', 'csv'],
+    ['GET', '/api/v1/me', 'ApiV1Controller', 'me'],
+    ['GET', '/api/v1/cases', 'ApiV1Controller', 'cases'],
+    ['GET', '/api/v1/reports', 'ApiV1Controller', 'reports'],
 ];
 
 foreach ($routes as [$method, $path, $controller, $action]) {
