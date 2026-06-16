@@ -22,6 +22,7 @@ $routes = [
     ['POST', '/privacy/export', 'PrivacyController', 'export'],
     ['POST', '/privacy/delete-account', 'PrivacyController', 'deleteAccount'],
     ['POST', '/billing/subscribe', 'BillingController', 'subscribe'],
+    ['POST', '/billing/webhook', 'BillingController', 'webhook'],
     ['POST', '/documents/upload', 'DocumentController', 'upload'],
     ['POST', '/documents/analyze', 'DocumentController', 'analyze'],
     ['POST', '/documents/delete', 'DocumentController', 'delete'],

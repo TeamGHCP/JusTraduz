@@ -3,65 +3,90 @@
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/SubscriptionService.php';
+require_once dirname(__DIR__) . '/services/payments/PaymentProviderFactory.php';
 
 class BillingController extends BaseController
 {
     private AuditService $audit;
     private SubscriptionService $subscriptions;
+    private PaymentProviderInterface $payments;
 
     public function __construct()
     {
         parent::__construct();
         $this->audit = new AuditService($this->pdo);
         $this->subscriptions = new SubscriptionService($this->pdo);
+        $this->payments = PaymentProviderFactory::make($this->pdo, $this->subscriptions);
     }
 
     public function subscribe(): void
     {
         $this->startSession();
         if (empty($_SESSION['logado'])) {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para escolher um plano.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para escolher um plano.')));
         }
 
         if (($_SESSION['tipo'] ?? '') !== 'cliente') {
-            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode('Planos são exclusivos para clientes.'));
+            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode('Planos sao exclusivos para clientes.'));
         }
 
         $planId = (int) $this->request->post('plan_id', 0);
         $cycle = (string) $this->request->post('billing_cycle', 'monthly');
         $userId = (int) $_SESSION['id'];
 
-        if (!$this->subscriptions->changePlan($userId, $planId, $cycle, 'active')) {
-            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano inválido.')));
+        $checkout = $this->payments->createCheckout($userId, $planId, $cycle);
+        if (!$checkout->ok) {
+            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode($checkout->errorMessage ?: 'Plano invalido.')));
         }
 
-        $subscription = $this->subscriptions->currentForUser($userId);
-        if ($subscription && database_table_exists($this->pdo, 'payment_events')) {
-            $priceColumn = $cycle === 'yearly' ? 'yearly_price_cents' : 'monthly_price_cents';
-            $stmt = $this->pdo->prepare("SELECT {$priceColumn} FROM plans WHERE id = ?");
-            $stmt->execute([$planId]);
-            $amount = (int) ($stmt->fetchColumn() ?: 0);
-
-            $stmt = $this->pdo->prepare(
-                "INSERT INTO payment_events (subscription_id, user_id, provider, event_type, amount_cents, status, payload_json, processed_at)
-                 VALUES (?, ?, 'manual_checkout', 'checkout.paid', ?, 'paid', ?, ?)"
-            );
-            $stmt->execute([
-                (int) $subscription['id'],
-                $userId,
-                $amount,
-                json_encode(['billing_cycle' => $cycle, 'source' => 'frontend/subir-plano.php'], JSON_UNESCAPED_UNICODE),
-                date('Y-m-d H:i:s'),
-            ]);
-        }
-
-        $this->audit->log('billing.subscribe', 'subscription', (int) ($subscription['id'] ?? 0), [
+        $this->audit->log('billing.checkout_create', 'subscription', (int) ($checkout->subscriptionId ?? 0), [
             'plan_id' => $planId,
             'billing_cycle' => $cycle,
-            'provider' => 'manual_checkout',
+            'provider' => $this->payments->name(),
+            'metadata' => $checkout->metadata,
         ]);
 
-        $this->response->redirect(app_url('/frontend/subir-plano.php'));
+        $this->response->redirect($checkout->redirectUrl);
+    }
+
+    public function webhook(): void
+    {
+        $rawPayload = (string) (file_get_contents('php://input') ?: '');
+
+        try {
+            $result = $this->payments->handleWebhook($rawPayload, $this->headers());
+            $this->audit->log('billing.webhook_processed', 'subscription', (int) ($result['subscription_id'] ?? 0), $result);
+            $this->response->json(['ok' => true, 'result' => $result]);
+        } catch (Throwable $exception) {
+            $status = (int) $exception->getCode();
+            if ($status < 400 || $status > 599) {
+                $status = 400;
+            }
+
+            $this->response->json(['ok' => false, 'error' => $exception->getMessage()], $status);
+        }
+    }
+
+    private function headers(): array
+    {
+        $headers = [];
+        if (function_exists('getallheaders')) {
+            foreach (getallheaders() as $key => $value) {
+                $headers[strtolower((string) $key)] = (string) $value;
+            }
+            return $headers;
+        }
+
+        foreach ($_SERVER as $key => $value) {
+            if (!str_starts_with((string) $key, 'HTTP_')) {
+                continue;
+            }
+
+            $name = strtolower(str_replace('_', '-', substr((string) $key, 5)));
+            $headers[$name] = (string) $value;
+        }
+
+        return $headers;
     }
 
     private function dashboardUrlFor(string $type): string
