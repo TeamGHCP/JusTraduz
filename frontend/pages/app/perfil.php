@@ -237,7 +237,7 @@ $profileTourKey = match ($type) {
       </div>
     </main>
   </div>
-  <script src="assets/js/phone-mask.js"></script>
+  <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
   <script src="assets/js/profile-password.js"></script>
   <?php render_onboarding_assets($profileTourKey, '2026.06.11', $type, false); ?>
   <?php render_vlibras(); ?>

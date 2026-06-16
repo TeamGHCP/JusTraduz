@@ -250,14 +250,14 @@ function render_onboarding_assets(
         'csrfToken' => csrf_token(),
     ];
     ?>
-    <link rel="stylesheet" href="<?= e($assetPrefix) ?>assets/css/onboarding.css?v=2026.06.11-7">
+    <link rel="stylesheet" href="<?= e($assetPrefix) ?>assets/css/onboarding.css?v=2026.06.11-8">
     <script>
       window.JusTraduzOnboarding = <?= json_encode(
           $config,
           JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
       ) ?>;
     </script>
-    <script src="<?= e($assetPrefix) ?>assets/js/onboarding-tour.js?v=2026.06.11-7" defer></script>
+    <script src="<?= e($assetPrefix) ?>assets/js/onboarding-tour.js?v=2026.06.11-8" defer></script>
     <?php
 }
 

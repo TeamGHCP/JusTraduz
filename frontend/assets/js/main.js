@@ -60,181 +60,223 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
-    const cards = Array.from(flow.querySelectorAll(".home-feature-grid-interactive .feature-card"));
-    const stepLabel = flow.querySelector("[data-flow-step-label]");
-    const metric = flow.querySelector("[data-flow-metric]");
-    const title = flow.querySelector("[data-flow-title]");
-    const copy = flow.querySelector("[data-flow-copy]");
-    const status = flow.querySelector("[data-flow-status]");
-    const percent = flow.querySelector("[data-flow-percent]");
-    const progress = flow.querySelector("[data-flow-progress]");
+    const panels = Array.from(flow.querySelectorAll("[data-flow-panel]"));
     const timeline = flow.querySelector("[data-flow-progress-timeline]");
     const timelineSteps = Array.from(flow.querySelectorAll("[data-timeline-step]"));
+    const desktopQuery = window.matchMedia("(min-width: 861px)");
 
-    if (cards.length === 0) {
+    if (panels.length === 0) {
       return;
     }
 
-    const featureStates = [
-      {
-        step: "Etapa 01",
-        metric: "Documento seguro",
-        title: "Documento recebido",
-        copy: "Upload protegido, consentimento claro e contexto inicial organizados no mesmo lugar.",
-        status: "Arquivo protegido",
-        percent: "25%",
-        progress: 25,
-      },
-      {
-        step: "Etapa 02",
-        metric: "IA em leitura",
-        title: "Clareza em segundos",
-        copy: "A IA transforma termos difíceis em resumo simples, pontos de atenção e próximos passos.",
-        status: "Resumo gerado",
-        percent: "50%",
-        progress: 50,
-      },
-      {
-        step: "Etapa 03",
-        metric: "Solicitação pronta",
-        title: "Pedido com contexto",
-        copy: "Sua dúvida vira uma solicitação estruturada para o profissional entender sem retrabalho.",
-        status: "Atendimento conectado",
-        percent: "75%",
-        progress: 75,
-      },
-      {
-        step: "Etapa 04",
-        metric: "Tudo acompanhado",
-        title: "Histórico vivo",
-        copy: "Agenda, chat, atualizações e auditoria ficam conectados para você acompanhar cada etapa.",
-        status: "Fluxo completo",
-        percent: "100%",
-        progress: 100,
-      },
-    ];
-
     let activeIndex = 0;
-    let animationStarted = false;
-    const animationTimers = [];
+    let currentProgress = 0;
+    let frameRequested = false;
+    let exitTimer = 0;
 
-    const timelineProgressFor = (index) => {
-      if (cards.length <= 1) {
-        return 100;
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
+    const getLineProgressForStep = (index) => {
+      if (panels.length <= 1) {
+        return 1;
       }
 
-      return Math.round((index / (cards.length - 1)) * 100);
+      return index / (panels.length - 1);
     };
 
-    const activateFeature = (index) => {
-      const card = cards[index];
-      const state = featureStates[index] || {};
+    const getScrollProgressForStep = (index) => index / panels.length;
 
-      if (!card) {
+    const setTimelineProgress = (progress) => {
+      currentProgress = clamp(progress, 0, 1);
+      const percent = `${(currentProgress * 100).toFixed(2)}%`;
+
+      flow.style.setProperty("--flow-scroll-progress", currentProgress.toFixed(4));
+      timeline?.style.setProperty("--timeline-progress", percent);
+    };
+
+    const updateTimelineGeometry = () => {
+      if (!timeline || timelineSteps.length < 2) {
         return;
       }
 
-      activeIndex = index;
-      cards.forEach((item, itemIndex) => {
-        const isActive = itemIndex === index;
-        item.classList.toggle("is-active", isActive);
-        item.setAttribute("aria-pressed", String(isActive));
-      });
+      const firstMarker = timelineSteps[0].querySelector("strong");
+      const lastMarker = timelineSteps[timelineSteps.length - 1].querySelector("strong");
 
+      if (!firstMarker || !lastMarker) {
+        return;
+      }
+
+      const timelineRect = timeline.getBoundingClientRect();
+      const firstRect = firstMarker.getBoundingClientRect();
+      const lastRect = lastMarker.getBoundingClientRect();
+
+      if (timelineRect.width <= 0) {
+        return;
+      }
+
+      const left = firstRect.left + (firstRect.width / 2) - timelineRect.left;
+      const right = lastRect.left + (lastRect.width / 2) - timelineRect.left;
+      const top = firstRect.top + (firstRect.height / 2) - timelineRect.top;
+
+      timeline.style.setProperty("--timeline-line-left", `${Math.max(0, left)}px`);
+      timeline.style.setProperty("--timeline-line-right", `${Math.min(timelineRect.width, right)}px`);
+      timeline.style.setProperty("--timeline-line-top", `${Math.max(0, top)}px`);
+    };
+
+    const setPanelAccessibility = () => {
+      const isDesktop = desktopQuery.matches;
+
+      panels.forEach((panel, index) => {
+        panel.setAttribute("aria-hidden", isDesktop && index !== activeIndex ? "true" : "false");
+      });
+    };
+
+    const updateTimelineSteps = () => {
       timelineSteps.forEach((step, stepIndex) => {
-        const isActive = stepIndex === index;
-        const isComplete = stepIndex <= index;
+        const isActive = stepIndex === activeIndex;
+        const isComplete = getLineProgressForStep(stepIndex) <= currentProgress + 0.002;
+
         step.classList.toggle("is-active", isActive);
         step.classList.toggle("is-complete", isComplete);
         step.setAttribute("aria-current", isActive ? "step" : "false");
       });
-
-      timeline?.style.setProperty("--timeline-progress", `${timelineProgressFor(index)}%`);
-      if (stepLabel) stepLabel.textContent = state.step || `Etapa ${String(index + 1).padStart(2, "0")}`;
-      if (metric) metric.textContent = state.metric || "";
-      if (title) title.textContent = state.title || card.querySelector("h3")?.textContent || "";
-      if (copy) copy.textContent = state.copy || card.querySelector("p")?.textContent || "";
-      if (status) status.textContent = state.status || "";
-      if (percent) percent.textContent = state.percent || "";
-      if (progress) progress.style.width = `${state.progress || 0}%`;
     };
 
-    const runFlowAnimation = () => {
-      if (animationStarted) {
+    const activateFeature = (index, options = {}) => {
+      const nextIndex = clamp(index, 0, panels.length - 1);
+      const force = Boolean(options.force);
+
+      if (!force && nextIndex === activeIndex) {
+        updateTimelineSteps();
+        setPanelAccessibility();
         return;
       }
 
-      animationStarted = true;
-      animationTimers.forEach((timer) => window.clearTimeout(timer));
+      const previousIndex = activeIndex;
+      activeIndex = nextIndex;
+      flow.dataset.flowDirection = activeIndex > previousIndex ? "forward" : "backward";
 
-      if (prefersReducedMotion) {
-        activateFeature(cards.length - 1);
-        return;
-      }
+      window.clearTimeout(exitTimer);
 
-      cards.forEach((_, index) => {
-        const timer = window.setTimeout(() => {
-          activateFeature(index);
-        }, index * 780);
+      panels.forEach((panel, panelIndex) => {
+        const isActive = panelIndex === activeIndex;
+        const wasActive = panelIndex === previousIndex;
 
-        animationTimers.push(timer);
-      });
-    };
+        panel.classList.toggle("is-active", isActive);
 
-    cards.forEach((card, index) => {
-      card.tabIndex = 0;
-      card.setAttribute("role", "button");
-      card.setAttribute("aria-pressed", String(index === 0));
-
-      card.addEventListener("mouseenter", () => {
-        activateFeature(index);
-      });
-
-      card.addEventListener("click", () => {
-        activateFeature(index);
-      });
-
-      card.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") {
-          return;
+        if (!isActive && wasActive && !force && desktopQuery.matches && !prefersReducedMotion) {
+          panel.classList.add("is-exiting");
+        } else {
+          panel.classList.remove("is-exiting");
         }
-
-        event.preventDefault();
-        activateFeature(index);
       });
-    });
+
+      exitTimer = window.setTimeout(() => {
+        panels.forEach((panel) => panel.classList.remove("is-exiting"));
+      }, 520);
+
+      updateTimelineSteps();
+      setPanelAccessibility();
+    };
+
+    const getScrollProgress = () => {
+      const rect = flow.getBoundingClientRect();
+      const scrollable = flow.offsetHeight - window.innerHeight;
+
+      if (scrollable <= 0) {
+        return 0;
+      }
+
+      return clamp((rect.top * -1) / scrollable, 0, 1);
+    };
+
+    const syncFlowToScroll = () => {
+      frameRequested = false;
+      updateTimelineGeometry();
+
+      if (!desktopQuery.matches) {
+        flow.classList.add("is-flow-started");
+        setTimelineProgress(0);
+        activateFeature(0, { force: true });
+        return;
+      }
+
+      const hasStarted = flow.getBoundingClientRect().top <= 84;
+      flow.classList.toggle("is-flow-started", hasStarted);
+
+      if (!hasStarted) {
+        setTimelineProgress(0);
+        activateFeature(0, { force: true });
+        return;
+      }
+
+      const progress = getScrollProgress();
+      const lineTravelEnd = (panels.length - 1) / panels.length;
+      const lineProgress = clamp(progress / lineTravelEnd, 0, 1);
+      const index = Math.min(panels.length - 1, Math.floor(progress * panels.length));
+
+      setTimelineProgress(lineProgress);
+      activateFeature(index);
+    };
+
+    const requestSync = () => {
+      if (frameRequested) {
+        return;
+      }
+
+      frameRequested = true;
+      window.requestAnimationFrame(syncFlowToScroll);
+    };
 
     timelineSteps.forEach((step, index) => {
       step.addEventListener("click", () => {
-        activateFeature(index);
-      });
+        if (!desktopQuery.matches) {
+          activateFeature(index);
+          return;
+        }
 
-      step.addEventListener("mouseenter", () => {
-        activateFeature(index);
+        const maxScroll = flow.offsetHeight - window.innerHeight;
+        const flowTop = window.scrollY + flow.getBoundingClientRect().top;
+
+        window.scrollTo({
+          top: flowTop + (maxScroll * getScrollProgressForStep(index)),
+          behavior: prefersReducedMotion ? "auto" : "smooth",
+        });
       });
     });
 
-    activateFeature(0);
-
     if ("IntersectionObserver" in window) {
-      const flowObserver = new IntersectionObserver((entries, observer) => {
+      const flowObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
-          if (!entry.isIntersecting) {
-            return;
-          }
+          flow.classList.toggle("is-in-view", entry.isIntersecting);
 
-          runFlowAnimation();
-          observer.unobserve(entry.target);
+          if (entry.isIntersecting) {
+            requestSync();
+          }
         });
       }, {
-        rootMargin: "0px 0px -18% 0px",
-        threshold: 0.32,
+        rootMargin: "-14% 0px -14% 0px",
+        threshold: 0,
       });
 
       flowObserver.observe(flow);
     } else {
-      runFlowAnimation();
+      flow.classList.add("is-in-view");
     }
+
+    window.addEventListener("scroll", requestSync, { passive: true });
+    window.addEventListener("resize", requestSync);
+
+    if (typeof desktopQuery.addEventListener === "function") {
+      desktopQuery.addEventListener("change", requestSync);
+    } else if (typeof desktopQuery.addListener === "function") {
+      desktopQuery.addListener(requestSync);
+    }
+
+    setTimelineProgress(0);
+    activateFeature(0, { force: true });
+    updateTimelineGeometry();
+    requestSync();
   });
 
   document.querySelectorAll("[data-hero-typewriter]").forEach((typewriter) => {

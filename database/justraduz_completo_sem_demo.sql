@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_users_tipo_status (tipo, status),
+    UNIQUE KEY uniq_users_cpf (cpf),
     INDEX idx_users_oab_status (oab_status),
     INDEX idx_users_provider (provider),
     INDEX idx_users_google_sub (google_sub),

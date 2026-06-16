@@ -7,6 +7,7 @@
   var spotlight;
   var popover;
   var previousFocus;
+  var scrollTimer;
 
   function request(url, data, method) {
     var options = { method: method || 'POST', credentials: 'same-origin', headers: { Accept: 'application/json' } };
@@ -51,6 +52,7 @@
     state.index = Math.max(0, Math.min(Number(startAt || 0), state.steps.length - 1));
     state.active = true;
     previousFocus = document.activeElement;
+    if (state.index === 0) scrollPageToTop();
     build();
     show();
     request(config.startUrl, payload({ manual: state.manual ? '1' : '0' })).catch(function () {});
@@ -69,9 +71,48 @@
     popover.setAttribute('aria-modal', 'true');
     popover.setAttribute('aria-labelledby', 'onboarding-step-title');
     popover.setAttribute('aria-describedby', 'onboarding-step-description');
+    popover.style.visibility = 'hidden';
     document.body.appendChild(overlay);
     document.body.appendChild(spotlight);
     document.body.appendChild(popover);
+  }
+
+  function scrollPageToTop() {
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
+    document.querySelectorAll('.app-shell, .app-main').forEach(function (container) {
+      if (container.scrollTop) container.scrollTop = 0;
+    });
+  }
+
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function isMostlyVisible(element) {
+    var rect = element.getBoundingClientRect();
+    var margin = 28;
+    return rect.top >= margin &&
+      rect.left >= margin &&
+      rect.bottom <= window.innerHeight - margin &&
+      rect.right <= window.innerWidth - margin;
+  }
+
+  function scrollStepIntoView(element) {
+    if (state.index === 0 || isMostlyVisible(element)) return;
+    element.scrollIntoView({
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+  }
+
+  function schedulePosition(delay) {
+    window.clearTimeout(scrollTimer);
+    window.requestAnimationFrame(position);
+    scrollTimer = window.setTimeout(position, delay || 360);
   }
 
   function show() {
@@ -90,7 +131,7 @@
       item.classList.remove('onboarding-highlight');
     });
     element.classList.add('onboarding-highlight');
-    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    scrollStepIntoView(element);
     popover.innerHTML =
       '<h2 id="onboarding-step-title">' + escapeHtml(element.dataset.tourTitle || 'Conheça esta área') + '</h2>' +
       '<p id="onboarding-step-description">' + escapeHtml(element.dataset.tourDescription || '') + '</p>' +
@@ -102,7 +143,7 @@
       '<button class="btn btn-primary btn-sm" type="button" data-tour-next>' +
       (state.index === state.steps.length - 1 ? 'Finalizar' : 'Próximo') + '</button></div>';
     bindPopover();
-    setTimeout(position, 300);
+    schedulePosition();
     popover.querySelector('[data-tour-next]').focus();
   }
 
@@ -129,13 +170,20 @@
     spotlight.style.left = Math.max(4, rect.left - padding) + 'px';
     spotlight.style.width = Math.max(1, Math.min(window.innerWidth - 8, rect.width + (padding * 2))) + 'px';
     spotlight.style.height = Math.max(1, Math.min(window.innerHeight - 8, rect.height + (padding * 2))) + 'px';
-    if (window.innerWidth <= 720) return;
+    if (window.innerWidth <= 720) {
+      popover.style.visibility = 'visible';
+      return;
+    }
     var box = popover.getBoundingClientRect();
-    var top = rect.bottom + 14;
-    if (top + box.height > window.innerHeight - 12) top = Math.max(12, rect.top - box.height - 14);
-    var left = Math.max(12, Math.min(rect.left, window.innerWidth - box.width - 12));
+    var viewportPadding = 12;
+    var gap = 14;
+    var top = rect.bottom + gap;
+    if (top + box.height > window.innerHeight - viewportPadding) top = rect.top - box.height - gap;
+    top = Math.max(viewportPadding, Math.min(top, window.innerHeight - box.height - viewportPadding));
+    var left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - box.width - viewportPadding));
     popover.style.top = top + 'px';
     popover.style.left = left + 'px';
+    popover.style.visibility = 'visible';
   }
 
   function confirmSkip() {
@@ -211,6 +259,7 @@
     if (overlay) overlay.remove();
     if (spotlight) spotlight.remove();
     if (popover) popover.remove();
+    window.clearTimeout(scrollTimer);
     if (previousFocus && previousFocus.focus) previousFocus.focus();
   }
 

@@ -23,6 +23,11 @@ assertEquals(1, (int) $_SESSION['id'], 'Login deve gravar id do usuario na sessa
 assertEquals('cliente', $_SESSION['tipo'] ?? '', 'Login deve gravar perfil do usuario.');
 assertTrue(!empty($_SESSION['_csrf_token']), 'Login deve emitir token CSRF.');
 
+$auth = new AuthController();
+assertTrue(callPrivate($auth, 'isValidCpf', ['529.982.247-25']) === true, 'CPF valido deve passar pelo digito verificador.');
+assertTrue(callPrivate($auth, 'isValidCpf', ['111.111.111-11']) === false, 'CPF com digitos repetidos deve falhar.');
+assertTrue(callPrivate($auth, 'isValidCpf', ['123.456.789-00']) === false, 'CPF com digito verificador invalido deve falhar.');
+
 reset_test_state();
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $_POST = ['email' => 'pendente@teste.local', 'senha' => 'Senha@123'];

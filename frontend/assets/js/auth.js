@@ -281,6 +281,31 @@ document.addEventListener("DOMContentLoaded", () => {
     return String(value || "").replace(/\D+/g, "").length;
   }
 
+  function isValidCpf(value) {
+    const digits = String(value || "").replace(/\D+/g, "");
+
+    if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) {
+      return false;
+    }
+
+    for (let position = 9; position <= 10; position += 1) {
+      let sum = 0;
+
+      for (let index = 0; index < position; index += 1) {
+        sum += Number(digits[index]) * ((position + 1) - index);
+      }
+
+      let checkDigit = (sum * 10) % 11;
+      if (checkDigit === 10) checkDigit = 0;
+
+      if (checkDigit !== Number(digits[position])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   function setButtonLoading(button, loading) {
     if (!button) return;
     if (loading) {
@@ -431,8 +456,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      if (formCpf?.required && countDigits(formCpf.value) !== 11) {
-        showFormMessage(form, "Informe um CPF completo para continuar.");
+      if (formCpf?.required && !isValidCpf(formCpf.value)) {
+        showFormMessage(form, "Informe um CPF valido para continuar.");
         formCpf.setAttribute("aria-invalid", "true");
         formCpf.focus();
         return;
