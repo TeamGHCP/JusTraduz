@@ -125,6 +125,21 @@ assertStringContains('/frontend/admin/login-admin.html', $redirect, 'Rotas admin
 
 reset_test_state();
 secure_session_start();
+$_SESSION = ['logado' => true, 'id' => 5, 'tipo' => 'admin'];
+$pdo->exec("UPDATE users SET oab = '123456', oab_uf = 'SP' WHERE id = 4");
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = ['user_id' => '4', 'action' => 'approve', 'justificativa' => 'Documento conferido no CNA'];
+$redirect = expectRedirect(static fn () => (new AdminController())->updateProfessionalOab());
+assertStringContains('/frontend/admin/validar-oab.php', $redirect, 'Admin deve concluir revisao OAB.');
+$approvedProfessional = $pdo->query('SELECT oab_verificado, oab_status, status_cna FROM users WHERE id = 4')->fetch();
+assertEquals(1, (int) ($approvedProfessional['oab_verificado'] ?? 0), 'Aprovacao OAB deve marcar profissional como verificado.');
+assertEquals('approved', $approvedProfessional['oab_status'] ?? '', 'Aprovacao OAB deve atualizar status da OAB.');
+assertEquals('verificado', $approvedProfessional['status_cna'] ?? '', 'Aprovacao OAB deve atualizar status CNA.');
+$pendingQueueCount = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE id = 4 AND oab_verificado = 0 AND COALESCE(status_cna, 'pendente') = 'pendente'")->fetchColumn();
+assertEquals(0, $pendingQueueCount, 'Profissional aprovado nao deve continuar na fila pendente.');
+
+reset_test_state();
+secure_session_start();
 $_SESSION = ['logado' => true, 'id' => 1, 'tipo' => 'cliente', '_csrf_token' => 'token-lgpd'];
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $_POST = ['_csrf' => 'token-lgpd'];

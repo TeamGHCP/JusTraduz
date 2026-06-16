@@ -93,7 +93,7 @@
             </svg>
           </span>
           <h2>GitHub</h2>
-          <p>Acompanhe o código, histórico de desenvolvimento e melhorias técnicas do projeto.</p>
+          <p>Acompanhe o desenvolvimento, melhorias, correções e evolução técnica do projeto.</p>
           <a class="btn btn-outline" href="https://github.com/TeamGHCP/justraduz" target="_blank" rel="noopener">Abrir GitHub</a>
         </article>
 
@@ -106,7 +106,7 @@
             </svg>
           </span>
           <h2>Instagram</h2>
-          <p>Siga o JusTraduz para novidades, bastidores e comunicados do projeto.</p>
+          <p>Receba novidades, atualizações, bastidores e comunicados oficiais do JusTraduz.</p>
           <a class="btn btn-outline" href="https://www.instagram.com/justraduz/" target="_blank" rel="noopener">Abrir Instagram</a>
         </article>
       </div>
@@ -130,13 +130,34 @@
           </select>
 
           <label for="contact-message">Mensagem</label>
-          <textarea id="contact-message" name="message" rows="6" placeholder="Conte em poucas linhas como podemos ajudar."></textarea>
+          <textarea id="contact-message" name="message" rows="6" minlength="10" required placeholder="Conte em poucas linhas como podemos ajudar."></textarea>
 
           <div class="contact-composer-actions">
             <button class="btn btn-primary" type="submit">Preparar e-mail</button>
             <span data-contact-feedback aria-live="polite"></span>
           </div>
         </form>
+      </div>
+    </section>
+
+    <section class="contact-trust-section" aria-label="Compromissos de contato">
+      <div class="container contact-trust-grid">
+        <div>
+          <strong>48h</strong>
+          <span>Resposta média em até 48 horas.</span>
+        </div>
+        <div>
+          <strong>Feedback</strong>
+          <span>Sugestões ajudam a melhorar o JusTraduz.</span>
+        </div>
+        <div>
+          <strong>Aberto</strong>
+          <span>Canal para dúvidas, parcerias e feedbacks.</span>
+        </div>
+        <div>
+          <strong>Acesso</strong>
+          <span>Projeto focado em democratizar a informação jurídica.</span>
+        </div>
       </div>
     </section>
 
@@ -227,6 +248,7 @@
       const feedback = document.querySelector("[data-contact-feedback]");
       const form = document.querySelector("[data-contact-form]");
       const previewButtons = document.querySelectorAll("[data-contact-preview]");
+      const messageField = form?.querySelector("#contact-message");
 
       copyButton?.addEventListener("click", async () => {
         try {
@@ -249,12 +271,38 @@
         });
       });
 
+      messageField?.addEventListener("input", () => {
+        form?.classList.remove("is-submitting");
+
+        if (messageField.validity.valid) {
+          form?.classList.remove("was-validated");
+
+          if (feedback) {
+            feedback.textContent = "";
+          }
+        }
+      });
+
       form?.addEventListener("submit", (event) => {
         event.preventDefault();
+
+        if (!form.checkValidity()) {
+          form.classList.add("was-validated");
+
+          if (feedback) {
+            feedback.textContent = "Escreva uma mensagem com pelo menos 10 caracteres.";
+          }
+
+          messageField?.focus();
+          return;
+        }
+
         const data = new FormData(form);
         const subject = String(data.get("subject") || "Contato JusTraduz");
         const message = String(data.get("message") || "").trim();
         const body = message || "Olá, time JusTraduz. Gostaria de conversar com vocês.";
+
+        form.classList.add("is-submitting");
 
         window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 

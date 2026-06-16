@@ -173,7 +173,7 @@ $pendingProfessionalTotal = count_query(
                     <td><?= e($user['tipo']) ?></td>
                     <td>
                       <?= e(trim(($user['oab'] ?? '') . ' ' . ($user['oab_uf'] ?? '')) ?: 'Não informado') ?>
-                      <span class="table-subtext"><?= e($user['oab_status'] ?: admin_oab_label($user)) ?></span>
+                      <span class="table-subtext"><?= e(admin_oab_label($user)) ?></span>
                       <span class="badge <?= e(admin_oab_badge_class($user)) ?> mt-8"><?= e(admin_oab_label($user)) ?></span>
                       <?php if (!empty($user['cna_validado_em'])): ?>
                         <span class="table-subtext">Validado em <?= e(date('d/m/Y H:i', strtotime($user['cna_validado_em']))) ?></span>
@@ -196,26 +196,30 @@ $pendingProfessionalTotal = count_query(
                         <span class="text-muted">Sem ação OAB</span>
                       <?php else: ?>
                         <div class="stacked-actions">
-                          <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post">
-                            <?= csrf_input() ?>
-                            <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
-                            <input type="hidden" name="action" value="approve">
-                            <input class="input admin-reason-input" name="justificativa" placeholder="Fonte da validação" required>
-                            <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
-                          </form>
-                          <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post">
-                            <?= csrf_input() ?>
-                            <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
-                            <input type="hidden" name="action" value="pending">
-                            <button class="btn btn-soft btn-sm" type="submit">Revisar</button>
-                          </form>
-                          <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar está OAB vai excluir a conta do profissional. Continuar?');">
-                            <?= csrf_input() ?>
-                            <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
-                            <input type="hidden" name="action" value="reject">
-                            <input class="input admin-reason-input" name="justificativa" placeholder="Motivo da reprovação" required>
-                            <button class="btn btn-outline btn-sm" type="submit">Excluir por OAB inválida</button>
-                          </form>
+                          <?php if ((int) ($user['oab_verificado'] ?? 0) === 1 || ($user['status_cna'] ?? '') === 'verificado'): ?>
+                            <span class="badge badge-success"><?= icon_svg('check') ?> OAB verificada</span>
+                            <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post">
+                              <?= csrf_input() ?>
+                              <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
+                              <input type="hidden" name="action" value="pending">
+                              <button class="btn btn-soft btn-sm" type="submit">Revisar novamente</button>
+                            </form>
+                          <?php else: ?>
+                            <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post">
+                              <?= csrf_input() ?>
+                              <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
+                              <input type="hidden" name="action" value="approve">
+                              <input class="input admin-reason-input" name="justificativa" placeholder="Fonte da validação" required>
+                              <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
+                            </form>
+                            <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar está OAB vai excluir a conta do profissional. Continuar?');">
+                              <?= csrf_input() ?>
+                              <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
+                              <input type="hidden" name="action" value="reject">
+                              <input class="input admin-reason-input" name="justificativa" placeholder="Motivo da reprovação" required>
+                              <button class="btn btn-outline btn-sm" type="submit">Excluir por OAB inválida</button>
+                            </form>
+                          <?php endif; ?>
                         </div>
                       <?php endif; ?>
                     </td>
