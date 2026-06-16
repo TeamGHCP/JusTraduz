@@ -30,6 +30,11 @@ class ErrorHandler
             echo json_encode(['error' => $message]);
         } else {
             http_response_code($status);
+            if (self::renderErrorPage($status)) {
+                return;
+            }
+
+            header('Content-Type: text/plain; charset=UTF-8');
             echo $message;
         }
         // Não expor detalhes do erro ao cliente
@@ -54,5 +59,38 @@ class ErrorHandler
             404 => 'Recurso não encontrado.',
             default => 'Erro interno do servidor.',
         };
+    }
+
+    public static function renderErrorPage(int $status): bool
+    {
+        $page = match ($status) {
+            404 => '404.html',
+            default => '500.html',
+        };
+
+        $path = dirname(__DIR__, 3) . '/frontend/' . $page;
+        if (!is_file($path)) {
+            return false;
+        }
+
+        header('Content-Type: text/html; charset=UTF-8');
+        $html = (string) file_get_contents($path);
+        $base = htmlspecialchars(self::frontendBasePath(), ENT_QUOTES, 'UTF-8');
+        echo str_replace('<head>', '<head>' . PHP_EOL . '  <base href="' . $base . '">', $html);
+        return true;
+    }
+
+    private static function frontendBasePath(): string
+    {
+        $script = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+        $marker = '/backend/public/';
+        $base = '';
+        $position = strpos($script, $marker);
+
+        if ($position !== false) {
+            $base = substr($script, 0, $position);
+        }
+
+        return rtrim($base, '/') . '/frontend/';
     }
 }

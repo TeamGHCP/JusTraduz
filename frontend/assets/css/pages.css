@@ -2526,6 +2526,7 @@ body.has-modal-open {
   border: 2px solid rgba(255, 255, 255, .9);
   border-radius: 50%;
   background: var(--mint);
+  object-fit: cover;
   box-shadow: 0 8px 18px rgba(23, 32, 51, .10);
 }
 
@@ -2559,6 +2560,10 @@ body.has-modal-open {
   font-size: 14px;
   letter-spacing: .08em;
   line-height: 1;
+}
+
+.feedback-star-empty {
+  color: #b9c4d5;
 }
 
 @keyframes feedback-scroll {

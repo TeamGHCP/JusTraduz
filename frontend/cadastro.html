@@ -26,6 +26,19 @@
   <script>
     window.location.replace("login.html?cadastro");
   </script>
-  <script src="assets/js/accessibility.js?v=2026.06.15-02"></script>
+  <script src="assets/js/accessibility.js?v=2026.06.16-a11y-stack-7"></script>
+  <div vw class="enabled">
+    <div vw-access-button class="active"></div>
+    <div vw-plugin-wrapper>
+      <div class="vw-plugin-top-wrapper"></div>
+    </div>
+  </div>
+  <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+  <script>
+    if (!window.JusTraduzVlibrasStarted && window.VLibras && window.VLibras.Widget) {
+      window.JusTraduzVlibrasStarted = true;
+      new window.VLibras.Widget('https://vlibras.gov.br/app');
+    }
+  </script>
 </body>
 </html>

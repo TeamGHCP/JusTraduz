@@ -1,8 +1,9 @@
 /* Global accessibility helpers and user preferences. */
 :root {
-  --floating-a11y-size: 52px;
-  --floating-a11y-gap: 12px;
-  --floating-a11y-right: 18px;
+  --floating-a11y-size: 44px;
+  --floating-a11y-gap: 10px;
+  --floating-a11y-right: 24px;
+  --floating-a11y-radius: 8px;
 }
 
 .skip-link {
@@ -28,6 +29,7 @@
   top: calc(50% - var(--floating-a11y-size) - (var(--floating-a11y-gap) / 2));
   bottom: auto;
   z-index: 100000;
+  box-sizing: border-box;
   display: grid;
   place-items: center;
   width: var(--floating-a11y-size);
@@ -37,14 +39,11 @@
   min-height: var(--floating-a11y-size);
   max-height: var(--floating-a11y-size);
   padding: 0;
-  border: 2px solid rgba(255, 255, 255, .88);
-  border-radius: 50%;
-  background: linear-gradient(145deg, var(--teal), #075985 72%, #071b49);
+  border: 0;
+  border-radius: var(--floating-a11y-radius);
+  background: #2f80ed;
   color: #fff;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, .45),
-    0 14px 34px rgba(7, 27, 73, .28),
-    0 0 0 0 rgba(17, 138, 126, .22);
+  box-shadow: none;
   animation: a11y-launcher-enter .7s ease .35s both;
   isolation: isolate;
   transition: box-shadow .2s ease, filter .2s ease;
@@ -60,17 +59,13 @@
 }
 
 .a11y-launcher.is-aligned-vlibras .a11y-launcher-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
 }
 
 .a11y-launcher::before {
-  position: absolute;
-  inset: 5px;
-  z-index: -1;
-  border: 1px solid rgba(255, 255, 255, .25);
-  border-radius: inherit;
-  content: "";
+  display: none;
+  content: none;
 }
 
 .a11y-launcher:hover,
@@ -78,10 +73,7 @@
 .a11y-launcher[aria-expanded="true"] {
   filter: saturate(1.14) brightness(1.05);
   transform: none;
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, .5),
-    0 18px 42px rgba(7, 27, 73, .34),
-    0 0 0 7px rgba(17, 138, 126, .14);
+  box-shadow: none;
 }
 
 .a11y-launcher.has-entered:hover,
@@ -91,12 +83,7 @@
 }
 
 .a11y-launcher-glow {
-  position: absolute;
-  inset: -8px;
-  z-index: -2;
-  border-radius: inherit;
-  background: radial-gradient(circle, rgba(45, 212, 191, .24), transparent 68%);
-  animation: a11y-pulse 2.8s ease-in-out infinite;
+  display: none;
 }
 
 .a11y-launcher-icon {
@@ -338,19 +325,125 @@ html[data-a11y-contrast="true"] {
 html[data-a11y-contrast="true"] img { filter: contrast(1.08); }
 [vw] {
   position: fixed !important;
-  top: 50% !important;
+  top: calc(50% + (var(--floating-a11y-gap) / 2)) !important;
   left: auto !important;
-  right: 0 !important;
+  right: var(--floating-a11y-right) !important;
   bottom: auto !important;
+  width: var(--floating-a11y-size) !important;
+  min-width: var(--floating-a11y-size) !important;
+  max-width: var(--floating-a11y-size) !important;
+  height: var(--floating-a11y-size) !important;
+  min-height: var(--floating-a11y-size) !important;
+  max-height: var(--floating-a11y-size) !important;
   z-index: 99999 !important;
   transform: none !important;
 }
 
+html body div[vw].enabled,
+html body div[vw] {
+  position: fixed !important;
+  top: calc(50% + (var(--floating-a11y-gap) / 2)) !important;
+  right: var(--floating-a11y-right) !important;
+  bottom: auto !important;
+  left: auto !important;
+  display: block !important;
+  width: var(--floating-a11y-size) !important;
+  min-width: var(--floating-a11y-size) !important;
+  max-width: var(--floating-a11y-size) !important;
+  height: var(--floating-a11y-size) !important;
+  min-height: var(--floating-a11y-size) !important;
+  max-height: var(--floating-a11y-size) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  overflow: visible !important;
+  transform: none !important;
+}
+
 [vw-access-button] {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: auto !important;
+  left: auto !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-direction: row-reverse !important;
+  width: var(--floating-a11y-size) !important;
+  min-width: var(--floating-a11y-size) !important;
+  max-width: calc(var(--floating-a11y-size) + 156px) !important;
+  height: var(--floating-a11y-size) !important;
+  min-height: var(--floating-a11y-size) !important;
+  max-height: var(--floating-a11y-size) !important;
+  border-radius: var(--floating-a11y-radius) !important;
+  overflow: hidden !important;
   z-index: 99999 !important;
   opacity: 1 !important;
   visibility: visible !important;
   cursor: pointer !important;
+}
+
+html body div[vw] [vw-access-button],
+html body div[vw].enabled [vw-access-button],
+html body div[vw] [vw-access-button].active,
+html body div[vw].enabled [vw-access-button].active {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: auto !important;
+  left: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-direction: row-reverse !important;
+  box-sizing: border-box !important;
+  width: var(--floating-a11y-size) !important;
+  min-width: var(--floating-a11y-size) !important;
+  max-width: calc(var(--floating-a11y-size) + 156px) !important;
+  height: var(--floating-a11y-size) !important;
+  min-height: var(--floating-a11y-size) !important;
+  max-height: var(--floating-a11y-size) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: var(--floating-a11y-radius) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  transform: none !important;
+}
+
+html body div[vw] [vw-access-button]:hover,
+html body div[vw].enabled [vw-access-button]:hover,
+html body div[vw] [vw-access-button]:focus-visible,
+html body div[vw].enabled [vw-access-button]:focus-visible,
+html body div[vw] [vw-access-button][style*="200px"],
+html body div[vw].enabled [vw-access-button][style*="200px"] {
+  width: calc(var(--floating-a11y-size) + 156px) !important;
+}
+
+html body div[vw] [vw-access-button] .vp-access-button {
+  display: block !important;
+  flex: 0 0 var(--floating-a11y-size) !important;
+  width: var(--floating-a11y-size) !important;
+  min-width: var(--floating-a11y-size) !important;
+  max-width: var(--floating-a11y-size) !important;
+  height: var(--floating-a11y-size) !important;
+  min-height: var(--floating-a11y-size) !important;
+  max-height: var(--floating-a11y-size) !important;
+  border-radius: inherit !important;
+}
+
+html body div[vw] [vw-access-button] .vp-pop-up {
+  position: static !important;
+  display: block !important;
+  flex: 0 0 156px !important;
+  width: 156px !important;
+  min-width: 156px !important;
+  max-width: 156px !important;
+  height: var(--floating-a11y-size) !important;
+  min-height: var(--floating-a11y-size) !important;
+  max-height: var(--floating-a11y-size) !important;
+  border-radius: var(--floating-a11y-radius) !important;
 }
 
 html body div[vw].enabled div[vw-plugin-wrapper] {
@@ -510,16 +603,15 @@ html[data-a11y-motion="reduce"] *::after {
 
 @media (max-width: 720px) {
   :root {
-    --floating-a11y-size: 48px;
+    --floating-a11y-size: 44px;
     --floating-a11y-gap: 10px;
-    --floating-a11y-right: 12px;
+    --floating-a11y-right: 14px;
+    --floating-a11y-radius: 8px;
   }
 
   .a11y-launcher { bottom: auto; }
-  .a11y-launcher-label { display: none; }
   .ai-chatbot ~ .a11y-launcher { bottom: auto; }
   .a11y-launcher.is-aligned-vlibras { bottom: auto; }
-  [vw-access-button] { bottom: auto !important; }
   html body div[vw].enabled div[vw-plugin-wrapper] {
     right: calc(var(--floating-a11y-right) + var(--floating-a11y-size) + 8px) !important;
     width: min(280px, calc(100vw - 76px)) !important;

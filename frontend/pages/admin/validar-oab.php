@@ -47,6 +47,8 @@ $pendingProfessionals = fetch_all(
        AND status = 'ativo'
        AND oab_verificado = FALSE
        AND COALESCE(status_cna, 'pendente') = 'pendente'
+       AND COALESCE(oab, '') <> ''
+       AND COALESCE(oab_uf, '') <> ''
      ORDER BY created_at ASC"
 );
 
@@ -57,7 +59,9 @@ $pendingTotal = count_query(
      WHERE tipo IN ('advogado', 'estagiario')
        AND status = 'ativo'
        AND oab_verificado = FALSE
-       AND COALESCE(status_cna, 'pendente') = 'pendente'"
+       AND COALESCE(status_cna, 'pendente') = 'pendente'
+       AND COALESCE(oab, '') <> ''
+       AND COALESCE(oab_uf, '') <> ''"
 );
 $validatedTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('advogado', 'estagiario') AND status = 'ativo' AND oab_verificado = TRUE");
 $professionalTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('advogado', 'estagiario') AND status = 'ativo'");
@@ -69,7 +73,18 @@ $recentReviews = fetch_all(
      FROM cna_validacao_logs l
      LEFT JOIN users p ON p.id = l.profissional_id
      LEFT JOIN users a ON a.id = l.admin_id
-     ORDER BY l.created_at DESC
+     WHERE l.acao LIKE 'admin_%'
+       AND NOT EXISTS (
+           SELECT 1
+           FROM cna_validacao_logs newer
+           WHERE newer.profissional_id = l.profissional_id
+             AND newer.acao LIKE 'admin_%'
+             AND (
+                 newer.created_at > l.created_at
+                 OR (newer.created_at = l.created_at AND newer.id > l.id)
+             )
+       )
+     ORDER BY l.created_at DESC, l.id DESC
      LIMIT 8"
 );
 ?>
