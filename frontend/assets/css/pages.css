@@ -5448,6 +5448,10 @@ body.has-modal-open {
   display: none;
 }
 
+.privacy-page.privacy-footer-gated:not(.is-privacy-footer-visible) .site-footer {
+  display: none;
+}
+
 .terms-modern-hero {
   position: relative;
   display: grid;
