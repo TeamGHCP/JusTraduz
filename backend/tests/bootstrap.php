@@ -100,7 +100,7 @@ function build_test_schema(PDO $pdo): void
             cna_ultimo_erro TEXT,
             cna_tentativas INTEGER DEFAULT 0,
             telefone TEXT,
-            cpf TEXT,
+            cpf TEXT UNIQUE,
             foto_perfil TEXT,
             google_sub TEXT UNIQUE,
             google_picture TEXT,
@@ -291,8 +291,8 @@ function seed_test_data(PDO $pdo): void
 {
     $password = password_hash('Senha@123', PASSWORD_DEFAULT);
     $users = [
-        [1, 'Cliente Um', 'cliente1@teste.local', 'cliente', 0, 'not_required', null, '12345678901'],
-        [2, 'Cliente Dois', 'cliente2@teste.local', 'cliente', 0, 'not_required', null, '10987654321'],
+        [1, 'Cliente Um', 'cliente1@teste.local', 'cliente', 0, 'not_required', null, '52998224725'],
+        [2, 'Cliente Dois', 'cliente2@teste.local', 'cliente', 0, 'not_required', null, '39053344705'],
         [3, 'Advogado OK', 'advogado@teste.local', 'advogado', 1, 'approved', 'verificado', null],
         [4, 'Advogado Pendente', 'pendente@teste.local', 'advogado', 0, 'pending', 'pendente', null],
         [5, 'Admin', 'admin@teste.local', 'admin', 1, 'not_required', null, null],

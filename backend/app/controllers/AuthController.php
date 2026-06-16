@@ -66,7 +66,7 @@ class AuthController extends BaseController
 
         $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
         if ($tipo === 'cliente') {
-            if (strlen($cpf) !== 11) {
+            if (!$this->isValidCpf($cpf)) {
                 $this->response->redirectWithError($frontUrl, 'Informe um CPF valido para consultar seus processos.');
             }
         } else {
@@ -97,6 +97,10 @@ class AuthController extends BaseController
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
             $this->response->redirectWithError($frontUrl, 'E-mail já cadastrado.');
+        }
+
+        if ($cpf && $this->cpfExists($cpf)) {
+            $this->response->redirectWithError($frontUrl, 'CPF ja cadastrado.');
         }
 
         // Insere no banco
@@ -134,6 +138,10 @@ class AuthController extends BaseController
                 $this->sendProfessionalPendingEmail($email, $nome, $tipo);
             }
         } catch (PDOException $e) {
+            if ($e->getCode() === '23000') {
+                $this->response->redirectWithError($frontUrl, 'E-mail ou CPF ja cadastrado.');
+            }
+
             if ($e->getCode() === '42S22') {
                 $this->response->redirectWithError(
                     $frontUrl,
@@ -352,7 +360,7 @@ class AuthController extends BaseController
         $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
 
         if ($tipo === 'cliente') {
-            if (strlen($cpf) !== 11) {
+            if (!$this->isValidCpf($cpf)) {
                 $this->response->redirectWithError($frontUrl, 'Informe um CPF valido para consultar seus processos.');
             }
             $oab = null;
@@ -387,6 +395,10 @@ class AuthController extends BaseController
         if (!$usuario || (int) ($usuario['profile_completed'] ?? 1) === 1) {
             unset($_SESSION['google_pending_user_id']);
             $this->response->redirectWithError(APP_URL . '/frontend/login.html', 'Cadastro Google ja foi concluido.');
+        }
+
+        if ($cpf && $this->cpfExists($cpf, $pendingUserId)) {
+            $this->response->redirectWithError($frontUrl, 'CPF ja cadastrado.');
         }
 
         $stmt = $this->pdo->prepare(
@@ -536,7 +548,7 @@ class AuthController extends BaseController
         }
 
         $currentType = (string) ($_SESSION['tipo'] ?? '');
-        if ($currentType === 'cliente' && $cpf !== '' && strlen($cpf) !== 11) {
+        if ($currentType === 'cliente' && $cpf !== '' && !$this->isValidCpf($cpf)) {
             $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe um CPF valido.'));
         }
 
@@ -549,6 +561,10 @@ class AuthController extends BaseController
 
         if ($stmt->fetch()) {
             $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('E-mail já cadastrado por outro usuário.'));
+        }
+
+        if ($cpf && $this->cpfExists($cpf, (int) $_SESSION['id'])) {
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('CPF ja cadastrado por outro usuario.'));
         }
 
         if ($novaSenha !== '' || $novaSenha2 !== '' || $senhaAtual !== '') {
@@ -603,6 +619,51 @@ class AuthController extends BaseController
         ]);
 
         $this->response->redirect(APP_URL . '/frontend/perfil.php?sucesso=' . urlencode('Perfil atualizado.'));
+    }
+
+    private function isValidCpf(?string $cpf): bool
+    {
+        $digits = preg_replace('/\D+/', '', (string) $cpf) ?? '';
+
+        if (strlen($digits) !== 11 || preg_match('/^(\d)\1{10}$/', $digits)) {
+            return false;
+        }
+
+        for ($position = 9; $position <= 10; $position++) {
+            $sum = 0;
+            for ($index = 0; $index < $position; $index++) {
+                $sum += (int) $digits[$index] * (($position + 1) - $index);
+            }
+
+            $checkDigit = ($sum * 10) % 11;
+            if ($checkDigit === 10) {
+                $checkDigit = 0;
+            }
+
+            if ($checkDigit !== (int) $digits[$position]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function cpfExists(string $cpf, ?int $exceptUserId = null): bool
+    {
+        $digits = preg_replace('/\D+/', '', $cpf) ?? '';
+        if ($digits === '') {
+            return false;
+        }
+
+        if ($exceptUserId !== null) {
+            $stmt = $this->pdo->prepare('SELECT id FROM users WHERE cpf = ? AND id <> ? LIMIT 1');
+            $stmt->execute([$digits, $exceptUserId]);
+            return (bool) $stmt->fetch();
+        }
+
+        $stmt = $this->pdo->prepare('SELECT id FROM users WHERE cpf = ? LIMIT 1');
+        $stmt->execute([$digits]);
+        return (bool) $stmt->fetch();
     }
 
     private function handleProfilePhotoUpload(int $userId): ?string

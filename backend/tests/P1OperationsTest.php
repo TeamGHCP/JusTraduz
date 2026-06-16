@@ -54,7 +54,7 @@ assertTrue($mailer->send('cliente1@teste.local', 'Teste P1', 'Mensagem') === tru
 assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM mail_logs WHERE recipient = 'cliente1@teste.local' AND status = 'sent'")->fetchColumn(), 'Envio deve ser registrado em mail_logs.');
 
 $pdo->exec("INSERT INTO external_processes (user_id, owner_type, source, query_type, query_value, process_number, last_synced_at) VALUES (1, 'cliente', 'datajud', 'cnj', '12345678920248260100', '1234567-89.2024.8.26.0100', '" . date('Y-m-d H:i:s') . "')");
-$result = (new DataJudService($pdo))->syncProcessByCnj(1, '12345678901', '1234567-89.2024.8.26.0100', true);
+$result = (new DataJudService($pdo))->syncProcessByCnj(1, '52998224725', '1234567-89.2024.8.26.0100', true);
 assertTrue(($result['cached'] ?? false) === true, 'DataJud deve reutilizar cache CNJ recente antes da API.');
 
 putenv('DOCUMENT_STORAGE_PATH');

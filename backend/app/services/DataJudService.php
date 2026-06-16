@@ -22,7 +22,7 @@ class DataJudService
     public function syncProcessByCnj(int $userId, string $cpf, string $processNumber, bool $lgpdConsent): array
     {
         $cpf = preg_replace('/\D+/', '', $cpf) ?? '';
-        if (strlen($cpf) !== 11) {
+        if (!$this->isValidCpf($cpf)) {
             return $this->failure('Cadastre um CPF valido no perfil antes de consultar processos.');
         }
 
@@ -596,6 +596,33 @@ class DataJudService
             'imported' => 0,
             'message' => $message,
         ];
+    }
+
+    private function isValidCpf(?string $cpf): bool
+    {
+        $digits = preg_replace('/\D+/', '', (string) $cpf) ?? '';
+
+        if (strlen($digits) !== 11 || preg_match('/^(\d)\1{10}$/', $digits)) {
+            return false;
+        }
+
+        for ($position = 9; $position <= 10; $position++) {
+            $sum = 0;
+            for ($index = 0; $index < $position; $index++) {
+                $sum += (int) $digits[$index] * (($position + 1) - $index);
+            }
+
+            $checkDigit = ($sum * 10) % 11;
+            if ($checkDigit === 10) {
+                $checkDigit = 0;
+            }
+
+            if ($checkDigit !== (int) $digits[$position]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function sslVerify(): bool

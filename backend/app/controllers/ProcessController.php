@@ -34,7 +34,7 @@ class ProcessController extends BaseController
             $stmt->execute([$userId]);
             $cpf = preg_replace('/\D+/', '', (string) $stmt->fetchColumn()) ?? '';
 
-            if (strlen($cpf) !== 11) {
+            if (!$this->isValidCpf($cpf)) {
                 $this->response->redirect(app_url('/frontend/processos.php?erro=' . urlencode('Cadastre seu CPF no perfil antes de consultar processos.')));
             }
 
@@ -82,5 +82,32 @@ class ProcessController extends BaseController
         }
 
         $this->response->redirect(app_url('/frontend/processos.php?sucesso=' . urlencode($message)));
+    }
+
+    private function isValidCpf(?string $cpf): bool
+    {
+        $digits = preg_replace('/\D+/', '', (string) $cpf) ?? '';
+
+        if (strlen($digits) !== 11 || preg_match('/^(\d)\1{10}$/', $digits)) {
+            return false;
+        }
+
+        for ($position = 9; $position <= 10; $position++) {
+            $sum = 0;
+            for ($index = 0; $index < $position; $index++) {
+                $sum += (int) $digits[$index] * (($position + 1) - $index);
+            }
+
+            $checkDigit = ($sum * 10) % 11;
+            if ($checkDigit === 10) {
+                $checkDigit = 0;
+            }
+
+            if ($checkDigit !== (int) $digits[$position]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

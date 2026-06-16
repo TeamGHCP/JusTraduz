@@ -110,8 +110,8 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
     </aside>
   </main>
 
-  <script src="assets/js/phone-mask.js"></script>
-  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
+  <script src="assets/js/auth.js?v=cpf-validator-1"></script>
   <script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>
