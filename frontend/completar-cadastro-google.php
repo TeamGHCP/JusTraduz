@@ -112,7 +112,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
   <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
   <script src="assets/js/auth.js?v=cpf-validator-1"></script>
-  <script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
+  <script src="assets/js/accessibility.js?v=2026.06.16-a11y-stack"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>
     <div vw-plugin-wrapper>
@@ -121,7 +121,10 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
   </div>
   <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
   <script>
-    new window.VLibras.Widget('https://vlibras.gov.br/app');
+    if (!window.JusTraduzVlibrasStarted && window.VLibras && window.VLibras.Widget) {
+      window.JusTraduzVlibrasStarted = true;
+      new window.VLibras.Widget('https://vlibras.gov.br/app');
+    }
   </script>
 </body>
 </html>

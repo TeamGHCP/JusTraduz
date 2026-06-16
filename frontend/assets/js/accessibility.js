@@ -68,6 +68,7 @@
     launcher.type = 'button';
     launcher.className = 'a11y-launcher';
     launcher.setAttribute('aria-label', 'Abrir menu de acessibilidade');
+    launcher.title = 'Acessibilidade';
     launcher.innerHTML =
       '<span class="a11y-launcher-glow" aria-hidden="true"></span>' +
       '<span class="a11y-launcher-icon" aria-hidden="true">' +
@@ -85,6 +86,7 @@
   }
 
   function ensureVlibras() {
+    normalizeVlibrasWidgets();
     var existingWidget = document.querySelector('[vw]');
     var existingScript = document.querySelector('script[src*="vlibras-plugin.js"]');
     var startAttempts = 0;
@@ -108,6 +110,7 @@
       }
       window.JusTraduzVlibrasStarted = true;
       new window.VLibras.Widget('https://vlibras.gov.br/app');
+      enforceVlibrasLayout();
     }
 
     if (window.VLibras && window.VLibras.Widget) {
@@ -127,23 +130,34 @@
     document.body.appendChild(script);
   }
 
+  function normalizeVlibrasWidgets() {
+    var widgets = Array.from(document.querySelectorAll('[vw]'));
+    if (!widgets.length) return;
+
+    widgets.slice(1).forEach(function (widget) {
+      widget.remove();
+    });
+  }
+
   function finishLauncherEntrance() {
     if (!launcher) return;
     launcher.classList.add('has-entered');
   }
 
   function fitVlibrasWidget() {
+    normalizeVlibrasWidgets();
     var wrapper = document.querySelector('[vw-plugin-wrapper]');
-    if (!wrapper) return;
 
     var compact = window.innerWidth <= 720;
-    var buttonSize = compact ? 48 : 52;
-    var right = compact ? 12 : 18;
+    var buttonSize = 44;
+    var right = compact ? 14 : 24;
     var sideGap = compact ? 8 : 12;
     var widthLimit = compact ? 76 : 88;
     var heightLimit = compact ? 20 : 24;
     var width = Math.max(220, Math.min(compact ? 280 : 300, window.innerWidth - widthLimit));
     var height = Math.max(320, Math.min(compact ? 410 : 450, window.innerHeight - heightLimit));
+
+    if (!wrapper) return;
 
     wrapper.style.setProperty('position', 'fixed', 'important');
     wrapper.style.setProperty('top', '50%', 'important');

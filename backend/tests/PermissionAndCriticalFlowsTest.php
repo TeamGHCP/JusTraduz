@@ -38,6 +38,14 @@ assertStringContains('aguardando', urldecode($redirect), 'Bloqueio de OAB penden
 reset_test_state();
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $_POST = ['email' => 'admin@teste.local', 'senha' => 'Senha@123'];
+$redirect = expectRedirect(static fn () => (new AuthController())->login());
+assertStringContains('/frontend/login.html', $redirect, 'Admin nao deve entrar pelo login comum.');
+assertStringContains('Email ou senha incorretos.', urldecode($redirect), 'Login comum deve mostrar erro generico para conta admin.');
+assertTrue(empty($_SESSION['logado']), 'Login comum nao deve abrir sessao administrativa.');
+
+reset_test_state();
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = ['email' => 'admin@teste.local', 'senha' => 'Senha@123'];
 $redirect = expectRedirect(static fn () => (new AuthController())->adminLogin());
 assertStringContains('/frontend/admin/dashboard-admin.php', $redirect, 'Admin ativo deve entrar no painel administrativo.');
 assertEquals('admin', $_SESSION['tipo'] ?? '', 'Admin login deve manter perfil admin na sessao.');

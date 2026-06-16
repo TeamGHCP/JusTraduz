@@ -192,16 +192,16 @@
 
         <div class="footer-col">
           <h4>Produto</h4>
-          <a href="index.html#recursos">Recursos</a>
-          <a href="index.html#fluxo">Fluxo</a>
-          <a href="index.html#seguranca">Segurança</a>
+          <a href="#recursos">Recursos</a>
+          <a href="#fluxo">Fluxo</a>
+          <a href="#seguranca">Segurança</a>
           <a href="login.html?cadastro">Cadastrar</a>
         </div>
 
         <div class="footer-col">
           <h4>Legal</h4>
           <a href="termos.html">Termos de Uso</a>
-          <a href="privacidade.html">Política de Privacidade</a>
+          <a href="privacidade.html">Pol&iacute;tica de Privacidade</a>
           <a href="contato.html">Contato</a>
         </div>
       </div>
@@ -220,158 +220,6 @@
 
   <script src="assets/js/main.js"></script>
   <script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const links = Array.from(document.querySelectorAll("[data-terms-nav]"));
-      const sections = Array.from(document.querySelectorAll(".terms-modern-section"));
-      const progress = document.querySelector("[data-terms-progress]");
-      const lastSection = document.querySelector("#limitacoes");
-      let footerScrollIntent = 0;
-      let lastScrollY = window.scrollY;
-      let touchStartY = 0;
-
-      document.body.classList.add("terms-footer-gated");
-
-      const setActive = (id) => {
-        links.forEach((link) => {
-          const isActive = link.getAttribute("href") === `#${id}`;
-          link.classList.toggle("is-active", isActive);
-          link.setAttribute("aria-current", isActive ? "true" : "false");
-        });
-      };
-
-      const openSection = (target) => {
-        if (target) {
-          target.open = true;
-        }
-
-        if (target?.id) {
-          setActive(target.id);
-        }
-      };
-
-      const updateProgress = () => {
-        if (!progress) return;
-
-        const content = document.querySelector(".terms-modern-content");
-        if (!content) return;
-
-        const rect = content.getBoundingClientRect();
-        const total = rect.height - window.innerHeight;
-        const current = Math.min(Math.max(-rect.top, 0), Math.max(total, 1));
-        progress.style.width = `${Math.round((current / Math.max(total, 1)) * 100)}%`;
-      };
-
-      const showFooter = () => {
-        document.body.classList.add("is-terms-footer-visible");
-      };
-
-      const isNearPageEnd = () => (
-        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 36
-      );
-
-      const registerFooterScrollIntent = () => {
-        if (document.body.classList.contains("is-terms-footer-visible")) {
-          return;
-        }
-
-        if (!isNearPageEnd()) {
-          footerScrollIntent = 0;
-          return;
-        }
-
-        footerScrollIntent += 1;
-
-        if (footerScrollIntent >= 3) {
-          showFooter();
-        }
-      };
-
-      const updateFooterGate = () => {
-        if (!lastSection) {
-          showFooter();
-          return;
-        }
-
-        const rect = lastSection.getBoundingClientRect();
-        const reachedLastTopic = rect.top <= window.innerHeight * 0.72;
-
-        if (reachedLastTopic) {
-          showFooter();
-        }
-      };
-
-      const observer = "IntersectionObserver" in window
-        ? new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-              if (entry.isIntersecting) {
-                setActive(entry.target.id);
-              }
-            });
-          }, { rootMargin: "-35% 0px -55% 0px", threshold: 0 })
-        : null;
-
-      sections.forEach((section) => observer?.observe(section));
-      sections.forEach((section) => {
-        section.addEventListener("toggle", () => {
-          if (section.open) {
-            openSection(section);
-          }
-        });
-      });
-
-      links.forEach((link) => {
-        link.addEventListener("click", () => {
-          const target = document.querySelector(link.getAttribute("href"));
-          if (target) {
-            openSection(target);
-          }
-        });
-      });
-
-      links[0]?.classList.add("is-active");
-      window.addEventListener("scroll", () => {
-        const isScrollingDown = window.scrollY > lastScrollY;
-
-        updateProgress();
-        updateFooterGate();
-
-        if (isScrollingDown) {
-          registerFooterScrollIntent();
-        }
-
-        lastScrollY = window.scrollY;
-      }, { passive: true });
-      window.addEventListener("wheel", (event) => {
-        if (event.deltaY > 0) {
-          registerFooterScrollIntent();
-        }
-      }, { passive: true });
-      window.addEventListener("touchstart", (event) => {
-        touchStartY = event.touches[0]?.clientY || 0;
-      }, { passive: true });
-      window.addEventListener("touchmove", (event) => {
-        const currentY = event.touches[0]?.clientY || touchStartY;
-
-        if (touchStartY - currentY > 18) {
-          registerFooterScrollIntent();
-        }
-      }, { passive: true });
-      window.addEventListener("keydown", (event) => {
-        const downwardKeys = ["ArrowDown", "PageDown", "End", " "];
-
-        if (downwardKeys.includes(event.key)) {
-          registerFooterScrollIntent();
-        }
-      });
-      window.addEventListener("resize", () => {
-        updateProgress();
-        updateFooterGate();
-      });
-      updateProgress();
-      updateFooterGate();
-    });
-  </script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>
     <div vw-plugin-wrapper>
@@ -380,7 +228,10 @@
   </div>
   <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
   <script>
-    new window.VLibras.Widget('https://vlibras.gov.br/app');
+    if (!window.JusTraduzVlibrasStarted && window.VLibras && window.VLibras.Widget) {
+      window.JusTraduzVlibrasStarted = true;
+      new window.VLibras.Widget('https://vlibras.gov.br/app');
+    }
   </script>
 </body>
 </html>
