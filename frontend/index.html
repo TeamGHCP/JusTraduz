@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=flow-scroll-reference-16">
+  <link rel="stylesheet" href="assets/css/style.css?v=landing-perf-3">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
 </head>
 <body class="home-page">
@@ -350,7 +350,107 @@
       </div>
     </section>
 
-    <section id="fluxo" class="page-section section-white home-detail-section">
+    <section id="fluxo" class="page-section section-white ai-document-section" data-ai-document-insights>
+      <div class="container">
+        <div class="section-head ai-document-head">
+          <h2>Veja o que a IA identifica no seu documento</h2>
+          <p>Nossa IA destaca riscos, prazos e pontos importantes para transformar juridiqu&ecirc;s em informa&ccedil;&atilde;o clara.</p>
+        </div>
+
+        <div class="ai-document-showcase">
+          <article class="ai-document-mockup" aria-label="Contrato com cl&aacute;usulas destacadas">
+            <header class="ai-document-toolbar">
+              <div>
+                <strong>Contrato_de_Locacao.pdf</strong>
+                <span>Analisado pelo JusTraduz</span>
+              </div>
+              <span>An&aacute;lise conclu&iacute;da</span>
+            </header>
+
+            <div class="ai-document-body">
+              <aside class="ai-document-pages" aria-hidden="true">
+                <span class="is-active"></span>
+                <span></span>
+                <span></span>
+              </aside>
+
+              <div class="ai-contract-page">
+                <span class="ai-contract-label">Contrato de loca&ccedil;&atilde;o</span>
+                <h3>Contrato de loca&ccedil;&atilde;o de im&oacute;vel</h3>
+                <p>Pelo presente instrumento, as partes qualificadas celebram este contrato mediante as cl&aacute;usulas e condi&ccedil;&otilde;es a seguir.</p>
+
+                <button class="ai-clause ai-clause-risk" type="button" data-clause="risk">
+                  <strong>Cl&aacute;usula 4 - Multa por atraso</strong>
+                  <span>O atraso no pagamento acarretar&aacute; multa de 30% sobre o valor devido.</span>
+                </button>
+
+                <button class="ai-clause ai-clause-deadline" type="button" data-clause="deadline">
+                  <strong>Cl&aacute;usula 6 - Prazo do contrato</strong>
+                  <span>O prazo de loca&ccedil;&atilde;o ser&aacute; de 12 meses, contados da assinatura.</span>
+                </button>
+
+                <button class="ai-clause ai-clause-renewal" type="button" data-clause="renewal">
+                  <strong>Cl&aacute;usula 8 - Renova&ccedil;&atilde;o autom&aacute;tica</strong>
+                  <span>A loca&ccedil;&atilde;o ser&aacute; renovada automaticamente se n&atilde;o houver aviso pr&eacute;vio.</span>
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <svg class="ai-connection-lines" viewBox="0 0 1000 620" aria-hidden="true" focusable="false">
+            <path class="ai-line ai-line-risk" data-line="risk" d="M477 235 C570 235 568 104 662 104" pathLength="1" />
+            <path class="ai-line ai-line-deadline" data-line="deadline" d="M477 335 C578 335 565 228 662 228" pathLength="1" />
+            <path class="ai-line ai-line-renewal" data-line="renewal" d="M477 435 C582 435 560 354 662 354" pathLength="1" />
+          </svg>
+
+          <aside class="ai-findings-panel" aria-label="O que a IA encontrou">
+            <h3>O que a IA encontrou</h3>
+
+            <article class="ai-finding-card ai-finding-risk" data-insight-card data-insight-target="risk" tabindex="0">
+              <span class="ai-finding-icon" aria-hidden="true">!</span>
+              <div>
+                <h4>Riscos identificados</h4>
+                <p>Multa de 30% por atraso no pagamento pode gerar custo elevado.</p>
+              </div>
+            </article>
+
+            <article class="ai-finding-card ai-finding-deadline" data-insight-card data-insight-target="deadline" tabindex="0">
+              <span class="ai-finding-icon" aria-hidden="true">12</span>
+              <div>
+                <h4>Prazos importantes</h4>
+                <p>Contrato v&aacute;lido por 12 meses a partir da assinatura.</p>
+              </div>
+            </article>
+
+            <article class="ai-finding-card ai-finding-renewal" data-insight-card data-insight-target="renewal" tabindex="0">
+              <span class="ai-finding-icon" aria-hidden="true">R</span>
+              <div>
+                <h4>Renova&ccedil;&atilde;o autom&aacute;tica</h4>
+                <p>Renova&ccedil;&atilde;o por prazo indeterminado se n&atilde;o houver aviso pr&eacute;vio.</p>
+              </div>
+            </article>
+
+            <article class="ai-finding-card ai-finding-summary" data-insight-card>
+              <span class="ai-finding-icon" aria-hidden="true">?</span>
+              <div>
+                <h4>Resumo simplificado</h4>
+                <p>Explica&ccedil;&atilde;o em linguagem simples sobre o que o contrato significa.</p>
+              </div>
+            </article>
+
+            <article class="ai-finding-card ai-finding-next" data-insight-card>
+              <span class="ai-finding-icon" aria-hidden="true">+</span>
+              <div>
+                <h4>Pr&oacute;ximos passos sugeridos</h4>
+                <p>Recomenda&ccedil;&otilde;es para agir com seguran&ccedil;a antes de assinar.</p>
+              </div>
+            </article>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section section-white home-detail-section" hidden aria-hidden="true">
       <div class="container home-detail-grid">
         <div>
           <span class="home-eyebrow">Fluxo guiado</span>
@@ -661,7 +761,7 @@
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=flow-scroll-reference-16"></script>
+  <script src="assets/js/main.js?v=landing-perf-3"></script>
   <script src="assets/js/chatbot.js?v=2026.06.14-06"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>
