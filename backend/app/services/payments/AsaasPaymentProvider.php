@@ -77,7 +77,8 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'asaas_first_payment' => $firstPayment,
         ], $providerSubscriptionId);
 
-        $redirectUrl = $this->checkoutUrlFromResponse($firstPayment ?: $subscription);
+        $paymentSource = $firstPayment ?: $subscription;
+        $redirectUrl = $this->checkoutUrlFromResponse($paymentSource);
         if ($redirectUrl === '') {
             $redirectUrl = app_url('/frontend/subir-plano.php?sucesso=' . urlencode('Assinatura criada no Asaas. Aguarde a confirmacao do pagamento.'));
         }
@@ -85,7 +86,13 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         return PaymentCheckoutResult::success($redirectUrl, null, [
             'provider_subscription_id' => $providerSubscriptionId,
             'provider_customer_id' => $customerId,
+            'provider_payment_id' => (string) ($firstPayment['id'] ?? ''),
             'amount_cents' => $amount,
+            'checkout_url' => $redirectUrl,
+            'invoice_url' => (string) ($paymentSource['invoiceUrl'] ?? ''),
+            'bank_slip_url' => (string) ($paymentSource['bankSlipUrl'] ?? ''),
+            'payment_link' => (string) ($paymentSource['paymentLink'] ?? ''),
+            'due_date' => (string) ($paymentSource['dueDate'] ?? $subscription['nextDueDate'] ?? ''),
         ]);
     }
 
@@ -135,6 +142,119 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'subscription_id' => $subscriptionId,
             'user_id' => $userId,
             'provider_subscription_id' => $providerSubscriptionId ?: null,
+        ];
+    }
+
+    public function syncCheckoutPayment(int $userId, string $providerSubscriptionId): array
+    {
+        $this->assertConfigured();
+
+        $providerSubscriptionId = trim($providerSubscriptionId);
+        if ($providerSubscriptionId === '') {
+            throw new InvalidArgumentException('Assinatura Asaas nao informada.');
+        }
+
+        $local = $this->findLocalSubscription($providerSubscriptionId);
+        if ($local && (int) ($local['user_id'] ?? 0) === $userId && (string) ($local['status'] ?? '') === 'active') {
+            return [
+                'ok' => true,
+                'provider' => $this->name(),
+                'status' => 'paid',
+                'subscription_id' => (int) $local['id'],
+                'provider_subscription_id' => $providerSubscriptionId,
+                'already_active' => true,
+            ];
+        }
+
+        $pending = $this->pendingEventForProviderSubscription($providerSubscriptionId);
+        if (!$pending || (int) ($pending['user_id'] ?? 0) !== $userId) {
+            throw new RuntimeException('Cobrança Asaas não encontrada para este usuário.');
+        }
+
+        $payment = $this->latestPaymentForSubscription($providerSubscriptionId);
+        if (!$payment) {
+            return [
+                'ok' => true,
+                'provider' => $this->name(),
+                'status' => 'pending',
+                'subscription_id' => null,
+                'provider_subscription_id' => $providerSubscriptionId,
+            ];
+        }
+
+        $paymentStatus = $this->paymentStatusFromAsaasStatus((string) ($payment['status'] ?? ''));
+        $amount = (int) round(((float) ($payment['value'] ?? 0)) * 100);
+        $providerPaymentId = (string) ($payment['id'] ?? '');
+
+        $subscription = $this->findLocalSubscription($providerSubscriptionId);
+        if (!$subscription && $paymentStatus === 'paid') {
+            $subscription = $this->createLocalSubscriptionFromPendingEvent($providerSubscriptionId);
+        }
+
+        $subscriptionId = $subscription ? (int) $subscription['id'] : null;
+        $this->recordPaymentEvent($subscriptionId, $userId, 'payment.sync_' . $paymentStatus, $amount, $paymentStatus, [
+            'provider_subscription_id' => $providerSubscriptionId,
+            'asaas_payment' => $payment,
+            'source' => 'billing.sync',
+        ], $providerPaymentId !== '' ? $providerPaymentId : null);
+
+        if ($subscriptionId && $paymentStatus === 'paid') {
+            $stmt = $this->pdo->prepare('UPDATE subscriptions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+            $stmt->execute(['active', $subscriptionId]);
+        }
+
+        return [
+            'ok' => true,
+            'provider' => $this->name(),
+            'status' => $paymentStatus,
+            'subscription_id' => $subscriptionId,
+            'provider_subscription_id' => $providerSubscriptionId,
+            'provider_payment_id' => $providerPaymentId ?: null,
+        ];
+    }
+
+    public function cancelSubscription(int $userId): array
+    {
+        $this->assertConfigured();
+
+        $subscription = $this->subscriptions->currentForUser($userId);
+        if (!$subscription) {
+            return ['ok' => true, 'provider' => $this->name(), 'already_free' => true];
+        }
+
+        $providerSubscriptionId = (string) ($subscription['provider_subscription_id'] ?? '');
+        $remoteCanceled = false;
+
+        if ((string) ($subscription['provider'] ?? '') === $this->name() && $providerSubscriptionId !== '') {
+            $this->request('DELETE', '/subscriptions/' . rawurlencode($providerSubscriptionId));
+            $remoteCanceled = true;
+        }
+
+        if (!$this->subscriptions->cancelCurrentForUser($userId)) {
+            throw new RuntimeException('Nao foi possivel cancelar a assinatura local.');
+        }
+
+        $this->recordPaymentEvent(
+            (int) $subscription['id'],
+            $userId,
+            'subscription.canceled',
+            0,
+            'refunded',
+            [
+                'source' => 'frontend/perfil.php',
+                'provider_subscription_id' => $providerSubscriptionId,
+                'remote_canceled' => $remoteCanceled,
+                'previous_plan_id' => (int) ($subscription['plan_id'] ?? 0),
+            ],
+            $providerSubscriptionId !== '' ? $providerSubscriptionId : null
+        );
+
+        return [
+            'ok' => true,
+            'provider' => $this->name(),
+            'subscription_id' => (int) $subscription['id'],
+            'provider_subscription_id' => $providerSubscriptionId ?: null,
+            'remote_canceled' => $remoteCanceled,
         ];
     }
 
@@ -280,6 +400,23 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         return is_array($payments['data'][0] ?? null) ? $payments['data'][0] : [];
     }
 
+    private function latestPaymentForSubscription(string $providerSubscriptionId): array
+    {
+        $payments = $this->request('GET', '/payments', [
+            'subscription' => $providerSubscriptionId,
+            'limit' => 10,
+        ]);
+
+        $items = is_array($payments['data'] ?? null) ? $payments['data'] : [];
+        foreach ($items as $payment) {
+            if (is_array($payment) && $this->paymentStatusFromAsaasStatus((string) ($payment['status'] ?? '')) === 'paid') {
+                return $payment;
+            }
+        }
+
+        return is_array($items[0] ?? null) ? $items[0] : [];
+    }
+
     private function createLocalSubscriptionFromPendingEvent(string $providerSubscriptionId): ?array
     {
         $pending = $this->pendingEventForProviderSubscription($providerSubscriptionId);
@@ -349,6 +486,15 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         return match ($event) {
             'PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED' => 'paid',
             'PAYMENT_OVERDUE', 'PAYMENT_DELETED', 'PAYMENT_RESTORED', 'PAYMENT_REFUNDED', 'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_CHARGEBACK_DISPUTE', 'PAYMENT_AWAITING_CHARGEBACK_REVERSAL' => 'failed',
+            default => 'pending',
+        };
+    }
+
+    private function paymentStatusFromAsaasStatus(string $status): string
+    {
+        return match (strtoupper($status)) {
+            'RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH' => 'paid',
+            'OVERDUE', 'REFUNDED', 'REFUND_REQUESTED', 'CHARGEBACK_REQUESTED', 'CHARGEBACK_DISPUTE', 'AWAITING_CHARGEBACK_REVERSAL' => 'failed',
             default => 'pending',
         };
     }

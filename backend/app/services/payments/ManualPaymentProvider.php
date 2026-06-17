@@ -52,6 +52,51 @@ class ManualPaymentProvider implements PaymentProviderInterface
         );
     }
 
+    public function cancelSubscription(int $userId): array
+    {
+        $subscription = $this->subscriptions->currentForUser($userId);
+        if (!$subscription) {
+            return ['ok' => true, 'provider' => $this->name(), 'already_free' => true];
+        }
+
+        if (!$this->subscriptions->cancelCurrentForUser($userId)) {
+            throw new RuntimeException('Nao foi possivel cancelar a assinatura.');
+        }
+
+        $this->recordPaymentEvent(
+            (int) $subscription['id'],
+            $userId,
+            'subscription.canceled',
+            0,
+            'refunded',
+            [
+                'source' => 'frontend/perfil.php',
+                'mode' => 'manual_cancel',
+                'previous_plan_id' => (int) ($subscription['plan_id'] ?? 0),
+            ],
+            null
+        );
+
+        return [
+            'ok' => true,
+            'provider' => $this->name(),
+            'subscription_id' => (int) $subscription['id'],
+        ];
+    }
+
+    public function syncCheckoutPayment(int $userId, string $providerSubscriptionId): array
+    {
+        $subscription = $this->subscriptions->currentForUser($userId);
+
+        return [
+            'ok' => true,
+            'provider' => $this->name(),
+            'status' => $subscription ? (string) $subscription['status'] : 'pending',
+            'subscription_id' => $subscription ? (int) $subscription['id'] : null,
+            'provider_subscription_id' => $providerSubscriptionId ?: null,
+        ];
+    }
+
     public function handleWebhook(string $rawPayload, array $headers): array
     {
         $this->validateSignature($rawPayload, $headers);

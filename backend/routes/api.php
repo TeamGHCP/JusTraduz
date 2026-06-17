@@ -22,6 +22,8 @@ $routes = [
     ['POST', '/privacy/export', 'PrivacyController', 'export'],
     ['POST', '/privacy/delete-account', 'PrivacyController', 'deleteAccount'],
     ['POST', '/billing/subscribe', 'BillingController', 'subscribe'],
+    ['POST', '/billing/sync', 'BillingController', 'sync'],
+    ['POST', '/billing/cancel', 'BillingController', 'cancel'],
     ['POST', '/billing/webhook', 'BillingController', 'webhook'],
     ['POST', '/documents/upload', 'DocumentController', 'upload'],
     ['POST', '/documents/analyze', 'DocumentController', 'analyze'],

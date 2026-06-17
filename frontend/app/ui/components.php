@@ -265,6 +265,7 @@ function render_topbar(string $title, string $subtitle, string $roleLabel): void
 {
     $initial = strtoupper(substr(current_user_name(), 0, 1));
     $photoUrl = current_user_photo_url();
+    $accountPlanLabel = current_user_account_label();
     ?>
     <header class="topbar">
       <div>
@@ -272,16 +273,62 @@ function render_topbar(string $title, string $subtitle, string $roleLabel): void
         <p><?= e($subtitle) ?></p>
       </div>
       <div class="topbar-actions">
-        <span class="avatar topbar-avatar" title="<?= e(current_user_name()) ?>" aria-label="Usuário: <?= e(current_user_name()) ?>">
-          <span class="avatar-initial"><?= e($initial) ?></span>
-          <?php if ($photoUrl): ?>
-            <img src="<?= e($photoUrl) ?>" alt="<?= e(current_user_name()) ?>" referrerpolicy="no-referrer" onerror="this.remove()">
-          <?php endif; ?>
-        </span>
+        <div class="topbar-account" title="<?= e(current_user_name() . ' · ' . $accountPlanLabel) ?>">
+          <span class="topbar-account-copy">
+            <strong><?= e(current_user_name()) ?></strong>
+            <small><?= e($accountPlanLabel) ?></small>
+          </span>
+          <span class="avatar topbar-avatar" aria-label="Usuário: <?= e(current_user_name()) ?>">
+            <span class="avatar-initial"><?= e($initial) ?></span>
+            <?php if ($photoUrl): ?>
+              <img src="<?= e($photoUrl) ?>" alt="<?= e(current_user_name()) ?>" referrerpolicy="no-referrer" onerror="this.remove()">
+            <?php endif; ?>
+          </span>
+        </div>
       </div>
     </header>
     <?php
     render_query_alert();
+}
+
+function current_user_account_label(): string
+{
+    $type = current_user_type();
+    if ($type !== 'cliente') {
+        return sidebar_profile_label($type);
+    }
+
+    static $label = null;
+    if ($label !== null) {
+        return $label;
+    }
+
+    $label = 'Grátis';
+    if (!is_logged_in()) {
+        return $label;
+    }
+
+    global $pdo;
+    if (!isset($pdo) || !$pdo instanceof PDO || !database_table_exists($pdo, 'subscriptions')) {
+        return $label;
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT p.name
+         FROM subscriptions s
+         INNER JOIN plans p ON p.id = s.plan_id
+         WHERE s.user_id = ?
+           AND s.status IN ('trialing', 'active', 'past_due')
+         ORDER BY CASE s.status WHEN 'active' THEN 1 WHEN 'trialing' THEN 2 WHEN 'past_due' THEN 3 ELSE 9 END, s.created_at DESC
+         LIMIT 1"
+    );
+    $stmt->execute([current_user_id()]);
+    $planName = trim((string) ($stmt->fetchColumn() ?: ''));
+    if ($planName !== '') {
+        $label = $planName;
+    }
+
+    return $label;
 }
 
 function current_user_photo_url(): string

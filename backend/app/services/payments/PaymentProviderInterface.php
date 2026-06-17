@@ -8,5 +8,9 @@ interface PaymentProviderInterface
 
     public function createCheckout(int $userId, int $planId, string $billingCycle): PaymentCheckoutResult;
 
+    public function syncCheckoutPayment(int $userId, string $providerSubscriptionId): array;
+
+    public function cancelSubscription(int $userId): array;
+
     public function handleWebhook(string $rawPayload, array $headers): array;
 }

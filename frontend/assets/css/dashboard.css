@@ -415,6 +415,46 @@
   flex-wrap: wrap;
 }
 
+.topbar-account {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 11px;
+  min-width: 0;
+  padding: 4px 4px 4px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.topbar-account-copy {
+  display: grid;
+  min-width: 0;
+  text-align: right;
+  line-height: 1.15;
+}
+
+.topbar-account-copy strong {
+  max-width: 180px;
+  overflow: hidden;
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-account-copy small {
+  max-width: 180px;
+  overflow: hidden;
+  color: var(--teal-2);
+  font-size: 12px;
+  font-weight: 850;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .theme-toggle {
   position: relative;
   display: inline-flex;

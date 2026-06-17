@@ -16,7 +16,7 @@ class SubscriptionService
         }
 
         $stmt = $this->pdo->prepare(
-            "SELECT s.*, p.name AS plan_name, p.slug AS plan_slug, p.limits_json, p.features_json
+            "SELECT s.*, p.name AS plan_name, p.slug AS plan_slug, p.monthly_price_cents, p.yearly_price_cents, p.limits_json, p.features_json
              FROM subscriptions s
              INNER JOIN plans p ON p.id = s.plan_id
              WHERE s.user_id = ?
@@ -138,6 +138,28 @@ class SubscriptionService
             $this->pdo->rollBack();
             throw $exception;
         }
+    }
+
+    public function cancelCurrentForUser(int $userId): bool
+    {
+        if (!$this->userCanSubscribe($userId)) {
+            return false;
+        }
+
+        if (!database_table_exists($this->pdo, 'subscriptions')) {
+            return false;
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $stmt = $this->pdo->prepare(
+            "UPDATE subscriptions
+             SET status = 'canceled', canceled_at = ?, updated_at = CURRENT_TIMESTAMP
+             WHERE user_id = ?
+               AND status IN ('trialing', 'active', 'past_due')"
+        );
+        $stmt->execute([$now, $userId]);
+
+        return $stmt->rowCount() > 0;
     }
 
     public function userCanSubscribe(int $userId): bool

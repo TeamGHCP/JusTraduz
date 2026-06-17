@@ -10,7 +10,7 @@ if ($type !== 'cliente') {
 
 $billing = new SubscriptionService($pdo);
 $plans = $billing->plans();
-$currentSubscription = $billing->ensureDefaultSubscription(current_user_id());
+$currentSubscription = $billing->currentForUser(current_user_id());
 $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
 function pricing_money(int $cents): string
@@ -64,7 +64,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
         <div class="pricing-hero card">
           <span class="pricing-kicker"><?= icon_svg('sparkles') ?> Planos mensais e anuais</span>
           <h2>Planos que crescem junto com sua demanda jurídica.</h2>
-          <p>Compare limites, escolha a cobrança mensal ou anual e veja qual nível combina com seu momento. Nesta branch, o checkout registra pagamento simulado para homologação e já muda seus limites.</p>
+          <p>Compare limites, escolha a cobrança mensal ou anual e veja qual nível combina com seu momento. O checkout cria a cobrança no Asaas e ativa seus limites automaticamente após a confirmação do pagamento.</p>
           <button
             class="pricing-cycle-toggle<?= $currentCycle === 'yearly' ? ' is-yearly' : '' ?>"
             type="button"
@@ -92,7 +92,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
               <div class="pricing-card-head">
                 <div>
                   <h3><?= e($plan['name']) ?></h3>
-                  <p><?= $isCurrent ? 'Seu plano atual' : 'Upgrade disponível' ?></p>
+                  <p><?= $isCurrent ? 'Seu plano atual' : ($currentSubscription ? 'Troca disponível' : 'Disponível para assinatura') ?></p>
                 </div>
               </div>
 
@@ -125,7 +125,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
                 <input type="hidden" name="plan_id" value="<?= (int) $plan['id'] ?>">
                 <input type="hidden" name="billing_cycle" value="<?= e($currentCycle) ?>" data-billing-cycle-input>
                 <button class="btn <?= $isHighlighted ? 'btn-primary' : 'btn-outline' ?> btn-block" type="submit">
-                  <?= $isCurrent ? 'Renovar este plano' : 'Assinar ' . e($plan['name']) ?>
+                  <?= $isCurrent ? 'Renovar este plano' : ($currentSubscription ? 'Mudar para ' : 'Assinar ') . e($plan['name']) ?>
                 </button>
               </form>
             </article>
@@ -134,10 +134,10 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
 
         <section class="pricing-note card">
           <div>
-            <h2>Próxima etapa</h2>
-            <p class="text-muted">O P2 já registra assinatura e evento de pagamento manual. Para produção, troque o provedor manual por Mercado Pago, Stripe ou outro PSP com webhook assinado.</p>
+            <h2>Pagamento seguro</h2>
+            <p class="text-muted">Ao assinar, você revisa o pedido na página de pagamento do JusTraduz e conclui a cobrança criada pelo Asaas.</p>
           </div>
-          <span class="badge badge-success">P2 ativo</span>
+          <span class="badge badge-success">Asaas integrado</span>
         </section>
       </section>
     </main>
