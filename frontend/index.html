@@ -10,8 +10,8 @@
   <meta name="theme-color" content="#008f80">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=flow-scroll-reference-16">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=before-button-restore-1">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
 </head>
 <body class="home-page">
@@ -353,7 +353,125 @@
       </div>
     </section>
 
-    <section id="fluxo" class="page-section section-white home-detail-section">
+    <section id="fluxo" class="page-section section-white ai-document-section" data-ai-document-insights>
+      <div class="container">
+        <div class="section-head ai-document-head">
+          <span class="ai-document-eyebrow">An&aacute;lise por IA</span>
+          <h2>Veja o que a IA identifica no seu documento</h2>
+          <p>Nossa IA destaca riscos, prazos e pontos importantes para transformar juridiqu&ecirc;s em informa&ccedil;&atilde;o clara.</p>
+        </div>
+
+        <div class="ai-document-showcase">
+          <button class="ai-showcase-menu" type="button" aria-label="Mais op&ccedil;&otilde;es da demonstra&ccedil;&atilde;o">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </button>
+
+          <article class="ai-document-mockup" aria-label="Contrato com cl&aacute;usulas destacadas">
+            <header class="ai-document-toolbar">
+              <img class="ai-pdf-badge" src="assets/img/pdf-file-icon.png" alt="" aria-hidden="true">
+              <span class="ai-window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <div>
+                <strong>Contrato_de_Locacao.pdf</strong>
+                <span>Analisado pelo JusTraduz</span>
+              </div>
+              <span class="ai-analysis-status">An&aacute;lise conclu&iacute;da</span>
+            </header>
+
+            <div class="ai-document-body">
+              <aside class="ai-document-pages" aria-hidden="true">
+                <span class="is-active"></span>
+                <span></span>
+                <span></span>
+              </aside>
+
+              <div class="ai-contract-page">
+                <span class="ai-contract-label">Contrato de loca&ccedil;&atilde;o</span>
+                <h3>Contrato de loca&ccedil;&atilde;o de im&oacute;vel</h3>
+                <p>Pelo presente instrumento, as partes qualificadas celebram este contrato mediante as cl&aacute;usulas e condi&ccedil;&otilde;es a seguir.</p>
+
+                <button class="ai-clause ai-clause-risk" type="button" data-clause="risk">
+                  <strong>Cl&aacute;usula 4 - Multa por atraso</strong>
+                  <span>O atraso no pagamento acarretar&aacute; multa de 30% sobre o valor devido.</span>
+                </button>
+
+                <button class="ai-clause ai-clause-deadline" type="button" data-clause="deadline">
+                  <strong>Cl&aacute;usula 6 - Prazo do contrato</strong>
+                  <span>O prazo de loca&ccedil;&atilde;o ser&aacute; de 12 meses, contados da assinatura.</span>
+                </button>
+
+                <button class="ai-clause ai-clause-renewal" type="button" data-clause="renewal">
+                  <strong>Cl&aacute;usula 8 - Renova&ccedil;&atilde;o autom&aacute;tica</strong>
+                  <span>A loca&ccedil;&atilde;o ser&aacute; renovada automaticamente se n&atilde;o houver aviso pr&eacute;vio.</span>
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <svg class="ai-connection-lines" viewBox="0 0 1000 620" aria-hidden="true" focusable="false">
+            <path class="ai-line ai-line-risk" data-line="risk" d="M477 235 C570 235 568 104 662 104" pathLength="1" />
+            <path class="ai-line ai-line-deadline" data-line="deadline" d="M477 335 C578 335 565 228 662 228" pathLength="1" />
+            <path class="ai-line ai-line-renewal" data-line="renewal" d="M477 435 C582 435 560 354 662 354" pathLength="1" />
+          </svg>
+
+          <aside class="ai-findings-panel" aria-label="O que a IA encontrou">
+            <h3>O que a IA encontrou</h3>
+
+            <article class="ai-finding-card ai-finding-risk" data-insight-card data-insight-target="risk" tabindex="0">
+              <span class="ai-finding-icon" aria-hidden="true">!</span>
+              <div>
+                <h4>Riscos identificados</h4>
+                <p>Multa de 30% por atraso no pagamento pode gerar custo elevado.</p>
+              </div>
+            </article>
+
+            <article class="ai-finding-card ai-finding-deadline" data-insight-card data-insight-target="deadline" tabindex="0">
+              <span class="ai-finding-icon" aria-hidden="true">12</span>
+              <div>
+                <h4>Prazos importantes</h4>
+                <p>Contrato v&aacute;lido por 12 meses a partir da assinatura.</p>
+              </div>
+            </article>
+
+            <article class="ai-finding-card ai-finding-renewal" data-insight-card data-insight-target="renewal" tabindex="0">
+              <span class="ai-finding-icon" aria-hidden="true">R</span>
+              <div>
+                <h4>Renova&ccedil;&atilde;o autom&aacute;tica</h4>
+                <p>Renova&ccedil;&atilde;o por prazo indeterminado se n&atilde;o houver aviso pr&eacute;vio.</p>
+              </div>
+            </article>
+
+            <article class="ai-finding-card ai-finding-summary" data-insight-card>
+              <span class="ai-finding-icon" aria-hidden="true">?</span>
+              <div>
+                <h4>Resumo simplificado</h4>
+                <p>Explica&ccedil;&atilde;o em linguagem simples sobre o que o contrato significa.</p>
+              </div>
+            </article>
+
+            <article class="ai-finding-card ai-finding-next" data-insight-card>
+              <span class="ai-finding-icon" aria-hidden="true">+</span>
+              <div>
+                <h4>Pr&oacute;ximos passos sugeridos</h4>
+                <p>Recomenda&ccedil;&otilde;es para agir com seguran&ccedil;a antes de assinar.</p>
+              </div>
+            </article>
+
+            <article class="ai-confidence-card">
+              <div>
+                <h4>Confian&ccedil;a da an&aacute;lise</h4>
+                <p>Alta precis&atilde;o identificada</p>
+              </div>
+              <strong>92%</strong>
+              <span aria-hidden="true"><i style="width: 92%"></i></span>
+            </article>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-section section-white home-detail-section" hidden aria-hidden="true">
       <div class="container home-detail-grid">
         <div>
           <span class="home-eyebrow">Fluxo guiado</span>
@@ -553,54 +671,62 @@
   </main>
 
   <footer class="site-footer">
-    <div class="container">
-      <div class="footer-top">
+    <div class="container footer-shell">
+      <div class="footer-grid">
         <div class="footer-brand">
-          <span class="footer-logo-text">JusTraduz</span>
-          <p>Direito em linguagem simples, para todos.</p>
+          <a class="footer-logo-text" href="index.html">Jus<span>Traduz</span></a>
+          <p>Direito em linguagem simples para entender documentos, agir com seguran&ccedil;a e resolver pr&oacute;ximos passos.</p>
 
-          <div class="footer-socials">
-            <a class="social-icon" href="https://www.instagram.com/justraduz/" target="_blank" rel="noopener" aria-label="Instagram">
-              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <p class="footer-social-links">
+            <a class="footer-social-link footer-social-instagram" href="https://www.instagram.com/justraduz/" target="_blank" rel="noopener" aria-label="Instagram">
+              <svg class="footer-social-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="2" y="2" width="20" height="20" rx="5"/>
                 <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
                 <path d="M17.5 6.5h.01"/>
               </svg>
             </a>
-
-            <a class="social-icon" href="https://github.com/TeamGHCP/justraduz" target="_blank" rel="noopener" aria-label="GitHub">
-              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <a class="footer-social-link footer-social-github" href="https://github.com/TeamGHCP/justraduz" target="_blank" rel="noopener" aria-label="GitHub">
+              <svg class="footer-social-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M9 19c-5 1.5-5-2.5-7-3"/>
                 <path d="M15 22v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 19 4.77 5.07 5.07 0 0 0 18.91 1S17.73.65 15 2.48a13.38 13.38 0 0 0-6 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
               </svg>
             </a>
+          </p>
+        </div>
+
+        <nav class="footer-columns" aria-label="Links do rodap&eacute;">
+          <div class="footer-col">
+            <h4>Produto</h4>
+            <ul>
+              <li><a href="index.html#recursos"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5Z"/><path d="M8 6h8"/><path d="M8 10h8"/></svg>Recursos</a></li>
+              <li><a href="index.html#fluxo"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h11"/><path d="M17 19h3v3"/></svg>Fluxo</a></li>
+              <li><a href="index.html#seguranca"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>Seguran&ccedil;a</a></li>
+              <li><a href="login.html?cadastro"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>Cadastrar</a></li>
+            </ul>
           </div>
-        </div>
 
-        <div class="footer-col">
-          <h4>Produto</h4>
-          <a href="#recursos">Recursos</a>
-          <a href="#fluxo">Fluxo</a>
-          <a href="#seguranca">Seguran&ccedil;a</a>
-          <a href="login.html?cadastro">Cadastrar</a>
-        </div>
+          <div class="footer-col">
+            <h4>Plataforma</h4>
+            <ul>
+              <li><a href="login.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>Entrar</a></li>
+              <li><a href="login.html?cadastro"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Criar conta</a></li>
+              <li><a href="contato.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Contato</a></li>
+            </ul>
+          </div>
 
-        <div class="footer-col">
-          <h4>Legal</h4>
-          <a href="termos.html">Termos de Uso</a>
-          <a href="privacidade.html">Pol&iacute;tica de Privacidade</a>
-          <a href="contato.html">Contato</a>
-        </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <ul>
+              <li><a href="termos.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>Termos de Uso</a></li>
+              <li><a href="privacidade.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Privacidade</a></li>
+              <li><a href="index.html#seguranca"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Seguran&ccedil;a</a></li>
+            </ul>
+          </div>
+        </nav>
       </div>
 
       <div class="footer-bottom">
-        <p>&copy; <span data-current-year></span> JusTraduz - Todos os direitos reservados</p>
-
-        <div class="footer-bottom-links">
-          <a href="termos.html">Termos de Uso</a>
-          <a href="privacidade.html">Privacidade</a>
-          <a href="contato.html">Contato</a>
-        </div>
+        <p>&copy; <span data-current-year></span> JusTraduz. Todos os direitos reservados.</p>
       </div>
     </div>
   </footer>
@@ -664,7 +790,7 @@
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=flow-scroll-reference-16"></script>
+  <script src="assets/js/main.js?v=ai-line-dot-1"></script>
   <script src="assets/js/chatbot.js?v=2026.06.14-06"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>
