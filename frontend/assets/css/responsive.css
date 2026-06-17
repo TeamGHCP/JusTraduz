@@ -398,6 +398,25 @@
     width: 100%;
   }
 
+  .home-hero-copy {
+    justify-self: center;
+    width: calc(100vw - 28px);
+    max-width: calc(100vw - 28px);
+    overflow: hidden;
+  }
+
+  .home-hero .hero-actions {
+    align-items: center;
+    width: min(100%, 280px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .home-hero .hero-actions .btn {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .chat-input-stack {
     width: 100%;
   }

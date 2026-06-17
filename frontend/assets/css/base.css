@@ -829,11 +829,11 @@ button {
 }
 
 .footer-social-github {
-  color: #b9a7ff;
+  color:#181616;
 }
 
 .footer-social-github:hover {
-  color: #d7ceff;
+  color:#181616;
 }
 
 .footer-social-links a:not(.footer-social-link) {
