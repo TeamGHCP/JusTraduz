@@ -207,6 +207,9 @@ $topbarSubtitle = (string) (($process['process_number'] ?? '') ?: 'Processo arma
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Detalhes do processo | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
 </head>
 <body>

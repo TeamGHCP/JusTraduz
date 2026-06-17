@@ -1,0 +1,20 @@
+{
+  "name": "JusTraduz",
+  "short_name": "JusTraduz",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7fcfc",
+  "theme_color": "#008f80",
+  "icons": [
+    {
+      "src": "assets/img/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/img/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
