@@ -185,17 +185,17 @@ class AdminController extends BaseController
 
         $stmt = $this->pdo->prepare(
             'UPDATE users
-             SET oab_verificado = ?,
-                 status_cna = ?,
-                 oab_status = ?,
-                 cna_validado_em = CASE WHEN ? = \'verificado\' THEN NOW() ELSE cna_validado_em END,
-                 cna_origem = ?,
-                 cna_ultimo_erro = CASE WHEN ? = \'invalido\' THEN ? ELSE NULL END,
-                 oab_rejection_reason = NULL,
-                 oab_validated_at = CASE WHEN ? = \'verificado\' THEN NOW() ELSE oab_validated_at END,
-                 oab_validated_by = CASE WHEN ? = \'verificado\' THEN ? ELSE oab_validated_by END,
-                 updated_at = NOW()
-             WHERE id = ?'
+            SET oab_verificado = ?,
+                status_cna = ?,
+                oab_status = ?,
+                cna_validado_em = CASE WHEN ? = \'verificado\' THEN CURRENT_TIMESTAMP ELSE cna_validado_em END,
+                cna_origem = ?,
+                cna_ultimo_erro = CASE WHEN ? = \'invalido\' THEN ? ELSE NULL END,
+                oab_rejection_reason = NULL,
+                oab_validated_at = CASE WHEN ? = \'verificado\' THEN CURRENT_TIMESTAMP ELSE oab_validated_at END,
+                oab_validated_by = CASE WHEN ? = \'verificado\' THEN ? ELSE oab_validated_by END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?'
         );
         $stmt->execute([$verified, $newStatus, $action === 'approve' ? 'approved' : 'pending', $newStatus, $origin, $newStatus, $message, $newStatus, $newStatus, $adminId > 0 ? $adminId : null, $userId]);
 
