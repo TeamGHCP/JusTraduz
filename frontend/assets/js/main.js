@@ -490,8 +490,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const clauseRect = clause.getBoundingClientRect();
         const cardRect = card.getBoundingClientRect();
-        const dotCenterOffset = -2;
-        const startX = clauseRect.right + dotCenterOffset - svgRect.left;
+        const clauseDotCenterOffset = -2;
+        const startX = clauseRect.right + clauseDotCenterOffset - svgRect.left;
         const startY = clauseRect.top + (clauseRect.height / 2) - svgRect.top;
         const endX = cardRect.left - svgRect.left - 1;
         const endY = cardRect.top + (cardRect.height / 2) - svgRect.top;
