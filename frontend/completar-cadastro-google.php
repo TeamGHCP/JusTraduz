@@ -15,6 +15,9 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Completar cadastro | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
   <link rel="stylesheet" href="assets/css/auth-novo.css?v=google-complete-4">
 </head>
@@ -112,7 +115,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
   <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
   <script src="assets/js/auth.js?v=cpf-validator-1"></script>
-  <script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
+  <script src="assets/js/accessibility.js?v=2026.06.16-a11y-stack"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>
     <div vw-plugin-wrapper>
@@ -121,7 +124,10 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
   </div>
   <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
   <script>
-    new window.VLibras.Widget('https://vlibras.gov.br/app');
+    if (!window.JusTraduzVlibrasStarted && window.VLibras && window.VLibras.Widget) {
+      window.JusTraduzVlibrasStarted = true;
+      new window.VLibras.Widget('https://vlibras.gov.br/app');
+    }
   </script>
 </body>
 </html>

@@ -189,12 +189,17 @@ class AuthController extends BaseController
 
         if (!$usuario) {
             $this->audit->log('auth.login_failed', 'user', null, ['email' => $email, 'reason' => 'not_found']);
-            $this->response->redirectWithError($frontUrl, 'Credenciais inválidas.');
+            $this->response->redirectWithError($frontUrl, 'Email ou senha incorretos.');
         }
 
         if (!password_verify($senha, $usuario['senha'])) {
             $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'wrong_password']);
-            $this->response->redirectWithError($frontUrl, 'Credenciais inválidas.');
+            $this->response->redirectWithError($frontUrl, 'Email ou senha incorretos.');
+        }
+
+        if ((string) ($usuario['tipo'] ?? '') === 'admin') {
+            $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'admin_used_common_login']);
+            $this->response->redirectWithError($frontUrl, 'Email ou senha incorretos.');
         }
 
         if ((int) ($usuario['profile_completed'] ?? 1) !== 1) {
@@ -298,6 +303,11 @@ class AuthController extends BaseController
                 ], static fn ($value) => $value !== null && $value !== ''));
             }
             $usuario = $this->findOrCreateGoogleUser($claims);
+
+            if ((string) ($usuario['tipo'] ?? '') === 'admin') {
+                $this->audit->log('auth.google_login_blocked', 'user', (int) $usuario['id'], ['email' => $usuario['email'] ?? null, 'reason' => 'admin_used_common_google_login']);
+                $this->response->redirectWithError($frontUrl, 'Email ou senha incorretos.');
+            }
 
             if ((int) ($usuario['profile_completed'] ?? 1) !== 1) {
                 $_SESSION['google_pending_user_id'] = (int) $usuario['id'];

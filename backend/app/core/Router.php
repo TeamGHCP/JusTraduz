@@ -38,6 +38,10 @@ class Router
             if (!file_exists($controllerFile)) {
                 error_log('Controller not found: ' . $route['controller']);
                 http_response_code(500);
+                if (!self::expectsJson() && class_exists('ErrorHandler') && ErrorHandler::renderErrorPage(500)) {
+                    return;
+                }
+
                 echo 'Erro interno do servidor.';
                 return;
             }
@@ -59,6 +63,15 @@ class Router
         }
 
         http_response_code(404);
+        if (!self::expectsJson() && class_exists('ErrorHandler') && ErrorHandler::renderErrorPage(404)) {
+            return;
+        }
+
         echo 'Recurso nao encontrado.';
+    }
+
+    private static function expectsJson(): bool
+    {
+        return str_contains((string) ($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json');
     }
 }

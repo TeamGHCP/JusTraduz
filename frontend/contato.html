@@ -5,10 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Contato | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=footer-component-1">
+  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="theme-color" content="#008f80">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=contato-interativo-1">
 </head>
-<body>
-  <header class="site-header" data-site-header>
+<body class="contact-page">
+  <header class="site-header home-header" data-site-header>
     <div class="container nav-bar">
       <a class="brand" href="index.html" aria-label="JusTraduz">
         <img src="assets/img/logo.png" alt="JusTraduz">
@@ -35,14 +41,27 @@
     </div>
   </header>
 
-  <main class="terms-page">
-    <section class="terms-hero">
-      <div class="container terms-hero-inner">
-        <span class="terms-badge">Canais oficiais</span>
-        <h1>Contato</h1>
-        <p>
-          Fale com o time do JusTraduz, acompanhe o projeto e veja nossas atualizações nos canais oficiais.
-        </p>
+  <main>
+    <section class="contact-hero contact-hero-simple">
+      <div class="contact-hero-grid container">
+        <div class="contact-hero-copy">
+          <span class="contact-kicker">Canais oficiais</span>
+          <h1>Fale com o <em>JusTraduz</em></h1>
+          <p>Escolha o melhor caminho para suporte, parcerias, ideias ou para acompanhar a evolução do projeto.</p>
+
+          <div class="contact-hero-actions">
+            <a class="btn btn-primary home-btn-primary" href="#mensagem">
+              <span class="home-btn-label">Montar mensagem</span>
+              <span class="home-btn-icon" aria-hidden="true">
+                <svg class="svg-icon" viewBox="0 0 24 24">
+                  <path d="M5 12h14"/>
+                  <path d="m13 6 6 6-6 6"/>
+                </svg>
+              </span>
+            </a>
+            <a class="btn btn-outline home-btn-outline" href="mailto:contatoghcp@gmail.com">Enviar e-mail</a>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -164,7 +183,10 @@
   </div>
   <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
   <script>
-    new window.VLibras.Widget('https://vlibras.gov.br/app');
+    if (!window.JusTraduzVlibrasStarted && window.VLibras && window.VLibras.Widget) {
+      window.JusTraduzVlibrasStarted = true;
+      new window.VLibras.Widget('https://vlibras.gov.br/app');
+    }
   </script>
 </body>
 </html>
