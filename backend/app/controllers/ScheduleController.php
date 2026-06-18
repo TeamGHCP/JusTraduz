@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
@@ -40,7 +40,7 @@ class ScheduleController extends BaseController
         }
 
         if ($this->hasOverlap((int) $_SESSION['id'], $startsAt, $endsAt)) {
-            $this->respondSlotError($isAjax, 'Ja existe horario ou bloqueio nessa faixa.', 409);
+            $this->respondSlotError($isAjax, 'Já existe horário ou bloqueio nessa faixa.', 409);
             return;
         }
 
@@ -92,13 +92,13 @@ class ScheduleController extends BaseController
         $slotId = (int) $this->request->post('slot_id', 0);
 
         if ($slotId <= 0) {
-            $this->respondSlotError($isAjax, 'Dados invalidos do horario.', 400);
+            $this->respondSlotError($isAjax, 'Dados inválidos do horário.', 400);
             return;
         }
 
         $slot = $this->slotById($slotId);
         if (!$slot || !$this->canManageSlot($slot)) {
-            $this->respondSlotError($isAjax, 'Horario indisponivel para seu perfil.', 403);
+            $this->respondSlotError($isAjax, 'Horário indisponível para seu perfil.', 403);
             return;
         }
 
@@ -111,7 +111,7 @@ class ScheduleController extends BaseController
 
         $status = (string) $this->request->post('status', '');
         if (!in_array($status, ['livre', 'bloqueado'], true)) {
-            $this->respondSlotError($isAjax, 'Status invalido do horario.', 400);
+            $this->respondSlotError($isAjax, 'Status inválido do horário.', 400);
             return;
         }
 
@@ -147,7 +147,7 @@ class ScheduleController extends BaseController
         $notes = trim((string) $this->request->post('observacoes', ''));
 
         if ($slotId <= 0 || $subject === '') {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Escolha um horario e informe o assunto.')));
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Escolha um horário e informe o assunto.')));
         }
 
         $slot = $this->slotById($slotId);
@@ -156,15 +156,15 @@ class ScheduleController extends BaseController
             || (string) $slot['status'] !== 'livre'
             || new DateTimeImmutable((string) $slot['starts_at']) < new DateTimeImmutable()
         ) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Este horario nao esta mais livre.')));
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Este horário não está mais livre.')));
         }
 
         if (!in_array((string) $slot['tipo'], ['advogado', 'estagiario'], true) || (int) ($slot['oab_verificado'] ?? 0) !== 1) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Profissional invalido para agenda.')));
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Profissional inválido para agenda.')));
         }
 
         if ($caseId !== null && !$this->caseBelongsToClient($caseId, (int) $_SESSION['id'])) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Caso invalido para seu usuario.')));
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Caso inválido para seu usuário.')));
         }
 
         $this->pdo->beginTransaction();
@@ -174,7 +174,7 @@ class ScheduleController extends BaseController
 
             if ($stmt->rowCount() === 0) {
                 $this->pdo->rollBack();
-                $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Este horario acabou de ser reservado.')));
+                $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Este horário acabou de ser reservado.')));
             }
 
             $organizationId = $this->organizations->currentOrganizationId((int) $_SESSION['id'])
@@ -218,12 +218,12 @@ class ScheduleController extends BaseController
         $status = (string) $this->request->post('status', '');
 
         if ($appointmentId <= 0 || !in_array($status, ['cancelado', 'concluido'], true)) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Dados invalidos do agendamento.')));
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Dados inválidos do agendamento.')));
         }
 
         $appointment = $this->appointmentById($appointmentId);
         if (!$appointment || !$this->canManageAppointment($appointment, $status)) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Agendamento indisponivel para seu perfil.')));
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Agendamento indisponível para seu perfil.')));
         }
 
         if ((string) ($appointment['status'] ?? '') !== 'agendado') {
@@ -333,7 +333,7 @@ class ScheduleController extends BaseController
         }
 
         if ($this->hasOverlap((int) $slot['professional_id'], $startsAt, $endsAt, $slotId)) {
-            $this->respondSlotError($isAjax, 'Ja existe horario ou bloqueio nessa faixa.', 409);
+            $this->respondSlotError($isAjax, 'Já existe horário ou bloqueio nessa faixa.', 409);
             return;
         }
 
@@ -379,7 +379,7 @@ class ScheduleController extends BaseController
     private function requireProfessional(): void
     {
         if (!in_array($_SESSION['tipo'] ?? '', ['advogado', 'estagiario'], true)) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Apenas profissionais gerenciam horarios.')));
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Apenas profissionais gerenciam horários.')));
         }
 
         $stmt = $this->pdo->prepare("SELECT oab_verificado FROM users WHERE id = ? AND status = 'ativo'");
@@ -387,7 +387,7 @@ class ScheduleController extends BaseController
         $isVerified = (int) ($stmt->fetchColumn() ?: 0) === 1;
 
         if (!$isVerified) {
-            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Sua OAB precisa ser validada pela administracao para abrir horarios.')));
+            $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Sua OAB precisa ser validada pela administração para abrir horários.')));
         }
     }
 

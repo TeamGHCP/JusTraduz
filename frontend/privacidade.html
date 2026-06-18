@@ -8,10 +8,17 @@
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/style.css?v=privacidade-interativa-1">
+  <script src="assets/js/pwa.js" defer></script>
 </head>
 <body class="privacy-page terms-page-enhanced">
   <header class="site-header home-header" data-site-header>
@@ -222,7 +229,7 @@
         <div class="footer-col">
           <h4>Legal</h4>
           <a href="termos.html">Termos de Uso</a>
-          <a href="privacidade.html">Pol&iacute;tica de Privacidade</a>
+          <a href="privacidade.html">Política de Privacidade</a>
           <a href="contato.html">Contato</a>
         </div>
       </div>
@@ -240,7 +247,159 @@
   </footer>
 
   <script src="assets/js/main.js"></script>
-  <script src="assets/js/accessibility.js?v=2026.06.16-a11y-stack-7"></script>
+  <script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const links = Array.from(document.querySelectorAll("[data-privacy-nav]"));
+      const sections = Array.from(document.querySelectorAll(".privacy-modern-section"));
+      const progress = document.querySelector("[data-privacy-progress]");
+      const lastSection = document.querySelector("#contato-lgpd");
+      let footerScrollIntent = 0;
+      let lastScrollY = window.scrollY;
+      let touchStartY = 0;
+
+      document.body.classList.add("privacy-footer-gated");
+
+      const setActive = (id) => {
+        links.forEach((link) => {
+          const isActive = link.getAttribute("href") === `#${id}`;
+          link.classList.toggle("is-active", isActive);
+          link.setAttribute("aria-current", isActive ? "true" : "false");
+        });
+      };
+
+      const openSection = (target) => {
+        if (target) {
+          target.open = true;
+        }
+
+        if (target?.id) {
+          setActive(target.id);
+        }
+      };
+
+      const updateProgress = () => {
+        if (!progress) return;
+
+        const content = document.querySelector(".terms-modern-content");
+        if (!content) return;
+
+        const rect = content.getBoundingClientRect();
+        const total = rect.height - window.innerHeight;
+        const current = Math.min(Math.max(-rect.top, 0), Math.max(total, 1));
+        progress.style.width = `${Math.round((current / Math.max(total, 1)) * 100)}%`;
+      };
+
+      const showFooter = () => {
+        document.body.classList.add("is-privacy-footer-visible");
+      };
+
+      const isNearPageEnd = () => (
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 36
+      );
+
+      const registerFooterScrollIntent = () => {
+        if (document.body.classList.contains("is-privacy-footer-visible")) {
+          return;
+        }
+
+        if (!isNearPageEnd()) {
+          footerScrollIntent = 0;
+          return;
+        }
+
+        footerScrollIntent += 1;
+
+        if (footerScrollIntent >= 3) {
+          showFooter();
+        }
+      };
+
+      const updateFooterGate = () => {
+        if (!lastSection) {
+          showFooter();
+          return;
+        }
+
+        const rect = lastSection.getBoundingClientRect();
+        const reachedLastTopic = rect.top <= window.innerHeight * 0.72;
+
+        if (reachedLastTopic) {
+          showFooter();
+        }
+      };
+
+      const observer = "IntersectionObserver" in window
+        ? new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                setActive(entry.target.id);
+              }
+            });
+          }, { rootMargin: "-35% 0px -55% 0px", threshold: 0 })
+        : null;
+
+      sections.forEach((section) => observer?.observe(section));
+      sections.forEach((section) => {
+        section.addEventListener("toggle", () => {
+          if (section.open) {
+            openSection(section);
+          }
+        });
+      });
+
+      links.forEach((link) => {
+        link.addEventListener("click", () => {
+          const target = document.querySelector(link.getAttribute("href"));
+          if (target) {
+            openSection(target);
+          }
+        });
+      });
+
+      links[0]?.classList.add("is-active");
+      window.addEventListener("scroll", () => {
+        const isScrollingDown = window.scrollY > lastScrollY;
+
+        updateProgress();
+        updateFooterGate();
+
+        if (isScrollingDown) {
+          registerFooterScrollIntent();
+        }
+
+        lastScrollY = window.scrollY;
+      }, { passive: true });
+      window.addEventListener("wheel", (event) => {
+        if (event.deltaY > 0) {
+          registerFooterScrollIntent();
+        }
+      }, { passive: true });
+      window.addEventListener("touchstart", (event) => {
+        touchStartY = event.touches[0]?.clientY || 0;
+      }, { passive: true });
+      window.addEventListener("touchmove", (event) => {
+        const currentY = event.touches[0]?.clientY || touchStartY;
+
+        if (touchStartY - currentY > 18) {
+          registerFooterScrollIntent();
+        }
+      }, { passive: true });
+      window.addEventListener("keydown", (event) => {
+        const downwardKeys = ["ArrowDown", "PageDown", "End", " "];
+
+        if (downwardKeys.includes(event.key)) {
+          registerFooterScrollIntent();
+        }
+      });
+      window.addEventListener("resize", () => {
+        updateProgress();
+        updateFooterGate();
+      });
+      updateProgress();
+      updateFooterGate();
+    });
+  </script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>
     <div vw-plugin-wrapper>
@@ -249,10 +408,7 @@
   </div>
   <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
   <script>
-    if (!window.JusTraduzVlibrasStarted && window.VLibras && window.VLibras.Widget) {
-      window.JusTraduzVlibrasStarted = true;
-      new window.VLibras.Widget('https://vlibras.gov.br/app');
-    }
+    new window.VLibras.Widget('https://vlibras.gov.br/app');
   </script>
 </body>
 </html>

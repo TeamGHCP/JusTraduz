@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
@@ -61,7 +61,7 @@ class ProcessController extends BaseController
             $this->redirectWithSyncResult($result);
         }
 
-        $this->response->redirect(app_url('/frontend/processos.php?erro=' . urlencode('A consulta DataJud por CNJ esta disponivel para clientes nesta versao inicial.')));
+        $this->response->redirect(app_url('/frontend/processos.php?erro=' . urlencode('A consulta DataJud por CNJ está disponível para clientes nesta versão inicial.')));
     }
 
     private function redirectWithSyncResult(array $result): void
@@ -69,7 +69,7 @@ class ProcessController extends BaseController
         if (!($result['success'] ?? false)) {
             $message = (string) ($result['message'] ?? 'Falha ao sincronizar processos.');
             if (!($result['configured'] ?? true)) {
-                $message = 'A integracao DataJud nao esta autorizada neste ambiente. Configure DATAJUD_API_KEY se o endpoint exigir chave.';
+                $message = 'A integração DataJud não está autorizada neste ambiente. Configure DATAJUD_API_KEY se o endpoint exigir chave.';
             }
 
             $this->response->redirect(app_url('/frontend/processos.php?erro=' . urlencode($message)));

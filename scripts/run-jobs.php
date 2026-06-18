@@ -25,7 +25,7 @@ while ($processed < $limit) {
     try {
         $payload = json_decode((string) $job['payload_json'], true);
         if (!is_array($payload)) {
-            throw new RuntimeException('Payload invalido.');
+            throw new RuntimeException('Payload inválido.');
         }
 
         $ok = match ((string) $job['type']) {
@@ -35,7 +35,7 @@ while ($processed < $limit) {
         };
 
         if (!$ok) {
-            throw new RuntimeException('Job nao concluiu com sucesso.');
+            throw new RuntimeException('Job não concluiu com sucesso.');
         }
 
         $queue->complete((int) $job['id']);

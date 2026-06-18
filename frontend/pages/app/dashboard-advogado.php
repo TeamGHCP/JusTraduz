@@ -186,7 +186,14 @@ $appointments = fetch_all(
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
+  <script src="assets/js/pwa.js" defer></script>
 </head>
 <body data-tour-page="dashboard_advogado">
   <div class="app-shell">
@@ -241,7 +248,7 @@ $appointments = fetch_all(
           <span class="badge badge-warning">Ordenada por urgencia</span>
         </div>
         <?php if (!$openCases): ?>
-          <?= empty_state('Nenhuma solicitacao aberta no momento.') ?>
+          <?= empty_state('Nenhuma solicitação aberta no momento.') ?>
         <?php else: ?>
           <div class="case-board">
             <?php foreach ($openCases as $case): ?>
@@ -350,7 +357,7 @@ $appointments = fetch_all(
 
         <article class="dash-section">
           <div class="dash-section-title">
-            <h2>Agenda proxima</h2>
+            <h2>Agenda próxima</h2>
             <a class="btn btn-soft btn-sm" href="agenda.php">Gerenciar</a>
           </div>
           <?php if (!$appointments): ?>

@@ -68,8 +68,6 @@
   .grid-2,
   .grid-3,
   .profile-oab-grid,
-  .profile-billing-plan,
-  .profile-billing-row,
   .analysis-section-grid,
   .doc-view,
   .doc-view-wide,
@@ -382,19 +380,7 @@
     max-height: 380px;
   }
 
-  .topbar-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .topbar-account {
-    max-width: 100%;
-  }
-
-  .topbar-account-copy strong,
-  .topbar-account-copy small {
-    max-width: min(220px, calc(100vw - 118px));
-  }
+  .topbar-actions { width: auto; }
 
   .form-actions,
   .hero-actions,
@@ -412,19 +398,23 @@
     width: 100%;
   }
 
-  .profile-tabs a,
-  .profile-billing-actions,
-  .profile-billing-actions .btn,
-  .profile-billing-actions form {
+  .home-hero-copy {
+    justify-self: center;
+    width: calc(100vw - 28px);
+    max-width: calc(100vw - 28px);
+    overflow: hidden;
+  }
+
+  .home-hero .hero-actions {
+    align-items: center;
+    width: min(100%, 280px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+
+  .home-hero .hero-actions .btn {
     width: 100%;
-  }
-
-  .profile-billing-actions {
-    justify-content: stretch;
-  }
-
-  .profile-billing-row small {
-    text-align: left;
+    max-width: 100%;
   }
 
   .chat-input-stack {

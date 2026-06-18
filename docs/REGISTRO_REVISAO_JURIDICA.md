@@ -1,34 +1,34 @@
-# Registro de Revisao Juridica
+# Registro de Revisão Jurídica
 
-Use este arquivo para registrar a aprovacao profissional antes da venda comercial.
+Use este arquivo para registrar a aprovação profissional antes da venda comercial.
 
 ## Escopo revisado
 
 - `frontend/termos.html`
 - `frontend/privacidade.html`
-- consentimento de IA no chat publico;
-- consentimento de analise de documentos por IA;
-- consentimento DataJud por numero CNJ;
+- consentimento de IA no chat público;
+- consentimento de análise de documentos por IA;
+- consentimento DataJud por número CNJ;
 - mensagens de OAB pendente/aprovada/rejeitada;
-- disclaimers de que IA e apoio informativo e nao parecer juridico.
+- disclaimers de que IA é apoio informativo e não parecer jurídico.
 
-## Responsavel pela revisao
+## Responsável pela revisão
 
 - Nome:
-- OAB/identificacao profissional:
+- OAB/identificação profissional:
 - E-mail:
 - Data:
 
 ## Resultado
 
 - [ ] Aprovado sem ressalvas.
-- [ ] Aprovado com ajustes obrigatorios listados abaixo.
-- [ ] Reprovado para uso comercial ate nova revisao.
+- [ ] Aprovado com ajustes obrigatórios listados abaixo.
+- [ ] Reprovado para uso comercial até nova revisão.
 
-## Ajustes obrigatorios
+## Ajustes obrigatórios
 
-Preencher quando aplicavel.
+Preencher quando aplicável.
 
-## Observacoes
+## Observações
 
-Preencher quando aplicavel.
+Preencher quando aplicável.

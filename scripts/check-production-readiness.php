@@ -25,12 +25,12 @@ foreach (['DB_HOST', 'DB_NAME', 'DB_USER'] as $key) {
 }
 
 if (($env['BACKUP_ENCRYPTION_PASSWORD'] ?? '') === '') {
-    $warnings[] = 'BACKUP_ENCRYPTION_PASSWORD vazio: backups nao serao criptografados.';
+    $warnings[] = 'BACKUP_ENCRYPTION_PASSWORD vazio: backups não serão criptografados.';
 }
 
 foreach (['USAGE_DAILY_DOCUMENT_UPLOADS', 'USAGE_DAILY_DOCUMENT_AI', 'USAGE_DAILY_AI_CHAT', 'USAGE_DAILY_DATAJUD_CNJ', 'USAGE_DAILY_OCR'] as $key) {
     if ((int) ($env[$key] ?? 0) <= 0) {
-        $warnings[] = "$key nao define limite positivo.";
+        $warnings[] = "$key não define limite positivo.";
     }
 }
 
@@ -51,8 +51,7 @@ $requiredFiles = [
     'scripts/backup-database.ps1',
     'scripts/restore-database.ps1',
     'scripts/run-jobs.php',
-    'docs/PRODUCAO_P0.md',
-    'docs/LGPD_E_REVISAO_JURIDICA_P0.md',
+    'docs/O_QUE_FALTA_AGORA.md',
     'docs/apache-justraduz-production.conf',
     'docs/REGISTRO_REVISAO_JURIDICA.md',
     'backend/app/services/StorageService.php',
@@ -71,12 +70,12 @@ foreach ($requiredFiles as $file) {
 $rootHtaccess = is_file($root . '/.htaccess') ? file_get_contents($root . '/.htaccess') : '';
 foreach (['Options -Indexes', 'Header set X-Content-Type-Options', 'backend/storage/(?:documents|message-attachments)'] as $needle) {
     if (!str_contains((string) $rootHtaccess, $needle)) {
-        $failures[] = ".htaccess raiz nao contem protecao esperada: $needle";
+        $failures[] = ".htaccess raiz não contém proteção esperada: $needle";
     }
 }
 
 if ($warnings !== []) {
-    fwrite(STDERR, "Avisos de producao:\n- " . implode("\n- ", $warnings) . "\n");
+    fwrite(STDERR, "Avisos de produção:\n- " . implode("\n- ", $warnings) . "\n");
 }
 
 if ($failures !== []) {
@@ -89,7 +88,7 @@ echo "Production readiness: OK\n";
 function read_env_file(string $path): array
 {
     if (!is_file($path)) {
-        fwrite(STDERR, "Arquivo .env nao encontrado: $path\n");
+        fwrite(STDERR, "Arquivo .env não encontrado: $path\n");
         exit(1);
     }
 

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
@@ -66,7 +66,7 @@ class DocumentController extends BaseController
         $allowedMimes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
 
         if ($file['size'] <= 0 || $file['size'] > $maxSize) {
-            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('O arquivo deve ter no máximo 50 MB.')));
+            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('O arquivo deve ter no m?ximo 50 MB.')));
         }
 
         $mime = mime_content_type($file['tmp_name']) ?: '';
@@ -81,7 +81,7 @@ class DocumentController extends BaseController
                 'mime' => $mime,
                 'reason' => $scanner->lastError(),
             ]);
-            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode($scanner->lastError() ?: 'Arquivo reprovado pelo scanner de seguranca.')));
+            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode($scanner->lastError() ?: 'Arquivo reprovado pelo scanner de segurança.')));
         }
 
         $storageDir = $this->storage->documentDirectory($userId);
@@ -144,10 +144,10 @@ class DocumentController extends BaseController
 
         $message = $analysis
             ? 'Documento enviado e analisado com IA.'
-            : 'Documento enviado com sucesso. A análise por IA pode ser gerada ao abrir o documento.';
+            : 'Documento enviado com sucesso. A an?lise por IA pode ser gerada ao abrir o documento.';
 
         if ($queued) {
-            $message = 'Documento enviado. A analise por IA entrou na fila de processamento.';
+            $message = 'Documento enviado. A análise por IA entrou na fila de processamento.';
         }
 
         $this->notifications->notify($userId, $message . ' Arquivo: ' . $file['name']);
@@ -181,7 +181,7 @@ class DocumentController extends BaseController
         }
 
         if ((string) $this->request->post('autorizar_ia', '') !== '1') {
-            $this->response->redirect(app_url('/frontend/visualizar-documento.php?id=' . $documentId . '&erro=' . urlencode('Autorize a análise por IA antes de enviar o documento para processamento.')));
+            $this->response->redirect(app_url('/frontend/visualizar-documento.php?id=' . $documentId . '&erro=' . urlencode('Autorize a an?lise por IA antes de enviar o documento para processamento.')));
         }
 
         $document = $this->findDocumentForCurrentUser($documentId);
@@ -201,11 +201,11 @@ class DocumentController extends BaseController
 
         if ($this->asyncJobsEnabled()) {
             $this->enqueueDocumentAnalysis($documentId, (int) $document['user_id']);
-            $this->response->redirect($redirect . '&sucesso=' . urlencode('Analise por IA enfileirada. Atualize a pagina apos o processamento.'));
+            $this->response->redirect($redirect . '&sucesso=' . urlencode('Análise por IA enfileirada. Atualize a página após o processamento.'));
         }
 
         if ($absolutePath === null) {
-            $this->response->redirect($redirect . '&erro=' . urlencode('Arquivo original nao encontrado para analise.'));
+            $this->response->redirect($redirect . '&erro=' . urlencode('Arquivo original não encontrado para análise.'));
         }
 
         $analysis = $this->generateAnalysisForUser($documentId, $absolutePath, $mime, $textoExtraido, (int) $document['user_id']);
@@ -215,9 +215,9 @@ class DocumentController extends BaseController
         }
 
         $this->saveAnalysis($documentId, $analysis);
-        $this->notifications->notify((int) $document['user_id'], 'Análise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
+        $this->notifications->notify((int) $document['user_id'], 'An?lise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
         $this->audit->log('document.analyze', 'document', $documentId, ['analysis_generated' => true]);
-        $this->response->redirect($redirect . '&sucesso=' . urlencode('Análise por IA gerada.'));
+        $this->response->redirect($redirect . '&sucesso=' . urlencode('An?lise por IA gerada.'));
     }
 
     public function download(): void
@@ -296,7 +296,7 @@ class DocumentController extends BaseController
             'owner_id' => (int) ($document['user_id'] ?? 0),
         ]);
 
-        $this->response->redirect(app_url('/frontend/visualizar-documento.php?sucesso=' . urlencode('Documento excluído.')));
+        $this->response->redirect(app_url('/frontend/visualizar-documento.php?sucesso=' . urlencode('Documento exclu?do.')));
     }
 
     private function generateAnalysis(string $filePath, string $mime, ?string $textoExtraido): ?array
@@ -338,7 +338,7 @@ class DocumentController extends BaseController
         }
 
         $this->saveAnalysis($documentId, $analysis);
-        $this->notifications->notify((int) $document['user_id'], 'Analise por IA concluida para o documento: ' . (string) $document['nome_arquivo']);
+        $this->notifications->notify((int) $document['user_id'], 'Análise por IA concluída para o documento: ' . (string) $document['nome_arquivo']);
         $this->audit->log('document.analyze_queued_completed', 'document', $documentId);
         return true;
     }

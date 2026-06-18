@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
   const header = document.querySelector("[data-site-header]");
   const toggle = document.querySelector("[data-nav-toggle]");
 
@@ -19,16 +19,22 @@ document.addEventListener("DOMContentLoaded", () => {
     ".home-trust-row",
     ".hero-phone-wrap",
     ".page-section .section-head",
+    ".home-flow-panel-copy",
+    ".home-flow-system-preview",
+    ".home-flow-feature-list li",
     ".home-flow-timeline",
     "#recursos .feature-card",
     ".home-flow-summary",
-    ".home-detail-grid > *",
+    ".ai-document-head",
+    ".ai-document-mockup",
+    ".ai-finding-card",
     ".home-feedback-copy",
+    ".feedback-card",
     ".feedback-columns",
-    ".flow-preview",
-    "#fluxo .flow-step",
     "#depoimentos .testimonial-marquee",
     "#depoimentos .testimonial-controls",
+    ".flow-preview",
+    "#fluxo .flow-step",
     "#seguranca .form-actions",
   ];
   const revealElements = Array.from(new Set(
@@ -59,6 +65,15 @@ document.addEventListener("DOMContentLoaded", () => {
     track.dataset.feedbackReady = "true";
   });
 
+  const syncFeedbackMarqueeState = () => {
+    document.querySelectorAll("[data-feedback-marquee]").forEach((marquee) => {
+      marquee.classList.toggle("is-paused", document.hidden);
+    });
+  };
+
+  document.addEventListener("visibilitychange", syncFeedbackMarqueeState);
+  syncFeedbackMarqueeState();
+
   document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
     const panels = Array.from(flow.querySelectorAll("[data-flow-panel]"));
     const timeline = flow.querySelector("[data-flow-progress-timeline]");
@@ -72,6 +87,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let activeIndex = 0;
     let currentProgress = 0;
     let frameRequested = false;
+    let isFlowVisible = false;
+    let geometryDirty = true;
     let exitTimer = 0;
 
     const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
@@ -87,7 +104,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const getScrollProgressForStep = (index) => index / panels.length;
 
     const setTimelineProgress = (progress) => {
-      currentProgress = clamp(progress, 0, 1);
+      const nextProgress = clamp(progress, 0, 1);
+
+      if (Math.abs(nextProgress - currentProgress) < 0.003) {
+        return;
+      }
+
+      currentProgress = nextProgress;
       const percent = `${(currentProgress * 100).toFixed(2)}%`;
 
       flow.style.setProperty("--flow-scroll-progress", currentProgress.toFixed(4));
@@ -95,6 +118,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const updateTimelineGeometry = () => {
+      geometryDirty = false;
+
       if (!timeline || timelineSteps.length < 2) {
         return;
       }
@@ -192,7 +217,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const syncFlowToScroll = () => {
       frameRequested = false;
-      updateTimelineGeometry();
+
+      if (geometryDirty) {
+        updateTimelineGeometry();
+      }
 
       if (!desktopQuery.matches) {
         flow.classList.add("is-flow-started");
@@ -201,7 +229,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const hasStarted = flow.getBoundingClientRect().top <= 84;
+      const flowTop = flow.getBoundingClientRect().top;
+      const startRevealAt = Math.min(window.innerHeight * 0.76, window.innerHeight - 150);
+      const hasStarted = flowTop <= startRevealAt;
       flow.classList.toggle("is-flow-started", hasStarted);
 
       if (!hasStarted) {
@@ -220,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     const requestSync = () => {
-      if (frameRequested) {
+      if (frameRequested || (!isFlowVisible && desktopQuery.matches)) {
         return;
       }
 
@@ -248,9 +278,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if ("IntersectionObserver" in window) {
       const flowObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
-          flow.classList.toggle("is-in-view", entry.isIntersecting);
+          isFlowVisible = entry.isIntersecting;
+          flow.classList.toggle("is-in-view", isFlowVisible);
 
-          if (entry.isIntersecting) {
+          if (isFlowVisible) {
             requestSync();
           }
         });
@@ -261,16 +292,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
       flowObserver.observe(flow);
     } else {
+      isFlowVisible = true;
       flow.classList.add("is-in-view");
     }
 
     window.addEventListener("scroll", requestSync, { passive: true });
-    window.addEventListener("resize", requestSync);
+    window.addEventListener("resize", () => {
+      geometryDirty = true;
+      requestSync();
+    });
 
     if (typeof desktopQuery.addEventListener === "function") {
-      desktopQuery.addEventListener("change", requestSync);
+      desktopQuery.addEventListener("change", () => {
+        geometryDirty = true;
+        requestSync();
+      });
     } else if (typeof desktopQuery.addListener === "function") {
-      desktopQuery.addListener(requestSync);
+      desktopQuery.addListener(() => {
+        geometryDirty = true;
+        requestSync();
+      });
     }
 
     setTimelineProgress(0);
@@ -356,7 +397,40 @@ document.addEventListener("DOMContentLoaded", () => {
     revealElements.forEach((element, index) => {
       element.classList.add("reveal-on-scroll");
       const isHero = element.closest(".home-hero");
-      const delay = isHero ? index * 110 : (index % 4) * 55;
+      const isFlowPanelCopy = element.matches(".home-flow-panel-copy");
+      const isFlowPreview = element.matches(".home-flow-system-preview");
+      const isFlowListItem = element.matches(".home-flow-feature-list li");
+      const isAiDocument = element.matches(".ai-document-mockup");
+      const isAiFinding = element.matches(".ai-finding-card");
+      const isFeedback = element.matches(".feedback-card");
+      const directions = ["up", "left", "right", "down", "zoom"];
+      const direction = isFlowPanelCopy
+        ? "left"
+        : isFlowPreview
+          ? "right"
+          : isAiDocument
+            ? "up"
+            : isAiFinding
+              ? "right"
+              : isFlowListItem
+                ? "left"
+                : isFeedback
+                  ? directions[index % directions.length]
+                  : directions[index % 3];
+      const aiFindingIndex = isAiFinding
+        ? Array.from(element.parentElement.querySelectorAll(".ai-finding-card")).indexOf(element)
+        : 0;
+      const delay = isHero
+        ? index * 160
+        : isFlowListItem
+          ? (index % 3) * 140
+          : isAiFinding
+            ? 180 + (aiFindingIndex * 150)
+          : isFeedback
+            ? (index % 6) * 95
+            : (index % 5) * 120;
+
+      element.dataset.reveal = direction;
       element.style.setProperty("--reveal-delay", `${delay}ms`);
     });
 
@@ -383,7 +457,142 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  document.querySelectorAll("[data-ai-document-insights]").forEach((section) => {
+    const cards = Array.from(section.querySelectorAll("[data-insight-card]"));
+    const stackedQuery = window.matchMedia("(max-width: 1120px)");
+    let lineFrame = 0;
+    let resizeTimer = 0;
+
+    const updateLines = () => {
+      lineFrame = 0;
+      const svg = section.querySelector(".ai-connection-lines");
+
+      if (!svg || stackedQuery.matches) {
+        section.classList.remove("is-lines-ready");
+        return;
+      }
+
+      const svgRect = svg.getBoundingClientRect();
+
+      if (svgRect.width <= 0 || svgRect.height <= 0) {
+        section.classList.remove("is-lines-ready");
+        return;
+      }
+
+      svg.setAttribute("viewBox", `0 0 ${svgRect.width.toFixed(2)} ${svgRect.height.toFixed(2)}`);
+
+      ["risk", "deadline", "renewal"].forEach((target) => {
+        const clause = section.querySelector(`[data-clause="${target}"]`);
+        const card = section.querySelector(`[data-insight-target="${target}"]`);
+        const line = section.querySelector(`[data-line="${target}"]`);
+
+        if (!clause || !card || !line) {
+          return;
+        }
+
+        const clauseRect = clause.getBoundingClientRect();
+        const cardRect = card.getBoundingClientRect();
+        const clauseDotCenterOffset = -2;
+        const startX = clauseRect.right + clauseDotCenterOffset - svgRect.left;
+        const startY = clauseRect.top + (clauseRect.height / 2) - svgRect.top;
+        const endX = cardRect.left - svgRect.left - 1;
+        const endY = cardRect.top + (cardRect.height / 2) - svgRect.top;
+        const curve = Math.max(44, Math.min(130, (endX - startX) * 0.46));
+
+        line.setAttribute("d", `M ${startX.toFixed(1)} ${startY.toFixed(1)} C ${(startX + curve).toFixed(1)} ${startY.toFixed(1)} ${(endX - curve).toFixed(1)} ${endY.toFixed(1)} ${endX.toFixed(1)} ${endY.toFixed(1)}`);
+      });
+
+      section.classList.add("is-lines-ready");
+    };
+
+    const requestLineUpdate = () => {
+      if (lineFrame) {
+        return;
+      }
+
+      lineFrame = window.requestAnimationFrame(updateLines);
+    };
+
+    const requestLineUpdateDebounced = () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(requestLineUpdate, 140);
+    };
+
+    const clearActive = () => {
+      section.removeAttribute("data-active-insight");
+      cards.forEach((card) => card.classList.remove("is-active"));
+    };
+
+    const revealSection = () => {
+      section.classList.add("is-visible");
+      section.querySelectorAll(".reveal-on-scroll").forEach((element) => {
+        element.classList.add("is-visible");
+      });
+      requestLineUpdate();
+    };
+
+    cards.forEach((card) => {
+      const target = card.dataset.insightTarget;
+
+      if (!target) {
+        return;
+      }
+
+      card.addEventListener("mouseenter", () => {
+        section.dataset.activeInsight = target;
+        card.classList.add("is-active");
+      });
+
+      card.addEventListener("mouseleave", clearActive);
+      card.addEventListener("focusin", () => {
+        section.dataset.activeInsight = target;
+        card.classList.add("is-active");
+      });
+      card.addEventListener("focusout", clearActive);
+    });
+
+    if (prefersReducedMotion) {
+      revealSection();
+      return;
+    }
+
+    if ("IntersectionObserver" in window) {
+      const insightObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          revealSection();
+          observer.unobserve(section);
+        });
+      }, {
+        rootMargin: "0px 0px -120px 0px",
+        threshold: 0.18,
+      });
+
+      insightObserver.observe(section);
+    } else {
+      revealSection();
+    }
+
+    window.addEventListener("resize", requestLineUpdateDebounced, { passive: true });
+    window.addEventListener("load", requestLineUpdate, { once: true });
+
+    if (typeof stackedQuery.addEventListener === "function") {
+      stackedQuery.addEventListener("change", requestLineUpdateDebounced);
+    } else if (typeof stackedQuery.addListener === "function") {
+      stackedQuery.addListener(requestLineUpdateDebounced);
+    }
+
+    requestLineUpdateDebounced();
+  });
+
   document.querySelectorAll("[data-flow-steps]").forEach((flow) => {
+    if (flow.closest("[hidden]")) {
+      return;
+    }
+
     const steps = Array.from(flow.querySelectorAll("[data-flow-step]"));
     const panels = Array.from(flow.querySelectorAll("[data-flow-panel]"));
 
@@ -414,263 +623,5 @@ document.addEventListener("DOMContentLoaded", () => {
     activateStep(steps.find((step) => step.classList.contains("is-active"))?.dataset.flowStep || steps[0].dataset.flowStep);
   });
 
-  document.querySelectorAll("[data-testimonial-carousel]").forEach((carousel) => {
-    const track = carousel.querySelector(".testimonial-track");
-    const section = carousel.closest(".testimonials-section");
-    const prevButton = section?.querySelector("[data-testimonial-prev]");
-    const nextButton = section?.querySelector("[data-testimonial-next]");
-    const originalCards = Array.from(carousel.querySelectorAll(".testimonial-card"))
-      .filter((card) => card.getAttribute("aria-hidden") !== "true");
 
-    if (!track || originalCards.length === 0) {
-      return;
-    }
-
-    const originalCount = originalCards.length;
-    carousel.setAttribute("role", "region");
-    carousel.setAttribute("aria-label", "Depoimentos de usuários");
-    const prepareImages = (card) => {
-      card.querySelectorAll("img").forEach((image) => {
-        image.loading = "lazy";
-        image.decoding = "async";
-      });
-    };
-    const buildCardSet = (hidden = false) => originalCards.map((card) => {
-      const clone = card.cloneNode(true);
-
-      clone.classList.remove("is-active");
-      prepareImages(clone);
-
-      if (hidden) {
-        clone.setAttribute("aria-hidden", "true");
-      } else {
-        clone.removeAttribute("aria-hidden");
-      }
-
-      return clone;
-    });
-
-    originalCards.forEach(prepareImages);
-
-    track.replaceChildren(
-      ...buildCardSet(true),
-      ...buildCardSet(false),
-      ...buildCardSet(true)
-    );
-
-    const cards = Array.from(track.querySelectorAll(".testimonial-card"));
-
-    let activeIndex = originalCount + Math.floor(originalCount / 2);
-    let timer = null;
-    let isPaused = false;
-    let isDragging = false;
-    let isCarouselVisible = false;
-    let scrollResumeTimer = null;
-    let dragStartX = 0;
-    let dragStartOffset = 0;
-    let dragOffset = 0;
-    let pendingResetIndex = null;
-
-    const getGap = () => {
-      const styles = window.getComputedStyle(track);
-      return Number.parseFloat(styles.columnGap || styles.gap) || 0;
-    };
-
-    const setActiveCard = (index) => {
-      cards.forEach((card) => card.classList.remove("is-active"));
-      cards[index]?.classList.add("is-active");
-    };
-
-    const getCardStep = () => cards[0].offsetWidth + getGap();
-
-    const getOffsetForIndex = (index) => {
-      const cardWidth = cards[0].offsetWidth;
-      return (carousel.clientWidth - cardWidth) / 2 - index * getCardStep();
-    };
-
-    const normalizeIndex = (index) => {
-      if (index >= originalCount * 2) {
-        pendingResetIndex = index - originalCount;
-      } else if (index < originalCount) {
-        pendingResetIndex = index + originalCount;
-      } else {
-        pendingResetIndex = null;
-      }
-
-      return Math.max(0, Math.min(cards.length - 1, index));
-    };
-
-    const getNearestIndex = (offset) => {
-      const cardWidth = cards[0].offsetWidth;
-      const centeredOffset = (carousel.clientWidth - cardWidth) / 2;
-      const index = Math.round((centeredOffset - offset) / getCardStep());
-
-      return normalizeIndex(index);
-    };
-
-    const moveTo = (index, animate = true) => {
-      track.style.transition = animate ? "transform .5s cubic-bezier(.16, 1, .3, 1)" : "none";
-      track.style.transform = `translateX(${getOffsetForIndex(index)}px)`;
-      setActiveCard(index);
-    };
-
-    const goTo = (direction) => {
-      window.clearTimeout(timer);
-      activeIndex = normalizeIndex(activeIndex + direction);
-
-      moveTo(activeIndex);
-    };
-
-    const scheduleNext = () => {
-      window.clearTimeout(timer);
-
-      if (isPaused || !isCarouselVisible) {
-        return;
-      }
-
-      timer = window.setTimeout(() => {
-        goTo(1);
-      }, 3000);
-    };
-
-    const pauseWhileScrolling = () => {
-      if (!isCarouselVisible) {
-        return;
-      }
-
-      window.clearTimeout(timer);
-      window.clearTimeout(scrollResumeTimer);
-      scrollResumeTimer = window.setTimeout(scheduleNext, 220);
-    };
-
-    track.addEventListener("transitionend", (event) => {
-      if (event.propertyName !== "transform") {
-        return;
-      }
-
-      if (pendingResetIndex !== null) {
-        activeIndex = pendingResetIndex;
-        pendingResetIndex = null;
-        moveTo(activeIndex, false);
-      }
-
-      scheduleNext();
-    });
-
-    prevButton?.addEventListener("click", () => {
-      goTo(-1);
-    });
-
-    nextButton?.addEventListener("click", () => {
-      goTo(1);
-    });
-
-    carousel.addEventListener("pointerdown", (event) => {
-      if (event.button !== undefined && event.button !== 0) {
-        return;
-      }
-
-      isDragging = true;
-      isPaused = true;
-      dragStartX = event.clientX;
-      dragStartOffset = getOffsetForIndex(activeIndex);
-      dragOffset = dragStartOffset;
-      pendingResetIndex = null;
-      window.clearTimeout(timer);
-      track.style.transition = "none";
-      carousel.classList.add("is-dragging");
-      carousel.setPointerCapture?.(event.pointerId);
-    });
-
-    carousel.addEventListener("pointermove", (event) => {
-      if (!isDragging) {
-        return;
-      }
-
-      dragOffset = dragStartOffset + event.clientX - dragStartX;
-      if (Math.abs(event.clientX - dragStartX) > 4) {
-        event.preventDefault();
-      }
-
-      track.style.transform = `translateX(${dragOffset}px)`;
-    });
-
-    const finishDrag = (event) => {
-      if (!isDragging) {
-        return;
-      }
-
-      isDragging = false;
-      isPaused = false;
-      carousel.classList.remove("is-dragging");
-      carousel.releasePointerCapture?.(event.pointerId);
-      activeIndex = getNearestIndex(dragOffset);
-      moveTo(activeIndex);
-      scheduleNext();
-    };
-
-    carousel.addEventListener("pointerup", finishDrag);
-    carousel.addEventListener("pointercancel", finishDrag);
-    carousel.addEventListener("lostpointercapture", finishDrag);
-
-    carousel.addEventListener("mouseenter", () => {
-      if (isDragging) {
-        return;
-      }
-
-      isPaused = true;
-      window.clearTimeout(timer);
-    });
-
-    carousel.addEventListener("mouseleave", () => {
-      if (isDragging) {
-        return;
-      }
-
-      isPaused = false;
-      scheduleNext();
-    });
-
-    carousel.addEventListener("focusin", () => {
-      isPaused = true;
-      window.clearTimeout(timer);
-    });
-
-    carousel.addEventListener("focusout", (event) => {
-      if (carousel.contains(event.relatedTarget)) return;
-      isPaused = false;
-      scheduleNext();
-    });
-
-    window.addEventListener("resize", () => {
-      moveTo(activeIndex, false);
-    });
-
-    moveTo(activeIndex, false);
-
-    if ("IntersectionObserver" in window) {
-      const carouselObserver = new IntersectionObserver((entries) => {
-        isCarouselVisible = entries.some((entry) => entry.isIntersecting);
-
-        if (isCarouselVisible) {
-          carousel.classList.add("is-ready");
-          scheduleNext();
-        } else {
-          carousel.classList.remove("is-ready");
-          window.clearTimeout(timer);
-          window.clearTimeout(scrollResumeTimer);
-        }
-      }, {
-        threshold: 0.18,
-      });
-
-      carouselObserver.observe(carousel);
-    } else {
-      isCarouselVisible = true;
-      carousel.classList.add("is-ready");
-      scheduleNext();
-    }
-
-    window.addEventListener("scroll", pauseWhileScrolling, { passive: true });
-  });
 });

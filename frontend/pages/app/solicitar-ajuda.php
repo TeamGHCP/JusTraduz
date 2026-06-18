@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_role(['cliente']);
 
@@ -26,10 +26,10 @@ if ($selectedDocumentId > 0) {
 
         $prefillDescription = "Documento relacionado: " . (string) $selectedDocument['nome_arquivo'] . "\n";
         if ($summary !== '') {
-            $prefillDescription .= "\nResumo da análise:\n" . mb_substr($summary, 0, 900) . "\n";
+            $prefillDescription .= "\nResumo da an?lise:\n" . mb_substr($summary, 0, 900) . "\n";
         }
         if ($analysis !== '') {
-            $prefillDescription .= "\nPontos da análise para o profissional revisar:\n" . mb_substr(strip_tags($analysis), 0, 1200) . "\n";
+            $prefillDescription .= "\nPontos da an?lise para o profissional revisar:\n" . mb_substr(strip_tags($analysis), 0, 1200) . "\n";
         }
         $prefillDescription .= "\nMinha duvida principal:\n";
     }
@@ -45,14 +45,21 @@ if ($selectedDocumentId > 0) {
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
+  <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
     <?php render_sidebar('cliente', 'solicitar-ajuda.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Solicitar ajuda juridica', 'Transforme a análise do documento em atendimento humano.', current_user_name()); ?>
+      <?php render_topbar('Solicitar ajuda jur?dica', 'Transforme a an?lise do documento em atendimento humano.', current_user_name()); ?>
 
       <?php if ($selectedDocument): ?>
         <section class="selected-document-context">
@@ -61,10 +68,10 @@ if ($selectedDocumentId > 0) {
             <h2><?= e($selectedDocument['nome_arquivo']) ?></h2>
             <p>Enviado em <?= e(date('d/m/Y H:i', strtotime((string) $selectedDocument['created_at']))) ?><?= $selectedDocument['confianca'] !== null ? ' | Confianca IA: ' . e(number_format((float) $selectedDocument['confianca'], 1, ',', '.')) . '%' : '' ?></p>
           </div>
-          <a class="btn btn-outline btn-sm" href="visualizar-documento.php?id=<?= (int) $selectedDocument['id'] ?>"><?= icon_svg('file') ?> Ver análise</a>
+          <a class="btn btn-outline btn-sm" href="visualizar-documento.php?id=<?= (int) $selectedDocument['id'] ?>"><?= icon_svg('file') ?> Ver an?lise</a>
         </section>
       <?php elseif ($selectedDocumentId > 0): ?>
-        <div class="alert alert-error is-visible">Documento não encontrado para a sua conta. A solicitacao sera criada sem contexto automatico.</div>
+        <div class="alert alert-error is-visible">Documento não encontrado para a sua conta. A solicitação será criada sem contexto automático.</div>
       <?php endif; ?>
 
       <form class="card auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/create')) ?>" method="post">
@@ -74,7 +81,7 @@ if ($selectedDocumentId > 0) {
         <?php endif; ?>
         <div class="form-grid">
           <div class="field">
-            <label for="titulo">Titulo da solicitacao</label>
+            <label for="titulo">Título da solicitação</label>
             <input class="input" id="titulo" name="titulo" value="<?= e($prefillTitle) ?>" required>
           </div>
           <div class="field">
@@ -89,7 +96,7 @@ if ($selectedDocumentId > 0) {
         <div class="field">
           <label for="advogado_id">Advogado especifico</label>
           <select class="select" id="advogado_id" name="advogado_id">
-            <option value="">Deixar solicitacao aberta</option>
+            <option value="">Deixar solicitação aberta</option>
             <?php foreach ($lawyers as $lawyer): ?>
               <option value="<?= (int) $lawyer['id'] ?>" <?= $selectedLawyerId === (int) $lawyer['id'] ? 'selected' : '' ?>>
                 <?= e($lawyer['nome']) ?><?= $lawyer['oab'] ? ' - OAB/' . e($lawyer['oab_uf']) . ' ' . e($lawyer['oab']) : '' ?>
@@ -101,9 +108,9 @@ if ($selectedDocumentId > 0) {
           <label for="descricao">Descreva sua duvida</label>
           <textarea class="textarea textarea-tall" id="descricao" name="descricao" required><?= e($prefillDescription) ?></textarea>
         </div>
-        <div class="alert alert-info is-visible">A IA organiza o contexto, mas a decisao e a orientação juridica devem vir de um profissional.</div>
+        <div class="alert alert-info is-visible">A IA organiza o contexto, mas a decisão e a orientação jurídica devem vir de um profissional.</div>
         <div class="form-actions">
-          <button class="btn btn-primary" type="submit"><?= icon_svg('help') ?> Enviar solicitacao</button>
+          <button class="btn btn-primary" type="submit"><?= icon_svg('help') ?> Enviar solicitação</button>
           <a class="btn btn-outline" href="lista-advogados.php"><?= icon_svg('users') ?> Ver advogados</a>
         </div>
       </form>

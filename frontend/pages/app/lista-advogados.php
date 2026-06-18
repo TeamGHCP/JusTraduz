@@ -1,11 +1,11 @@
-<?php
+﻿<?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 
 $type = current_user_type();
 $q = trim((string) ($_GET['q'] ?? ''));
 $uf = strtoupper(trim((string) ($_GET['uf'] ?? '')));
-$onlyAvailable = (string) ($_GET['disponível'] ?? '') === '1';
+$onlyAvailable = (string) ($_GET['disponivel'] ?? '') === '1';
 
 $ufs = fetch_all(
     $pdo,
@@ -84,7 +84,14 @@ function directory_datetime(?string $value): string
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
+  <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -97,7 +104,7 @@ function directory_datetime(?string $value): string
         <div>
           <span class="badge badge-success">OAB validada</span>
           <h2><?= e((string) count($lawyers)) ?> profissionais encontrados</h2>
-          <p>Use a lista para direcionar atendimento com contexto. Para cliente, o botao ja abre a solicitacao com o advogado escolhido.</p>
+          <p>Use a lista para direcionar atendimento com contexto. Para cliente, o botão já abre a solicitação com o advogado escolhido.</p>
         </div>
         <?php if ($type === 'cliente'): ?>
           <a class="btn btn-primary" href="solicitar-ajuda.php"><?= icon_svg('help') ?> Solicitar ajuda aberta</a>
@@ -122,7 +129,7 @@ function directory_datetime(?string $value): string
           </select>
         </div>
         <label class="checkline directory-check">
-          <input type="checkbox" name="disponível" value="1" <?= $onlyAvailable ? 'checked' : '' ?>>
+          <input type="checkbox" name="disponivel" value="1" <?= $onlyAvailable ? 'checked' : '' ?>>
           <span>Com horário livre</span>
         </label>
         <div class="form-actions">

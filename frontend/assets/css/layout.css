@@ -131,12 +131,6 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.site-footer {
-  background: var(--navy);
-  color: #d8e0ea;
-  padding: 28px 0;
-}
-
 .footer-row {
   display: flex;
   align-items: center;
