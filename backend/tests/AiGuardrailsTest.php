@@ -38,14 +38,16 @@ assertTrue(
 );
 
 $prompt = callPrivate(GeminiService::class, 'buildChatPrompt', ['Quero ajuda', []]);
-assertTrue(str_contains($prompt, 'Nao calcule prazos processuais'), 'Prompt deve proibir cálculo de prazos.');
-assertTrue(str_contains($prompt, 'dados nao confiaveis'), 'Prompt deve tratar entrada como não confiável.');
+$normalizedPrompt = normalizeTextForAssertions($prompt);
+assertTrue(str_contains($normalizedPrompt, 'Nao calcule prazos processuais'), 'Prompt deve proibir cálculo de prazos.');
+assertTrue(str_contains($normalizedPrompt, 'dados nao confiaveis'), 'Prompt deve tratar entrada como não confiável.');
 
 $_SERVER['REMOTE_ADDR'] = '127.0.0.240';
 $_SESSION['_ai_chat_attempts'] = [];
-$rateLimitPath = dirname(__DIR__) . '/storage/rate-limits/ai-' . hash('sha256', $_SERVER['REMOTE_ADDR']) . '.json';
+$rateLimitDirectory = getenv('RATE_LIMIT_STORAGE_PATH') ?: dirname(__DIR__) . '/storage/rate-limits';
+$rateLimitPath = rtrim((string) $rateLimitDirectory, "\\/") . '/ai-' . hash('sha256', $_SERVER['REMOTE_ADDR']) . '.json';
 if (is_file($rateLimitPath)) {
-    unlink($rateLimitPath);
+    @unlink($rateLimitPath);
 }
 $limiter = new AiRateLimiter();
 for ($index = 0; $index < 10; $index++) {

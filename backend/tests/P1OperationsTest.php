@@ -7,10 +7,23 @@ require_once dirname(__DIR__) . '/app/services/StorageService.php';
 require_once dirname(__DIR__) . '/app/services/UploadScannerService.php';
 require_once dirname(__DIR__) . '/app/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/app/services/DataJudService.php';
+require_once dirname(__DIR__) . '/app/controllers/CaseController.php';
+require_once dirname(__DIR__) . '/app/controllers/HealthController.php';
 
 $pdo = test_pdo();
 build_test_schema($pdo);
 seed_test_data($pdo);
+
+$originalDsn = getenv('DB_DSN');
+$missingSqliteDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-missing-' . bin2hex(random_bytes(4));
+putenv('DB_DSN=sqlite:' . $missingSqliteDir . DIRECTORY_SEPARATOR . 'health.sqlite');
+ob_start();
+(new HealthController())->show();
+$healthOutput = ob_get_clean();
+$health = json_decode($healthOutput, true);
+assertEquals('degraded', $health['status'] ?? '', 'Healthcheck deve responder degradado quando o banco esta indisponivel.');
+assertTrue(($health['checks']['database'] ?? true) === false, 'Healthcheck deve marcar database como falso sem fatal error.');
+putenv('DB_DSN=' . $originalDsn);
 
 $tmpFile = tempnam(sys_get_temp_dir(), 'scan_');
 file_put_contents($tmpFile, '<?php echo "malicioso";');
@@ -22,6 +35,24 @@ $tmpFile = tempnam(sys_get_temp_dir(), 'scan_');
 file_put_contents($tmpFile, '%PDF-1.4 documento seguro');
 assertTrue($scanner->scan($tmpFile, 'teste.pdf', 'application/pdf') === true, 'Scanner deve permitir arquivo sem assinatura suspeita.');
 unlink($tmpFile);
+
+$caseController = new CaseController();
+$fakeDocx = tempnam(sys_get_temp_dir(), 'docx_');
+file_put_contents($fakeDocx, 'PK arquivo zip falso sem estrutura docx');
+assertTrue(callPrivate($caseController, 'hasValidDocxStructure', [$fakeDocx]) === false, 'ZIP generico nao deve passar como DOCX.');
+unlink($fakeDocx);
+
+if (class_exists(ZipArchive::class)) {
+    $validDocx = tempnam(sys_get_temp_dir(), 'docx_');
+    $zip = new ZipArchive();
+    $zip->open($validDocx, ZipArchive::OVERWRITE);
+    $zip->addFromString('[Content_Types].xml', '<Types></Types>');
+    $zip->addFromString('_rels/.rels', '<Relationships></Relationships>');
+    $zip->addFromString('word/document.xml', '<w:document></w:document>');
+    $zip->close();
+    assertTrue(callPrivate($caseController, 'hasValidDocxStructure', [$validDocx]) === true, 'DOCX com estrutura minima deve ser aceito.');
+    unlink($validDocx);
+}
 
 $privateRoot = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-private-' . bin2hex(random_bytes(4));
 mkdir($privateRoot . DIRECTORY_SEPARATOR . '7', 0777, true);

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
@@ -711,9 +711,9 @@ class AuthController extends BaseController
             $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Envie uma imagem JPG, PNG ou WebP.'));
         }
 
-        $projectRoot = dirname(__DIR__, 3);
-        $relativeDir = 'backend/storage/profile_photos';
-        $targetDir = $projectRoot . '/' . $relativeDir;
+        $storage = $this->profilePhotoStorage();
+        $relativeDir = $storage['relative_dir'];
+        $targetDir = $storage['target_dir'];
         if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
             throw new RuntimeException('Não foi possível criar a pasta de fotos de perfil.');
         }
@@ -734,13 +734,55 @@ class AuthController extends BaseController
             return;
         }
 
+        $storage = $this->profilePhotoStorage();
         $projectRoot = dirname(__DIR__, 3);
-        $baseDir = realpath($projectRoot . '/backend/storage/profile_photos');
+        $baseDir = realpath($storage['target_dir']);
         $oldPath = realpath($projectRoot . '/' . ltrim($oldPhoto, '/'));
 
         if ($baseDir && $oldPath && str_starts_with($oldPath, $baseDir) && is_file($oldPath)) {
             @unlink($oldPath);
         }
+    }
+
+    private function profilePhotoStorage(): array
+    {
+        $projectRoot = dirname(__DIR__, 3);
+        $configuredPath = trim((string) getenv('PROFILE_PHOTO_STORAGE_PATH'));
+        if ($configuredPath === '' && function_exists('database_env_values')) {
+            $env = database_env_values($projectRoot . '/backend/.env');
+            $configuredPath = trim((string) ($env['PROFILE_PHOTO_STORAGE_PATH'] ?? ''));
+        }
+
+        $configuredPath = $configuredPath !== '' ? $configuredPath : 'backend/storage/profile_photos';
+        $normalizedPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $configuredPath);
+        $targetDir = $this->isAbsolutePath($normalizedPath)
+            ? $normalizedPath
+            : $projectRoot . DIRECTORY_SEPARATOR . ltrim($normalizedPath, DIRECTORY_SEPARATOR);
+
+        $projectReal = realpath($projectRoot);
+        $targetParent = realpath(dirname($targetDir)) ?: dirname($targetDir);
+        $targetComparable = $targetParent . DIRECTORY_SEPARATOR . basename($targetDir);
+
+        if ($projectReal && !str_starts_with($targetComparable, $projectReal . DIRECTORY_SEPARATOR)) {
+            throw new RuntimeException('PROFILE_PHOTO_STORAGE_PATH precisa apontar para uma pasta dentro do projeto.');
+        }
+
+        $relativeDir = trim(str_replace(DIRECTORY_SEPARATOR, '/', substr($targetComparable, strlen((string) $projectReal))), '/');
+        if ($relativeDir === '') {
+            throw new RuntimeException('PROFILE_PHOTO_STORAGE_PATH invalido para fotos de perfil.');
+        }
+
+        return [
+            'target_dir' => $targetDir,
+            'relative_dir' => $relativeDir,
+        ];
+    }
+
+    private function isAbsolutePath(string $path): bool
+    {
+        return preg_match('/^[A-Za-z]:[\\\\\\/]/', $path) === 1
+            || str_starts_with($path, DIRECTORY_SEPARATOR)
+            || str_starts_with($path, '\\\\');
     }
 
     public function resetPassword(): void
@@ -781,11 +823,11 @@ class AuthController extends BaseController
              WHERE pr.email = ?
              AND u.status = 'ativo'
              AND pr.used_at IS NULL
-             AND pr.expires_at >= NOW()
+             AND pr.expires_at >= ?
              ORDER BY pr.created_at DESC
              LIMIT 1"
         );
-        $stmt->execute([$email]);
+        $stmt->execute([$email, date('Y-m-d H:i:s')]);
         $reset = $stmt->fetch();
 
         if (!$reset) {
@@ -806,8 +848,8 @@ class AuthController extends BaseController
         try {
             $this->updateUserPassword((int) $reset['user_id'], $senha);
 
-            $stmt = $this->pdo->prepare('UPDATE password_reset_codes SET used_at = NOW() WHERE id = ?');
-            $stmt->execute([(int) $reset['reset_id']]);
+            $stmt = $this->pdo->prepare('UPDATE password_reset_codes SET used_at = ? WHERE id = ?');
+            $stmt->execute([date('Y-m-d H:i:s'), (int) $reset['reset_id']]);
 
             $this->pdo->commit();
         } catch (Throwable $e) {
@@ -887,11 +929,11 @@ class AuthController extends BaseController
              WHERE pr.user_id = ?
              AND u.status = 'ativo'
              AND pr.used_at IS NULL
-             AND pr.expires_at >= NOW()
+             AND pr.expires_at >= ?
              ORDER BY pr.created_at DESC
              LIMIT 1"
         );
-        $stmt->execute([(int) $_SESSION['id']]);
+        $stmt->execute([(int) $_SESSION['id'], date('Y-m-d H:i:s')]);
         $reset = $stmt->fetch();
 
         if (!$reset) {
@@ -915,8 +957,8 @@ class AuthController extends BaseController
         try {
             $this->updateUserPassword((int) $reset['user_id'], $senha);
 
-            $stmt = $this->pdo->prepare('UPDATE password_reset_codes SET used_at = NOW() WHERE id = ?');
-            $stmt->execute([(int) $reset['reset_id']]);
+            $stmt = $this->pdo->prepare('UPDATE password_reset_codes SET used_at = ? WHERE id = ?');
+            $stmt->execute([date('Y-m-d H:i:s'), (int) $reset['reset_id']]);
 
             $this->pdo->commit();
         } catch (Throwable $e) {
@@ -960,13 +1002,16 @@ class AuthController extends BaseController
         $code = (string) random_int(100000, 999999);
         $email = (string) $user['email'];
 
-        $stmt = $this->pdo->prepare('UPDATE password_reset_codes SET used_at = NOW() WHERE user_id = ? AND used_at IS NULL');
-        $stmt->execute([(int) $user['id']]);
+        $now = date('Y-m-d H:i:s');
+        $expiresAt = date('Y-m-d H:i:s', time() + 900);
+
+        $stmt = $this->pdo->prepare('UPDATE password_reset_codes SET used_at = ? WHERE user_id = ? AND used_at IS NULL');
+        $stmt->execute([$now, (int) $user['id']]);
 
         $stmt = $this->pdo->prepare(
-            'INSERT INTO password_reset_codes (user_id, email, code_hash, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE))'
+            'INSERT INTO password_reset_codes (user_id, email, code_hash, expires_at) VALUES (?, ?, ?, ?)'
         );
-        $stmt->execute([(int) $user['id'], $email, password_hash($code, PASSWORD_DEFAULT)]);
+        $stmt->execute([(int) $user['id'], $email, password_hash($code, PASSWORD_DEFAULT), $expiresAt]);
 
         return $this->sendPasswordResetEmail($email, (string) $user['nome'], $code);
     }

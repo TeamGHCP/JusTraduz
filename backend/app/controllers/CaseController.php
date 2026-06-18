@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
@@ -465,6 +465,15 @@ class CaseController extends BaseController
             $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Formato de anexo não permitido.')));
         }
 
+        if ($extension === 'docx' && !$this->hasValidDocxStructure($tmpName)) {
+            $this->audit->log('message.attachment_blocked', 'case', $caseId, [
+                'sender_id' => $userId,
+                'attachment_name' => $originalName,
+                'reason' => 'DOCX sem estrutura interna obrigatoria.',
+            ]);
+            $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Arquivo DOCX inválido ou corrompido.')));
+        }
+
         $scanner = new UploadScannerService();
         if (!$scanner->scan($tmpName, $originalName, $mime)) {
             $this->audit->log('message.attachment_blocked', 'case', $caseId, [
@@ -498,6 +507,34 @@ class CaseController extends BaseController
     private function messageAttachmentPath(array $message): ?string
     {
         return $this->storage->attachmentPathFromReference((string) ($message['attachment_path'] ?? ''));
+    }
+
+    private function hasValidDocxStructure(string $path): bool
+    {
+        if (!class_exists(ZipArchive::class) || !is_readable($path)) {
+            return false;
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($path) !== true) {
+            return false;
+        }
+
+        $requiredEntries = [
+            '[Content_Types].xml',
+            '_rels/.rels',
+            'word/document.xml',
+        ];
+
+        foreach ($requiredEntries as $entry) {
+            if ($zip->locateName($entry) === false) {
+                $zip->close();
+                return false;
+            }
+        }
+
+        $zip->close();
+        return true;
     }
 
     private function safeAttachmentName(string $filename): string
