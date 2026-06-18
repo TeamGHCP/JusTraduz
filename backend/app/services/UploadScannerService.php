@@ -14,13 +14,13 @@ class UploadScannerService
         $this->lastError = null;
 
         if (!is_readable($path)) {
-            $this->lastError = 'Arquivo temporario indisponivel para varredura.';
+            $this->lastError = 'Arquivo temporário indisponível para varredura.';
             return false;
         }
 
         $handle = @fopen($path, 'rb');
         if ($handle === false) {
-            $this->lastError = 'Nao foi possivel ler o arquivo para varredura.';
+            $this->lastError = 'Não foi possível ler o arquivo para varredura.';
             return false;
         }
         $sample = (string) fread($handle, 1024 * 1024);
@@ -40,12 +40,12 @@ class UploadScannerService
         }
 
         if (preg_match('/<\?(php|=)|<script\b|eval\s*\(|base64_decode\s*\(/i', $sample) === 1) {
-            $this->lastError = 'Arquivo contem conteudo executavel ou script.';
+            $this->lastError = 'Arquivo contém conteúdo executável ou script.';
             return true;
         }
 
         if (preg_match('/\.(php|phtml|phar|cgi|exe|bat|cmd|sh|js)$/i', $originalName) === 1) {
-            $this->lastError = 'Extensao de arquivo nao permitida.';
+            $this->lastError = 'Extensão de arquivo não permitida.';
             return true;
         }
 

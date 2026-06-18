@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 
@@ -150,14 +150,21 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
+  <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
     <?php render_sidebar($type, 'chat.php'); ?>
 
     <main class="app-main chat-main">
-      <?php render_topbar('Chat por caso', 'Conversa vinculada a uma solicitacao, documento e proximas acoes.', current_user_name()); ?>
+      <?php render_topbar('Chat por caso', 'Conversa vinculada a uma solicitação, documento e próximas ações.', current_user_name()); ?>
 
       <?php if ($successMessage !== ''): ?>
         <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
@@ -167,7 +174,7 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
       <?php endif; ?>
 
       <?php if (!$cases): ?>
-        <?= empty_state($type === 'cliente' ? 'Nenhum chat disponível. Abra uma solicitacao para iniciar o atendimento.' : 'Nenhum caso aceito para conversar no momento.') ?>
+        <?= empty_state($type === 'cliente' ? 'Nenhum chat disponível. Abra uma solicitação para iniciar o atendimento.' : 'Nenhum caso aceito para conversar no momento.') ?>
       <?php else: ?>
         <section class="chat-layout">
           <aside class="chat-list">
@@ -199,7 +206,7 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
                       <span class="badge <?= e(chat_priority_badge_class((string) $selectedCase['prioridade'])) ?>"><?= e((string) $selectedCase['prioridade']) ?></span>
                     </div>
                     <h2><?= e($selectedCase['titulo']) ?></h2>
-                    <p><?= e($selectedCase['descricao'] ?: 'Sem descricao cadastrada.') ?></p>
+                    <p><?= e($selectedCase['descricao'] ?: 'Sem descrição cadastrada.') ?></p>
                   </div>
                   <div class="chat-context-actions">
                     <a class="btn btn-outline btn-sm" href="acompanhar-solicitacoes.php"><?= icon_svg('case') ?> Casos</a>
@@ -289,7 +296,7 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
               <?php else: ?>
                 <div class="chat-compose chat-compose-locked">
                   <span class="badge badge-success">Caso finalizado</span>
-                  <p>Novas mensagens estao bloqueadas para manter o histórico encerrado.</p>
+                  <p>Novas mensagens estão bloqueadas para manter o histórico encerrado.</p>
                 </div>
               <?php endif; ?>
             <?php endif; ?>
