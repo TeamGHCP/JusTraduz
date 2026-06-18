@@ -1,20 +1,110 @@
 {
+  "id": "./",
   "name": "JusTraduz",
   "short_name": "JusTraduz",
-  "start_url": "./index.html",
+  "description": "Plataforma para entender documentos jur\u00eddicos em linguagem simples e acompanhar atendimento.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./index.html?source=pwa",
+  "scope": "./",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
+  "orientation": "portrait-primary",
   "background_color": "#f7fcfc",
   "theme_color": "#008f80",
+  "categories": [
+    "productivity",
+    "business",
+    "utilities"
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "icons": [
     {
       "src": "assets/img/app-icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "assets/img/app-icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/app-icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "assets/img/app-icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "assets/img/pwa-screenshot-mobile.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "JusTraduz no celular"
+    },
+    {
+      "src": "assets/img/pwa-screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Painel JusTraduz instal\u00e1vel"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Entrar",
+      "short_name": "Entrar",
+      "description": "Acessar sua conta JusTraduz.",
+      "url": "./login.html?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "assets/img/app-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Solicitar ajuda",
+      "short_name": "Ajuda",
+      "description": "Abrir o fluxo de solicita\u00e7\u00e3o de ajuda.",
+      "url": "./pages/app/solicitar-ajuda.php?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "assets/img/app-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Meus documentos",
+      "short_name": "Documentos",
+      "description": "\u00c1rea de documentos.",
+      "url": "./pages/app/visualizar-documento.php?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "assets/img/app-icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

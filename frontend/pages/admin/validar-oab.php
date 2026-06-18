@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_role(['admin']);
 
@@ -11,9 +11,9 @@ function admin_oab_validation_clipboard_text(array $professional): string
 {
     return implode("\n", [
         'Nome: ' . (string) ($professional['nome'] ?? ''),
-        'Numero da inscricao: ' . (string) ($professional['oab'] ?? ''),
+        'Numero da inscrição: ' . (string) ($professional['oab'] ?? ''),
         'Seccional/UF: ' . (string) ($professional['oab_uf'] ?? ''),
-        'Tipo de inscricao: ' . admin_oab_validation_type_label((string) ($professional['tipo'] ?? '')),
+        'Tipo de inscrição: ' . admin_oab_validation_type_label((string) ($professional['tipo'] ?? '')),
     ]);
 }
 
@@ -30,7 +30,7 @@ function admin_oab_status_label(string $status): string
 {
     return match ($status) {
         'verificado' => 'Validado',
-        'invalido' => 'Invalido',
+        'invalido' => 'Inválido',
         'nao_encontrado' => 'Não encontrado',
         default => 'Pendente',
     };
@@ -98,7 +98,14 @@ $recentReviews = fetch_all(
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
   <link rel="manifest" href="../site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="../assets/css/style.css?v=sidebar-open-button-1">
+  <script src="../assets/js/pwa.js" defer></script>
 </head>
 <body>
   <div class="app-shell admin-shell">
@@ -128,8 +135,8 @@ $recentReviews = fetch_all(
         </article>
         <article>
           <?= icon_svg('check') ?>
-          <strong>2. Decidir com evidência</strong>
-          <span>Aprove apenas quando a inscricao estiver ativa e compatível com nome, UF e tipo.</span>
+          <strong>2. Decidir com evid?ncia</strong>
+          <span>Aprove apenas quando a inscrição estiver ativa e compatível com nome, UF e tipo.</span>
         </article>
         <article>
           <?= icon_svg('lock') ?>

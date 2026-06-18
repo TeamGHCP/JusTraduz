@@ -3856,13 +3856,11 @@ body.has-modal-open {
 }
 
 .home-feature-grid-interactive .feature-card.reveal-on-scroll,
-.testimonial-card.reveal-on-scroll,
 .flow-step.reveal-on-scroll {
   transform: translateY(30px) scale(.985);
 }
 
 .home-feature-grid-interactive .feature-card.reveal-on-scroll.is-visible,
-.testimonial-card.reveal-on-scroll.is-visible,
 .flow-step.reveal-on-scroll.is-visible {
   transform: translateY(0) scale(1);
 }

@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
   const calendarEl = document.getElementById("calendar");
   if (!calendarEl) return;
 
@@ -159,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `);
       });
 
-    daySlotsContent.innerHTML = rows.length ? rows.join("") : '<p class="text-muted">Nenhum horario neste dia.</p>';
+    daySlotsContent.innerHTML = rows.length ? rows.join("") : '<p class="text-muted">Nenhum horário neste dia.</p>';
     daySlotsContent.querySelectorAll("[data-scroll-slot]").forEach((button) => {
       button.addEventListener("click", () => {
         hideDayModal();
@@ -343,7 +343,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("slot-starts").value = "09:00";
     document.getElementById("slot-ends").value = "10:00";
     document.getElementById("slot-status").value = "livre";
-    if (slotModalTitle) slotModalTitle.textContent = "Novo horario";
+    if (slotModalTitle) slotModalTitle.textContent = "Novo horário";
     showSlotModal();
   }
 
@@ -364,7 +364,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("slot-ends").value = `${String(ends.getHours()).padStart(2, "0")}:${String(ends.getMinutes()).padStart(2, "0")}`;
     document.getElementById("slot-title").value = slot.titulo || "";
     document.getElementById("slot-status").value = slot.status === "livre" ? "livre" : "bloqueado";
-    if (slotModalTitle) slotModalTitle.textContent = "Editar horario";
+    if (slotModalTitle) slotModalTitle.textContent = "Editar horário";
     showSlotModal();
   }
 
@@ -405,7 +405,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const data = await response.json();
       if (!response.ok || !data.success) {
-        showModalAlert(data.error || "Nao foi possivel salvar horario.", "error");
+        showModalAlert(data.error || "Não foi possível salvar horário.", "error");
         return;
       }
       showModalAlert("Horario salvo.", "success");
@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", () => {
         render();
       }, 500);
     } catch (error) {
-      showModalAlert("Falha ao salvar horario.", "error");
+      showModalAlert("Falha ao salvar horário.", "error");
     }
   });
 

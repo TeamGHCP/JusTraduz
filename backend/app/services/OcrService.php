@@ -14,7 +14,7 @@ class OcrService
         $this->lastError = null;
 
         if (!$this->enabled()) {
-            $this->lastError = 'OCR nao configurado.';
+            $this->lastError = 'OCR não configurado.';
             return '';
         }
 
@@ -22,7 +22,7 @@ class OcrService
         $language = $this->envValue('OCR_LANGUAGE') ?: 'por+eng';
         $tmpBase = tempnam(sys_get_temp_dir(), 'justraduz_ocr_');
         if ($tmpBase === false) {
-            $this->lastError = 'Nao foi possivel criar arquivo temporario para OCR.';
+            $this->lastError = 'Não foi possível criar arquivo temporário para OCR.';
             return '';
         }
 
@@ -48,7 +48,7 @@ class OcrService
     public function fallbackMessage(string $mime): string
     {
         if ($this->enabled()) {
-            return 'OCR nao conseguiu extrair texto legivel deste arquivo. A qualidade da imagem ou PDF pode estar baixa.';
+            return 'OCR não conseguiu extrair texto legível deste arquivo. A qualidade da imagem ou PDF pode estar baixa.';
         }
 
         return 'Este arquivo pode estar escaneado como imagem. Configure OCR_TESSERACT_BINARY e OCR_ENABLED=true para extrair texto automaticamente.';

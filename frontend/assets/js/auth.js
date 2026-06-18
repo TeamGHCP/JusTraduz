@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
   const frontendMarker = "/frontend/";
   const frontendIndex = window.location.pathname.indexOf(frontendMarker);
   const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";
@@ -477,7 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const token = await ensureCsrfToken();
         if (!token) {
-          showFormMessage(form, "Nao foi possivel preparar a seguranca do formulario. Recarregue a pagina.");
+          showFormMessage(form, "Não foi possível preparar a segurança do formulário. Recarregue a página.");
           setButtonLoading(submitButton, false);
           return;
         }
@@ -492,7 +492,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         HTMLFormElement.prototype.submit.call(form);
       } catch (e) {
-        showFormMessage(form, "Nao foi possivel enviar agora. Tente novamente.");
+        showFormMessage(form, "Não foi possível enviar agora. Tente novamente.");
         setButtonLoading(submitButton, false);
       }
     });
