@@ -16,9 +16,122 @@
   <meta name="msapplication-TileColor" content="#008f80">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=leaf-png-lines-1">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css?v=flow-pill-timeline-smooth-1">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
+  <style>
+    @media (max-width: 980px) {
+      .home-page .home-hero {
+        min-height: auto !important;
+        padding: 42px 0 48px !important;
+        overflow: hidden !important;
+      }
+
+      .home-page .home-hero-grid {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      .home-page .home-hero-copy {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 16px 0 24px !important;
+        text-align: center !important;
+      }
+
+      .home-page .home-hero h1 {
+        max-width: min(100%, 620px) !important;
+        margin: 0 auto 22px !important;
+        line-height: .98 !important;
+      }
+
+      .home-page .home-hero h1 .hero-title-typewriter-line {
+        display: flex !important;
+        align-items: baseline !important;
+        justify-content: center !important;
+        gap: .32em !important;
+        min-height: auto !important;
+        white-space: normal !important;
+      }
+
+      .home-page .home-hero h1 .hero-typewriter {
+        display: inline-grid !important;
+        min-width: min(16ch, 100%) !important;
+        max-width: 100% !important;
+        text-align: left !important;
+        white-space: nowrap !important;
+      }
+
+      .home-page .home-hero-copy > p {
+        max-width: min(100%, 560px) !important;
+        margin: 0 auto 24px !important;
+      }
+
+      .home-page .home-hero .hero-actions {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        gap: 14px !important;
+        width: 100% !important;
+      }
+
+      .home-page .home-trust-row {
+        justify-content: center !important;
+      }
+
+      .home-page .home-hero-visual,
+      .home-page .hero-phone-wrap,
+      .home-page .iphone-mockup {
+        display: none !important;
+        min-height: 0 !important;
+        height: 0 !important;
+        max-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .home-page .home-hero {
+        padding: 30px 0 40px !important;
+      }
+
+      .home-page .home-hero h1 {
+        max-width: 360px !important;
+        font-size: clamp(34px, 12.2vw, 50px) !important;
+      }
+
+      .home-page .home-hero h1 .hero-title-typewriter-line {
+        display: grid !important;
+        justify-items: center !important;
+        gap: 0 !important;
+      }
+
+      .home-page .home-hero h1 .hero-typewriter {
+        display: block !important;
+        min-width: 0 !important;
+        text-align: center !important;
+        white-space: normal !important;
+      }
+
+      .home-page .home-hero h1 .hero-typewriter-reserve {
+        display: none !important;
+      }
+
+      .home-page .home-hero .hero-actions {
+        display: grid !important;
+        justify-items: center !important;
+      }
+
+      .home-page .home-flow-button,
+      .home-page .home-btn-outline {
+        width: min(100%, 320px) !important;
+      }
+    }
+  </style>
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body class="home-page">
@@ -175,28 +288,60 @@
             </div>
 
             <div class="home-flow-experience" data-flow-scene>
-              <div class="home-flow-timeline" data-flow-progress-timeline aria-label="Progresso do fluxo JusTraduz">
+              <div class="home-flow-timeline home-flow-pill-timeline" data-flow-progress-timeline aria-label="Progresso do fluxo JusTraduz">
                 <div class="home-flow-timeline-track" aria-hidden="true">
                   <span data-flow-timeline-fill></span>
                 </div>
 
                 <button class="home-flow-timeline-step is-active" type="button" data-timeline-step="0" aria-label="Etapa 01: Envie seu documento" aria-current="step">
-                  <strong>01</strong>
+                  <span class="home-flow-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M12 16V4"></path>
+                      <path d="m7 9 5-5 5 5"></path>
+                      <path d="M5 16v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"></path>
+                    </svg>
+                  </span>
                   <small>Envie seu documento</small>
                 </button>
 
+                <span class="home-flow-timeline-chevron" aria-hidden="true">&gt;</span>
+
                 <button class="home-flow-timeline-step" type="button" data-timeline-step="1" aria-label="Etapa 02: Entenda em segundos">
-                  <strong>02</strong>
+                  <span class="home-flow-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M4 6.5c2.6-1.1 5.1-1.1 8 0v13c-2.9-1.1-5.4-1.1-8 0z"></path>
+                      <path d="M12 6.5c2.9-1.1 5.4-1.1 8 0v13c-2.6-1.1-5.1-1.1-8 0z"></path>
+                      <path d="M12 6.5v13"></path>
+                    </svg>
+                  </span>
                   <small>Entenda em segundos</small>
                 </button>
 
+                <span class="home-flow-timeline-chevron" aria-hidden="true">&gt;</span>
+
                 <button class="home-flow-timeline-step" type="button" data-timeline-step="2" aria-label="Etapa 03: Peça o que precisa">
-                  <strong>03</strong>
+                  <span class="home-flow-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M9 5h6"></path>
+                      <path d="M9 4.5A2.5 2.5 0 0 0 6.5 7v12A1.5 1.5 0 0 0 8 20.5h8A1.5 1.5 0 0 0 17.5 19V7A2.5 2.5 0 0 0 15 4.5"></path>
+                      <path d="M9 11h6"></path>
+                      <path d="M9 15h4"></path>
+                    </svg>
+                  </span>
                   <small>Peça o que precisa</small>
                 </button>
 
+                <span class="home-flow-timeline-chevron" aria-hidden="true">&gt;</span>
+
                 <button class="home-flow-timeline-step" type="button" data-timeline-step="3" aria-label="Etapa 04: Acompanhe tudo">
-                  <strong>04</strong>
+                  <span class="home-flow-step-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <path d="M4 19V5"></path>
+                      <path d="M4 19h16"></path>
+                      <path d="m7 15 4-4 3 3 5-7"></path>
+                      <path d="M16 7h3v3"></path>
+                    </svg>
+                  </span>
                   <small>Acompanhe tudo</small>
                 </button>
               </div>
@@ -362,123 +507,28 @@
           </div>
         </div>
       </div>
-    </section>
 
-    <section id="fluxo" class="page-section section-white ai-document-section" data-ai-document-insights>
-      <div class="container">
-        <div class="section-head ai-document-head">
-          <span class="ai-document-eyebrow">An&aacute;lise por IA</span>
-          <h2>Veja o que a IA identifica no seu documento</h2>
-          <p>Nossa IA destaca riscos, prazos e pontos importantes para transformar juridiqu&ecirc;s em informa&ccedil;&atilde;o clara.</p>
-        </div>
-
-        <div class="ai-document-showcase">
-          <button class="ai-showcase-menu" type="button" aria-label="Mais op&ccedil;&otilde;es da demonstra&ccedil;&atilde;o">
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-          </button>
-
-          <article class="ai-document-mockup" aria-label="Contrato com cl&aacute;usulas destacadas">
-            <header class="ai-document-toolbar">
-              <img class="ai-pdf-badge" src="assets/img/pdf-file-icon.png" alt="" aria-hidden="true">
-              <span class="ai-window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-              <div>
-                <strong>Contrato_de_Locacao.pdf</strong>
-                <span>Analisado pelo JusTraduz</span>
-              </div>
-              <span class="ai-analysis-status">An&aacute;lise conclu&iacute;da</span>
-            </header>
-
-            <div class="ai-document-body">
-              <aside class="ai-document-pages" aria-hidden="true">
-                <span class="is-active"></span>
-                <span></span>
-                <span></span>
-              </aside>
-
-              <div class="ai-contract-page">
-                <span class="ai-contract-label">Contrato de loca&ccedil;&atilde;o</span>
-                <h3>Contrato de loca&ccedil;&atilde;o de im&oacute;vel</h3>
-                <p>Pelo presente instrumento, as partes qualificadas celebram este contrato mediante as cl&aacute;usulas e condi&ccedil;&otilde;es a seguir.</p>
-
-                <button class="ai-clause ai-clause-risk" type="button" data-clause="risk">
-                  <strong>Cl&aacute;usula 4 - Multa por atraso</strong>
-                  <span>O atraso no pagamento acarretar&aacute; multa de 30% sobre o valor devido.</span>
-                </button>
-
-                <button class="ai-clause ai-clause-deadline" type="button" data-clause="deadline">
-                  <strong>Cl&aacute;usula 6 - Prazo do contrato</strong>
-                  <span>O prazo de loca&ccedil;&atilde;o ser&aacute; de 12 meses, contados da assinatura.</span>
-                </button>
-
-                <button class="ai-clause ai-clause-renewal" type="button" data-clause="renewal">
-                  <strong>Cl&aacute;usula 8 - Renova&ccedil;&atilde;o autom&aacute;tica</strong>
-                  <span>A loca&ccedil;&atilde;o ser&aacute; renovada automaticamente se n&atilde;o houver aviso pr&eacute;vio.</span>
-                </button>
-              </div>
-            </div>
-          </article>
-
-          <svg class="ai-connection-lines" viewBox="0 0 1000 620" aria-hidden="true" focusable="false">
-            <path class="ai-line ai-line-risk" data-line="risk" d="M477 235 C570 235 568 104 662 104" pathLength="1" fill="none" />
-            <path class="ai-line ai-line-deadline" data-line="deadline" d="M477 335 C578 335 565 228 662 228" pathLength="1" fill="none" />
-            <path class="ai-line ai-line-renewal" data-line="renewal" d="M477 435 C582 435 560 354 662 354" pathLength="1" fill="none" />
-          </svg>
-
-          <aside class="ai-findings-panel" aria-label="O que a IA encontrou">
-            <h3>O que a IA encontrou</h3>
-
-            <article class="ai-finding-card ai-finding-risk" data-insight-card data-insight-target="risk" tabindex="0">
-              <span class="ai-finding-icon" aria-hidden="true">!</span>
-              <div>
-                <h4>Riscos identificados</h4>
-                <p>Multa de 30% por atraso no pagamento pode gerar custo elevado.</p>
-              </div>
-            </article>
-
-            <article class="ai-finding-card ai-finding-deadline" data-insight-card data-insight-target="deadline" tabindex="0">
-              <span class="ai-finding-icon" aria-hidden="true">12</span>
-              <div>
-                <h4>Prazos importantes</h4>
-                <p>Contrato v&aacute;lido por 12 meses a partir da assinatura.</p>
-              </div>
-            </article>
-
-            <article class="ai-finding-card ai-finding-renewal" data-insight-card data-insight-target="renewal" tabindex="0">
-              <span class="ai-finding-icon" aria-hidden="true">R</span>
-              <div>
-                <h4>Renova&ccedil;&atilde;o autom&aacute;tica</h4>
-                <p>Renova&ccedil;&atilde;o por prazo indeterminado se n&atilde;o houver aviso pr&eacute;vio.</p>
-              </div>
-            </article>
-
-            <article class="ai-finding-card ai-finding-summary" data-insight-card>
-              <span class="ai-finding-icon" aria-hidden="true">?</span>
-              <div>
-                <h4>Resumo simplificado</h4>
-                <p>Explica&ccedil;&atilde;o em linguagem simples sobre o que o contrato significa.</p>
-              </div>
-            </article>
-
-            <article class="ai-finding-card ai-finding-next" data-insight-card>
-              <span class="ai-finding-icon" aria-hidden="true">+</span>
-              <div>
-                <h4>Pr&oacute;ximos passos sugeridos</h4>
-                <p>Recomenda&ccedil;&otilde;es para agir com seguran&ccedil;a antes de assinar.</p>
-              </div>
-            </article>
-
-            <article class="ai-confidence-card">
-              <div>
-                <h4>Confian&ccedil;a da an&aacute;lise</h4>
-                <p>Alta precis&atilde;o identificada</p>
-              </div>
-              <strong>92%</strong>
-              <span aria-hidden="true"><i style="width: 92%"></i></span>
-            </article>
-          </aside>
-        </div>
+      <div class="container home-flow-compact" aria-label="Resumo do fluxo JusTraduz">
+        <article class="home-flow-compact-card">
+          <strong>01</strong>
+          <h3>Envie</h3>
+          <p>Suba PDF ou imagem com consentimento claro e proteção dos dados.</p>
+        </article>
+        <article class="home-flow-compact-card">
+          <strong>02</strong>
+          <h3>Entenda</h3>
+          <p>A IA resume pontos importantes e traduz juridiquês para linguagem simples.</p>
+        </article>
+        <article class="home-flow-compact-card">
+          <strong>03</strong>
+          <h3>Solicite</h3>
+          <p>Sua dúvida vira uma solicitação organizada, com contexto para atendimento.</p>
+        </article>
+        <article class="home-flow-compact-card">
+          <strong>04</strong>
+          <h3>Acompanhe</h3>
+          <p>Chat, agenda, status e histórico ficam juntos até a resolução.</p>
+        </article>
       </div>
     </section>
 
@@ -811,7 +861,7 @@
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=leaf-png-lines-1"></script>
+  <script src="assets/js/main.js?v=flow-pill-timeline-smooth-1"></script>
   <script src="assets/js/chatbot.js?v=2026.06.18-02"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>

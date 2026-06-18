@@ -78,7 +78,8 @@
     const panels = Array.from(flow.querySelectorAll("[data-flow-panel]"));
     const timeline = flow.querySelector("[data-flow-progress-timeline]");
     const timelineSteps = Array.from(flow.querySelectorAll("[data-timeline-step]"));
-    const desktopQuery = window.matchMedia("(min-width: 861px)");
+    const timelineChevrons = timeline ? Array.from(timeline.querySelectorAll(".home-flow-timeline-chevron")) : [];
+    const desktopQuery = window.matchMedia("(min-width: 981px)");
 
     if (panels.length === 0) {
       return;
@@ -86,7 +87,9 @@
 
     let activeIndex = 0;
     let currentProgress = 0;
+    let targetProgress = 0;
     let frameRequested = false;
+    let smoothFrameRequested = false;
     let isFlowVisible = false;
     let geometryDirty = true;
     let exitTimer = 0;
@@ -103,18 +106,47 @@
 
     const getScrollProgressForStep = (index) => index / panels.length;
 
-    const setTimelineProgress = (progress) => {
-      const nextProgress = clamp(progress, 0, 1);
-
-      if (Math.abs(nextProgress - currentProgress) < 0.003) {
-        return;
-      }
-
-      currentProgress = nextProgress;
+    const renderTimelineProgress = (progress) => {
+      currentProgress = clamp(progress, 0, 1);
       const percent = `${(currentProgress * 100).toFixed(2)}%`;
+      const scale = currentProgress.toFixed(4);
 
       flow.style.setProperty("--flow-scroll-progress", currentProgress.toFixed(4));
       timeline?.style.setProperty("--timeline-progress", percent);
+      timeline?.style.setProperty("--timeline-progress-scale", scale);
+    };
+
+    const animateTimelineProgress = () => {
+      smoothFrameRequested = false;
+
+      const distance = targetProgress - currentProgress;
+
+      if (Math.abs(distance) < 0.0015) {
+        renderTimelineProgress(targetProgress);
+        updateTimelineSteps();
+        return;
+      }
+
+      renderTimelineProgress(currentProgress + (distance * 0.14));
+      updateTimelineSteps();
+
+      smoothFrameRequested = true;
+      window.requestAnimationFrame(animateTimelineProgress);
+    };
+
+    const setTimelineProgress = (progress, options = {}) => {
+      targetProgress = clamp(progress, 0, 1);
+
+      if (options.instant || prefersReducedMotion) {
+        renderTimelineProgress(targetProgress);
+        updateTimelineSteps();
+        return;
+      }
+
+      if (!smoothFrameRequested) {
+        smoothFrameRequested = true;
+        window.requestAnimationFrame(animateTimelineProgress);
+      }
     };
 
     const updateTimelineGeometry = () => {
@@ -124,8 +156,8 @@
         return;
       }
 
-      const firstMarker = timelineSteps[0].querySelector("strong");
-      const lastMarker = timelineSteps[timelineSteps.length - 1].querySelector("strong");
+      const firstMarker = timelineSteps[0].querySelector(".home-flow-step-icon");
+      const lastMarker = timelineSteps[timelineSteps.length - 1].querySelector(".home-flow-step-icon");
 
       if (!firstMarker || !lastMarker) {
         return;
@@ -159,11 +191,21 @@
     const updateTimelineSteps = () => {
       timelineSteps.forEach((step, stepIndex) => {
         const isActive = stepIndex === activeIndex;
-        const isComplete = getLineProgressForStep(stepIndex) <= currentProgress + 0.002;
+        const stepProgress = getLineProgressForStep(stepIndex);
+        const isComplete = stepProgress <= currentProgress + 0.002;
+        const isDiscovered = stepProgress <= currentProgress + 0.045;
 
         step.classList.toggle("is-active", isActive);
         step.classList.toggle("is-complete", isComplete);
+        step.classList.toggle("is-discovered", isDiscovered);
         step.setAttribute("aria-current", isActive ? "step" : "false");
+      });
+
+      timelineChevrons.forEach((chevron, chevronIndex) => {
+        const nextStepProgress = getLineProgressForStep(chevronIndex + 1);
+        const isComplete = nextStepProgress <= currentProgress + 0.002;
+
+        chevron.classList.toggle("is-complete", isComplete);
       });
     };
 
@@ -207,12 +249,38 @@
     const getScrollProgress = () => {
       const rect = flow.getBoundingClientRect();
       const scrollable = flow.offsetHeight - window.innerHeight;
+      const revealOffset = Math.min(window.innerHeight * 0.76, window.innerHeight - 150);
 
       if (scrollable <= 0) {
         return 0;
       }
 
-      return clamp((rect.top * -1) / scrollable, 0, 1);
+      return clamp((revealOffset - rect.top) / (scrollable + revealOffset), 0, 1);
+    };
+
+    const getInlineScrollProgress = () => {
+      const rect = flow.getBoundingClientRect();
+      const start = window.innerHeight * 0.82;
+      const end = Math.max(window.innerHeight * 0.26, rect.height * 0.46);
+      const distance = start + rect.height - end;
+
+      if (distance <= 0) {
+        return rect.top <= start ? 1 : 0;
+      }
+
+      return clamp((start - rect.top) / distance, 0, 1);
+    };
+
+    const getActiveIndexFromProgress = (progress) => {
+      let nextIndex = 0;
+
+      for (let index = 0; index < panels.length; index += 1) {
+        if (progress + 0.002 >= getLineProgressForStep(index)) {
+          nextIndex = index;
+        }
+      }
+
+      return nextIndex;
     };
 
     const syncFlowToScroll = () => {
@@ -222,16 +290,9 @@
         updateTimelineGeometry();
       }
 
-      if (!desktopQuery.matches) {
-        flow.classList.add("is-flow-started");
-        setTimelineProgress(0);
-        activateFeature(0, { force: true });
-        return;
-      }
-
       const flowTop = flow.getBoundingClientRect().top;
       const startRevealAt = Math.min(window.innerHeight * 0.76, window.innerHeight - 150);
-      const hasStarted = flowTop <= startRevealAt;
+      const hasStarted = desktopQuery.matches ? flowTop <= startRevealAt : flowTop <= window.innerHeight * 0.86;
       flow.classList.toggle("is-flow-started", hasStarted);
 
       if (!hasStarted) {
@@ -240,17 +301,17 @@
         return;
       }
 
-      const progress = getScrollProgress();
+      const progress = desktopQuery.matches ? getScrollProgress() : getInlineScrollProgress();
       const lineTravelEnd = (panels.length - 1) / panels.length;
-      const lineProgress = clamp(progress / lineTravelEnd, 0, 1);
-      const index = Math.min(panels.length - 1, Math.floor(progress * panels.length));
+      const lineProgress = desktopQuery.matches ? clamp(progress / lineTravelEnd, 0, 1) : progress;
+      const index = getActiveIndexFromProgress(lineProgress);
 
       setTimelineProgress(lineProgress);
       activateFeature(index);
     };
 
     const requestSync = () => {
-      if (frameRequested || (!isFlowVisible && desktopQuery.matches)) {
+      if (frameRequested || !isFlowVisible) {
         return;
       }
 
@@ -261,7 +322,16 @@
     timelineSteps.forEach((step, index) => {
       step.addEventListener("click", () => {
         if (!desktopQuery.matches) {
-          activateFeature(index);
+          const sectionTop = window.scrollY + flow.getBoundingClientRect().top;
+          const targetProgress = getLineProgressForStep(index);
+          const start = window.innerHeight * 0.82;
+          const end = Math.max(window.innerHeight * 0.26, flow.getBoundingClientRect().height * 0.46);
+          const distance = start + flow.offsetHeight - end;
+
+          window.scrollTo({
+            top: sectionTop + (distance * targetProgress) - start,
+            behavior: prefersReducedMotion ? "auto" : "smooth",
+          });
           return;
         }
 
