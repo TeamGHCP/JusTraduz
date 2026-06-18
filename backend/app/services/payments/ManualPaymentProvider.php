@@ -20,7 +20,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
         return 'manual_checkout';
     }
 
-    public function createCheckout(int $userId, int $planId, string $billingCycle): PaymentCheckoutResult
+    public function createCheckout(int $userId, int $planId, string $billingCycle, array $paymentData = []): PaymentCheckoutResult
     {
         if (!$this->subscriptions->changePlan($userId, $planId, $billingCycle, 'active')) {
             return PaymentCheckoutResult::error('Plano invalido.');
@@ -94,6 +94,16 @@ class ManualPaymentProvider implements PaymentProviderInterface
             'status' => $subscription ? (string) $subscription['status'] : 'pending',
             'subscription_id' => $subscription ? (int) $subscription['id'] : null,
             'provider_subscription_id' => $providerSubscriptionId ?: null,
+        ];
+    }
+
+    public function cancelCheckout(int $userId, string $providerSubscriptionId): array
+    {
+        return [
+            'ok' => true,
+            'provider' => $this->name(),
+            'provider_subscription_id' => $providerSubscriptionId ?: null,
+            'remote_canceled' => false,
         ];
     }
 

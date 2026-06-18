@@ -26,7 +26,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         return 'asaas';
     }
 
-    public function createCheckout(int $userId, int $planId, string $billingCycle): PaymentCheckoutResult
+    public function createCheckout(int $userId, int $planId, string $billingCycle, array $paymentData = []): PaymentCheckoutResult
     {
         $this->assertConfigured();
 
@@ -48,17 +48,25 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             ? (int) $plan['yearly_price_cents']
             : (int) $plan['monthly_price_cents'];
 
+        $paymentMethod = $this->normalizePaymentMethod((string) ($paymentData['method'] ?? ''));
+        $billingType = $this->billingTypeForMethod($paymentMethod);
         $customerId = $this->findOrCreateCustomer($user);
         $externalReference = 'justraduz_subscription_' . $userId . '_' . $planId . '_' . $billingCycle;
-        $subscription = $this->request('POST', '/subscriptions', [
+        $payload = [
             'customer' => $customerId,
-            'billingType' => $this->billingType,
+            'billingType' => $billingType,
             'value' => $amount / 100,
             'nextDueDate' => date('Y-m-d'),
             'cycle' => $billingCycle === 'yearly' ? 'YEARLY' : 'MONTHLY',
             'description' => 'JusTraduz - Plano ' . (string) $plan['name'],
             'externalReference' => $externalReference,
-        ]);
+        ];
+
+        if ($paymentMethod === 'credit_card') {
+            $payload = array_merge($payload, $this->creditCardPayload($paymentData, $user));
+        }
+
+        $subscription = $this->request('POST', '/subscriptions', $payload);
 
         $providerSubscriptionId = (string) ($subscription['id'] ?? '');
         if ($providerSubscriptionId === '') {
@@ -78,6 +86,9 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         ], $providerSubscriptionId);
 
         $paymentSource = $firstPayment ?: $subscription;
+        $providerPaymentId = (string) ($firstPayment['id'] ?? '');
+        $pixQrCode = $providerPaymentId !== '' ? $this->pixQrCodeForPayment($providerPaymentId) : [];
+        $bankSlip = $providerPaymentId !== '' ? $this->bankSlipInfoForPayment($providerPaymentId) : [];
         $redirectUrl = $this->checkoutUrlFromResponse($paymentSource);
         if ($redirectUrl === '') {
             $redirectUrl = app_url('/frontend/subir-plano.php?sucesso=' . urlencode('Assinatura criada no Asaas. Aguarde a confirmacao do pagamento.'));
@@ -86,13 +97,18 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         return PaymentCheckoutResult::success($redirectUrl, null, [
             'provider_subscription_id' => $providerSubscriptionId,
             'provider_customer_id' => $customerId,
-            'provider_payment_id' => (string) ($firstPayment['id'] ?? ''),
+            'provider_payment_id' => $providerPaymentId,
             'amount_cents' => $amount,
             'checkout_url' => $redirectUrl,
             'invoice_url' => (string) ($paymentSource['invoiceUrl'] ?? ''),
             'bank_slip_url' => (string) ($paymentSource['bankSlipUrl'] ?? ''),
             'payment_link' => (string) ($paymentSource['paymentLink'] ?? ''),
             'due_date' => (string) ($paymentSource['dueDate'] ?? $subscription['nextDueDate'] ?? ''),
+            'billing_type' => (string) ($paymentSource['billingType'] ?? $billingType),
+            'payment_method' => $paymentMethod,
+            'payment_status' => (string) ($paymentSource['status'] ?? 'PENDING'),
+            'pix_qr_code' => $pixQrCode,
+            'bank_slip' => $bankSlip,
         ]);
     }
 
@@ -258,6 +274,59 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         ];
     }
 
+    public function cancelCheckout(int $userId, string $providerSubscriptionId): array
+    {
+        $this->assertConfigured();
+
+        $providerSubscriptionId = trim($providerSubscriptionId);
+        if ($providerSubscriptionId === '') {
+            return [
+                'ok' => true,
+                'provider' => $this->name(),
+                'provider_subscription_id' => null,
+                'remote_canceled' => false,
+            ];
+        }
+
+        $local = $this->findLocalSubscription($providerSubscriptionId);
+        if ($local && (int) ($local['user_id'] ?? 0) !== $userId) {
+            throw new RuntimeException('Cobrança Asaas não pertence a este usuário.');
+        }
+
+        $pending = $this->pendingEventForProviderSubscription($providerSubscriptionId);
+        if (!$local && (!$pending || (int) ($pending['user_id'] ?? 0) !== $userId)) {
+            throw new RuntimeException('Cobrança Asaas não encontrada para este usuário.');
+        }
+
+        $remoteCanceled = false;
+        if (!$local || (string) ($local['status'] ?? '') !== 'active') {
+            $this->request('DELETE', '/subscriptions/' . rawurlencode($providerSubscriptionId));
+            $remoteCanceled = true;
+        }
+
+        $this->recordPaymentEvent(
+            $local ? (int) $local['id'] : null,
+            $userId,
+            'checkout.canceled',
+            0,
+            'refunded',
+            [
+                'source' => 'frontend/pagamento-plano.php',
+                'provider_subscription_id' => $providerSubscriptionId,
+                'remote_canceled' => $remoteCanceled,
+            ],
+            $providerSubscriptionId
+        );
+
+        return [
+            'ok' => true,
+            'provider' => $this->name(),
+            'subscription_id' => $local ? (int) $local['id'] : null,
+            'provider_subscription_id' => $providerSubscriptionId,
+            'remote_canceled' => $remoteCanceled,
+        ];
+    }
+
     public function ping(): array
     {
         $this->assertConfigured();
@@ -415,6 +484,104 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         }
 
         return is_array($items[0] ?? null) ? $items[0] : [];
+    }
+
+    private function pixQrCodeForPayment(string $providerPaymentId): array
+    {
+        try {
+            $qrCode = $this->request('GET', '/payments/' . rawurlencode($providerPaymentId) . '/pixQrCode');
+        } catch (Throwable) {
+            return [];
+        }
+
+        return [
+            'encoded_image' => (string) ($qrCode['encodedImage'] ?? ''),
+            'payload' => (string) ($qrCode['payload'] ?? ''),
+            'expiration_date' => (string) ($qrCode['expirationDate'] ?? ''),
+        ];
+    }
+
+    private function bankSlipInfoForPayment(string $providerPaymentId): array
+    {
+        try {
+            $bankSlip = $this->request('GET', '/payments/' . rawurlencode($providerPaymentId) . '/identificationField');
+        } catch (Throwable) {
+            return [];
+        }
+
+        return [
+            'identification_field' => (string) ($bankSlip['identificationField'] ?? ''),
+            'bar_code' => (string) ($bankSlip['barCode'] ?? ''),
+            'nosso_numero' => (string) ($bankSlip['nossoNumero'] ?? ''),
+        ];
+    }
+
+    private function normalizePaymentMethod(string $method): string
+    {
+        return match (strtolower(trim($method))) {
+            'pix' => 'pix',
+            'boleto', 'bank_slip' => 'boleto',
+            'card', 'credit_card' => 'credit_card',
+            default => 'pix',
+        };
+    }
+
+    private function billingTypeForMethod(string $method): string
+    {
+        return match ($method) {
+            'pix' => 'PIX',
+            'boleto' => 'BOLETO',
+            'credit_card' => 'CREDIT_CARD',
+            default => $this->billingType,
+        };
+    }
+
+    private function creditCardPayload(array $paymentData, array $user): array
+    {
+        $card = is_array($paymentData['card'] ?? null) ? $paymentData['card'] : [];
+        $holder = is_array($paymentData['holder'] ?? null) ? $paymentData['holder'] : [];
+        $number = preg_replace('/\D+/', '', (string) ($card['number'] ?? '')) ?: '';
+        $expiryMonth = str_pad((string) (int) preg_replace('/\D+/', '', (string) ($card['expiry_month'] ?? '')), 2, '0', STR_PAD_LEFT);
+        $expiryYear = preg_replace('/\D+/', '', (string) ($card['expiry_year'] ?? '')) ?: '';
+        if (strlen($expiryYear) === 2) {
+            $expiryYear = '20' . $expiryYear;
+        }
+
+        $ccv = preg_replace('/\D+/', '', (string) ($card['ccv'] ?? '')) ?: '';
+        $holderName = trim((string) ($card['holder_name'] ?? $holder['name'] ?? $user['nome'] ?? ''));
+        $cpfCnpj = preg_replace('/\D+/', '', (string) ($holder['cpf_cnpj'] ?? $user['cpf'] ?? '')) ?: '';
+        $postalCode = preg_replace('/\D+/', '', (string) ($holder['postal_code'] ?? '')) ?: '';
+        $addressNumber = trim((string) ($holder['address_number'] ?? ''));
+        $phone = preg_replace('/\D+/', '', (string) ($holder['phone'] ?? $user['telefone'] ?? '')) ?: '';
+
+        if ($number === '' || strlen($number) < 13 || $holderName === '' || $expiryMonth === '00' || $expiryYear === '' || $ccv === '') {
+            throw new InvalidArgumentException('Informe os dados do cartão corretamente.');
+        }
+
+        if ($cpfCnpj === '' || $postalCode === '' || $addressNumber === '' || $phone === '') {
+            throw new InvalidArgumentException('Informe CPF, CEP, número do endereço e telefone do titular do cartão.');
+        }
+
+        return [
+            'creditCard' => [
+                'holderName' => $holderName,
+                'number' => $number,
+                'expiryMonth' => $expiryMonth,
+                'expiryYear' => $expiryYear,
+                'ccv' => $ccv,
+            ],
+            'creditCardHolderInfo' => [
+                'name' => trim((string) ($holder['name'] ?? $holderName)),
+                'email' => trim((string) ($holder['email'] ?? $user['email'] ?? '')),
+                'cpfCnpj' => $cpfCnpj,
+                'postalCode' => $postalCode,
+                'addressNumber' => $addressNumber,
+                'addressComplement' => trim((string) ($holder['address_complement'] ?? '')),
+                'phone' => $phone,
+                'mobilePhone' => $phone,
+            ],
+            'remoteIp' => trim((string) ($paymentData['remote_ip'] ?? '127.0.0.1')),
+        ];
     }
 
     private function createLocalSubscriptionFromPendingEvent(string $providerSubscriptionId): ?array

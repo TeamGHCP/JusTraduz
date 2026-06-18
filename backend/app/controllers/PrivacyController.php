@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
@@ -171,7 +171,7 @@ class PrivacyController extends BaseController
              WHERE id = ?"
         );
         $stmt->execute([
-            'Usuário removido',
+            'Usuario removido',
             'deleted+' . $userId . '@justraduz.invalid',
             password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT),
             date('Y-m-d H:i:s'),

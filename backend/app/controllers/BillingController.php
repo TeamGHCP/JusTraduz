@@ -33,10 +33,71 @@ class BillingController extends BaseController
         $planId = (int) $this->request->post('plan_id', 0);
         $cycle = (string) $this->request->post('billing_cycle', 'monthly');
         $userId = (int) $_SESSION['id'];
+        if (!in_array($cycle, ['monthly', 'yearly'], true)) {
+            $cycle = 'monthly';
+        }
 
-        $checkout = $this->payments->createCheckout($userId, $planId, $cycle);
+        if (!$this->planExists($planId)) {
+            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano invalido.')));
+        }
+
+        $_SESSION['billing_checkout'] = [
+            'reference' => bin2hex(random_bytes(12)),
+            'provider' => $this->payments->name(),
+            'plan_id' => $planId,
+            'billing_cycle' => $cycle,
+            'redirect_url' => '',
+            'metadata' => [],
+            'created_at' => time(),
+            'status' => 'draft',
+        ];
+
+        $this->audit->log('billing.checkout_prepare', 'subscription', 0, [
+            'plan_id' => $planId,
+            'billing_cycle' => $cycle,
+            'provider' => $this->payments->name(),
+        ]);
+
+        $this->response->redirect(app_url('/frontend/pagamento-plano.php'));
+    }
+
+    public function checkout(): void
+    {
+        $this->startSession();
+        if (empty($_SESSION['logado'])) {
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para finalizar seu pagamento.')));
+        }
+
+        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
+            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode('Planos sao exclusivos para clientes.'));
+        }
+
+        $userId = (int) $_SESSION['id'];
+        $checkoutSession = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
+        $metadata = is_array($checkoutSession['metadata'] ?? null) ? $checkoutSession['metadata'] : [];
+        if (($checkoutSession['provider'] ?? '') === $this->payments->name() && !empty($metadata['provider_subscription_id'])) {
+            $this->response->redirect(app_url('/frontend/pagamento-plano.php'));
+        }
+
+        $planId = (int) ($checkoutSession['plan_id'] ?? 0);
+        $cycle = (string) ($checkoutSession['billing_cycle'] ?? 'monthly');
+        if (!in_array($cycle, ['monthly', 'yearly'], true)) {
+            $cycle = 'monthly';
+        }
+
+        if (!$this->planExists($planId)) {
+            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano invalido.')));
+        }
+
+        try {
+            $paymentData = $this->checkoutPaymentData();
+            $checkout = $this->payments->createCheckout($userId, $planId, $cycle, $paymentData);
+        } catch (Throwable $exception) {
+            $this->response->redirect(app_url('/frontend/pagamento-plano.php?erro=' . urlencode($exception->getMessage())));
+        }
+
         if (!$checkout->ok) {
-            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode($checkout->errorMessage ?: 'Plano invalido.')));
+            $this->response->redirect(app_url('/frontend/pagamento-plano.php?erro=' . urlencode($checkout->errorMessage ?: 'Plano invalido.')));
         }
 
         $this->audit->log('billing.checkout_create', 'subscription', (int) ($checkout->subscriptionId ?? 0), [
@@ -48,19 +109,50 @@ class BillingController extends BaseController
 
         if ($this->payments->name() === 'asaas') {
             $_SESSION['billing_checkout'] = [
-                'reference' => bin2hex(random_bytes(12)),
+                'reference' => (string) ($checkoutSession['reference'] ?? bin2hex(random_bytes(12))),
                 'provider' => $this->payments->name(),
                 'plan_id' => $planId,
                 'billing_cycle' => in_array($cycle, ['monthly', 'yearly'], true) ? $cycle : 'monthly',
                 'redirect_url' => $checkout->redirectUrl,
                 'metadata' => $checkout->metadata,
                 'created_at' => time(),
+                'status' => 'created',
+                'payment_method' => (string) ($paymentData['method'] ?? 'pix'),
             ];
 
             $this->response->redirect(app_url('/frontend/pagamento-plano.php'));
         }
 
         $this->response->redirect($checkout->redirectUrl);
+    }
+
+    public function cancelCheckout(): void
+    {
+        $this->startSession();
+        if (empty($_SESSION['logado'])) {
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para cancelar seu pagamento.')));
+        }
+
+        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
+            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode('Planos sao exclusivos para clientes.'));
+        }
+
+        $checkout = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
+        $metadata = is_array($checkout['metadata'] ?? null) ? $checkout['metadata'] : [];
+        $providerSubscriptionId = trim((string) ($metadata['provider_subscription_id'] ?? ''));
+
+        try {
+            $result = $this->payments->cancelCheckout((int) $_SESSION['id'], $providerSubscriptionId);
+            $this->audit->log('billing.checkout_cancel', 'subscription', (int) ($result['subscription_id'] ?? 0), $result);
+            unset($_SESSION['billing_checkout']);
+
+            $message = !empty($result['remote_canceled'])
+                ? 'Pagamento cancelado e cobrança removida no Asaas.'
+                : 'Pagamento cancelado.';
+            $this->response->redirect(app_url('/frontend/subir-plano.php?sucesso=' . urlencode($message)));
+        } catch (Throwable $exception) {
+            $this->response->redirect(app_url('/frontend/pagamento-plano.php?erro=' . urlencode($exception->getMessage())));
+        }
     }
 
     public function webhook(): void
@@ -79,6 +171,16 @@ class BillingController extends BaseController
 
             $this->response->json(['ok' => false, 'error' => $exception->getMessage()], $status);
         }
+    }
+
+    public function webhookStatus(): void
+    {
+        $this->response->json([
+            'ok' => true,
+            'provider' => $this->payments->name(),
+            'endpoint' => 'billing.webhook',
+            'accepts' => 'POST',
+        ]);
     }
 
     public function cancel(): void
@@ -168,5 +270,165 @@ class BillingController extends BaseController
             'admin' => app_url('/frontend/admin/dashboard-admin.php'),
             default => app_url('/frontend/dashboard-cliente.php'),
         };
+    }
+
+    private function planExists(int $planId): bool
+    {
+        if ($planId <= 0) {
+            return false;
+        }
+
+        foreach ($this->subscriptions->plans() as $plan) {
+            if ((int) ($plan['id'] ?? 0) === $planId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function checkoutPaymentData(): array
+    {
+        $method = strtolower(trim((string) $this->request->post('payment_method', 'pix')));
+        if (!in_array($method, ['pix', 'boleto', 'credit_card'], true)) {
+            $method = 'pix';
+        }
+
+        $data = [
+            'method' => $method,
+            'remote_ip' => (string) ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'),
+        ];
+
+        if ($method !== 'credit_card') {
+            return $data;
+        }
+
+        $data['card'] = [
+            'holder_name' => trim((string) $this->request->post('card_holder_name', '')),
+            'number' => preg_replace('/\D+/', '', (string) $this->request->post('card_number', '')) ?: '',
+            'expiry_month' => preg_replace('/\D+/', '', (string) $this->request->post('card_expiry_month', '')) ?: '',
+            'expiry_year' => preg_replace('/\D+/', '', (string) $this->request->post('card_expiry_year', '')) ?: '',
+            'ccv' => preg_replace('/\D+/', '', (string) $this->request->post('card_ccv', '')) ?: '',
+        ];
+        $data['holder'] = [
+            'name' => trim((string) $this->request->post('holder_name', '')),
+            'email' => trim((string) $this->request->post('holder_email', '')),
+            'cpf_cnpj' => preg_replace('/\D+/', '', (string) $this->request->post('holder_cpf_cnpj', '')) ?: '',
+            'postal_code' => preg_replace('/\D+/', '', (string) $this->request->post('holder_postal_code', '')) ?: '',
+            'address_number' => trim((string) $this->request->post('holder_address_number', '')),
+            'address_complement' => trim((string) $this->request->post('holder_address_complement', '')),
+            'phone' => preg_replace('/\D+/', '', (string) $this->request->post('holder_phone', '')) ?: '',
+        ];
+
+        if (!$this->isValidCpfCnpj($data['holder']['cpf_cnpj'])) {
+            throw new InvalidArgumentException('Informe um CPF ou CNPJ real para o titular do cartão.');
+        }
+
+        if (!$this->isValidCep($data['holder']['postal_code'])) {
+            throw new InvalidArgumentException('Informe um CEP real e existente para o titular do cartão.');
+        }
+
+        if (!filter_var($data['holder']['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Informe um e-mail válido para o titular do cartão.');
+        }
+
+        if (strlen($data['holder']['phone']) < 10 || strlen($data['holder']['phone']) > 11) {
+            throw new InvalidArgumentException('Informe um telefone real com DDD para o titular do cartão.');
+        }
+
+        return $data;
+    }
+
+    private function isValidCpfCnpj(string $document): bool
+    {
+        $digits = preg_replace('/\D+/', '', $document) ?: '';
+
+        return strlen($digits) === 11
+            ? $this->isValidCpf($digits)
+            : (strlen($digits) === 14 && $this->isValidCnpj($digits));
+    }
+
+    private function isValidCpf(string $cpf): bool
+    {
+        if (strlen($cpf) !== 11 || preg_match('/^(\d)\1{10}$/', $cpf)) {
+            return false;
+        }
+
+        for ($position = 9; $position < 11; $position++) {
+            $sum = 0;
+            for ($index = 0; $index < $position; $index++) {
+                $sum += (int) $cpf[$index] * (($position + 1) - $index);
+            }
+
+            $digit = ((10 * $sum) % 11) % 10;
+            if ((int) $cpf[$position] !== $digit) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isValidCnpj(string $cnpj): bool
+    {
+        if (strlen($cnpj) !== 14 || preg_match('/^(\d)\1{13}$/', $cnpj)) {
+            return false;
+        }
+
+        $weights = [
+            [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+            [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+        ];
+
+        for ($digitIndex = 12; $digitIndex < 14; $digitIndex++) {
+            $sum = 0;
+            foreach ($weights[$digitIndex - 12] as $index => $weight) {
+                $sum += (int) $cnpj[$index] * $weight;
+            }
+
+            $rest = $sum % 11;
+            $digit = $rest < 2 ? 0 : 11 - $rest;
+            if ((int) $cnpj[$digitIndex] !== $digit) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isValidCep(string $cep): bool
+    {
+        $digits = preg_replace('/\D+/', '', $cep) ?: '';
+        if (strlen($digits) !== 8 || preg_match('/^(\d)\1{7}$/', $digits)) {
+            return false;
+        }
+
+        if (function_exists('curl_init')) {
+            $curl = curl_init('https://viacep.com.br/ws/' . $digits . '/json/');
+            curl_setopt_array($curl, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 6,
+                CURLOPT_CONNECTTIMEOUT => 4,
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+            $response = curl_exec($curl);
+            $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            curl_close($curl);
+
+            if ($response === false || $httpCode < 200 || $httpCode >= 300) {
+                return false;
+            }
+
+            $data = json_decode((string) $response, true);
+            return is_array($data) && empty($data['erro']);
+        }
+
+        $response = @file_get_contents('https://viacep.com.br/ws/' . $digits . '/json/');
+        if ($response === false) {
+            return false;
+        }
+
+        $data = json_decode((string) $response, true);
+        return is_array($data) && empty($data['erro']);
     }
 }
