@@ -134,6 +134,8 @@ $hasAnalysis = $document && ((string) ($document['resumo'] ?? '') !== '' || (str
 $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (float) $document['confianca'])) : null;
 $analysisSections = $hasAnalysis ? document_analysis_sections((string) ($document['explicacao'] ?? '')) : [];
 $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'] : 'solicitar-ajuda.php';
+$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
+$errorMessage = trim((string) ($_GET['erro'] ?? ''));
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -161,14 +163,50 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
     <main class="app-main">
       <?php render_topbar(
           $document ? 'Análise do documento' : 'Documentos',
-          $document ? 'Resumo, explicacao simples, riscos e próximos passos.' : 'Consulte os documentos disponíveis para seu perfil.',
+          $document ? 'Resumo, explicacao simples, riscos e próximos passos.' : 'Envie documentos e consulte seu histórico em um só lugar.',
           current_user_name()
       ); ?>
 
+      <?php if ($successMessage !== ''): ?>
+        <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
+      <?php endif; ?>
+      <?php if ($errorMessage !== ''): ?>
+        <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
+      <?php endif; ?>
+
       <?php if (!$documentId): ?>
+        <?php if ($type === 'cliente'): ?>
+          <section class="dash-section" id="novo-documento">
+            <form class="card upload-card" action="<?= e(app_url('/backend/public/index.php?rota=/documents/upload')) ?>" method="post" enctype="multipart/form-data" data-upload-form>
+              <?= csrf_input() ?>
+              <input type="hidden" name="redirect_to" value="documents">
+              <div class="dash-section-title">
+                <div>
+                  <h2>Novo documento <?= help_icon('Enviar documento', 'Use para enviar PDF ou imagem. Confira o arquivo e autorize IA somente quando concordar com o processamento.') ?></h2>
+                  <p class="text-muted">Envie o arquivo por aqui ou pela dashboard. Depois, acompanhe tudo no histórico abaixo.</p>
+                </div>
+                <span class="badge badge-success">Máx. 50 MB</span>
+              </div>
+              <label class="upload-box upload-box-featured" data-upload-box tabindex="0">
+                <input class="sr-only" type="file" name="documento" accept=".pdf,.png,.jpg,.jpeg,.webp" data-upload-input required>
+                <?= icon_svg('upload') ?>
+                <strong>Arraste seu arquivo ou clique para selecionar</strong>
+                <p data-file-name>PDF, PNG, JPEG ou WebP</p>
+                <span class="btn btn-primary">Selecionar arquivo</span>
+              </label>
+              <label class="checkline mt-14">
+                <input type="checkbox" name="autorizar_ia" value="1">
+                <span>Autorizo enviar este documento para análise automática por IA.</span>
+              </label>
+              <p class="mt-14 text-muted">A análise automática é informativa e não substitui orientação jurídica profissional.</p>
+              <button class="btn btn-primary mt-16" type="submit" data-upload-submit>Enviar documento</button>
+            </form>
+          </section>
+        <?php endif; ?>
+
         <section class="dash-section">
           <div class="dash-section-title">
-            <h2>Lista de documentos</h2>
+            <h2>Histórico de documentos <?= help_icon('Histórico e análise', 'Abra seus envios anteriores para consultar o status e a explicação gerada. A análise não substitui orientação jurídica.') ?></h2>
             <span class="badge badge-success"><?= e((string) count($documents)) ?> registros</span>
           </div>
           <?php if (!$documents): ?>
@@ -340,6 +378,7 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
       <?php endif; ?>
     </main>
   </div>
+  <script src="assets/js/upload.js"></script>
   <script src="assets/js/documento.js"></script>
   <?php render_vlibras(); ?>
 </body>
