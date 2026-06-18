@@ -4,10 +4,8 @@ seed.php
 database/seed_admin.local.sql
 .env
 .env.*
-!.env.example
 backend/.env
 backend/.env.*
-!backend/.env.example
 backend/app/config/gemini.php
 backend/storage/documents/*
 !backend/storage/documents/demo/
