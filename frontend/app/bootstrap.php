@@ -5,7 +5,7 @@ defined('PROJECT_ROOT_PATH') || define('PROJECT_ROOT_PATH', dirname(__DIR__, 2))
 
 require_once PROJECT_ROOT_PATH . '/backend/app/support/session.php';
 require_once PROJECT_ROOT_PATH . '/backend/app/support/security.php';
-security_headers(true);
+security_headers(false);
 secure_session_start();
 
 require_once PROJECT_ROOT_PATH . '/backend/app/config/app.php';

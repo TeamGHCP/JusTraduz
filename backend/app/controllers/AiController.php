@@ -193,6 +193,50 @@ class AiController
 
     private function answerBusinessQuestion(string $normalized, array $history): ?string
     {
+        if (preg_match('/\b(criar conta|fazer cadastro|me cadastrar|cadastro|abrir conta|registrar|registrar conta)\b/', $normalized)) {
+            return 'Para criar uma conta, use o botão Criar conta ou Cadastrar no site. Preencha seus dados, escolha seu perfil e confirme o envio. Se você for profissional, a validação pode depender da análise dos dados da OAB antes de liberar recursos completos.';
+        }
+
+        if (preg_match('/\b(entrar|login|logar|acessar conta|minha conta|acesso)\b/', $normalized)) {
+            return 'Para entrar, clique em Entrar e informe e-mail e senha. Se estiver usando cadastro pelo Google, use a opção correspondente na tela de login. Se não lembrar a senha, use Recuperar senha antes de tentar criar outra conta.';
+        }
+
+        if (preg_match('/\b(esqueci senha|esqueci minha senha|perdi senha|perdi minha senha|recuperar senha|trocar senha|mudar senha|resetar senha|senha)\b/', $normalized)) {
+            return 'Para recuperar a senha, abra a tela de login e escolha Recuperar senha. Informe o e-mail cadastrado e siga as instruções. Se você ainda estiver logado, também pode procurar a área de perfil para alterar a senha com segurança.';
+        }
+
+        if (preg_match('/\b(enviar documento|mandar documento|subir documento|upload|anexar documento|analisar documento|documento para analise)\b/', $normalized)) {
+            return 'Para enviar um documento, entre na sua conta e use a área de envio de documentos. Prefira PDF ou imagem nítida, completa e sem cortes. Antes de enviar, confirme se não há páginas faltando e autorize a análise por IA somente se estiver de acordo com os termos.';
+        }
+
+        if (preg_match('/\b(acompanhar|andamento|status|solicitacao|solicitacoes|pedido|meus pedidos|caso|casos)\b/', $normalized)) {
+            return 'Depois de entrar na conta, acompanhe seus pedidos pela área de solicitações ou casos. Lá você pode ver status, mensagens, documentos relacionados e próximas ações. Se houver advogado responsável, use o chat do caso para continuar o atendimento.';
+        }
+
+        if (preg_match('/\b(contato|suporte|falar com alguem|atendimento|ajuda humana|email|telefone)\b/', $normalized)) {
+            return 'Para falar com o time, use a página Contato do site. Descreva o assunto de forma objetiva e evite enviar CPF, senha, número de processo ou documentos sigilosos em mensagens abertas.';
+        }
+
+        if (preg_match('/\b(perfil cliente|perfil advogado|advogado|cliente|estagiario|administrador|admin|oab)\b/', $normalized)) {
+            return 'O JusTraduz organiza o acesso por perfil. Cliente envia documentos e acompanha solicitações. Advogado atende casos e interage com clientes quando validado. Estagiário pode apoiar rotinas permitidas. Administrador gerencia usuários, auditoria e validações.';
+        }
+
+        if (preg_match('/\b(como funciona|usar o site|usar a plataforma|tutorial|passo a passo|primeiros passos|onde comeco|começar)\b/', $normalized)) {
+            return 'Para começar: crie sua conta, entre no painel, envie um documento legível, leia a explicação inicial e abra uma solicitação se precisar de atendimento. Depois, acompanhe tudo pela área de casos, mensagens e notificações.';
+        }
+
+        if (preg_match('/\b(ruim de entender|nao entendi|nao consigo entender|dificil de entender|confuso|linguagem dificil|juridiqu[eê]s|explicar documento|entender documento|resumir documento)\b/', $normalized)) {
+            return 'Posso ajudar a transformar o documento em linguagem simples. Primeiro, envie o arquivo ou uma foto legível pelo JusTraduz. Se preferir descrever aqui, não envie CPF, nomes completos, número de processo ou dados sigilosos. Diga só o tipo de documento e qual parte está difícil: prazo, valor, obrigação, multa, assinatura ou próximos passos.';
+        }
+
+        if (preg_match('/\b(ajuda (?:para|com|no|em) (?:meu )?documento|me ajuda (?:com|no|em) (?:meu )?documento|preciso de ajuda (?:com|no|em) (?:meu )?documento|meu documento)\b/', $normalized)) {
+            return 'Claro. Posso ajudar de três formas: explicar o documento em linguagem simples, orientar se ele pode precisar de tradução simples ou juramentada, ou indicar quais informações faltam para orçamento. Para começar, diga que tipo de documento é e qual é sua dúvida principal. Não envie CPF, número de processo, nomes completos ou dados sigilosos aqui.';
+        }
+
+        if (preg_match('/\b(me ajude a traduzir|quero traduzir|preciso traduzir|traduzir um documento|traduzir meu documento|fazer traducao|fazer uma traducao)\b/', $normalized)) {
+            return 'Claro. Para orientar a tradução, preciso de quatro informações: qual é o documento, em qual idioma ele está, para qual idioma você precisa traduzir e onde ele será usado. Se for para consulado, universidade, cartório, processo ou órgão público, pode ser necessário avaliar tradução juramentada.';
+        }
+
         if (preg_match('/\b(valor exato|preco exato|quanto custa exatamente|qual o valor exato)\b/', $normalized)) {
             return 'Para informar valor exato, precisamos analisar o arquivo, o idioma, a quantidade de páginas/laudas, o prazo e se precisa de tradução juramentada. Você pode enviar o documento pelo JusTraduz para receber um orçamento correto.';
         }
@@ -202,7 +246,7 @@ class AiController
         }
 
         if (preg_match('/\b(traducao simples|diferenca entre traducao simples e juramentada)\b/', $normalized)) {
-            return 'A tradução simples serve para entendimento, estudo interno ou uso não oficial. A tradução juramentada tem validade oficial e costuma ser exigida por órgãos, universidades, consulados e processos formais.';
+            return 'Tradução simples é indicada quando você precisa entender o conteúdo ou usar o texto sem exigência oficial. Se o documento será entregue a consulado, universidade, cartório, órgão público ou processo, confirme antes se pedem tradução juramentada. Para orientar melhor, diga qual é o documento, o idioma atual, o idioma desejado e onde ele será usado.';
         }
 
         if (preg_match('/\b(quanto tempo|prazo|urgente|amanha|30 dias)\b/', $normalized)) {
@@ -231,7 +275,7 @@ class AiController
             return 'Esse tipo de documento geralmente pode ser traduzido. Para confirmar se precisa ser juramentado, precisamos saber o país de destino, o idioma, o órgão que vai receber e se há alguma exigência específica. Você pode enviar PDF ou foto legível para análise e orçamento.';
         }
 
-        if (preg_match('/\b(enviar|envio|foto|celular|pdf|arquivo|documento ilegivel|ilegivel)\b/', $normalized)) {
+        if (preg_match('/\b(enviar|envio|foto|celular|pdf|arquivo|documento ilegivel|ilegivel|documento ruim|documento borrado|foto ruim|cortado|baixa qualidade)\b/', $normalized)) {
             return 'Você pode enviar o documento em PDF ou imagem pelo celular, desde que esteja completo e legível. Se estiver cortado, borrado ou ilegível, a análise pode ficar limitada e talvez seja necessário reenviar uma versão melhor.';
         }
 
@@ -254,7 +298,7 @@ class AiController
 
     private function isUnsafeRequest(string $normalized): bool
     {
-        return preg_match('/\b(senha|administrador|admin|banco de dados|database|delete|drop table|todos os usuarios|dados de outros clientes|documentos do sistema|acesso total)\b/', $normalized) === 1;
+        return preg_match('/\b(senha (?:do|de) (?:admin|administrador|sistema|outro usuario)|senhas (?:do|de) (?:admin|administrador|sistema|usuarios)|administrador|admin|banco de dados|database|delete|drop table|todos os usuarios|dados de outros clientes|documentos do sistema|acesso total)\b/', $normalized) === 1;
     }
 
     private function containsSensitiveData(string $message): bool
@@ -358,6 +402,13 @@ class AiController
     private function normalizeText(string $text): string
     {
         $text = mb_strtolower(trim($text), 'UTF-8');
+        $mojibakeFrom = ['Ã¡', 'Ã ', 'Ã¢', 'Ã£', 'Ã¤', 'Ã©', 'Ã¨', 'Ãª', 'Ã«', 'Ã­', 'Ã¬', 'Ã®', 'Ã¯', 'Ã³', 'Ã²', 'Ã´', 'Ãµ', 'Ã¶', 'Ãº', 'Ã¹', 'Ã»', 'Ã¼', 'Ã§'];
+        $mojibakeTo = ['a', 'a', 'a', 'a', 'a', 'e', 'e', 'e', 'e', 'i', 'i', 'i', 'i', 'o', 'o', 'o', 'o', 'o', 'u', 'u', 'u', 'u', 'c'];
+        $text = str_replace($mojibakeFrom, $mojibakeTo, $text);
+        $accentFrom = ['á', 'à', 'â', 'ã', 'ä', 'é', 'è', 'ê', 'ë', 'í', 'ì', 'î', 'ï', 'ó', 'ò', 'ô', 'õ', 'ö', 'ú', 'ù', 'û', 'ü', 'ç'];
+        $accentTo = ['a', 'a', 'a', 'a', 'a', 'e', 'e', 'e', 'e', 'i', 'i', 'i', 'i', 'o', 'o', 'o', 'o', 'o', 'u', 'u', 'u', 'u', 'c'];
+        $text = str_replace($accentFrom, $accentTo, $text);
+
         if (function_exists('iconv')) {
             $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
             if (is_string($converted) && $converted !== '') {

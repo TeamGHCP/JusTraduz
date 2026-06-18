@@ -24,7 +24,7 @@ function security_headers(bool $allowInlineScripts = false): void
     header(
         "Content-Security-Policy: "
         . "default-src 'self'; "
-        . "script-src 'self'{$inline} 'wasm-unsafe-eval' 'unsafe-eval' blob: https://www.google.com https://www.gstatic.com https://vlibras.gov.br https://www.vlibras.gov.br https://cdn.jsdelivr.net; "
+        . "script-src 'self'{$inline} 'wasm-unsafe-eval' blob: https://www.google.com https://www.gstatic.com https://vlibras.gov.br https://www.vlibras.gov.br https://cdn.jsdelivr.net; "
         . "style-src 'self' 'unsafe-inline' https://vlibras.gov.br https://www.vlibras.gov.br https://cdn.jsdelivr.net; "
         . "img-src 'self' data: blob: https:; "
         . "connect-src 'self' https://vlibras.gov.br https://www.vlibras.gov.br https://dicionario2.vlibras.gov.br https://cdn.jsdelivr.net; "

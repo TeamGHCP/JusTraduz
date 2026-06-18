@@ -342,7 +342,7 @@ $profileTourKey = match ($type) {
             <p class="profile-password-step" data-password-code-hint>Envie o código para habilitar a atualização da senha.</p>
             <div class="field">
               <label for="profile_password_code">Código recebido</label>
-              <input class="input" id="profile_password_code" name="código" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
+              <input class="input" id="profile_password_code" name="codigo" inputmode="numeric" maxlength="6" autocomplete="one-time-code" required>
             </div>
             <div class="form-grid">
               <div class="field">

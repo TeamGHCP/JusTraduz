@@ -2,8 +2,20 @@
   const calendarEl = document.getElementById("calendar");
   if (!calendarEl) return;
 
-  const currentUserType = String(window.CURRENT_USER_TYPE || "");
-  const currentUserId = Number(window.CURRENT_USER_ID || 0);
+  function readAgendaUserContext() {
+    const node = document.getElementById("agenda-user-context");
+    if (!node) return {};
+
+    try {
+      return JSON.parse(node.textContent || "{}");
+    } catch (error) {
+      return {};
+    }
+  }
+
+  const agendaUserContext = readAgendaUserContext();
+  const currentUserType = String(agendaUserContext.type || window.CURRENT_USER_TYPE || "");
+  const currentUserId = Number(agendaUserContext.id || window.CURRENT_USER_ID || 0);
   const isProfessional = currentUserType === "advogado" || currentUserType === "estagiario";
   const frontendIndex = window.location.pathname.indexOf("/frontend/");
   const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";

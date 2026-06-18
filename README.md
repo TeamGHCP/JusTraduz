@@ -1,17 +1,20 @@
 # JusTraduz
 
-Sistema PHP/MySQL para envio de documentos jurídicos, análise em linguagem simples, solicitação de ajuda jurídica, agenda, chat, validação OAB manual e consulta processual por número CNJ via DataJud.
+Sistema PHP/MySQL para envio de documentos juridicos, analise em linguagem simples, solicitacao de ajuda juridica, agenda, chat, validacao OAB manual e consulta processual por numero CNJ via DataJud.
 
-## Documentação
+## Documentacao
 
-A documentação ativa fica em `docs/`:
+A documentacao ativa fica em `docs/`:
 
 - `docs/README.md`
 - `docs/O_QUE_FALTA_AGORA.md`
 - `docs/REGISTRO_REVISAO_JURIDICA.md`
 - `docs/apache-justraduz-production.conf`
+- `docs/CHECKLIST_RELEASE.md`
+- `docs/CHECKLIST_APRESENTACAO_SA.md`
+- `docs/OPERACAO_BACKUP_RESTORE.md`
 
-Os documentos antigos e os guias de entregas já implementadas foram removidos para evitar várias versões da verdade. A documentação ativa mostra apenas o que ainda falta para o sistema ficar pronto para uso real/comercial.
+Os documentos antigos e os guias de entregas ja implementadas foram removidos para evitar varias versoes da verdade. A documentacao ativa mostra apenas o que ainda falta para o sistema ficar pronto para uso real/comercial.
 
 ## Como rodar localmente
 
@@ -22,7 +25,20 @@ Os documentos antigos e os guias de entregas já implementadas foram removidos p
 Copy-Item backend\.env.example backend\.env
 ```
 
-3. Ajuste `backend/.env` com banco, SMTP e chaves externas. Não versionar esse arquivo.
+3. Ajuste `backend/.env` com banco, SMTP e chaves externas. Nao versionar esse arquivo.
+   Para XAMPP local, confira principalmente:
+
+```env
+APP_ENV=local
+APP_URL=http://localhost:9999
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=justraduz
+DB_USER=root
+DB_PASS=
+MAIL_LOG_ONLY=true
+```
+
 4. Importe o banco sem demo:
 
 ```powershell
@@ -57,7 +73,7 @@ C:\xampp\php\php.exe -S 127.0.0.1:8080 public-router.php
 http://127.0.0.1:8080/frontend/index.html
 ```
 
-## Variáveis de ambiente
+## Variaveis de ambiente
 
 Use `backend/.env.example` como modelo. O arquivo `backend/.env` local fica ignorado pelo Git.
 
@@ -68,15 +84,17 @@ Principais grupos:
 - IA: `GEMINI_API_KEY`, `GEMINI_MODEL`.
 - Google OAuth: `GOOGLE_*`.
 - DataJud/CNJ: `DATAJUD_*`.
+- Operacao: `HEALTHCHECK_TOKEN`, `BACKUP_*`, `CLAMAV_BINARY`.
+- Storage: `DOCUMENT_STORAGE_PATH`, `ATTACHMENT_STORAGE_PATH`, `PROFILE_PHOTO_STORAGE_PATH`.
 
 ## Limpeza aplicada
 
-- Páginas HTML antigas da área logada foram removidas.
+- Paginas HTML antigas da area logada foram removidas.
 - Scripts SQL incrementais antigos foram removidos; ficaram apenas os dois instaladores consolidados.
-- Documentos antigos e entregas já implementadas foram consolidados/removidos; as pendências ficam em `docs/O_QUE_FALTA_AGORA.md`.
-- Uploads locais órfãos fora do seed demo foram removidos.
+- Documentos antigos e entregas ja implementadas foram consolidados/removidos; as pendencias ficam em `docs/O_QUE_FALTA_AGORA.md`.
+- Uploads locais orfaos fora do seed demo foram removidos.
 
-## Qualidade e produção
+## Qualidade e producao
 
 Suite P0 local:
 
@@ -84,16 +102,22 @@ Suite P0 local:
 C:\xampp\php\php.exe backend\tests\run.php
 ```
 
-Checagem de referências:
+Checagem de referencias:
 
 ```powershell
 C:\xampp\php\php.exe scripts\check-references.php
 ```
 
-Prontidão P0 de produção:
+Prontidao P0 de producao:
 
 ```powershell
 C:\xampp\php\php.exe scripts\check-production-readiness.php --env=backend/.env
+```
+
+Para validar apenas o template versionado no CI ou em revisao local:
+
+```powershell
+C:\xampp\php\php.exe scripts\check-production-readiness.php --env=backend/.env.example --allow-placeholders
 ```
 
 Health check:
@@ -101,3 +125,30 @@ Health check:
 ```text
 /backend/public/index.php?rota=/health
 ```
+
+Se `HEALTHCHECK_TOKEN` estiver configurado, envie o token por `?token=...` ou pelo header `X-Healthcheck-Token`.
+
+## Revisao Atual
+
+Ultima revisao local: 18/06/2026.
+
+Status automatizado esperado:
+
+- Sintaxe PHP: OK.
+- Testes backend: OK.
+- Referencias internas: OK.
+- Template `backend/.env.example`: OK com placeholders permitidos.
+- PWA estrutural: OK, com `CACHE_VERSION` atualizado quando assets mudam.
+
+Pendencias que ainda dependem de ambiente real ou validacao manual:
+
+1. Configurar `backend/.env` de producao com `APP_DEBUG=false`, URLs HTTPS reais, SMTP, Google OAuth, Gemini/DataJud, backup e ClamAV.
+2. Validar `/backend/public/index.php?rota=/health` com MySQL ativo e, se exposto, com `HEALTHCHECK_TOKEN`.
+3. Executar restore real de backup em ambiente limpo.
+4. Fazer QA manual dos fluxos principais: cadastro, login, reset de senha, upload, analise IA, solicitacao, chat, agenda, LGPD e admin.
+5. Testar SMTP real, entregabilidade e logs de erro.
+6. Validar integracoes externas em sucesso, falha, timeout e limite de uso.
+7. Fazer matriz visual mobile/tablet/desktop e instalacao PWA em navegador real.
+8. Ativar monitoramento, alertas e plano de rollback antes de producao.
+
+O sistema nao deve ser considerado pronto para producao enquanto essas validacoes externas e operacionais nao estiverem concluidas.

@@ -36,16 +36,47 @@ assertTrue(
     callPrivate($controller, 'isRestrictedLegalAdvice', ['quanto custa traduzir um diploma']) === false,
     'Não deveria bloquear pergunta comercial de tradução.'
 );
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['meu documento está ruim de entender, o que fazer', []]), 'linguagem simples'),
+    'Deveria responder melhor quando o documento estiver difícil de entender.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['ajuda para meu documento', []]), 'três formas'),
+    'Deveria responder melhor a pedido genérico de ajuda com documento.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['tradução simples', []]), 'idioma atual'),
+    'Deveria explicar tradução simples sem cair no fallback genérico.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['me ajude a traduzir um documento', []]), 'quatro informações'),
+    'Deveria pedir dados objetivos para orientar tradução.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['como criar conta no site', []]), 'Criar conta'),
+    'Deveria orientar cadastro de conta.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['esqueci minha senha', []]), 'Recuperar senha'),
+    'Deveria orientar recuperação de senha.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['onde acompanho minha solicitação', []]), 'solicita'),
+    'Deveria orientar acompanhamento de solicitações.'
+);
 
 $prompt = callPrivate(GeminiService::class, 'buildChatPrompt', ['Quero ajuda', []]);
-assertTrue(str_contains($prompt, 'Nao calcule prazos processuais'), 'Prompt deve proibir cálculo de prazos.');
-assertTrue(str_contains($prompt, 'dados nao confiaveis'), 'Prompt deve tratar entrada como não confiável.');
+$normalizedPrompt = normalizeTextForAssertions($prompt);
+assertTrue(str_contains($normalizedPrompt, 'Nao calcule prazos processuais'), 'Prompt deve proibir c�lculo de prazos.');
+assertTrue(str_contains($normalizedPrompt, 'dados nao confiaveis'), 'Prompt deve tratar entrada como n�o confi�vel.');
+assertTrue(str_contains($normalizedPrompt, 'criar conta'), 'Prompt deve orientar uso da plataforma.');
 
 $_SERVER['REMOTE_ADDR'] = '127.0.0.240';
 $_SESSION['_ai_chat_attempts'] = [];
-$rateLimitPath = dirname(__DIR__) . '/storage/rate-limits/ai-' . hash('sha256', $_SERVER['REMOTE_ADDR']) . '.json';
+$rateLimitDirectory = getenv('RATE_LIMIT_STORAGE_PATH') ?: dirname(__DIR__) . '/storage/rate-limits';
+$rateLimitPath = rtrim((string) $rateLimitDirectory, "\\/") . '/ai-' . hash('sha256', $_SERVER['REMOTE_ADDR']) . '.json';
 if (is_file($rateLimitPath)) {
-    unlink($rateLimitPath);
+    @unlink($rateLimitPath);
 }
 $limiter = new AiRateLimiter();
 for ($index = 0; $index < 10; $index++) {

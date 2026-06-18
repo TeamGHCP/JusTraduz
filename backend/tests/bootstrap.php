@@ -4,6 +4,18 @@ putenv('APP_DEBUG=false');
 putenv('APP_BASE_PATH=JusTraduz');
 putenv('DB_DSN=sqlite::memory:');
 
+$testSessionPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-test-sessions';
+if (!is_dir($testSessionPath)) {
+    mkdir($testSessionPath, 0777, true);
+}
+ini_set('session.save_path', $testSessionPath);
+
+$testRateLimitPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-test-rate-limits';
+if (!is_dir($testRateLimitPath)) {
+    mkdir($testRateLimitPath, 0777, true);
+}
+putenv('RATE_LIMIT_STORAGE_PATH=' . $testRateLimitPath);
+
 $_SERVER['REQUEST_METHOD'] = 'GET';
 $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $_SERVER['HTTP_USER_AGENT'] = 'JusTraduzTest/1.0';
@@ -54,6 +66,13 @@ function assertStringContains(string $needle, string $haystack, string $message)
     if (!str_contains($haystack, $needle)) {
         throw new RuntimeException($message . ' Procurado: ' . $needle . ' Em: ' . $haystack);
     }
+}
+
+function normalizeTextForAssertions(string $text): string
+{
+    $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+    $text = $converted !== false ? $converted : $text;
+    return str_replace(["'", '`', '^', '~'], '', $text);
 }
 
 function callPrivate(object|string $target, string $method, array $arguments = [])

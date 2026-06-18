@@ -136,6 +136,8 @@ function render_vlibras(): void
     }
 
     $rendered = true;
+    $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/');
+    $assetPrefix = $isAdminPath ? '../' : '';
     ?>
     <div vw class="enabled">
       <div vw-access-button class="active"></div>
@@ -143,6 +145,8 @@ function render_vlibras(): void
         <div class="vw-plugin-top-wrapper"></div>
       </div>
     </div>
+    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+    <script src="<?= e($assetPrefix) ?>assets/js/vlibras-init.js?v=2026.06.18-1" defer></script>
     <?php
 }
 
@@ -251,12 +255,10 @@ function render_onboarding_assets(
     ];
     ?>
     <link rel="stylesheet" href="<?= e($assetPrefix) ?>assets/css/onboarding.css?v=2026.06.11-8">
-    <script>
-      window.JusTraduzOnboarding = <?= json_encode(
-          $config,
-          JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
-      ) ?>;
-    </script>
+    <script type="application/json" id="justraduz-onboarding-config"><?= json_encode(
+        $config,
+        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+    ) ?></script>
     <script src="<?= e($assetPrefix) ?>assets/js/onboarding-tour.js?v=2026.06.11-8" defer></script>
     <?php
 }

@@ -48,17 +48,25 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         {
           label: "Simples",
-          answer: "A tradução simples serve para entendimento, estudo interno ou uso sem exigência oficial. Se o documento será entregue a um órgão, universidade, consulado ou processo formal, pode ser necessário confirmar se pedem tradução juramentada.",
+          answer: "Tradução simples é indicada quando você precisa entender o conteúdo ou usar o texto sem exigência oficial. Se o documento será entregue a consulado, universidade, cartório, órgão público ou processo, confirme antes se pedem tradução juramentada. Para orientar melhor, diga qual é o documento, o idioma atual, o idioma desejado e onde ele será usado.",
         },
         {
           label: "Qual escolher?",
           answer: "Para escolher entre tradução simples e juramentada, precisamos saber qual documento você tem, em qual idioma ele está, para qual idioma precisa traduzir e onde ele será usado.",
+        },
+        {
+          label: "Quero traduzir",
+          answer: "Claro. Para orientar a tradução, preciso de quatro informações: qual é o documento, em qual idioma ele está, para qual idioma você precisa traduzir e onde ele será usado. Se for para consulado, universidade, cartório, processo ou órgão público, pode ser necessário avaliar tradução juramentada.",
         },
       ],
     },
     {
       label: "Documentos",
       children: [
+        {
+          label: "Difícil de entender",
+          answer: "Posso ajudar a explicar em linguagem simples. Envie o arquivo ou uma foto legível pelo JusTraduz. Se quiser descrever aqui, não informe CPF, nomes completos, número de processo ou dados sigilosos. Diga só o tipo de documento e qual parte confundiu você: prazo, valor, multa, obrigação, assinatura ou próximos passos.",
+        },
         {
           label: "Certidoes",
           answer: "Certidões de nascimento, casamento e outros registros civis geralmente podem ser traduzidas. Para confirmar o formato correto, informe o país, idioma e órgão que vai receber o documento.",
@@ -89,6 +97,35 @@ document.addEventListener("DOMContentLoaded", () => {
     {
       label: "Enviar arquivo",
       answer: "Você pode enviar PDF ou imagem pelo celular, desde que esteja completo e legível. Se o documento estiver cortado, borrado ou ilegível, talvez seja necessário reenviar uma versão melhor.",
+    },
+    {
+      label: "Usar o site",
+      children: [
+        {
+          label: "Criar conta",
+          answer: "Para criar uma conta, use o botão Criar conta ou Cadastrar no site. Preencha seus dados, escolha seu perfil e confirme o envio. Se você for profissional, a validação pode depender da análise dos dados da OAB antes de liberar recursos completos.",
+        },
+        {
+          label: "Entrar",
+          answer: "Para entrar, clique em Entrar e informe e-mail e senha. Se estiver usando cadastro pelo Google, use a opção correspondente na tela de login. Se não lembrar a senha, use Recuperar senha antes de tentar criar outra conta.",
+        },
+        {
+          label: "Enviar documento",
+          answer: "Para enviar um documento, entre na sua conta e use a área de envio de documentos. Prefira PDF ou imagem nítida, completa e sem cortes. Antes de enviar, confirme se não há páginas faltando e autorize a análise por IA somente se estiver de acordo com os termos.",
+        },
+        {
+          label: "Acompanhar pedido",
+          answer: "Depois de entrar na conta, acompanhe seus pedidos pela área de solicitações ou casos. Lá você pode ver status, mensagens, documentos relacionados e próximas ações. Se houver advogado responsável, use o chat do caso para continuar o atendimento.",
+        },
+        {
+          label: "Perfis",
+          answer: "Cliente envia documentos e acompanha solicitações. Advogado atende casos e interage com clientes quando validado. Estagiário pode apoiar rotinas permitidas. Administrador gerencia usuários, auditoria e validações.",
+        },
+        {
+          label: "Contato",
+          answer: "Para falar com o time, use a página Contato do site. Descreva o assunto de forma objetiva e evite enviar CPF, senha, número de processo ou documentos sigilosos em mensagens abertas.",
+        },
+      ],
     },
     {
       label: "Uso no exterior",
