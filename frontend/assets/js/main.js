@@ -462,6 +462,7 @@
     const stackedQuery = window.matchMedia("(max-width: 1120px)");
     let lineFrame = 0;
     let resizeTimer = 0;
+    let settleTimer = 0;
 
     const updateLines = () => {
       lineFrame = 0;
@@ -492,8 +493,8 @@
 
         const clauseRect = clause.getBoundingClientRect();
         const cardRect = card.getBoundingClientRect();
-        const clauseDotCenterOffset = -2;
-        const startX = clauseRect.right + clauseDotCenterOffset - svgRect.left;
+        const clauseDotClearance = 10;
+        const startX = clauseRect.right + clauseDotClearance - svgRect.left;
         const startY = clauseRect.top + (clauseRect.height / 2) - svgRect.top;
         const endX = cardRect.left - svgRect.left - 1;
         const endY = cardRect.top + (cardRect.height / 2) - svgRect.top;
@@ -510,12 +511,20 @@
         return;
       }
 
-      lineFrame = window.requestAnimationFrame(updateLines);
+      lineFrame = window.requestAnimationFrame(() => {
+        lineFrame = window.requestAnimationFrame(updateLines);
+      });
+    };
+
+    const requestLineUpdateSettled = () => {
+      requestLineUpdate();
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(requestLineUpdate, 260);
     };
 
     const requestLineUpdateDebounced = () => {
       window.clearTimeout(resizeTimer);
-      resizeTimer = window.setTimeout(requestLineUpdate, 140);
+      resizeTimer = window.setTimeout(requestLineUpdateSettled, 140);
     };
 
     const clearActive = () => {
@@ -528,7 +537,7 @@
       section.querySelectorAll(".reveal-on-scroll").forEach((element) => {
         element.classList.add("is-visible");
       });
-      requestLineUpdate();
+      requestLineUpdateSettled();
     };
 
     cards.forEach((card) => {
@@ -577,7 +586,20 @@
     }
 
     window.addEventListener("resize", requestLineUpdateDebounced, { passive: true });
-    window.addEventListener("load", requestLineUpdate, { once: true });
+    window.addEventListener("load", requestLineUpdateSettled, { once: true });
+
+    if (document.fonts && typeof document.fonts.ready?.then === "function") {
+      document.fonts.ready.then(requestLineUpdateSettled).catch(() => {});
+    }
+
+    section.querySelectorAll("img").forEach((image) => {
+      if (image.complete) {
+        return;
+      }
+
+      image.addEventListener("load", requestLineUpdateSettled, { once: true });
+      image.addEventListener("error", requestLineUpdateSettled, { once: true });
+    });
 
     if (typeof stackedQuery.addEventListener === "function") {
       stackedQuery.addEventListener("change", requestLineUpdateDebounced);

@@ -417,6 +417,11 @@
     max-width: 100%;
   }
 
+  .home-hero .hero-actions .home-flow-button {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .chat-input-stack {
     width: 100%;
   }
