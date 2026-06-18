@@ -506,3 +506,139 @@
     padding: 8px;
   }
 }
+
+@media (max-width: 980px) {
+  .home-page .home-hero {
+    display: block !important;
+    min-height: auto !important;
+    padding: 42px 0 48px !important;
+    overflow: hidden !important;
+  }
+
+  .home-page .home-hero-grid {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .home-page .home-hero-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 18px 0 24px !important;
+    overflow: visible !important;
+    text-align: center !important;
+  }
+
+  .home-page .home-hero h1 {
+    max-width: min(100%, 620px) !important;
+    margin: 0 auto 22px !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .home-page .home-hero h1 .hero-title-line,
+  .home-page .home-hero h1 em,
+  .home-page .home-hero h1 .hero-typewriter-live {
+    display: block !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+  }
+
+  .home-page .home-hero h1 .hero-title-typewriter-line {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: center !important;
+    gap: .32em !important;
+    min-height: auto !important;
+    white-space: normal !important;
+  }
+
+  .home-page .home-hero h1 .hero-typewriter {
+    display: inline-grid !important;
+    min-width: min(16ch, 100%) !important;
+    max-width: 100% !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+  }
+
+  .home-page .home-hero h1 .hero-typewriter-reserve {
+    display: none !important;
+  }
+
+  .home-page .home-hero-copy > p {
+    max-width: min(100%, 560px) !important;
+    margin: 0 auto 24px !important;
+  }
+
+  .home-page .home-hero .hero-actions {
+    display: grid !important;
+    justify-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .home-page .home-flow-button,
+  .home-page .home-btn-outline,
+  .home-page .home-hero .hero-actions .btn,
+  .home-page .home-hero .hero-actions .home-flow-button {
+    width: min(100%, 340px) !important;
+    max-width: 100% !important;
+  }
+
+  .home-page .home-trust-row {
+    display: grid !important;
+    justify-items: center !important;
+    gap: 10px !important;
+    margin-top: 22px !important;
+  }
+
+  .home-page .home-trust-row span {
+    justify-content: center !important;
+    max-width: min(100%, 340px) !important;
+  }
+
+  .home-page .home-hero-visual,
+  .home-page .hero-phone-wrap,
+  .home-page .iphone-mockup {
+    display: none !important;
+    min-height: 0 !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .home-page .home-hero {
+    padding: 30px 0 40px !important;
+  }
+
+  .home-page .home-hero h1 {
+    max-width: 360px !important;
+    font-size: clamp(34px, 12.2vw, 50px) !important;
+    line-height: .96 !important;
+  }
+
+  .home-page .home-hero h1 .hero-title-typewriter-line {
+    display: grid !important;
+    justify-items: center !important;
+    gap: 0 !important;
+  }
+
+  .home-page .home-hero h1 .hero-typewriter {
+    display: block !important;
+    min-width: 0 !important;
+    text-align: center !important;
+    white-space: normal !important;
+  }
+
+  .home-page .home-hero-copy > p {
+    max-width: 340px !important;
+    font-size: 16px !important;
+    line-height: 1.55 !important;
+  }
+}
