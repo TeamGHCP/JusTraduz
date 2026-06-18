@@ -171,7 +171,7 @@ class PrivacyController extends BaseController
              WHERE id = ?"
         );
         $stmt->execute([
-            'Usuario removido',
+            'Usuário removido',
             'deleted+' . $userId . '@justraduz.invalid',
             password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT),
             date('Y-m-d H:i:s'),

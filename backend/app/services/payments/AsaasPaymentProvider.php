@@ -88,7 +88,6 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $paymentSource = $firstPayment ?: $subscription;
         $providerPaymentId = (string) ($firstPayment['id'] ?? '');
         $pixQrCode = $providerPaymentId !== '' ? $this->pixQrCodeForPayment($providerPaymentId) : [];
-        $bankSlip = $providerPaymentId !== '' ? $this->bankSlipInfoForPayment($providerPaymentId) : [];
         $redirectUrl = $this->checkoutUrlFromResponse($paymentSource);
         if ($redirectUrl === '') {
             $redirectUrl = app_url('/frontend/subir-plano.php?sucesso=' . urlencode('Assinatura criada no Asaas. Aguarde a confirmacao do pagamento.'));
@@ -101,14 +100,12 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'amount_cents' => $amount,
             'checkout_url' => $redirectUrl,
             'invoice_url' => (string) ($paymentSource['invoiceUrl'] ?? ''),
-            'bank_slip_url' => (string) ($paymentSource['bankSlipUrl'] ?? ''),
             'payment_link' => (string) ($paymentSource['paymentLink'] ?? ''),
             'due_date' => (string) ($paymentSource['dueDate'] ?? $subscription['nextDueDate'] ?? ''),
             'billing_type' => (string) ($paymentSource['billingType'] ?? $billingType),
             'payment_method' => $paymentMethod,
             'payment_status' => (string) ($paymentSource['status'] ?? 'PENDING'),
             'pix_qr_code' => $pixQrCode,
-            'bank_slip' => $bankSlip,
         ]);
     }
 
@@ -226,6 +223,40 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'subscription_id' => $subscriptionId,
             'provider_subscription_id' => $providerSubscriptionId,
             'provider_payment_id' => $providerPaymentId ?: null,
+        ];
+    }
+
+    public function confirmSandboxPayment(string $providerPaymentId): array
+    {
+        $this->assertConfigured();
+
+        $providerPaymentId = trim($providerPaymentId);
+        if ($providerPaymentId === '') {
+            return [
+                'ok' => false,
+                'provider' => $this->name(),
+                'sandbox_confirmed' => false,
+                'reason' => 'missing_payment_id',
+            ];
+        }
+
+        if (!str_contains($this->apiUrl, 'api-sandbox.asaas.com')) {
+            return [
+                'ok' => true,
+                'provider' => $this->name(),
+                'sandbox_confirmed' => false,
+                'reason' => 'not_sandbox',
+            ];
+        }
+
+        $payment = $this->request('POST', '/sandbox/payment/' . rawurlencode($providerPaymentId) . '/confirm');
+
+        return [
+            'ok' => true,
+            'provider' => $this->name(),
+            'sandbox_confirmed' => true,
+            'provider_payment_id' => $providerPaymentId,
+            'asaas_status' => (string) ($payment['status'] ?? ''),
         ];
     }
 
@@ -501,26 +532,10 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         ];
     }
 
-    private function bankSlipInfoForPayment(string $providerPaymentId): array
-    {
-        try {
-            $bankSlip = $this->request('GET', '/payments/' . rawurlencode($providerPaymentId) . '/identificationField');
-        } catch (Throwable) {
-            return [];
-        }
-
-        return [
-            'identification_field' => (string) ($bankSlip['identificationField'] ?? ''),
-            'bar_code' => (string) ($bankSlip['barCode'] ?? ''),
-            'nosso_numero' => (string) ($bankSlip['nossoNumero'] ?? ''),
-        ];
-    }
-
     private function normalizePaymentMethod(string $method): string
     {
         return match (strtolower(trim($method))) {
             'pix' => 'pix',
-            'boleto', 'bank_slip' => 'boleto',
             'card', 'credit_card' => 'credit_card',
             default => 'pix',
         };
@@ -530,7 +545,6 @@ class AsaasPaymentProvider implements PaymentProviderInterface
     {
         return match ($method) {
             'pix' => 'PIX',
-            'boleto' => 'BOLETO',
             'credit_card' => 'CREDIT_CARD',
             default => $this->billingType,
         };
@@ -678,7 +692,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
     private function checkoutUrlFromResponse(array $response): string
     {
-        foreach (['invoiceUrl', 'paymentLink', 'bankSlipUrl', 'url'] as $key) {
+        foreach (['invoiceUrl', 'paymentLink', 'url'] as $key) {
             if (!empty($response[$key]) && is_string($response[$key])) {
                 return $response[$key];
             }

@@ -219,6 +219,7 @@ class BillingController extends BaseController
         $checkout = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
         $metadata = is_array($checkout['metadata'] ?? null) ? $checkout['metadata'] : [];
         $providerSubscriptionId = trim((string) ($metadata['provider_subscription_id'] ?? ''));
+        $providerPaymentId = trim((string) ($metadata['provider_payment_id'] ?? ''));
         if (($checkout['provider'] ?? '') !== $this->payments->name() || $providerSubscriptionId === '') {
             $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Nenhuma cobrança pendente foi encontrada.')));
         }
@@ -226,12 +227,39 @@ class BillingController extends BaseController
         $userId = (int) $_SESSION['id'];
 
         try {
+            if ($providerPaymentId !== '' && method_exists($this->payments, 'confirmSandboxPayment')) {
+                try {
+                    $sandboxResult = $this->payments->confirmSandboxPayment($providerPaymentId);
+                    if (!empty($sandboxResult['sandbox_confirmed'])) {
+                        $this->audit->log('billing.sandbox_payment_confirm', 'subscription', 0, $sandboxResult);
+                    }
+                } catch (Throwable $sandboxException) {
+                    $this->audit->log('billing.sandbox_payment_confirm_failed', 'subscription', 0, [
+                        'provider' => $this->payments->name(),
+                        'provider_payment_id' => $providerPaymentId,
+                        'error' => $sandboxException->getMessage(),
+                    ]);
+                }
+            }
+
             $result = $this->payments->syncCheckoutPayment($userId, $providerSubscriptionId);
             $this->audit->log('billing.checkout_sync', 'subscription', (int) ($result['subscription_id'] ?? 0), $result);
 
             if (($result['status'] ?? '') === 'paid') {
+                $subscription = $this->subscriptions->currentForUser($userId);
+                $_SESSION['payment_confirmed'] = [
+                    'confirmed_at' => time(),
+                    'plan_id' => (int) ($subscription['plan_id'] ?? $checkout['plan_id'] ?? 0),
+                    'plan_name' => (string) ($subscription['plan_name'] ?? 'Plano ativo'),
+                    'billing_cycle' => (string) ($subscription['billing_cycle'] ?? $checkout['billing_cycle'] ?? 'monthly'),
+                    'amount_cents' => (int) ($metadata['amount_cents'] ?? 0),
+                    'subscription_id' => (int) ($result['subscription_id'] ?? $subscription['id'] ?? 0),
+                    'provider' => (string) ($result['provider'] ?? $this->payments->name()),
+                    'provider_subscription_id' => $providerSubscriptionId,
+                    'provider_payment_id' => (string) ($result['provider_payment_id'] ?? ''),
+                ];
                 unset($_SESSION['billing_checkout']);
-                $this->response->redirect(app_url('/frontend/perfil.php?tab=faturamento&sucesso=' . urlencode('Pagamento confirmado. Seu plano foi ativado.')));
+                $this->response->redirect(app_url('/frontend/pagamento-confirmado.php'));
             }
 
             $this->response->redirect(app_url('/frontend/pagamento-plano.php?erro=' . urlencode('Pagamento ainda não confirmado no Asaas. Se você ainda não efetuou o pagamento, clique em Pagar com segurança para concluir.')));
@@ -290,7 +318,7 @@ class BillingController extends BaseController
     private function checkoutPaymentData(): array
     {
         $method = strtolower(trim((string) $this->request->post('payment_method', 'pix')));
-        if (!in_array($method, ['pix', 'boleto', 'credit_card'], true)) {
+        if (!in_array($method, ['pix', 'credit_card'], true)) {
             $method = 'pix';
         }
 

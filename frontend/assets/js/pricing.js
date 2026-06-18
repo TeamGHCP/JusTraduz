@@ -52,4 +52,75 @@
       setCycle(toggle, nextCycle);
     });
   });
+
+  document.querySelectorAll("[data-pricing-card]").forEach(function (card) {
+    var button = card.querySelector("button[type='submit']");
+
+    function resetPointer() {
+      card.classList.remove("is-card-active", "is-card-pressed");
+      card.style.removeProperty("--pricing-card-rotate-x");
+      card.style.removeProperty("--pricing-card-rotate-y");
+      card.style.removeProperty("--pricing-card-glow-x");
+      card.style.removeProperty("--pricing-card-glow-y");
+    }
+
+    function activateCard() {
+      if (button && !button.disabled) {
+        button.click();
+      }
+    }
+
+    card.addEventListener("pointermove", function (event) {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
+      var rect = card.getBoundingClientRect();
+      var x = event.clientX - rect.left;
+      var y = event.clientY - rect.top;
+      var rotateY = ((x / rect.width) - 0.5) * 5;
+      var rotateX = ((0.5 - (y / rect.height)) * 5);
+
+      card.classList.add("is-card-active");
+      card.style.setProperty("--pricing-card-rotate-x", rotateX.toFixed(2) + "deg");
+      card.style.setProperty("--pricing-card-rotate-y", rotateY.toFixed(2) + "deg");
+      card.style.setProperty("--pricing-card-glow-x", ((x / rect.width) * 100).toFixed(2) + "%");
+      card.style.setProperty("--pricing-card-glow-y", ((y / rect.height) * 100).toFixed(2) + "%");
+    });
+
+    card.addEventListener("pointerleave", resetPointer);
+
+    card.addEventListener("pointerdown", function () {
+      card.classList.add("is-card-pressed");
+    });
+
+    card.addEventListener("pointerup", function () {
+      card.classList.remove("is-card-pressed");
+    });
+
+    card.addEventListener("click", function (event) {
+      if (event.target.closest("button, a, input, select, textarea, label")) {
+        return;
+      }
+
+      activateCard();
+    });
+
+    card.addEventListener("keydown", function (event) {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      if (event.target.closest("button, a, input, select, textarea")) {
+        return;
+      }
+
+      event.preventDefault();
+      card.classList.add("is-card-pressed");
+      window.setTimeout(function () {
+        card.classList.remove("is-card-pressed");
+      }, 140);
+      activateCard();
+    });
+  });
 })();
