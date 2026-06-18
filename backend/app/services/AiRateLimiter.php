@@ -43,7 +43,7 @@ class AiRateLimiter
     {
         $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
         $key = hash('sha256', $ip);
-        $directory = dirname(__DIR__, 2) . '/storage/rate-limits';
+        $directory = $this->rateLimitDirectory();
 
         if (!is_dir($directory) && !@mkdir($directory, 0750, true) && !is_dir($directory)) {
             return ['allowed' => true, 'retry_after' => 0];
@@ -83,5 +83,15 @@ class AiRateLimiter
             flock($handle, LOCK_UN);
             fclose($handle);
         }
+    }
+
+    private function rateLimitDirectory(): string
+    {
+        $configured = getenv('RATE_LIMIT_STORAGE_PATH');
+        if ($configured !== false && trim((string) $configured) !== '') {
+            return rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, trim((string) $configured)), DIRECTORY_SEPARATOR);
+        }
+
+        return dirname(__DIR__, 2) . '/storage/rate-limits';
     }
 }

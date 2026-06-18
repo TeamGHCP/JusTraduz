@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/OnboardingService.php';

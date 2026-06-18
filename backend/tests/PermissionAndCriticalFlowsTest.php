@@ -27,6 +27,10 @@ $auth = new AuthController();
 assertTrue(callPrivate($auth, 'isValidCpf', ['529.982.247-25']) === true, 'CPF valido deve passar pelo digito verificador.');
 assertTrue(callPrivate($auth, 'isValidCpf', ['111.111.111-11']) === false, 'CPF com digitos repetidos deve falhar.');
 assertTrue(callPrivate($auth, 'isValidCpf', ['123.456.789-00']) === false, 'CPF com digito verificador invalido deve falhar.');
+putenv('PROFILE_PHOTO_STORAGE_PATH=backend/storage/profile_photos_test');
+$profileStorage = callPrivate($auth, 'profilePhotoStorage', []);
+assertEquals('backend/storage/profile_photos_test', $profileStorage['relative_dir'] ?? '', 'Foto de perfil deve respeitar PROFILE_PHOTO_STORAGE_PATH.');
+putenv('PROFILE_PHOTO_STORAGE_PATH');
 
 reset_test_state();
 $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -148,6 +152,22 @@ assertEquals(0, $pendingQueueCount, 'Profissional aprovado nao deve continuar na
 
 reset_test_state();
 secure_session_start();
+$_SESSION = ['logado' => true, 'id' => 1, 'tipo' => 'cliente'];
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$profileResetCode = '123456';
+$pdo->prepare('INSERT INTO password_reset_codes (user_id, email, code_hash, expires_at) VALUES (?, ?, ?, ?)')
+    ->execute([1, 'cliente1@teste.local', password_hash($profileResetCode, PASSWORD_DEFAULT), date('Y-m-d H:i:s', time() + 900)]);
+$_POST = ['codigo' => $profileResetCode, 'senha' => 'NovaSenha@123', 'senha2' => 'NovaSenha@123'];
+ob_start();
+(new AuthController())->profilePasswordReset();
+$profileResetJson = ob_get_clean();
+$profileReset = json_decode((string) $profileResetJson, true);
+assertTrue(($profileReset['success'] ?? false) === true, 'Reset de senha pelo perfil deve aceitar o campo codigo.');
+$newPasswordHash = (string) $pdo->query('SELECT senha FROM users WHERE id = 1')->fetchColumn();
+assertTrue(password_verify('NovaSenha@123', $newPasswordHash), 'Reset de senha pelo perfil deve alterar a senha do usuario.');
+
+reset_test_state();
+secure_session_start();
 $_SESSION = ['logado' => true, 'id' => 1, 'tipo' => 'cliente', '_csrf_token' => 'token-lgpd'];
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $_POST = ['_csrf' => 'token-lgpd'];
@@ -167,7 +187,7 @@ $_POST = ['_csrf' => 'token-delete', 'confirmacao' => 'EXCLUIR'];
 $redirect = expectRedirect(static fn () => (new PrivacyController())->deleteAccount());
 assertStringContains('/frontend/login.html', $redirect, 'Encerramento LGPD deve encerrar sessao e voltar ao login.');
 $deleted = $pdo->query('SELECT nome, email, status, cpf FROM users WHERE id = 2')->fetch();
-assertEquals('Usuario removido', $deleted['nome'] ?? '', 'Encerramento LGPD deve anonimizar nome.');
+assertEquals('Usuário removido', $deleted['nome'] ?? '', 'Encerramento LGPD deve anonimizar nome.');
 assertEquals('deleted+2@justraduz.invalid', $deleted['email'] ?? '', 'Encerramento LGPD deve anonimizar e-mail.');
 assertEquals('inativo', $deleted['status'] ?? '', 'Encerramento LGPD deve inativar conta.');
 assertTrue(($deleted['cpf'] ?? null) === null, 'Encerramento LGPD deve remover CPF.');

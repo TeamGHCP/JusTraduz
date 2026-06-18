@@ -501,10 +501,10 @@ $calendarSubtitle = $type === 'cliente'
       </div>
     </main>
   </div>
-  <script>
-    window.CURRENT_USER_ID = <?= (int) current_user_id() ?>;
-    window.CURRENT_USER_TYPE = '<?= e((string) current_user_type()) ?>';
-  </script>
+  <script type="application/json" id="agenda-user-context"><?= json_encode(
+      ['id' => (int) current_user_id(), 'type' => (string) current_user_type()],
+      JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+  ) ?></script>
   <script src="assets/js/agenda.js?v=module-5"></script>
   <?php render_vlibras(); ?>
 </body>
