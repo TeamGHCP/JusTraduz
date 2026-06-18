@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
@@ -49,7 +49,7 @@ class PrivacyController extends BaseController
         $userId = $this->currentUserId();
         $userType = $this->currentUserType();
         if ($userType === 'admin' && $this->activeAdminCount() <= 1) {
-            $this->response->redirect(app_url('/frontend/perfil.php?erro=' . urlencode('Nao e possivel encerrar o ultimo administrador ativo.')));
+            $this->response->redirect(app_url('/frontend/perfil.php?erro=' . urlencode('Não é possível encerrar o último administrador ativo.')));
         }
 
         $documents = $this->fetchAll('SELECT id, caminho FROM documents WHERE user_id = ?', [$userId]);
@@ -110,9 +110,9 @@ class PrivacyController extends BaseController
 
     private function anonymizeUserContent(int $userId): void
     {
-        $this->pdo->prepare("UPDATE messages SET mensagem = '[mensagem removida por solicitacao LGPD]', attachment_original_name = NULL, attachment_path = NULL, attachment_mime = NULL, attachment_size = NULL WHERE sender_id = ?")->execute([$userId]);
-        $this->pdo->prepare("UPDATE cases SET titulo = '[solicitacao removida por solicitacao LGPD]', descricao = NULL WHERE cliente_id = ?")->execute([$userId]);
-        $this->pdo->prepare("UPDATE appointments SET assunto = '[agendamento removido por solicitacao LGPD]', observacoes = NULL WHERE client_id = ?")->execute([$userId]);
+        $this->pdo->prepare("UPDATE messages SET mensagem = '[mensagem removida por solicitação LGPD]', attachment_original_name = NULL, attachment_path = NULL, attachment_mime = NULL, attachment_size = NULL WHERE sender_id = ?")->execute([$userId]);
+        $this->pdo->prepare("UPDATE cases SET titulo = '[solicitação removida por solicitação LGPD]', descricao = NULL WHERE cliente_id = ?")->execute([$userId]);
+        $this->pdo->prepare("UPDATE appointments SET assunto = '[agendamento removido por solicitação LGPD]', observacoes = NULL WHERE client_id = ?")->execute([$userId]);
     }
 
     private function deleteUserDocuments(int $userId): void
@@ -171,7 +171,7 @@ class PrivacyController extends BaseController
              WHERE id = ?"
         );
         $stmt->execute([
-            'Usuario removido',
+            'Usuário removido',
             'deleted+' . $userId . '@justraduz.invalid',
             password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT),
             date('Y-m-d H:i:s'),

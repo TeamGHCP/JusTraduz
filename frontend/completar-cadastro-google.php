@@ -18,8 +18,15 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-3">
   <link rel="stylesheet" href="assets/css/auth-novo.css?v=google-complete-4">
+  <script src="assets/js/pwa.js" defer></script>
 </head>
 <body class="auth-google-complete-body">
   <main class="auth-page auth-google-complete-page">

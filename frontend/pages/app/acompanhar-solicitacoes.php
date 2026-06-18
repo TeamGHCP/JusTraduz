@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 
@@ -116,14 +116,21 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
+  <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
     <?php render_sidebar($type, 'acompanhar-solicitacoes.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Acompanhar solicitações', 'Fila de casos, responsaveis, chat e proximas acoes.', current_user_name()); ?>
+      <?php render_topbar('Acompanhar solicitações', 'Fila de casos, responsáveis, chat e próximas ações.', current_user_name()); ?>
 
       <section class="grid grid-4">
         <?= stat_card('Resultado filtrado', $total, 'case') ?>
@@ -151,7 +158,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
           <select class="select" id="prioridade" name="prioridade">
             <option value="">Todas</option>
             <option value="alta" <?= $priority === 'alta' ? 'selected' : '' ?>>Alta</option>
-            <option value="media" <?= $priority === 'media' ? 'selected' : '' ?>>Media</option>
+            <option value="media" <?= $priority === 'media' ? 'selected' : '' ?>>M?dia</option>
             <option value="baixa" <?= $priority === 'baixa' ? 'selected' : '' ?>>Baixa</option>
           </select>
         </div>
@@ -169,7 +176,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
           <button class="btn btn-primary" type="submit">Filtrar</button>
           <a class="btn btn-outline" href="acompanhar-solicitacoes.php">Limpar</a>
           <?php if ($type === 'cliente'): ?>
-            <a class="btn btn-soft" href="solicitar-ajuda.php"><?= icon_svg('help') ?> Nova solicitacao</a>
+            <a class="btn btn-soft" href="solicitar-ajuda.php"><?= icon_svg('help') ?> Nova solicitação</a>
           <?php endif; ?>
         </div>
       </form>
@@ -185,7 +192,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
         </div>
 
         <?php if (!$cases): ?>
-          <?= empty_state('Nenhuma solicitacao encontrada para os filtros atuais.') ?>
+          <?= empty_state('Nenhuma solicitação encontrada para os filtros atuais.') ?>
         <?php else: ?>
           <div class="case-board">
             <?php foreach ($cases as $case): ?>
@@ -221,7 +228,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
                 <div class="case-card-foot">
                   <span class="text-muted">
                     Criado em <?= e(date('d/m/Y H:i', strtotime((string) $case['created_at']))) ?>
-                    <?php if (!empty($case['last_message_at'])): ?> | Ultima msg <?= e(date('d/m/Y H:i', strtotime((string) $case['last_message_at']))) ?><?php endif; ?>
+                    <?php if (!empty($case['last_message_at'])): ?> | ?ltima msg <?= e(date('d/m/Y H:i', strtotime((string) $case['last_message_at']))) ?><?php endif; ?>
                   </span>
                   <div class="case-actions">
                     <?php if ($isOpenForLawyer): ?>

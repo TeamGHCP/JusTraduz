@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+﻿document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-copy-text]").forEach((button) => {
     button.addEventListener("click", async () => {
       const target = document.querySelector(button.dataset.copyText);
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const button = form.querySelector("button[type='submit']");
       if (!button) return;
       button.disabled = true;
-      button.textContent = "Gerando analise...";
+      button.textContent = "Gerando análise...";
     });
   });
 });

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
@@ -44,12 +44,12 @@ class AuthController extends BaseController
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->response->redirectWithError($frontUrl, 'Informe um e-mail válido.');
+            $this->response->redirectWithError($frontUrl, 'Informe um e-mail v?lido.');
         }
 
         $telefone = preg_replace('/[^\d()+\-\s]/', '', $telefone) ?? '';
         if ($telefone === '' || strlen(preg_replace('/\D+/', '', $telefone) ?? '') < 10) {
-            $this->response->redirectWithError($frontUrl, 'Informe um telefone válido com DDD.');
+            $this->response->redirectWithError($frontUrl, 'Informe um telefone v?lido com DDD.');
         }
 
         if (!in_array($tipo, ['cliente', 'advogado', 'estagiario'], true)) {
@@ -61,7 +61,7 @@ class AuthController extends BaseController
         }
 
         if (strlen($senha) < 6) {
-            $this->response->redirectWithError($frontUrl, 'A senha deve ter no mínimo 6 caracteres.');
+            $this->response->redirectWithError($frontUrl, 'A senha deve ter no m?nimo 6 caracteres.');
         }
 
         $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
@@ -92,15 +92,15 @@ class AuthController extends BaseController
             $oab_uf = null;
         }
 
-        // Verifica se e-mail já existe
+        // Verifica se e-mail j? existe
         $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
-            $this->response->redirectWithError($frontUrl, 'E-mail já cadastrado.');
+            $this->response->redirectWithError($frontUrl, 'E-mail j? cadastrado.');
         }
 
         if ($cpf && $this->cpfExists($cpf)) {
-            $this->response->redirectWithError($frontUrl, 'CPF ja cadastrado.');
+            $this->response->redirectWithError($frontUrl, 'CPF já cadastrado.');
         }
 
         // Insere no banco
@@ -139,7 +139,7 @@ class AuthController extends BaseController
             }
         } catch (PDOException $e) {
             if ($e->getCode() === '23000') {
-                $this->response->redirectWithError($frontUrl, 'E-mail ou CPF ja cadastrado.');
+                $this->response->redirectWithError($frontUrl, 'E-mail ou CPF já cadastrado.');
             }
 
             if ($e->getCode() === '42S22') {
@@ -153,7 +153,7 @@ class AuthController extends BaseController
         }
 
         $success = $isProfessional
-            ? 'Cadastro recebido. Seu acesso profissional aguardara aprovacao interna.'
+            ? 'Cadastro recebido. Seu acesso profissional aguardará aprovação interna.'
             : 'conta_criada';
 
         $this->response->redirect(APP_URL . '/frontend/login.html?sucesso=' . urlencode($success));
@@ -326,7 +326,7 @@ class AuthController extends BaseController
             $this->response->redirect(APP_URL . $this->dashboardPathFor((string) $usuario['tipo']));
         } catch (PDOException $e) {
             if ($e->getCode() === '42S22') {
-                $this->response->redirectWithError($frontUrl, 'Banco desatualizado. Importe um dos SQLs consolidados em database/.');
+                $this->response->redirectWithError($frontUrl, 'Banco de dados desatualizado. Importe um dos SQLs consolidados em database/.');
             }
 
             throw $e;
@@ -404,11 +404,11 @@ class AuthController extends BaseController
 
         if (!$usuario || (int) ($usuario['profile_completed'] ?? 1) === 1) {
             unset($_SESSION['google_pending_user_id']);
-            $this->response->redirectWithError(APP_URL . '/frontend/login.html', 'Cadastro Google ja foi concluido.');
+            $this->response->redirectWithError(APP_URL . '/frontend/login.html', 'Cadastro Google já foi concluído.');
         }
 
         if ($cpf && $this->cpfExists($cpf, $pendingUserId)) {
-            $this->response->redirectWithError($frontUrl, 'CPF ja cadastrado.');
+            $this->response->redirectWithError($frontUrl, 'CPF já cadastrado.');
         }
 
         $stmt = $this->pdo->prepare(
@@ -443,7 +443,7 @@ class AuthController extends BaseController
         if ($isProfessional) {
             $this->logOabValidation($pendingUserId, 'google_cadastro', null, 'pendente', 'admin_manual', 'pending');
             $this->sendProfessionalPendingEmail((string) $usuario['email'], (string) $usuario['nome'], $tipo);
-            $this->response->redirectWithSuccess(APP_URL . '/frontend/login.html', 'Cadastro recebido. Seu acesso profissional aguardara aprovacao interna.');
+            $this->response->redirectWithSuccess(APP_URL . '/frontend/login.html', 'Cadastro recebido. Seu acesso profissional aguardará aprovação interna.');
         }
 
         $this->signInUser($usuario);
@@ -554,7 +554,7 @@ class AuthController extends BaseController
         $passwordUpdated = false;
 
         if (!$nome || !$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe nome e e-mail válidos.'));
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe nome e e-mail v?lidos.'));
         }
 
         $currentType = (string) ($_SESSION['tipo'] ?? '');
@@ -574,12 +574,12 @@ class AuthController extends BaseController
         }
 
         if ($cpf && $this->cpfExists($cpf, (int) $_SESSION['id'])) {
-            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('CPF ja cadastrado por outro usuario.'));
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('CPF já cadastrado por outro usuário.'));
         }
 
         if ($novaSenha !== '' || $novaSenha2 !== '' || $senhaAtual !== '') {
             if (strlen($novaSenha) < 6) {
-                $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A nova senha deve ter no mínimo 6 caracteres.'));
+                $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A nova senha deve ter no m?nimo 6 caracteres.'));
             }
 
             if ($novaSenha !== $novaSenha2) {
@@ -688,7 +688,7 @@ class AuthController extends BaseController
         }
 
         if ((int) ($file['size'] ?? 0) > 2 * 1024 * 1024) {
-            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A foto deve ter no máximo 2 MB.'));
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A foto deve ter no m?ximo 2 MB.'));
         }
 
         $tmpPath = (string) ($file['tmp_name'] ?? '');
@@ -750,7 +750,7 @@ class AuthController extends BaseController
         $frontUrl = APP_URL . '/frontend/recuperar-senha.html';
 
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->response->redirectWithError($frontUrl, 'Informe um e-mail válido.');
+            $this->response->redirectWithError($frontUrl, 'Informe um e-mail v?lido.');
         }
 
         if ($action === 'request_code') {
@@ -763,11 +763,11 @@ class AuthController extends BaseController
         $senha2 = trim((string) $this->request->post('senha2', ''));
 
         if (strlen($codigo) !== 6) {
-            $this->response->redirectWithError($frontUrl, 'Informe o código de 6 dígitos enviado por e-mail.');
+            $this->response->redirectWithError($frontUrl, 'Informe o c?digo de 6 d?gitos enviado por e-mail.');
         }
 
         if (strlen($senha) < 6) {
-            $this->response->redirectWithError($frontUrl, 'A nova senha deve ter no mínimo 6 caracteres.');
+            $this->response->redirectWithError($frontUrl, 'A nova senha deve ter no m?nimo 6 caracteres.');
         }
 
         if ($senha !== $senha2) {
@@ -793,7 +793,7 @@ class AuthController extends BaseController
         }
 
         if ((int) ($reset['attempts'] ?? 0) >= 5) {
-            $this->response->redirectWithError($frontUrl, 'Muitas tentativas incorretas. Solicite um novo código.');
+            $this->response->redirectWithError($frontUrl, 'Muitas tentativas incorretas. Solicite um novo c?digo.');
         }
 
         if (!password_verify($codigo, (string) $reset['code_hash'])) {
@@ -866,12 +866,12 @@ class AuthController extends BaseController
         $senha2 = trim((string) $this->request->post('senha2', ''));
 
         if (strlen($codigo) !== 6) {
-            $this->response->json(['success' => false, 'message' => 'Informe o código de 6 dígitos enviado por e-mail.'], 422);
+            $this->response->json(['success' => false, 'message' => 'Informe o c?digo de 6 d?gitos enviado por e-mail.'], 422);
             return;
         }
 
         if (strlen($senha) < 6) {
-            $this->response->json(['success' => false, 'message' => 'A nova senha deve ter no mínimo 6 caracteres.'], 422);
+            $this->response->json(['success' => false, 'message' => 'A nova senha deve ter no m?nimo 6 caracteres.'], 422);
             return;
         }
 
@@ -900,7 +900,7 @@ class AuthController extends BaseController
         }
 
         if ((int) ($reset['attempts'] ?? 0) >= 5) {
-            $this->response->json(['success' => false, 'message' => 'Muitas tentativas incorretas. Solicite um novo código.'], 429);
+            $this->response->json(['success' => false, 'message' => 'Muitas tentativas incorretas. Solicite um novo c?digo.'], 429);
             return;
         }
 
@@ -1057,7 +1057,7 @@ class AuthController extends BaseController
           </tr>
           <tr>
             <td align="center" style="padding:0 40px 28px;color:#3c4043;font-size:14px;line-height:20px;">
-              Olá, {$safeName}.
+              Ol?, {$safeName}.
             </td>
           </tr>
           <tr>
@@ -1256,10 +1256,10 @@ HTML;
         $status = (string) (($usuario['oab_status'] ?? '') ?: ($usuario['status_cna'] ?? 'pending'));
         if (in_array($status, ['rejected', 'invalido', 'nao_encontrado'], true)) {
             $reason = trim((string) (($usuario['oab_rejection_reason'] ?? '') ?: ($usuario['cna_ultimo_erro'] ?? '')));
-            return 'Seu cadastro profissional nao foi aprovado.' . ($reason !== '' ? ' Motivo: ' . $reason : '');
+            return 'Seu cadastro profissional não foi aprovado.' . ($reason !== '' ? ' Motivo: ' . $reason : '');
         }
 
-        return 'Seu cadastro profissional esta aguardando aprovacao do administrador interno. Voce recebera um e-mail quando for aprovado.';
+        return 'Seu cadastro profissional está aguardando aprovação do administrador interno. Você receberá um e-mail quando for aprovado.';
     }
 
     private function sendProfessionalPendingEmail(string $email, string $name, string $type): void
@@ -1267,7 +1267,7 @@ HTML;
         $subject = 'Cadastro recebido - aguardando validacao da OAB';
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $safeType = $type === 'estagiario' ? 'estagiario' : 'advogado';
-        $message = "<p>Ola, {$safeName}.</p><p>Recebemos seu cadastro como {$safeType}. O acesso profissional ao JusTraduz depende da aprovacao do administrador interno apos validacao da OAB/registro informado.</p><p>Voce recebera um e-mail quando a revisao for concluida.</p>";
+        $message = "<p>Olá, {$safeName}.</p><p>Recebemos seu cadastro como {$safeType}. O acesso profissional ao JusTraduz depende da aprovação do administrador interno após validação da OAB/registro informado.</p><p>Você receberá um e-mail quando a revisão for concluída.</p>";
         $this->sendSystemEmail($email, $subject, $message);
     }
 
@@ -1282,8 +1282,8 @@ HTML;
     {
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $safeReason = htmlspecialchars($reason, ENT_QUOTES, 'UTF-8');
-        $message = "<p>Ola, {$safeName}.</p><p>Seu cadastro profissional nao foi aprovado.</p><p><strong>Motivo:</strong> {$safeReason}</p><p>Se necessario, entre em contato com o suporte para corrigir os dados enviados.</p>";
-        $this->sendSystemEmail($email, 'Cadastro profissional nao aprovado', $message);
+        $message = "<p>Ola, {$safeName}.</p><p>Seu cadastro profissional não foi aprovado.</p><p><strong>Motivo:</strong> {$safeReason}</p><p>Se necessario, entre em contato com o suporte para corrigir os dados enviados.</p>";
+        $this->sendSystemEmail($email, 'Cadastro profissional não aprovado', $message);
     }
 
     private function sendSystemEmail(string $email, string $subject, string $message): void

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/OnboardingService.php';
@@ -54,7 +54,7 @@ class OnboardingController extends BaseController
         [$tourKey, $tourVersion, $profile] = $this->tourPayload();
         $mode = (string) $this->request->post('skip_mode', '');
         if (!in_array($mode, ['remind_later', 'dont_show_again'], true)) {
-            throw new RuntimeException('Modo de adiamento invalido.', 422);
+            throw new RuntimeException('Modo de adiamento inválido.', 422);
         }
 
         $manual = (string) $this->request->post('manual', '') === '1';
@@ -103,7 +103,7 @@ class OnboardingController extends BaseController
         $profile = $this->clean((string) $this->request->post('dashboard_profile', $this->currentUserType()), 30, '/^[a-z_]+$/');
         $allowed = ['cliente', 'advogado', 'admin', 'estagiario'];
         if (!in_array($profile, $allowed, true) || $profile !== $this->currentUserType()) {
-            throw new RuntimeException('Perfil invalido.', 422);
+            throw new RuntimeException('Perfil inválido.', 422);
         }
         return $profile;
     }

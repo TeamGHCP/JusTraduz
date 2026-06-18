@@ -134,7 +134,14 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
   <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
+  <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -188,7 +195,7 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
             </div>
             <div class="field">
               <label for="descricao">Descricao</label>
-              <textarea class="textarea" id="descricao" name="descricao" placeholder="O que precisa acontecer, por que importa e qual e a proxima evidência esperada."></textarea>
+              <textarea class="textarea" id="descricao" name="descricao" placeholder="O que precisa acontecer, por que importa e qual é a próxima evidência esperada."></textarea>
             </div>
             <button class="btn btn-primary" type="submit"><?= icon_svg('check') ?> Criar tarefa</button>
           <?php endif; ?>

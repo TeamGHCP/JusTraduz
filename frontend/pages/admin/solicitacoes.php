@@ -1,10 +1,10 @@
-<?php
+﻿<?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_role(['admin']);
 
 $status = trim((string) ($_GET['status'] ?? ''));
 $priority = trim((string) ($_GET['prioridade'] ?? ''));
-$responsible = trim((string) ($_GET['responsável'] ?? ''));
+$responsible = trim((string) ($_GET['responsavel'] ?? ''));
 $scope = trim((string) ($_GET['scope'] ?? ''));
 $q = trim((string) ($_GET['q'] ?? ''));
 $successMessage = trim((string) ($_GET['sucesso'] ?? ''));
@@ -111,14 +111,21 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
   <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
   <link rel="manifest" href="../site.webmanifest">
   <meta name="theme-color" content="#008f80">
+  <meta name="application-name" content="JusTraduz">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="JusTraduz">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="../assets/css/style.css?v=sidebar-open-button-1">
+  <script src="../assets/js/pwa.js" defer></script>
 </head>
 <body>
   <div class="app-shell admin-shell">
     <?php render_sidebar('admin', 'solicitacoes.php', true); ?>
 
     <main class="app-main">
-      <?php render_topbar('Solicitações', 'Fila de ajuda juridica com prioridade, responsável, documento e chat.', current_user_name()); ?>
+      <?php render_topbar('Solicitações', 'Fila de ajuda jurídica com prioridade, responsável, documento e chat.', current_user_name()); ?>
 
       <?php if ($successMessage !== ''): ?>
         <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
@@ -158,8 +165,8 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
           </select>
         </div>
         <div class="field">
-          <label for="responsável">Responsável</label>
-          <select class="select" id="responsável" name="responsável">
+          <label for="responsavel">Responsável</label>
+          <select class="select" id="responsavel" name="responsavel">
             <option value="">Todos</option>
             <option value="sem" <?= $responsible === 'sem' ? 'selected' : '' ?>>Sem responsável</option>
             <option value="com" <?= $responsible === 'com' ? 'selected' : '' ?>>Com responsável</option>
@@ -179,7 +186,7 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
       </form>
 
       <?php if ($unassignedCount > 0): ?>
-        <div class="alert is-visible alert-info">Ha <?= e((string) $unassignedCount) ?> caso(s) sem responsável. Isso é gargalo operacional, não detalhe visual.</div>
+        <div class="alert is-visible alert-info">Há <?= e((string) $unassignedCount) ?> caso(s) sem responsável. Isso é gargalo operacional, não detalhe visual.</div>
       <?php endif; ?>
 
       <section class="dash-section">
@@ -189,7 +196,7 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
         </div>
 
         <?php if (!$cases): ?>
-          <?= empty_state('Nenhuma solicitacao encontrada para os filtros selecionados.') ?>
+          <?= empty_state('Nenhuma solicitação encontrada para os filtros selecionados.') ?>
         <?php else: ?>
           <div class="table-wrap">
             <table class="table admin-requests-table">

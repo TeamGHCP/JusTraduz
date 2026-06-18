@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
@@ -99,7 +99,7 @@ class AdminController extends BaseController
         $justification = mb_substr($justification, 0, 500);
 
         if ($userId <= 0 || !in_array($action, ['approve', 'reject', 'pending'], true)) {
-            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Dados invalidos para revisar OAB.')));
+            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Dados inválidos para revisar OAB.')));
         }
 
         if (in_array($action, ['approve', 'reject'], true) && $justification === '') {
@@ -111,7 +111,7 @@ class AdminController extends BaseController
         $professional = $stmt->fetch();
 
         if (!$professional) {
-            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Profissional nao encontrado.')));
+            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Profissional não encontrado.')));
         }
 
         $hasOab = trim((string) ($professional['oab'] ?? '')) !== '' && trim((string) ($professional['oab_uf'] ?? '')) !== '';
@@ -123,7 +123,7 @@ class AdminController extends BaseController
         $adminId = (int) ($_SESSION['id'] ?? 0);
 
         if ($action === 'reject') {
-            $message = $justification !== '' ? $justification : 'OAB reprovada na revisao manual administrativa.';
+            $message = $justification !== '' ? $justification : 'OAB reprovada na revisão manual administrativa.';
 
             $this->pdo->beginTransaction();
             try {
@@ -144,7 +144,7 @@ class AdminController extends BaseController
                 $stmt->execute([$message, $message, $adminId > 0 ? $adminId : null, $userId]);
 
                 if ($stmt->rowCount() !== 1) {
-                    throw new RuntimeException('Nao foi possivel rejeitar o profissional.');
+                    throw new RuntimeException('Não foi possível rejeitar o profissional.');
                 }
 
                 $this->logOabReview($userId, $adminId, $action, $previousStatus, 'invalido', 'admin_manual', $message, $justification);
@@ -161,12 +161,12 @@ class AdminController extends BaseController
                 $this->pdo->commit();
             } catch (Throwable $exception) {
                 $this->pdo->rollBack();
-                $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Nao foi possivel rejeitar o cadastro profissional.')));
+                $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Não foi possível rejeitar o cadastro profissional.')));
             }
 
-            $this->notifications->notify($userId, 'Seu cadastro profissional nao foi aprovado. Motivo: ' . $message);
+            $this->notifications->notify($userId, 'Seu cadastro profissional não foi aprovado. Motivo: ' . $message);
             $this->sendProfessionalRejectedEmail((string) $professional['email'], (string) $professional['nome'], $message);
-            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?sucesso=' . urlencode('Cadastro profissional rejeitado e usuario notificado.')));
+            $this->response->redirect(app_url('/frontend/admin/validar-oab.php?sucesso=' . urlencode('Cadastro profissional rejeitado e usuário notificado.')));
         }
 
         if ($action === 'approve') {
@@ -211,7 +211,7 @@ class AdminController extends BaseController
             $this->sendProfessionalApprovedEmail((string) $professional['email'], (string) $professional['nome']);
         }
 
-        $this->response->redirect(app_url('/frontend/admin/validar-oab.php?sucesso=' . urlencode('Revisao profissional atualizada.')));
+        $this->response->redirect(app_url('/frontend/admin/validar-oab.php?sucesso=' . urlencode('Revisão profissional atualizada.')));
     }
 
     private function sendProfessionalApprovedEmail(string $email, string $name): void
@@ -224,7 +224,7 @@ class AdminController extends BaseController
     {
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $safeReason = htmlspecialchars($reason, ENT_QUOTES, 'UTF-8');
-        $this->sendSystemEmail($email, 'Cadastro profissional nao aprovado', "<p>Ola, {$safeName}.</p><p>Seu cadastro profissional nao foi aprovado.</p><p><strong>Motivo:</strong> {$safeReason}</p>");
+        $this->sendSystemEmail($email, 'Cadastro profissional não aprovado', "<p>Olá, {$safeName}.</p><p>Seu cadastro profissional não foi aprovado.</p><p><strong>Motivo:</strong> {$safeReason}</p>");
     }
 
     private function sendSystemEmail(string $email, string $subject, string $message): void

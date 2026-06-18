@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once dirname(__DIR__) . '/config/database.php';
 
@@ -55,12 +55,12 @@ class DataJudService
 
         $hit = is_array($search['hit'] ?? null) ? $search['hit'] : [];
         if (!$hit) {
-            return $this->failure('O DataJud nao encontrou dados publicos para este numero de processo nos tribunais consultados.');
+            return $this->failure('O DataJud não encontrou dados públicos para este número de processo nos tribunais consultados.');
         }
 
         $process = $this->normalizeProcess($hit, $cnj, (string) $search['tribunal'], $cpf, $lgpdConsent);
         if (!$this->saveProcess($userId, $process)) {
-            return $this->failure('O DataJud retornou dados, mas nao foi possivel salvar o cache do processo.');
+            return $this->failure('O DataJud retornou dados, mas não foi possível salvar o cache do processo.');
         }
 
         return [
@@ -312,25 +312,25 @@ class DataJudService
     {
         $last = trim((string) ($movements[0]['descricao'] ?? ''));
         if ($last === '') {
-            return 'O processo foi encontrado no DataJud, mas nao ha movimentacoes recentes suficientes para explicar o andamento com seguranca.';
+            return 'O processo foi encontrado no DataJud, mas não há movimentações recentes suficientes para explicar o andamento com segurança.';
         }
 
         $class = $this->namedValue($source['classe'] ?? null);
         $prefix = $class !== '' ? 'Este processo aparece como ' . $class . '. ' : '';
 
         if (preg_match('/juntad|documento|peti[cç][aã]o/i', $last)) {
-            return $prefix . 'A ultima movimentacao indica que um documento foi juntado ao processo. Isso significa que alguma parte enviou uma nova informacao ou prova. Agora, o juiz ou a vara deve analisar esse documento antes do proximo andamento.';
+            return $prefix . 'A última movimentação indica que um documento foi juntado ao processo. Isso significa que alguma parte enviou uma nova informação ou prova. Agora, o juiz ou a vara deve analisar esse documento antes do próximo andamento.';
         }
 
         if (preg_match('/conclus|juiz|magistrad/i', $last)) {
-            return $prefix . 'O processo esta aguardando analise do juiz. A ultima movimentacao indica que os autos foram encaminhados para decisao, despacho ou verificacao interna.';
+            return $prefix . 'O processo está aguardando análise do juiz. A última movimentação indica que os autos foram encaminhados para decisão, despacho ou verificação interna.';
         }
 
         if (preg_match('/intima|citac|cita[cç][aã]o|publica/i', $last)) {
-            return $prefix . 'A ultima movimentacao indica uma comunicacao oficial no processo. Uma parte ou interessado pode precisar tomar conhecimento e, dependendo do caso, cumprir algum prazo.';
+            return $prefix . 'A última movimentação indica uma comunicação oficial no processo. Uma parte ou interessado pode precisar tomar conhecimento e, dependendo do caso, cumprir algum prazo.';
         }
 
-        return $prefix . 'A ultima movimentacao registrada foi: ' . $last . '. Em termos simples, houve um novo andamento no processo e a proxima etapa depende da analise da vara, do juiz ou da manifestacao das partes.';
+        return $prefix . 'A última movimentação registrada foi: ' . $last . '. Em termos simples, houve um novo andamento no processo e a próxima etapa depende da análise da vara, do juiz ou da manifestação das partes.';
     }
 
     private function tribunalFromCnj(string $cnj): ?string
@@ -522,7 +522,7 @@ class DataJudService
     private function requestJson(string $method, string $url, array $headers = [], $body = null): array
     {
         if (!function_exists('curl_init')) {
-            return ['ok' => false, 'message' => 'Extensao cURL do PHP nao esta habilitada.', 'data' => null];
+            return ['ok' => false, 'message' => 'Extensão cURL do PHP não está habilitada.', 'data' => null];
         }
 
         $ch = curl_init($url);

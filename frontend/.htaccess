@@ -1,0 +1,10 @@
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType application/javascript .js
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "^(service-worker\.js|site\.webmanifest)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+</IfModule>

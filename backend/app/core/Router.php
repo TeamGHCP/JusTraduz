@@ -67,7 +67,7 @@ class Router
             return;
         }
 
-        echo 'Recurso nao encontrado.';
+        echo 'Recurso não encontrado.';
     }
 
     private static function expectsJson(): bool
