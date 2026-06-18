@@ -36,10 +36,39 @@ assertTrue(
     callPrivate($controller, 'isRestrictedLegalAdvice', ['quanto custa traduzir um diploma']) === false,
     'Não deveria bloquear pergunta comercial de tradução.'
 );
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['meu documento está ruim de entender, o que fazer', []]), 'linguagem simples'),
+    'Deveria responder melhor quando o documento estiver difícil de entender.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['ajuda para meu documento', []]), 'três formas'),
+    'Deveria responder melhor a pedido genérico de ajuda com documento.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['tradução simples', []]), 'idioma atual'),
+    'Deveria explicar tradução simples sem cair no fallback genérico.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['me ajude a traduzir um documento', []]), 'quatro informações'),
+    'Deveria pedir dados objetivos para orientar tradução.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['como criar conta no site', []]), 'Criar conta'),
+    'Deveria orientar cadastro de conta.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['esqueci minha senha', []]), 'Recuperar senha'),
+    'Deveria orientar recuperação de senha.'
+);
+assertTrue(
+    str_contains(callPrivate($controller, 'answerLocalQuestion', ['onde acompanho minha solicitação', []]), 'solicita'),
+    'Deveria orientar acompanhamento de solicitações.'
+);
 
 $prompt = callPrivate(GeminiService::class, 'buildChatPrompt', ['Quero ajuda', []]);
-assertTrue(str_contains($prompt, 'Nao calcule prazos processuais'), 'Prompt deve proibir cálculo de prazos.');
-assertTrue(str_contains($prompt, 'dados nao confiaveis'), 'Prompt deve tratar entrada como não confiável.');
+assertTrue(str_contains($prompt, 'não presta consultoria jurídica'), 'Prompt deve proibir consultoria jurídica.');
+assertTrue(str_contains($prompt, 'conteúdo entre os delimitadores'), 'Prompt deve tratar entrada como não confiável.');
+assertTrue(str_contains($prompt, 'criar conta'), 'Prompt deve orientar uso da plataforma.');
 
 $_SERVER['REMOTE_ADDR'] = '127.0.0.240';
 $_SESSION['_ai_chat_attempts'] = [];
