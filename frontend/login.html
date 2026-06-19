@@ -15,7 +15,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-6-eye">
-  <link rel="stylesheet" href="assets/css/auth-novo.css?v=auth-symbol-detail-2">
+  <link rel="stylesheet" href="assets/css/auth-novo.css?v=auth-soft-motion-2">
   <style>
     .auth-switch-page .auth-card .btn.btn-block {
       min-height: 48px !important;
@@ -247,40 +247,76 @@
   </section>
 
   <aside class="auth-art auth-slider" aria-label="JusTraduz">
-    <span class="auth-orbit auth-orbit-one" aria-hidden="true"></span>
-    <span class="auth-orbit auth-orbit-two" aria-hidden="true"></span>
-    <span class="auth-light-trail auth-light-trail-one" aria-hidden="true"></span>
-    <span class="auth-light-trail auth-light-trail-two" aria-hidden="true"></span>
-    <span class="auth-dot-grid" aria-hidden="true"></span>
-
+    <svg class="auth-line-field" viewBox="0 0 904 940" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="authLineBlur">
+          <feGaussianBlur stdDeviation="3"/>
+        </filter>
+        <linearGradient id="authLineA" x1="0" y1="760" x2="620" y2="0" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#00d6c7" stop-opacity=".92"/>
+          <stop offset=".48" stop-color="#fff3bb" stop-opacity=".88"/>
+          <stop offset="1" stop-color="#00d6c7" stop-opacity=".78"/>
+        </linearGradient>
+        <linearGradient id="authLineB" x1="0" y1="780" x2="850" y2="940" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#00d6c7" stop-opacity=".78"/>
+          <stop offset=".48" stop-color="#fef0b6" stop-opacity=".9"/>
+          <stop offset="1" stop-color="#00d6c7" stop-opacity=".55"/>
+        </linearGradient>
+      </defs>
+      <path class="auth-line auth-line-main" d="M-126 782 C32 732 108 640 168 500 C242 326 356 124 586 -46" stroke="url(#authLineA)" stroke-width="3">
+        <animate attributeName="d" dur="15s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"
+          values="M-126 782 C32 732 108 640 168 500 C242 326 356 124 586 -46;
+                  M-126 782 C44 720 118 660 180 500 C238 338 382 142 586 -46;
+                  M-126 782 C22 744 98 616 162 490 C270 314 344 102 586 -46;
+                  M-126 782 C32 732 108 640 168 500 C242 326 356 124 586 -46"/>
+      </path>
+      <path class="auth-line auth-line-glow" d="M-126 782 C32 732 108 640 168 500 C242 326 356 124 586 -46" stroke="#07fff0" stroke-opacity=".46" stroke-width="8" filter="url(#authLineBlur)">
+        <animate attributeName="d" dur="15s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"
+          values="M-126 782 C32 732 108 640 168 500 C242 326 356 124 586 -46;
+                  M-126 782 C44 720 118 660 180 500 C238 338 382 142 586 -46;
+                  M-126 782 C22 744 98 616 162 490 C270 314 344 102 586 -46;
+                  M-126 782 C32 732 108 640 168 500 C242 326 356 124 586 -46"/>
+      </path>
+      <path class="auth-line auth-line-low" d="M-150 690 C74 724 246 820 408 904 C540 972 654 1010 838 986" stroke="url(#authLineB)" stroke-width="3">
+        <animate attributeName="d" dur="17s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"
+          values="M-150 690 C74 724 246 820 408 904 C540 972 654 1010 838 986;
+                  M-150 690 C86 704 238 836 418 892 C558 948 672 1022 838 986;
+                  M-150 690 C60 748 270 800 410 916 C548 996 690 982 838 986;
+                  M-150 690 C74 724 246 820 408 904 C540 972 654 1010 838 986"/>
+      </path>
+      <path class="auth-line auth-line-thin" d="M-80 84 C114 28 300 74 466 186 C632 298 754 470 982 402" stroke="#04dcca" stroke-opacity=".38" stroke-width="1.6">
+        <animate attributeName="d" dur="19s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"
+          values="M-80 84 C114 28 300 74 466 186 C632 298 754 470 982 402;
+                  M-80 84 C102 52 286 52 466 198 C622 318 774 448 982 402;
+                  M-80 84 C128 8 320 96 466 176 C650 280 736 490 982 402;
+                  M-80 84 C114 28 300 74 466 186 C632 298 754 470 982 402"/>
+      </path>
+      <path class="auth-line auth-line-thin" d="M-76 760 C128 646 216 552 296 398 C386 226 500 70 700 -38" stroke="#04dcca" stroke-opacity=".34" stroke-width="1.4">
+        <animate attributeName="d" dur="16s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"
+          values="M-76 760 C128 646 216 552 296 398 C386 226 500 70 700 -38;
+                  M-76 760 C144 658 204 532 308 406 C402 246 486 48 700 -38;
+                  M-76 760 C110 628 238 568 290 390 C368 202 524 92 700 -38;
+                  M-76 760 C128 646 216 552 296 398 C386 226 500 70 700 -38"/>
+      </path>
+      <path class="auth-line auth-line-thin" d="M-60 816 C146 790 326 846 492 928 C642 1002 780 1004 960 910" stroke="#04dcca" stroke-opacity=".34" stroke-width="1.4">
+        <animate attributeName="d" dur="18s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".42 0 .58 1;.42 0 .58 1;.42 0 .58 1"
+          values="M-60 816 C146 790 326 846 492 928 C642 1002 780 1004 960 910;
+                  M-60 816 C160 808 306 824 502 930 C660 1014 792 984 960 910;
+                  M-60 816 C132 766 342 874 486 914 C628 946 770 1026 960 910;
+                  M-60 816 C146 790 326 846 492 928 C642 1002 780 1004 960 910"/>
+      </path>
+    </svg>
     <div class="auth-art-inner">
       <a href="index.html" class="slider-logo-link">
         <img class="slider-logo" src="assets/img/logo-modo-escuro-normalizado.png" alt="JusTraduz">
       </a>
-
-      <div class="auth-art-text login-art-text">
-        <h2>Acesse com <span>controle claro.</span></h2>
-        <p>Documentos, solicitações, agenda e atendimento ficam no mesmo fluxo.</p>
-      </div>
-
-      <div class="auth-art-text cadastro-art-text">
-        <h2>Cadastro com <span>regra clara.</span></h2>
-        <p>Clientes entram para enviar documentos. Profissionais aguardam validação OAB antes do acesso completo.</p>
-      </div>
-      <div class="auth-art-trust" aria-hidden="true">
-        <span><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>Seguro</span>
-        <i></i>
-        <span><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Privado</span>
-        <i></i>
-        <span><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>Confi&aacute;vel</span>
-      </div>
     </div>
   </aside>
 </main>
 
 <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
 <script src="assets/js/auth.js?v=cpf-validator-1"></script>
-<script src="assets/js/auth-novo.js"></script>
+<script src="assets/js/auth-novo.js?v=auth-transition-replay-2"></script>
 <script src="assets/js/accessibility.js?v=2026.06.16-a11y-stack"></script>
 <div vw class="enabled">
   <div vw-access-button class="active"></div>

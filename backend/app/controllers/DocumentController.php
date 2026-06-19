@@ -41,12 +41,16 @@ class DocumentController extends BaseController
         // Validação CSRF adicional (defensiva)
         CsrfMiddleware::validate();
 
+        $uploadRedirect = (string) $this->request->post('redirect_to', '') === 'documents'
+            ? '/frontend/visualizar-documento.php'
+            : '/frontend/dashboard-cliente.php';
+
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] !== 'cliente') {
             $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login como cliente para enviar documentos.')));
         }
 
         if (empty($_FILES['documento']) || $_FILES['documento']['error'] !== UPLOAD_ERR_OK) {
-            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('Arquivo inválido ou não enviado.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Arquivo inválido ou não enviado.')));
         }
 
         $file = $_FILES['documento'];
@@ -57,7 +61,7 @@ class DocumentController extends BaseController
 
         $quota = $this->usage->allow($userId, 'document_upload');
         if (!$quota['allowed']) {
-            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('Limite diario de uploads atingido. Tente novamente amanha.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Limite diario de uploads atingido. Tente novamente amanha.')));
         }
 
         $maxSize = 50 * 1024 * 1024;
@@ -66,12 +70,12 @@ class DocumentController extends BaseController
         $allowedMimes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
 
         if ($file['size'] <= 0 || $file['size'] > $maxSize) {
-            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('O arquivo deve ter no m?ximo 50 MB.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('O arquivo deve ter no m?ximo 50 MB.')));
         }
 
         $mime = mime_content_type($file['tmp_name']) ?: '';
         if (!in_array($extension, $allowedExtensions, true) || !in_array($mime, $allowedMimes, true)) {
-            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('Formato não permitido.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Formato não permitido.')));
         }
 
         $scanner = new UploadScannerService();
@@ -81,7 +85,7 @@ class DocumentController extends BaseController
                 'mime' => $mime,
                 'reason' => $scanner->lastError(),
             ]);
-            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode($scanner->lastError() ?: 'Arquivo reprovado pelo scanner de segurança.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode($scanner->lastError() ?: 'Arquivo reprovado pelo scanner de segurança.')));
         }
 
         $storageDir = $this->storage->documentDirectory($userId);
@@ -94,7 +98,7 @@ class DocumentController extends BaseController
         $destination = $storageDir . '/' . $safeName;
 
         if (!move_uploaded_file($file['tmp_name'], $destination)) {
-            $this->response->redirect(app_url('/frontend/dashboard-cliente.php?erro=' . urlencode('Não foi possível salvar o arquivo.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Não foi possível salvar o arquivo.')));
         }
 
         $relativePath = $this->storage->documentReference($userId, $safeName);
@@ -161,7 +165,7 @@ class DocumentController extends BaseController
             'private_storage' => $this->storage->isDocumentStorageOutsideWebroot(),
         ]);
 
-        $this->response->redirect(app_url('/frontend/dashboard-cliente.php?sucesso=' . urlencode($message)));
+        $this->response->redirect(app_url($uploadRedirect . '?sucesso=' . urlencode($message)));
     }
 
     public function analyze(): void

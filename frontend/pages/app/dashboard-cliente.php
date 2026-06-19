@@ -20,6 +20,50 @@ $documents = fetch_all(
 );
 $lastDocument = $documents[0] ?? null;
 $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WHERE cliente_id = ? ORDER BY created_at DESC LIMIT 1', [$userId]);
+$quickLinks = [
+    [
+        'title' => 'Enviar documento',
+        'description' => 'Faça upload e acompanhe a análise na página de documentos.',
+        'href' => 'visualizar-documento.php#novo-documento',
+        'icon' => 'upload',
+        'action' => 'Enviar agora',
+    ],
+    [
+        'title' => 'Histórico',
+        'description' => 'Consulte seus envios, status e análises disponíveis.',
+        'href' => 'visualizar-documento.php',
+        'icon' => 'folder',
+        'action' => 'Ver histórico',
+    ],
+    [
+        'title' => 'Pedir ajuda',
+        'description' => 'Abra uma solicitação quando precisar de orientação.',
+        'href' => 'solicitar-ajuda.php',
+        'icon' => 'help',
+        'action' => 'Solicitar',
+    ],
+    [
+        'title' => 'Conversas',
+        'description' => 'Acompanhe o chat dos seus casos em andamento.',
+        'href' => 'chat.php',
+        'icon' => 'chat',
+        'action' => 'Abrir chat',
+    ],
+    [
+        'title' => 'Agenda',
+        'description' => 'Veja compromissos e próximos atendimentos.',
+        'href' => 'agenda.php',
+        'icon' => 'calendar',
+        'action' => 'Ver agenda',
+    ],
+    [
+        'title' => 'Perfil',
+        'description' => 'Atualize seus dados e revise a segurança da conta.',
+        'href' => 'perfil.php',
+        'icon' => 'user',
+        'action' => 'Editar perfil',
+    ],
+];
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -53,7 +97,7 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
           <h2>Envie um documento e transforme juridiquês em próximos passos.</h2>
           <p>O JusTraduz organiza análise, solicitação, chat e agenda para você sair da dúvida com segurança.</p>
           <div class="form-actions">
-            <a class="btn btn-primary" href="#novo-documento"><?= icon_svg('upload') ?> Enviar documento</a>
+            <a class="btn btn-primary" href="visualizar-documento.php#novo-documento"><?= icon_svg('upload') ?> Enviar documento</a>
             <a class="btn btn-outline" href="visualizar-documento.php"><?= icon_svg('file') ?> Ver documentos</a>
           </div>
         </article>
@@ -89,6 +133,25 @@ $lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WH
         <?= stat_card('Análises feitas', $analysisCount, 'chart') ?>
         <?= stat_card('Pendentes de IA', $pendingAnalysisCount, 'help') ?>
         <?= stat_card('Casos ativos', $caseCount, 'case') ?>
+      </section>
+
+      <section class="dash-section">
+        <div class="dash-section-title">
+          <div>
+            <h2>Atalhos importantes <?= help_icon('Atalhos da dashboard', 'Use estes acessos para chegar rapidamente às principais áreas do JusTraduz.') ?></h2>
+            <p class="text-muted">Acesse documentos, atendimento, conversas e conta sem procurar no menu.</p>
+          </div>
+        </div>
+        <div class="grid grid-3">
+          <?php foreach ($quickLinks as $link): ?>
+            <article class="card">
+              <?= icon_svg($link['icon']) ?>
+              <h3><?= e($link['title']) ?></h3>
+              <p class="text-muted"><?= e($link['description']) ?></p>
+              <a class="btn btn-soft btn-sm" href="<?= e($link['href']) ?>"><?= e($link['action']) ?></a>
+            </article>
+          <?php endforeach; ?>
+        </div>
       </section>
 
       <section class="dash-section" id="novo-documento">
