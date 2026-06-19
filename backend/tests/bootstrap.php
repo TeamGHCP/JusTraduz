@@ -418,8 +418,8 @@ function seed_test_data(PDO $pdo): void
     }
 
     $pdo->exec("INSERT INTO plans (id, slug, name, description, monthly_price_cents, yearly_price_cents, limits_json, features_json, active, sort_order) VALUES
-        (1, 'essencial', 'Essencial', 'Teste', 2900, 27900, '{\"document_upload\":10,\"document_ai\":10,\"ai_chat\":30,\"datajud_cnj\":20,\"ocr\":5}', '[\"Teste\"]', 1, 10),
-        (2, 'pro', 'Pro', 'Teste', 7900, 75900, '{\"document_upload\":60,\"document_ai\":60,\"ai_chat\":200,\"datajud_cnj\":100,\"ocr\":40}', '[\"Teste\"]', 1, 20)");
+        (1, 'essencial', 'Essencial', 'Teste', 1500, 14400, '{\"document_upload\":10,\"document_ai\":10,\"ai_chat\":30,\"datajud_cnj\":20,\"ocr\":5}', '[\"Teste\"]', 1, 10),
+        (2, 'pro', 'Pro', 'Teste', 5000, 48000, '{\"document_upload\":60,\"document_ai\":60,\"ai_chat\":200,\"datajud_cnj\":100,\"ocr\":40}', '[\"Teste\"]', 1, 20)");
     $pdo->exec("INSERT INTO organizations (id, name, slug, owner_user_id, status) VALUES (1, 'Escritorio Teste', 'escritorio-teste', 3, 'active')");
     $pdo->exec("INSERT INTO organization_members (organization_id, user_id, role, status) VALUES
         (1, 1, 'member', 'active'),

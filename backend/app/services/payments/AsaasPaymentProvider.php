@@ -2,11 +2,15 @@
 
 require_once __DIR__ . '/PaymentProviderInterface.php';
 require_once dirname(__DIR__, 2) . '/config/app.php';
+require_once dirname(__DIR__) . '/BillingEmailService.php';
+require_once dirname(__DIR__) . '/NotificationService.php';
 require_once dirname(__DIR__) . '/SubscriptionService.php';
 
 class AsaasPaymentProvider implements PaymentProviderInterface
 {
     private PDO $pdo;
+    private BillingEmailService $billingEmails;
+    private NotificationService $notifications;
     private SubscriptionService $subscriptions;
     private string $apiUrl;
     private string $apiKey;
@@ -15,6 +19,8 @@ class AsaasPaymentProvider implements PaymentProviderInterface
     public function __construct(PDO $pdo, SubscriptionService $subscriptions)
     {
         $this->pdo = $pdo;
+        $this->billingEmails = new BillingEmailService();
+        $this->notifications = new NotificationService($pdo);
         $this->subscriptions = $subscriptions;
         $this->apiUrl = rtrim($this->env('ASAAS_API_URL', 'https://api-sandbox.asaas.com/v3'), '/');
         $this->apiKey = $this->env('ASAAS_API_KEY', '');
@@ -148,6 +154,10 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             $stmt->execute([$newStatus, $subscriptionId]);
         }
 
+        if ($userId && $paymentStatus === 'paid') {
+            $this->notifyPlanPaid((int) $userId, $subscriptionId, $amount);
+        }
+
         return [
             'provider' => $this->name(),
             'event_type' => $event,
@@ -214,6 +224,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         if ($subscriptionId && $paymentStatus === 'paid') {
             $stmt = $this->pdo->prepare('UPDATE subscriptions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
             $stmt->execute(['active', $subscriptionId]);
+            $this->notifyPlanPaid($userId, $subscriptionId, $amount);
         }
 
         return [
@@ -295,6 +306,8 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             ],
             $providerSubscriptionId !== '' ? $providerSubscriptionId : null
         );
+
+        $this->notifyPlanCanceled($userId, (string) ($subscription['plan_name'] ?? ''));
 
         return [
             'ok' => true,
@@ -660,6 +673,82 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             date('Y-m-d H:i:s'),
         ]);
+    }
+
+    private function notifyPlanPaid(int $userId, ?int $subscriptionId, int $amount): void
+    {
+        if ($userId <= 0 || !database_table_exists($this->pdo, 'notifications')) {
+            return;
+        }
+
+        $subscription = $subscriptionId ? $this->subscriptionWithPlan($subscriptionId) : $this->subscriptions->currentForUser($userId);
+        $planName = (string) ($subscription['plan_name'] ?? 'seu plano');
+        $periodEnd = (string) ($subscription['current_period_end'] ?? '');
+        $until = $periodEnd !== '' ? ' até ' . date('d/m/Y', strtotime($periodEnd)) : '';
+        $amountText = $amount > 0 ? ' (' . $this->money($amount) . ')' : '';
+
+        $message = 'Pagamento confirmado' . $amountText . ': o plano ' . $planName . ' está ativo' . $until . '.';
+        if ($this->notifyRecentUnique($userId, $message)) {
+            $user = $this->fetchUser($userId);
+            if ($user) {
+                $this->billingEmails->sendPlanPaid($user, $subscription ?: [], $amount);
+            }
+        }
+    }
+
+    private function notifyPlanCanceled(int $userId, string $planName): void
+    {
+        if ($userId <= 0 || !database_table_exists($this->pdo, 'notifications')) {
+            return;
+        }
+
+        $label = trim($planName) !== '' ? ' ' . trim($planName) : '';
+        $message = 'Plano' . $label . ' cancelado. Sua conta voltou para o modo gratuito.';
+        if ($this->notifyRecentUnique($userId, $message)) {
+            $user = $this->fetchUser($userId);
+            if ($user) {
+                $this->billingEmails->sendPlanCanceled($user, ['plan_name' => $planName]);
+            }
+        }
+    }
+
+    private function notifyRecentUnique(int $userId, string $message): bool
+    {
+        $cutoff = date('Y-m-d H:i:s', time() - 600);
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*)
+             FROM notifications
+             WHERE user_id = ?
+               AND mensagem = ?
+               AND created_at >= ?'
+        );
+        $stmt->execute([$userId, $message, $cutoff]);
+        if ((int) $stmt->fetchColumn() > 0) {
+            return false;
+        }
+
+        $this->notifications->notify($userId, $message);
+        return true;
+    }
+
+    private function subscriptionWithPlan(int $subscriptionId): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT s.*, p.name AS plan_name
+             FROM subscriptions s
+             LEFT JOIN plans p ON p.id = s.plan_id
+             WHERE s.id = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$subscriptionId]);
+        $subscription = $stmt->fetch();
+
+        return $subscription ?: null;
+    }
+
+    private function money(int $cents): string
+    {
+        return 'R$ ' . number_format($cents / 100, 2, ',', '.');
     }
 
     private function paymentStatusFromEvent(string $event): string

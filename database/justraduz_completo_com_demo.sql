@@ -460,13 +460,13 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('2026_06_15_p2_saas');
 
 INSERT INTO plans (slug, name, description, monthly_price_cents, yearly_price_cents, limits_json, features_json, sort_order) VALUES
-    ('essencial', 'Essencial', 'Para começar com documentos e IA jurídica em baixo volume.', 2900, 27900,
+    ('essencial', 'Essencial', 'Para começar com documentos e IA jurídica em baixo volume.', 1500, 14400,
      JSON_OBJECT('document_upload', 10, 'document_ai', 10, 'ai_chat', 30, 'datajud_cnj', 20, 'ocr', 5),
      JSON_ARRAY('Documentos essenciais', 'IA jurídica em linguagem simples', 'Consulta CNJ'), 10),
-    ('pro', 'Pro', 'Para usuários recorrentes e equipes pequenas.', 7900, 75900,
+    ('pro', 'Pro', 'Para usuários recorrentes e equipes pequenas.', 5000, 48000,
      JSON_OBJECT('document_upload', 60, 'document_ai', 60, 'ai_chat', 200, 'datajud_cnj', 100, 'ocr', 40),
      JSON_ARRAY('OCR ampliado', 'Atendimento prioritário', 'Agenda e tarefas'), 20),
-    ('escritorio', 'Escritório', 'Para operação jurídica com governança, auditoria e escala.', 19900, 191000,
+    ('escritorio', 'Escritório', 'Para operação jurídica com governança, auditoria e escala.', 10000, 96000,
      JSON_OBJECT('document_upload', 300, 'document_ai', 300, 'ai_chat', 1000, 'datajud_cnj', 500, 'ocr', 200),
      JSON_ARRAY('Multiempresa', 'Relatórios gerenciais', 'SLA e auditoria'), 30)
 ON DUPLICATE KEY UPDATE

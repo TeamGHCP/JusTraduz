@@ -2,16 +2,22 @@
 
 require_once __DIR__ . '/PaymentProviderInterface.php';
 require_once dirname(__DIR__, 2) . '/config/app.php';
+require_once dirname(__DIR__) . '/BillingEmailService.php';
+require_once dirname(__DIR__) . '/NotificationService.php';
 require_once dirname(__DIR__) . '/SubscriptionService.php';
 
 class ManualPaymentProvider implements PaymentProviderInterface
 {
     private PDO $pdo;
+    private BillingEmailService $billingEmails;
+    private NotificationService $notifications;
     private SubscriptionService $subscriptions;
 
     public function __construct(PDO $pdo, SubscriptionService $subscriptions)
     {
         $this->pdo = $pdo;
+        $this->billingEmails = new BillingEmailService();
+        $this->notifications = new NotificationService($pdo);
         $this->subscriptions = $subscriptions;
     }
 
@@ -44,6 +50,15 @@ class ManualPaymentProvider implements PaymentProviderInterface
                 'mode' => 'manual_immediate',
             ]
         );
+        if ($this->notify(
+            $userId,
+            'Pagamento confirmado (' . $this->money($amount) . '): o plano ' . (string) ($subscription['plan_name'] ?? 'contratado') . ' está ativo.'
+        )) {
+            $user = $this->fetchUser($userId);
+            if ($user) {
+                $this->billingEmails->sendPlanPaid($user, $subscription, $amount);
+            }
+        }
 
         return PaymentCheckoutResult::success(
             app_url('/frontend/subir-plano.php?sucesso=' . urlencode('Plano atualizado com sucesso.')),
@@ -76,6 +91,15 @@ class ManualPaymentProvider implements PaymentProviderInterface
             ],
             null
         );
+        if ($this->notify(
+            $userId,
+            'Plano ' . (string) ($subscription['plan_name'] ?? '') . ' cancelado. Sua conta voltou para o modo gratuito.'
+        )) {
+            $user = $this->fetchUser($userId);
+            if ($user) {
+                $this->billingEmails->sendPlanCanceled($user, $subscription);
+            }
+        }
 
         return [
             'ok' => true,
@@ -143,6 +167,15 @@ class ManualPaymentProvider implements PaymentProviderInterface
             $stmt->execute([$subscriptionStatus, $subscriptionId]);
         }
 
+        if ($userId > 0 && $paymentStatus === 'paid') {
+            if ($this->notify($userId, 'Pagamento confirmado: sua assinatura JusTraduz está ativa.')) {
+                $user = $this->fetchUser($userId);
+                if ($user) {
+                    $this->billingEmails->sendPlanPaid($user, $this->subscriptions->currentForUser($userId) ?: [], $amount);
+                }
+            }
+        }
+
         return [
             'provider' => $this->name(),
             'event_type' => $eventType,
@@ -182,6 +215,43 @@ class ManualPaymentProvider implements PaymentProviderInterface
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             date('Y-m-d H:i:s'),
         ]);
+    }
+
+    private function notify(int $userId, string $message): bool
+    {
+        if (!database_table_exists($this->pdo, 'notifications')) {
+            return false;
+        }
+
+        $cutoff = date('Y-m-d H:i:s', time() - 600);
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*)
+             FROM notifications
+             WHERE user_id = ?
+               AND mensagem = ?
+               AND created_at >= ?'
+        );
+        $stmt->execute([$userId, $message, $cutoff]);
+        if ((int) $stmt->fetchColumn() > 0) {
+            return false;
+        }
+
+        $this->notifications->notify($userId, $message);
+        return true;
+    }
+
+    private function fetchUser(int $userId): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT id, nome, email FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+
+        return $user ?: null;
+    }
+
+    private function money(int $cents): string
+    {
+        return 'R$ ' . number_format($cents / 100, 2, ',', '.');
     }
 
     private function validateSignature(string $rawPayload, array $headers): void

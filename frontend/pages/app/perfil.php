@@ -272,8 +272,8 @@ $profileTourKey = match ($type) {
                       data-event-cycle="<?= e($eventCycle) ?>"
                       data-event-provider="<?= e(ucfirst((string) ($event['provider'] ?? 'asaas'))) ?>"
                       data-event-payment-id="<?= e((string) ($event['provider_event_id'] ?? '')) ?>"
-                      data-invoice-url="<?= e(app_url('/frontend/fatura.php?id=' . $eventId)) ?>"
-                      data-receipt-url="<?= e(app_url('/frontend/recibo.php?id=' . $eventId)) ?>"
+                      data-invoice-url="<?= e(app_url('/frontend/fatura.php?id=' . $eventId . '&download=1')) ?>"
+                      data-receipt-url="<?= e(app_url('/frontend/recibo.php?id=' . $eventId . '&download=1')) ?>"
                     >Exibir</button>
                   </div>
                 <?php endforeach; ?>

@@ -2,6 +2,7 @@
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 require_once FRONTEND_APP_PATH . '/support/billing_documents.php';
+require_once FRONTEND_APP_PATH . '/support/simple_pdf.php';
 
 $eventId = (int) ($_GET['id'] ?? 0);
 $event = $eventId > 0 ? billing_document_event($pdo, $eventId, current_user_id()) : null;
@@ -22,6 +23,46 @@ $cycle = billing_cycle_label($event);
 $amountCents = (int) ($event['amount_cents'] ?? 0);
 $documentNumber = billing_document_number('JT-FAT', (int) $event['id']);
 $providerPaymentId = (string) ($event['provider_event_id'] ?? '');
+$downloadMode = (string) ($_GET['download'] ?? '') === '1';
+
+if ($downloadMode) {
+    $clientLines = array_filter([
+        (string) ($event['user_name'] ?? current_user_name()),
+        (string) ($event['user_email'] ?? ''),
+        !empty($event['user_cpf']) ? 'CPF ' . (string) $event['user_cpf'] : '',
+        (string) ($event['user_phone'] ?? ''),
+    ]);
+
+    simple_pdf_download('fatura-' . $documentNumber . '.pdf', [
+        'title' => 'Fatura',
+        'number' => $documentNumber,
+        'meta' => [
+            'Emissão' => billing_date($date),
+            'Status' => $statusLabel,
+        ],
+        'left_title' => 'Emitido por',
+        'left_lines' => ['JusTraduz', 'Plataforma jurídica digital', 'Brasil'],
+        'right_title' => 'Cliente',
+        'right_lines' => $clientLines,
+        'summary' => billing_money($amountCents) . ' ' . ($statusLabel === 'Pago' ? 'pago' : 'a vencer') . ' em ' . billing_date($date),
+        'headers' => ['Descrição', 'Método', 'Valor'],
+        'columns' => [300, 105, 95],
+        'rows' => [[
+            $planName . ' - ' . $cycle . ' | ' . billing_date($periodStart) . ($periodEnd !== '' ? ' - ' . billing_date($periodEnd) : ''),
+            $method,
+            billing_money($amountCents),
+        ]],
+        'totals' => [
+            'Subtotal' => billing_money($amountCents),
+            'Total' => billing_money($amountCents),
+            'Valor devido' => $statusLabel === 'Pago' ? 'R$ 0,00' : billing_money($amountCents),
+        ],
+        'footer' => array_filter([
+            $providerPaymentId !== '' ? 'Pagamento Asaas: ' . $providerPaymentId : '',
+            'Documento interno gerado a partir dos eventos de cobrança registrados no JusTraduz.',
+        ]),
+    ]);
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -230,10 +271,13 @@ $providerPaymentId = (string) ($event['provider_event_id'] ?? '');
   </style>
 </head>
 <body>
-  <div class="doc-actions">
-    <a href="<?= e(app_url('/frontend/perfil.php?tab=faturamento')) ?>">Voltar</a>
-    <button type="button" onclick="window.print()">Imprimir / salvar PDF</button>
-  </div>
+  <?php if (!$downloadMode): ?>
+    <div class="doc-actions">
+      <a href="<?= e(app_url('/frontend/perfil.php?tab=faturamento')) ?>">Voltar</a>
+      <a href="<?= e(app_url('/frontend/fatura.php?id=' . $eventId . '&download=1')) ?>">Baixar PDF</a>
+      <button type="button" onclick="window.print()">Imprimir / salvar PDF</button>
+    </div>
+  <?php endif; ?>
 
   <main class="document">
     <header class="doc-head">

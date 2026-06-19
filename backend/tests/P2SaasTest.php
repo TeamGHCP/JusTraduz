@@ -28,21 +28,32 @@ $quota = $usage->allow(1, 'document_upload', 11);
 assertTrue($quota['allowed'] === true, 'Plano Pro deve permitir 11 uploads.');
 
 $payments = new ManualPaymentProvider($pdo, $subscriptions);
+putenv('MAIL_LOG_ONLY=true');
 $checkout = $payments->createCheckout(1, 2, 'yearly');
 assertTrue($checkout->ok === true, 'Checkout manual deve concluir com sucesso.');
 assertTrue($checkout->subscriptionId !== null, 'Checkout manual deve retornar assinatura.');
 assertStringContains('/frontend/subir-plano.php', $checkout->redirectUrl, 'Checkout manual deve redirecionar para planos.');
-assertEquals(75900, (int) $pdo->query('SELECT COALESCE(SUM(amount_cents), 0) FROM payment_events WHERE status = "paid"')->fetchColumn(), 'Checkout manual deve registrar pagamento anual.');
+assertEquals(48000, (int) $pdo->query('SELECT COALESCE(SUM(amount_cents), 0) FROM payment_events WHERE status = "paid"')->fetchColumn(), 'Checkout manual deve registrar pagamento anual.');
+$latestNotification = (string) $pdo->query('SELECT mensagem FROM notifications WHERE user_id = 1 ORDER BY id DESC LIMIT 1')->fetchColumn();
+assertStringContains('Pagamento confirmado', $latestNotification, 'Checkout pago deve notificar o cliente.');
+assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM mail_logs WHERE recipient = 'cliente1@teste.local' AND subject LIKE 'Plano Pro confirmado%' AND status = 'sent'")->fetchColumn(), 'Checkout pago deve enviar e-mail ao cliente.');
 
 $webhook = $payments->handleWebhook(json_encode([
     'subscription_id' => $checkout->subscriptionId,
     'event_type' => 'invoice.payment_failed',
     'status' => 'failed',
-    'amount_cents' => 75900,
+    'amount_cents' => 48000,
 ]), []);
 assertEquals('failed', $webhook['status'], 'Webhook deve normalizar status de pagamento.');
 $current = $subscriptions->currentForUser(1);
 assertEquals('past_due', $current['status'], 'Webhook failed deve marcar assinatura como inadimplente.');
+
+$cancel = $payments->cancelSubscription(1);
+assertTrue(($cancel['ok'] ?? false) === true, 'Cancelamento manual deve funcionar.');
+$latestNotification = (string) $pdo->query('SELECT mensagem FROM notifications WHERE user_id = 1 ORDER BY id DESC LIMIT 1')->fetchColumn();
+assertStringContains('cancelado', $latestNotification, 'Cancelamento de plano deve notificar o cliente.');
+assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM mail_logs WHERE recipient = 'cliente1@teste.local' AND subject = 'Plano cancelado - JusTraduz' AND status = 'sent'")->fetchColumn(), 'Cancelamento de plano deve enviar e-mail ao cliente.');
+putenv('MAIL_LOG_ONLY');
 
 $organizations = new OrganizationService($pdo);
 assertEquals(1, $organizations->currentOrganizationId(3), 'Advogado deve estar no escritorio demo.');
