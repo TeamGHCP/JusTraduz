@@ -16,8 +16,11 @@
   <meta name="msapplication-TileColor" content="#008f80">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="assets/img/app-mark.png" as="image" type="image/png">
+  <link rel="preload" href="assets/img/app-mark-edge.png" as="image" type="image/png">
+  <link rel="preload" href="assets/img/loading-background.png" as="image" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=flow-pill-timeline-smooth-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=cinematic-opening-6">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
   <style>
     @media (max-width: 980px) {
@@ -134,7 +137,13 @@
   </style>
   <script src="assets/js/pwa.js" defer></script>
 </head>
-<body class="home-page">
+<body class="home-page has-opening-loader">
+  <div class="jt-cinematic-loader" data-opening-loader aria-hidden="true">
+    <div class="jt-cinematic-loader__mark">
+      <img class="jt-cinematic-loader__logo jt-cinematic-loader__logo--dim" src="assets/img/app-mark.png" alt="">
+      <span class="jt-cinematic-loader__logo jt-cinematic-loader__logo--lit jt-cinematic-loader__logo--lit-fill"></span>
+    </div>
+  </div>
   <header class="site-header home-header" data-site-header>
     <div class="container nav-bar">
       <a class="brand" href="index.html" aria-label="JusTraduz">
@@ -861,7 +870,7 @@
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=flow-pill-timeline-smooth-1"></script>
+  <script src="assets/js/main.js?v=cinematic-opening-6"></script>
   <script src="assets/js/chatbot.js?v=2026.06.18-02"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>

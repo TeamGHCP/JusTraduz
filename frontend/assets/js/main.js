@@ -1,4 +1,22 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
+  const openingLoader = document.querySelector("[data-opening-loader]");
+
+  if (openingLoader) {
+    let loaderRemoved = false;
+    const removeOpeningLoader = () => {
+      if (loaderRemoved) return;
+      loaderRemoved = true;
+      openingLoader.remove();
+      document.body.classList.remove("has-opening-loader");
+      document.body.classList.add("is-opening-complete");
+    };
+
+    openingLoader.addEventListener("animationend", (event) => {
+      if (event.target === openingLoader) removeOpeningLoader();
+    });
+    window.setTimeout(removeOpeningLoader, 7400);
+  }
+
   const header = document.querySelector("[data-site-header]");
   const toggle = document.querySelector("[data-nav-toggle]");
 
