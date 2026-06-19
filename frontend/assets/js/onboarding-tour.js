@@ -1,7 +1,20 @@
 (function () {
   'use strict';
 
-  var config = window.JusTraduzOnboarding || null;
+  function readConfig() {
+    if (window.JusTraduzOnboarding) return window.JusTraduzOnboarding;
+
+    var node = document.getElementById('justraduz-onboarding-config');
+    if (!node) return null;
+
+    try {
+      return JSON.parse(node.textContent || '{}');
+    } catch (error) {
+      return null;
+    }
+  }
+
+  var config = readConfig();
   var state = { steps: [], index: 0, manual: false, active: false };
   var overlay;
   var spotlight;

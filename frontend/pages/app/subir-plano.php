@@ -47,7 +47,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Subir de plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=pricing-cycle-toggle-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=payment-confirmed-1">
 </head>
 <body>
   <div class="app-shell">
@@ -84,14 +84,20 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
               $isCurrent = $currentSubscription && (int) ($currentSubscription['plan_id'] ?? 0) === (int) $plan['id'];
               $isHighlighted = ($plan['slug'] ?? '') === 'pro';
             ?>
-            <article class="pricing-card<?= $isHighlighted ? ' pricing-card-featured' : '' ?>">
+            <article
+              class="pricing-card<?= $isHighlighted ? ' pricing-card-featured' : '' ?>"
+              tabindex="0"
+              role="button"
+              aria-labelledby="pricing-plan-title-<?= (int) $plan['id'] ?>"
+              data-pricing-card
+            >
               <?php if ($isHighlighted): ?>
                 <span class="pricing-popular">Mais escolhido</span>
               <?php endif; ?>
 
               <div class="pricing-card-head">
                 <div>
-                  <h3><?= e($plan['name']) ?></h3>
+                  <h3 id="pricing-plan-title-<?= (int) $plan['id'] ?>"><?= e($plan['name']) ?></h3>
                   <p><?= $isCurrent ? 'Seu plano atual' : ($currentSubscription ? 'Troca disponível' : 'Disponível para assinatura') ?></p>
                 </div>
               </div>
@@ -144,6 +150,6 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
   </div>
 
   <?php render_vlibras(); ?>
-  <script src="assets/js/pricing.js?v=pricing-cycle-toggle-2"></script>
+  <script src="assets/js/pricing.js?v=pricing-interactive-cards-1"></script>
 </body>
 </html>

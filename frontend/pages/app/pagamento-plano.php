@@ -14,9 +14,21 @@ if ($type !== 'cliente') {
     payment_redirect(dashboard_url($type) . '?erro=' . urlencode('Planos são exclusivos para clientes.'));
 }
 
+$billing = new SubscriptionService($pdo);
+$currentSubscription = $billing->currentForUser(current_user_id());
+$hasConfirmedPaymentPage = is_array($_SESSION['payment_confirmed'] ?? null);
+$hasActiveAsaasSubscription = $currentSubscription
+    && in_array((string) ($currentSubscription['status'] ?? ''), ['active', 'trialing'], true)
+    && (string) ($currentSubscription['provider'] ?? '') === 'asaas'
+    && trim((string) ($currentSubscription['provider_subscription_id'] ?? '')) !== '';
+
 $checkout = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
 $checkoutAge = time() - (int) ($checkout['created_at'] ?? 0);
 if (($checkout['provider'] ?? '') !== 'asaas' || $checkoutAge > 3600) {
+    if ($hasConfirmedPaymentPage || $hasActiveAsaasSubscription) {
+        payment_redirect(app_url('/frontend/pagamento-confirmado.php'));
+    }
+
     payment_redirect(app_url('/frontend/perfil.php?tab=faturamento'));
 }
 
@@ -25,7 +37,6 @@ $billingCycle = (string) ($checkout['billing_cycle'] ?? 'monthly');
 $metadata = is_array($checkout['metadata'] ?? null) ? $checkout['metadata'] : [];
 $payUrl = trim((string) ($checkout['redirect_url'] ?? $metadata['checkout_url'] ?? ''));
 $invoiceUrl = trim((string) ($metadata['invoice_url'] ?? ''));
-$bankSlipUrl = trim((string) ($metadata['bank_slip_url'] ?? ''));
 $paymentLink = trim((string) ($metadata['payment_link'] ?? ''));
 $dueDate = trim((string) ($metadata['due_date'] ?? ''));
 $providerSubscriptionId = trim((string) ($metadata['provider_subscription_id'] ?? ''));
@@ -33,15 +44,10 @@ $pixQrCode = is_array($metadata['pix_qr_code'] ?? null) ? $metadata['pix_qr_code
 $pixImage = trim((string) ($pixQrCode['encoded_image'] ?? ''));
 $pixPayload = trim((string) ($pixQrCode['payload'] ?? ''));
 $pixExpiration = trim((string) ($pixQrCode['expiration_date'] ?? ''));
-$bankSlip = is_array($metadata['bank_slip'] ?? null) ? $metadata['bank_slip'] : [];
-$bankSlipLine = trim((string) ($bankSlip['identification_field'] ?? ''));
-$bankSlipBarCode = trim((string) ($bankSlip['bar_code'] ?? ''));
 $createdPaymentMethod = (string) ($metadata['payment_method'] ?? $checkout['payment_method'] ?? '');
 $isCheckoutCreated = $providerSubscriptionId !== '' && $payUrl !== '';
 
-$billing = new SubscriptionService($pdo);
 $checkoutUser = fetch_one($pdo, 'SELECT nome, email, cpf, telefone FROM users WHERE id = ? LIMIT 1', [current_user_id()]) ?: [];
-$currentSubscription = $billing->currentForUser(current_user_id());
 $isPlanActive = $currentSubscription
     && (int) ($currentSubscription['plan_id'] ?? 0) === $planId
     && (
@@ -63,6 +69,22 @@ if (!$plan) {
 }
 
 $amountCents = (int) ($metadata['amount_cents'] ?? ($billingCycle === 'yearly' ? $plan['yearly_price_cents'] : $plan['monthly_price_cents']));
+if ($isPlanActive) {
+    $_SESSION['payment_confirmed'] = [
+        'confirmed_at' => time(),
+        'plan_id' => (int) ($currentSubscription['plan_id'] ?? $planId),
+        'plan_name' => (string) ($currentSubscription['plan_name'] ?? $plan['name'] ?? 'Plano ativo'),
+        'billing_cycle' => (string) ($currentSubscription['billing_cycle'] ?? $billingCycle),
+        'amount_cents' => $amountCents,
+        'subscription_id' => (int) ($currentSubscription['id'] ?? 0),
+        'provider' => (string) ($currentSubscription['provider'] ?? 'asaas'),
+        'provider_subscription_id' => (string) ($currentSubscription['provider_subscription_id'] ?? $providerSubscriptionId),
+        'provider_payment_id' => (string) ($metadata['provider_payment_id'] ?? ''),
+    ];
+    unset($_SESSION['billing_checkout']);
+    payment_redirect(app_url('/frontend/pagamento-confirmado.php'));
+}
+
 $cycleLabel = $billingCycle === 'yearly' ? 'Anual' : 'Mensal';
 $periodLabel = $billingCycle === 'yearly' ? '/ano' : '/mês';
 $dueLabel = '';
@@ -93,7 +115,6 @@ function payment_display(string $value): string
 }
 
 $cardPayUrl = $invoiceUrl !== '' ? $invoiceUrl : $payUrl;
-$boletoPayUrl = $bankSlipUrl !== '' ? $bankSlipUrl : ($invoiceUrl !== '' ? $invoiceUrl : $payUrl);
 $expirationLabel = '';
 if ($pixExpiration !== '') {
     $expirationTimestamp = strtotime($pixExpiration);
@@ -113,7 +134,7 @@ $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagamento do plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=payment-page-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=payment-confirmed-1">
 </head>
 <body>
   <div class="app-shell">
@@ -342,50 +363,13 @@ $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? 
                   </div>
                 </section>
 
-                <section class="payment-method <?= ($createdPaymentMethod === 'boleto') ? 'is-open' : '' ?>" data-payment-method="boleto">
-                  <button type="button" class="payment-method-title" data-payment-method-toggle>
-                    <?= icon_svg('file') ?>
-                    <div>
-                      <strong>Boleto bancário</strong>
-                      <span>Gere o boleto e copie a linha digitável.</span>
-                    </div>
-                  </button>
-
-                  <div class="payment-method-body">
-                    <?php if ($isCheckoutCreated && $createdPaymentMethod === 'boleto'): ?>
-                      <div class="payment-boleto-box">
-                        <?php if ($bankSlipLine !== ''): ?>
-                          <span>Linha digitável</span>
-                          <code><?= e($bankSlipLine) ?></code>
-                          <button type="button" class="payment-copy-button" data-copy-value="<?= e($bankSlipLine) ?>" data-copy-label="Linha copiada">
-                            <?= icon_svg('paperclip') ?> Copiar linha
-                          </button>
-                        <?php endif; ?>
-                        <?php if ($bankSlipBarCode !== ''): ?>
-                          <small>Código de barras: <?= e($bankSlipBarCode) ?></small>
-                        <?php endif; ?>
-                        <?php if ($boletoPayUrl !== ''): ?>
-                          <a class="payment-method-action" href="<?= e($boletoPayUrl) ?>" rel="noopener"><?= icon_svg('download') ?> Abrir PDF do boleto</a>
-                        <?php endif; ?>
-                      </div>
-                    <?php elseif ($isCheckoutCreated): ?>
-                      <p class="payment-method-note">Já existe uma cobrança gerada. Cancele o pagamento atual para escolher boleto.</p>
-                    <?php else: ?>
-                      <form action="<?= e($checkoutAction) ?>" method="post">
-                        <?= csrf_input() ?>
-                        <input type="hidden" name="payment_method" value="boleto">
-                        <button class="payment-method-action" type="submit"><?= icon_svg('file') ?> Gerar boleto</button>
-                      </form>
-                    <?php endif; ?>
-                  </div>
-                </section>
               </div>
 
               <div class="payment-actions">
                 <?php if ($isCheckoutCreated): ?>
                   <form action="<?= e(app_url('/backend/public/index.php?rota=/billing/sync')) ?>" method="post">
                     <?= csrf_input() ?>
-                    <button class="btn btn-primary" type="submit"><?= icon_svg('check') ?> Já paguei, verificar agora</button>
+                    <button class="btn btn-primary" type="submit"><?= icon_svg('check') ?> Já realizei o pagamento</button>
                   </form>
                 <?php endif; ?>
                 <form action="<?= e($cancelCheckoutAction) ?>" method="post">

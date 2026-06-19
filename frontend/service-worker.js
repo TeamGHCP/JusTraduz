@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justraduz-pwa-v4";
+const CACHE_VERSION = "justraduz-pwa-2026-06-18-05";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "offline.html";
 const PUBLIC_PAGE_FALLBACKS = new Set([
@@ -38,6 +38,7 @@ const STATIC_ASSETS = [
   "assets/js/auth.js",
   "assets/js/auth-novo.js",
   "assets/js/chatbot.js",
+  "assets/js/vlibras-init.js",
   "assets/js/pwa.js",
   "assets/img/app-mark.png",
   "assets/img/apple-touch-icon.png",
@@ -49,6 +50,7 @@ const STATIC_ASSETS = [
   "assets/img/pwa-screenshot-wide.png",
   "assets/img/logo.png",
   "assets/img/chat-bot-logo.png",
+  "assets/img/phone-boot-leaf.png",
   "site.webmanifest"
 ];
 
