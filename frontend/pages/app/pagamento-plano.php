@@ -55,6 +55,9 @@ $isPlanActive = $currentSubscription
         || (string) ($currentSubscription['provider_subscription_id'] ?? '') === $providerSubscriptionId
         || (string) ($currentSubscription['provider'] ?? '') !== 'asaas'
     );
+$isPlanChange = $currentSubscription
+    && !$isPlanActive
+    && in_array((string) ($currentSubscription['status'] ?? ''), ['active', 'trialing', 'past_due'], true);
 $plans = $billing->plans();
 $plan = null;
 foreach ($plans as $candidate) {
@@ -126,6 +129,7 @@ $holderName = payment_display((string) ($checkoutUser['nome'] ?? current_user_na
 $holderEmail = payment_display((string) ($checkoutUser['email'] ?? ''));
 $holderCpf = preg_replace('/\D+/', '', (string) ($checkoutUser['cpf'] ?? '')) ?: '';
 $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? '')) ?: '';
+$currentPlanName = (string) ($currentSubscription['plan_name'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -134,7 +138,7 @@ $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagamento do plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=payment-confirmed-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=plan-alert-dark-1">
 </head>
 <body>
   <div class="app-shell">
@@ -146,6 +150,12 @@ $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? 
       <section class="payment-page">
         <?php if (!empty($_GET['erro'])): ?>
           <div class="payment-alert payment-alert-error"><?= e((string) $_GET['erro']) ?></div>
+        <?php endif; ?>
+        <?php if ($isPlanChange): ?>
+          <div class="payment-alert payment-alert-info">
+            <?= icon_svg('shield') ?>
+            <span>Ao confirmar este pagamento, o plano <?= e($currentPlanName !== '' ? $currentPlanName : 'atual') ?> será substituído pelo plano <?= e((string) $plan['name']) ?>.</span>
+          </div>
         <?php endif; ?>
 
         <div class="payment-panel">
@@ -202,6 +212,10 @@ $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? 
             <div class="payment-order-lines">
               <div><span>Subtotal</span><strong><?= e(payment_money($amountCents)) ?></strong></div>
               <div><span>Entrega</span><strong>Digital</strong></div>
+              <?php if ($isPlanChange): ?>
+                <div><span>Plano atual</span><strong><?= e($currentPlanName !== '' ? $currentPlanName : 'Atual') ?></strong></div>
+                <div><span>Após confirmação</span><strong>Substituir pelo plano <?= e((string) $plan['name']) ?></strong></div>
+              <?php endif; ?>
               <?php if ($dueLabel !== ''): ?>
                 <div><span>Vencimento</span><strong><?= e($dueLabel) ?></strong></div>
               <?php endif; ?>

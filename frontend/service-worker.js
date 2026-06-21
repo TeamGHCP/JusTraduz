@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justraduz-pwa-2026-06-21-02";
+const CACHE_VERSION = "justraduz-pwa-2026-06-21-07";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "offline.html";
 const PUBLIC_PAGE_FALLBACKS = new Set([

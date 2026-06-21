@@ -13,7 +13,10 @@ function render_query_alert(): void
     }
 
     $isError = str_contains(query_message_kind(), 'error');
-    echo '<div class="alert is-visible ' . query_message_kind() . ' mt-16" role="' . ($isError ? 'alert' : 'status') . '" aria-live="' . ($isError ? 'assertive' : 'polite') . '">' . e($message) . '</div>';
+    echo '<div class="alert alert-query is-visible ' . query_message_kind() . ' mt-16" role="' . ($isError ? 'alert' : 'status') . '" aria-live="' . ($isError ? 'assertive' : 'polite') . '"' . (!$isError ? ' data-alert-auto-dismiss="3000"' : '') . '>' . e($message) . '</div>';
+    if (!$isError) {
+        echo '<script>(function(){var alert=document.querySelector("[data-alert-auto-dismiss]");if(!alert)return;var delay=parseInt(alert.getAttribute("data-alert-auto-dismiss")||"3000",10);window.setTimeout(function(){alert.classList.add("is-dismissing");window.setTimeout(function(){alert.remove();},260);},delay);})();</script>';
+    }
 }
 
 function render_sidebar(string $type, string $active, bool $isAdminPath = false): void

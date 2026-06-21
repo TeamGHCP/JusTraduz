@@ -195,14 +195,18 @@ class BillingController extends BaseController
         }
 
         $userId = (int) $_SESSION['id'];
+        $currentSubscription = $this->subscriptions->currentForUser($userId);
+        $planName = trim((string) ($currentSubscription['plan_name'] ?? ''));
 
         try {
             $result = $this->payments->cancelSubscription($userId);
             $this->audit->log('billing.subscription_cancel', 'subscription', (int) ($result['subscription_id'] ?? 0), $result);
-            $this->response->redirect(app_url('/frontend/perfil.php?tab=faturamento&sucesso=' . urlencode('Plano cancelado. Sua conta voltou para o modo gratuito.')));
         } catch (Throwable $exception) {
             $this->response->redirect(app_url('/frontend/perfil.php?tab=faturamento&erro=' . urlencode($exception->getMessage())));
         }
+
+        $message = $planName !== '' ? 'Plano ' . $planName . ' cancelado' : 'Plano cancelado';
+        $this->response->redirect(app_url('/frontend/perfil.php?tab=faturamento&sucesso=' . urlencode($message)));
     }
 
     public function sync(): void
@@ -257,6 +261,10 @@ class BillingController extends BaseController
                     'provider' => (string) ($result['provider'] ?? $this->payments->name()),
                     'provider_subscription_id' => $providerSubscriptionId,
                     'provider_payment_id' => (string) ($result['provider_payment_id'] ?? ''),
+                    'previous_subscription_id' => (int) ($result['previous_subscription_id'] ?? 0),
+                    'previous_plan_id' => (int) ($result['previous_plan_id'] ?? 0),
+                    'previous_plan_name' => (string) ($result['previous_plan_name'] ?? ''),
+                    'previous_remote_cancel_error' => (string) ($result['previous_remote_cancel_error'] ?? ''),
                 ];
                 unset($_SESSION['billing_checkout']);
                 $this->response->redirect(app_url('/frontend/pagamento-confirmado.php'));

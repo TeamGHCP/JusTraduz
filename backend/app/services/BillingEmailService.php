@@ -50,6 +50,32 @@ class BillingEmailService
         );
     }
 
+    public function sendPlanChanged(array $user, array $previousSubscription, array $newSubscription): bool
+    {
+        $previousPlanName = (string) ($previousSubscription['plan_name'] ?? 'Plano anterior');
+        $newPlanName = (string) ($newSubscription['plan_name'] ?? 'Plano JusTraduz');
+        $periodEnd = (string) ($newSubscription['current_period_end'] ?? '');
+        $details = [
+            'Plano anterior' => $previousPlanName,
+            'Novo plano' => $newPlanName,
+            'Status' => 'Substituido',
+        ];
+
+        if ($periodEnd !== '') {
+            $details['Novo ciclo valido ate'] = $this->date($periodEnd);
+        }
+
+        return $this->sendBillingEmail(
+            $user,
+            'Plano alterado - JusTraduz',
+            'Troca de plano',
+            'Seu novo plano esta ativo',
+            'Confirmamos a troca: sua assinatura anterior foi substituida e o novo plano ja esta liberado na sua conta.',
+            $details,
+            'Ver faturamento'
+        );
+    }
+
     private function sendBillingEmail(
         array $user,
         string $subject,

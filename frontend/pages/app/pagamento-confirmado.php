@@ -41,6 +41,9 @@ $confirmedAt = (int) ($confirmation['confirmed_at'] ?? time());
 $providerPaymentId = trim((string) ($confirmation['provider_payment_id'] ?? ''));
 $providerSubscriptionId = trim((string) ($confirmation['provider_subscription_id'] ?? $subscription['provider_subscription_id'] ?? ''));
 $subscriptionId = (int) ($confirmation['subscription_id'] ?? $subscription['id'] ?? 0);
+$previousPlanName = trim((string) ($confirmation['previous_plan_name'] ?? ''));
+$hasPlanReplacement = $previousPlanName !== '';
+$replacementWarning = trim((string) ($confirmation['previous_remote_cancel_error'] ?? ''));
 $protocolSeed = $providerPaymentId !== '' ? $providerPaymentId : ($providerSubscriptionId !== '' ? $providerSubscriptionId : (string) $subscriptionId);
 $receiptProtocol = 'JT-' . strtoupper(substr(hash('sha256', $protocolSeed . '|' . current_user_id()), 0, 10));
 $periodEnd = (string) ($subscription['current_period_end'] ?? '');
@@ -81,7 +84,7 @@ $receiptText = implode(' | ', [
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagamento confirmado | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=payment-confirmed-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=plan-alert-dark-1">
 </head>
 <body>
   <div class="app-shell">
@@ -91,11 +94,19 @@ $receiptText = implode(' | ', [
       <?php render_topbar('Pagamento confirmado', 'Seu plano foi ativado com sucesso.', current_user_name()); ?>
 
       <section class="payment-confirmed-page" data-payment-confirmed>
+        <div class="payment-confetti-layer" data-payment-confetti aria-hidden="true"></div>
+        <?php if ($replacementWarning !== ''): ?>
+          <div class="payment-alert payment-alert-info">
+            <?= icon_svg('shield') ?>
+            <span>Seu novo plano está ativo, mas o cancelamento remoto do plano anterior precisa ser conferido no Asaas.</span>
+          </div>
+        <?php endif; ?>
+
         <div class="payment-confirmed-hero">
           <div class="payment-confirmed-copy">
             <span class="pricing-kicker"><?= icon_svg('check') ?> Assinatura ativa</span>
             <h2>Pronto, seu plano <?= e($planName) ?> está liberado.</h2>
-            <p>A confirmação foi registrada e os limites do plano já estão disponíveis na sua conta JusTraduz.</p>
+            <p><?= $hasPlanReplacement ? 'A confirmação foi registrada, o plano ' . e($previousPlanName) . ' foi substituído e os novos limites já estão disponíveis na sua conta JusTraduz.' : 'A confirmação foi registrada e os limites do plano já estão disponíveis na sua conta JusTraduz.' ?></p>
             <div class="payment-confirmed-actions">
               <a class="btn btn-primary" href="<?= e(app_url('/frontend/dashboard-cliente.php')) ?>"><?= icon_svg('home') ?> Ir para dashboard</a>
               <a class="btn btn-outline" href="<?= e(app_url('/frontend/perfil.php?tab=faturamento')) ?>"><?= icon_svg('chart') ?> Ver faturamento</a>
@@ -126,6 +137,12 @@ $receiptText = implode(' | ', [
                 <dt>Plano</dt>
                 <dd><?= e($planName) ?></dd>
               </div>
+              <?php if ($hasPlanReplacement): ?>
+                <div>
+                  <dt>Plano substituído</dt>
+                  <dd><?= e($previousPlanName) ?></dd>
+                </div>
+              <?php endif; ?>
               <div>
                 <dt>Valor</dt>
                 <dd><?= e(confirmed_money($amountCents)) ?></dd>
@@ -166,8 +183,8 @@ $receiptText = implode(' | ', [
               </div>
               <div>
                 <span><?= icon_svg('shield') ?></span>
-                <strong>Plano ativado</strong>
-                <p>Assinatura registrada no JusTraduz.</p>
+                <strong><?= $hasPlanReplacement ? 'Plano anterior substituído' : 'Plano ativado' ?></strong>
+                <p><?= $hasPlanReplacement ? 'A assinatura anterior foi cancelada no JusTraduz e substituída pelo novo plano.' : 'Assinatura registrada no JusTraduz.' ?></p>
               </div>
               <div>
                 <span><?= icon_svg('file') ?></span>
@@ -182,6 +199,6 @@ $receiptText = implode(' | ', [
   </div>
 
   <?php render_vlibras(); ?>
-  <script src="assets/js/payment-confirmed.js?v=payment-confirmed-1"></script>
+  <script src="assets/js/payment-confirmed.js?v=payment-confetti-2"></script>
 </body>
 </html>

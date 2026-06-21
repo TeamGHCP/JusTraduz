@@ -165,6 +165,10 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'subscription_id' => $subscriptionId,
             'user_id' => $userId,
             'provider_subscription_id' => $providerSubscriptionId ?: null,
+            'previous_subscription_id' => (int) ($subscription['previous_subscription_id'] ?? 0) ?: null,
+            'previous_plan_id' => (int) ($subscription['previous_plan_id'] ?? 0) ?: null,
+            'previous_plan_name' => (string) ($subscription['previous_plan_name'] ?? '') ?: null,
+            'previous_remote_cancel_error' => (string) ($subscription['previous_remote_cancel_error'] ?? '') ?: null,
         ];
     }
 
@@ -234,6 +238,10 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'subscription_id' => $subscriptionId,
             'provider_subscription_id' => $providerSubscriptionId,
             'provider_payment_id' => $providerPaymentId ?: null,
+            'previous_subscription_id' => (int) ($subscription['previous_subscription_id'] ?? 0) ?: null,
+            'previous_plan_id' => (int) ($subscription['previous_plan_id'] ?? 0) ?: null,
+            'previous_plan_name' => (string) ($subscription['previous_plan_name'] ?? '') ?: null,
+            'previous_remote_cancel_error' => (string) ($subscription['previous_remote_cancel_error'] ?? '') ?: null,
         ];
     }
 
@@ -626,6 +634,15 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $userId = (int) ($pending['user_id'] ?? 0);
         $planId = (int) ($payload['plan_id'] ?? 0);
         $cycle = (string) ($payload['billing_cycle'] ?? 'monthly');
+        $previousSubscription = $this->subscriptions->currentForUser($userId);
+        $isReplacement = $previousSubscription
+            && in_array((string) ($previousSubscription['status'] ?? ''), ['trialing', 'active', 'past_due'], true)
+            && (
+                (int) ($previousSubscription['plan_id'] ?? 0) !== $planId
+                || (string) ($previousSubscription['billing_cycle'] ?? '') !== $cycle
+                || trim((string) ($previousSubscription['provider_subscription_id'] ?? '')) !== ''
+            );
+
         if ($userId <= 0 || $planId <= 0 || !$this->subscriptions->changePlan($userId, $planId, $cycle, 'active')) {
             return null;
         }
@@ -638,7 +655,61 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $stmt = $this->pdo->prepare('UPDATE subscriptions SET provider = ?, provider_subscription_id = ? WHERE id = ?');
         $stmt->execute([$this->name(), $providerSubscriptionId, (int) $subscription['id']]);
 
-        return $this->findLocalSubscription($providerSubscriptionId);
+        $activated = $this->findLocalSubscription($providerSubscriptionId);
+        if ($activated && $isReplacement && $previousSubscription) {
+            $remoteCancelError = $this->finalizePlanReplacement($userId, $previousSubscription, $activated, $providerSubscriptionId);
+            $activated['previous_subscription_id'] = (int) ($previousSubscription['id'] ?? 0);
+            $activated['previous_plan_id'] = (int) ($previousSubscription['plan_id'] ?? 0);
+            $activated['previous_plan_name'] = (string) ($previousSubscription['plan_name'] ?? '');
+            $activated['previous_remote_cancel_error'] = $remoteCancelError;
+        }
+
+        return $activated;
+    }
+
+    private function finalizePlanReplacement(int $userId, array $previousSubscription, array $newSubscription, string $newProviderSubscriptionId): string
+    {
+        $previousProviderSubscriptionId = trim((string) ($previousSubscription['provider_subscription_id'] ?? ''));
+        $remoteCanceled = false;
+        $remoteCancelError = '';
+
+        if (
+            (string) ($previousSubscription['provider'] ?? '') === $this->name()
+            && $previousProviderSubscriptionId !== ''
+            && $previousProviderSubscriptionId !== $newProviderSubscriptionId
+        ) {
+            try {
+                $this->request('DELETE', '/subscriptions/' . rawurlencode($previousProviderSubscriptionId));
+                $remoteCanceled = true;
+            } catch (Throwable $exception) {
+                $remoteCancelError = $exception->getMessage();
+            }
+        }
+
+        $this->recordPaymentEvent(
+            (int) ($previousSubscription['id'] ?? 0),
+            $userId,
+            $remoteCancelError === '' ? 'subscription.replaced' : 'subscription.replace_cancel_failed',
+            0,
+            $remoteCancelError === '' ? 'refunded' : 'failed',
+            [
+                'source' => 'billing.plan_replacement',
+                'previous_subscription_id' => (int) ($previousSubscription['id'] ?? 0),
+                'previous_plan_id' => (int) ($previousSubscription['plan_id'] ?? 0),
+                'previous_plan_name' => (string) ($previousSubscription['plan_name'] ?? ''),
+                'previous_provider_subscription_id' => $previousProviderSubscriptionId ?: null,
+                'new_subscription_id' => (int) ($newSubscription['id'] ?? 0),
+                'new_plan_id' => (int) ($newSubscription['plan_id'] ?? 0),
+                'new_plan_name' => (string) ($newSubscription['plan_name'] ?? ''),
+                'new_provider_subscription_id' => $newProviderSubscriptionId,
+                'remote_canceled' => $remoteCanceled,
+                'remote_cancel_error' => $remoteCancelError ?: null,
+            ],
+            $previousProviderSubscriptionId !== '' ? $previousProviderSubscriptionId : null
+        );
+
+        $this->notifyPlanReplaced($userId, $previousSubscription, $newSubscription, $remoteCancelError);
+        return $remoteCancelError;
     }
 
     private function pendingEventForProviderSubscription(string $providerSubscriptionId): ?array
@@ -708,6 +779,27 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             $user = $this->fetchUser($userId);
             if ($user) {
                 $this->billingEmails->sendPlanCanceled($user, ['plan_name' => $planName]);
+            }
+        }
+    }
+
+    private function notifyPlanReplaced(int $userId, array $previousSubscription, array $newSubscription, string $remoteCancelError = ''): void
+    {
+        if ($userId <= 0 || !database_table_exists($this->pdo, 'notifications')) {
+            return;
+        }
+
+        $previousPlan = trim((string) ($previousSubscription['plan_name'] ?? 'plano anterior'));
+        $newPlan = trim((string) ($newSubscription['plan_name'] ?? 'novo plano'));
+        $message = 'Seu plano ' . $previousPlan . ' foi substituído pelo plano ' . $newPlan . '.';
+        if ($remoteCancelError !== '') {
+            $message .= ' A troca está ativa, mas não foi possível confirmar o cancelamento remoto da assinatura anterior automaticamente.';
+        }
+
+        if ($this->notifyRecentUnique($userId, $message)) {
+            $user = $this->fetchUser($userId);
+            if ($user && $remoteCancelError === '') {
+                $this->billingEmails->sendPlanChanged($user, $previousSubscription, $newSubscription);
             }
         }
     }

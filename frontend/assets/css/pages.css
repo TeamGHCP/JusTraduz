@@ -8074,6 +8074,49 @@ body.has-modal-open {
   gap: 18px;
 }
 
+.pricing-current-alert {
+  --pricing-alert-bg: linear-gradient(180deg, rgba(232, 246, 244, .92), rgba(255, 255, 255, .96));
+  --pricing-alert-border: rgba(17, 138, 126, .28);
+  --pricing-alert-icon-bg: rgba(17, 138, 126, .12);
+  --pricing-alert-title: var(--navy);
+  --pricing-alert-text: var(--muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border-color: var(--pricing-alert-border);
+  background: var(--pricing-alert-bg);
+}
+
+.pricing-current-alert > span {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  background: var(--pricing-alert-icon-bg);
+  color: var(--teal-2);
+}
+
+.pricing-current-alert h2 {
+  margin: 0 0 6px;
+  color: var(--pricing-alert-title);
+  font-size: 20px;
+}
+
+.pricing-current-alert p {
+  margin: 0;
+  color: var(--pricing-alert-text);
+}
+
+:root[data-theme="dark"] .pricing-current-alert {
+  --pricing-alert-bg: linear-gradient(180deg, rgba(18, 60, 58, .88), rgba(18, 34, 51, .96));
+  --pricing-alert-border: rgba(45, 212, 191, .34);
+  --pricing-alert-icon-bg: rgba(45, 212, 191, .14);
+  --pricing-alert-title: #f4fffd;
+  --pricing-alert-text: #b7c7d7;
+}
+
 .pricing-note h2 {
   margin: 0 0 6px;
   font-size: 22px;
@@ -8202,10 +8245,25 @@ body.has-modal-open {
 }
 
 .payment-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 14px 16px;
   color: var(--danger);
   font-weight: 850;
   background: rgba(196, 57, 57, .08);
+}
+
+.payment-alert .svg-icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
+
+.payment-alert-info {
+  color: var(--teal-2);
+  border-color: rgba(17, 138, 126, .26);
+  background: rgba(17, 138, 126, .08);
 }
 
 .payment-customer-card,
@@ -9672,8 +9730,53 @@ body.has-modal-open {
 
 /* PAGAMENTO CONFIRMADO */
 .payment-confirmed-page {
+  position: relative;
   display: grid;
   gap: 20px;
+}
+
+.payment-confetti-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.payment-confetti-piece {
+  position: absolute;
+  top: -14vh;
+  left: var(--confetti-x);
+  width: var(--confetti-width);
+  height: var(--confetti-height);
+  border-radius: 3px;
+  background: var(--confetti-color);
+  opacity: 0;
+  filter: drop-shadow(0 7px 10px rgba(15, 23, 42, .12));
+  transform:
+    translate3d(0, 0, 0)
+    rotate(var(--confetti-rotate))
+    scale(var(--confetti-scale));
+  animation:
+    payment-confetti-fall var(--confetti-duration) cubic-bezier(.18, .72, .22, 1) var(--confetti-delay) forwards,
+    payment-confetti-sway var(--confetti-sway-duration) ease-in-out var(--confetti-delay) infinite alternate;
+  will-change: transform, opacity;
+}
+
+.payment-confetti-piece.is-circle {
+  border-radius: 50%;
+}
+
+.payment-confetti-piece.is-diamond {
+  border-radius: 2px;
+  transform:
+    translate3d(0, 0, 0)
+    rotate(calc(var(--confetti-rotate) + 45deg))
+    scale(var(--confetti-scale));
+}
+
+.payment-confetti-piece.is-star {
+  clip-path: polygon(50% 0%, 61% 33%, 96% 35%, 68% 56%, 79% 91%, 50% 70%, 21% 91%, 32% 56%, 4% 35%, 39% 33%);
 }
 
 .payment-confirmed-hero {
@@ -9979,6 +10082,42 @@ body.has-modal-open {
   }
 }
 
+@keyframes payment-confetti-fall {
+  0% {
+    opacity: 0;
+    transform:
+      translate3d(0, -12vh, 0)
+      rotate(var(--confetti-rotate))
+      scale(calc(var(--confetti-scale) * .82));
+  }
+
+  12% {
+    opacity: var(--confetti-opacity);
+  }
+
+  78% {
+    opacity: var(--confetti-opacity);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate3d(var(--confetti-drift), 118vh, 0)
+      rotate(calc(var(--confetti-rotate) + var(--confetti-spin)))
+      scale(var(--confetti-scale));
+  }
+}
+
+@keyframes payment-confetti-sway {
+  from {
+    margin-left: var(--confetti-sway-negative);
+  }
+
+  to {
+    margin-left: var(--confetti-sway);
+  }
+}
+
 @media (max-width: 980px) {
   .payment-confirmed-hero,
   .payment-confirmed-grid {
@@ -10203,6 +10342,10 @@ body.has-modal-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .payment-confetti-layer {
+    display: none;
+  }
+
   .payment-confirmed-hero::before,
   .payment-confirmed-seal span,
   .payment-confirmed-page.is-ready .payment-confirmed-steps div {

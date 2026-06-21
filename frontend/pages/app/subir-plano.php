@@ -12,6 +12,7 @@ $billing = new SubscriptionService($pdo);
 $plans = $billing->plans();
 $currentSubscription = $billing->currentForUser(current_user_id());
 $errorMessage = trim((string) ($_GET['erro'] ?? ''));
+$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
 
 function pricing_money(int $cents): string
 {
@@ -47,7 +48,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Subir de plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=payment-confirmed-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=plan-alert-dark-1">
 </head>
 <body>
   <div class="app-shell">
@@ -59,6 +60,9 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
       <section class="pricing-page">
         <?php if ($errorMessage !== ''): ?>
           <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
+        <?php endif; ?>
+        <?php if ($successMessage !== ''): ?>
+          <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
         <?php endif; ?>
 
         <div class="pricing-hero card">
@@ -77,6 +81,16 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
             <span class="pricing-cycle-option pricing-cycle-yearly">Anual <strong>-20%</strong></span>
           </button>
         </div>
+
+        <?php if ($currentSubscription): ?>
+          <section class="pricing-current-alert card">
+            <span><?= icon_svg('shield') ?></span>
+            <div>
+              <h2>Você já tem o plano <?= e((string) ($currentSubscription['plan_name'] ?? 'atual')) ?> ativo.</h2>
+              <p>Ao confirmar o pagamento de outro plano, a assinatura atual será substituída automaticamente e você receberá a confirmação da troca.</p>
+            </div>
+          </section>
+        <?php endif; ?>
 
         <div class="pricing-grid">
           <?php foreach ($plans as $plan): ?>

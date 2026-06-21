@@ -232,10 +232,25 @@
   border-radius: var(--radius-sm);
   font-size: 14px;
   font-weight: 750;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity .24s ease, transform .24s ease, margin .24s ease;
 }
 
 .alert.is-visible {
   display: block;
+}
+
+.alert-query {
+  margin-bottom: 22px;
+}
+
+.alert.is-dismissing {
+  margin-top: 0 !important;
+  margin-bottom: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
 }
 
 .alert-error {
