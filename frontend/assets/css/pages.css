@@ -8442,6 +8442,11 @@ body.has-modal-open {
 .payment-card-brand-inline img {
   position: relative;
   z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 
 .home-page {
   --font: "Nunito Sans", "Plus Jakarta Sans", "Manrope", "Segoe UI", Roboto, Arial, sans-serif;
@@ -10003,7 +10008,10 @@ body.has-modal-open {
 
   .payment-confirmed-list dd {
     text-align: left;
+  }
+}
 
+.jt-opening-loader__logo {
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -10204,6 +10212,7 @@ body.has-modal-open {
   .payment-confirmed-card,
   .payment-confirmed-copy-button {
     transition: none;
+  }
 
   .jt-opening-loader {
     animation-duration: .32s;
