@@ -58,6 +58,35 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 84px;
+  scrollbar-color: rgba(11, 143, 130, .72) #f1f5f8;
+  scrollbar-width: thin;
+}
+
+section[id] {
+  scroll-margin-top: 84px;
+}
+
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f5f8;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    min-height: 48px;
+    border: 3px solid #f1f5f8;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #16a394, #087f75);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #19ae9e, #076e66);
+  }
 }
 
 body {

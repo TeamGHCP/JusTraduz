@@ -154,63 +154,9 @@ $quickLinks = [
         </div>
       </section>
 
-      <section class="dash-section" id="novo-documento">
-        <form class="card upload-card" action="<?= e(app_url('/backend/public/index.php?rota=/documents/upload')) ?>" method="post" enctype="multipart/form-data" data-upload-form data-tour-step="4" data-tour-title="Área de envio" data-tour-description="Selecione PDF ou imagem. A IA ajuda a explicar o texto, mas não substitui um advogado.">
-          <?= csrf_input() ?>
-          <div class="dash-section-title">
-            <div>
-              <h2>Novo documento <?= help_icon('Enviar documento', 'Use para enviar PDF ou imagem. Confira o arquivo e autorize IA somente quando concordar com o processamento.') ?></h2>
-              <p class="text-muted">Envie o arquivo, autorize IA se fizer sentido e acompanhe a análise depois.</p>
-            </div>
-            <span class="badge badge-success">Máx. 50 MB</span>
-          </div>
-          <label class="upload-box upload-box-featured" data-upload-box tabindex="0">
-            <input class="sr-only" type="file" name="documento" accept=".pdf,.png,.jpg,.jpeg,.webp" data-upload-input required>
-            <?= icon_svg('upload') ?>
-            <strong>Arraste seu arquivo ou clique para selecionar</strong>
-            <p data-file-name>PDF, PNG, JPEG ou WebP</p>
-            <span class="btn btn-primary">Selecionar arquivo</span>
-          </label>
-          <label class="checkline mt-14" data-tour-step="5" data-tour-title="Autorização de IA" data-tour-description="Ative apenas quando concordar com o processamento automático do documento enviado.">
-            <input type="checkbox" name="autorizar_ia" value="1">
-            <span>Autorizo enviar este documento para análise automática por IA.</span>
-          </label>
-          <p class="mt-14 text-muted">A análise automática é informativa e não substitui orientação jurídica profissional.</p>
-          <button class="btn btn-primary mt-16" type="submit" data-upload-submit>Enviar documento</button>
-        </form>
-      </section>
-
-      <section class="dash-section" data-tour-step="6" data-tour-title="Histórico de documentos" data-tour-description="Consulte envios anteriores e abra as análises disponíveis.">
-        <div class="dash-section-title">
-          <h2>Histórico de documentos <?= help_icon('Histórico e análise', 'Abra seus envios anteriores para consultar o status e a explicação gerada. A análise não substitui orientação jurídica.') ?></h2>
-          <a class="btn btn-soft btn-sm" href="solicitar-ajuda.php"><?= icon_svg('help') ?> Pedir ajuda</a>
-        </div>
-        <?php if (!$documents): ?>
-          <?= empty_state('Nenhum documento enviado ainda.') ?>
-        <?php else: ?>
-          <div class="table-wrap">
-            <table class="table">
-              <caption class="sr-only">Histórico dos documentos enviados</caption>
-              <thead><tr><th>Documento</th><th>Tipo</th><th>Análise</th><th>Data</th><th>Ação</th></tr></thead>
-              <tbody>
-                <?php foreach ($documents as $document): ?>
-                  <tr>
-                    <td><strong><?= e($document['nome_arquivo']) ?></strong></td>
-                    <td><?= e(strtoupper($document['tipo_arquivo'] ?? '')) ?></td>
-                    <td><span class="badge <?= !empty($document['analysis_id']) ? 'badge-success' : 'badge-warning' ?>"><?= !empty($document['analysis_id']) ? 'Gerada' : 'Pendente' ?></span></td>
-                    <td><?= e(date('d/m/Y H:i', strtotime($document['created_at']))) ?></td>
-                    <td><a href="visualizar-documento.php?id=<?= (int) $document['id'] ?>">Abrir</a></td>
-                  </tr>
-                <?php endforeach; ?>
-              </tbody>
-            </table>
-          </div>
-        <?php endif; ?>
-      </section>
     </main>
   </div>
   <?php render_onboarding_assets('dashboard_cliente', '2026.06.11', 'cliente'); ?>
-  <script src="assets/js/upload.js"></script>
   <?php render_vlibras(); ?>
 </body>
 </html>

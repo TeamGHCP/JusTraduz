@@ -1,6 +1,7 @@
 (function registerJusTraduzPwa() {
   var deferredInstallPrompt = null;
   var installTipKey = "justraduz:pwa-ios-tip-dismissed-at";
+  var installHiddenKey = "justraduz:pwa-install-hidden";
   var updateRegistration = null;
 
   function isStandalone() {
@@ -22,10 +23,10 @@
     var style = document.createElement("style");
     style.id = "justraduz-pwa-style";
     style.textContent = [
-      ".pwa-toast{position:fixed;left:16px;right:16px;bottom:16px;z-index:99999;display:flex;gap:12px;align-items:center;justify-content:space-between;max-width:520px;margin:0 auto;padding:14px 14px 14px 16px;border-radius:10px;background:#102033;color:#fff;box-shadow:0 18px 45px rgba(16,32,51,.22);font:500 14px/1.45 Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}",
+      ".pwa-toast{position:fixed;left:16px;right:16px;bottom:16px;z-index:99999;display:flex;gap:12px;align-items:center;justify-content:space-between;max-width:680px;margin:0 auto;padding:14px 14px 14px 16px;border-radius:10px;background:#102033;color:#fff;box-shadow:0 18px 45px rgba(16,32,51,.22);font:500 14px/1.45 Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}",
       ".pwa-toast strong{display:block;margin:0 0 2px;font-size:14px}",
       ".pwa-toast span{display:block;color:rgba(255,255,255,.76)}",
-      ".pwa-toast-actions{display:flex;gap:8px;flex:0 0 auto}",
+      ".pwa-toast-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;flex:0 0 auto}",
       ".pwa-toast button{min-height:38px;border:0;border-radius:8px;padding:0 12px;font:700 13px Inter,system-ui,sans-serif;cursor:pointer}",
       ".pwa-toast .pwa-primary{background:#00a896;color:#fff}",
       ".pwa-toast .pwa-ghost{background:rgba(255,255,255,.1);color:#fff}",
@@ -39,6 +40,20 @@
   function removeToast(id) {
     var existing = document.getElementById(id);
     if (existing) existing.remove();
+  }
+
+  function isInstallPromptHidden() {
+    try {
+      return window.localStorage.getItem(installHiddenKey) === "1";
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function hideInstallPromptPermanently() {
+    try {
+      window.localStorage.setItem(installHiddenKey, "1");
+    } catch (error) {}
   }
 
   function showToast(options) {
@@ -88,13 +103,19 @@
   }
 
   function showInstallPrompt() {
-    if (!deferredInstallPrompt || isStandalone()) return;
+    if (!deferredInstallPrompt || isStandalone() || isInstallPromptHidden()) return;
 
     showToast({
       id: "justraduz-pwa-install",
       title: "Instalar JusTraduz",
       message: "Abra como aplicativo e acesse mais rápido pela tela inicial.",
       actions: [
+        {
+          label: "Não mostrar novamente",
+          onClick: function () {
+            hideInstallPromptPermanently();
+          }
+        },
         {
           label: "Agora não",
           onClick: function () {}
@@ -227,7 +248,10 @@
   var scopeUrl = new URL("../../", scriptUrl);
 
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register(workerUrl.href, { scope: scopeUrl.href }).then(function (registration) {
+    navigator.serviceWorker.register(workerUrl.href, {
+      scope: scopeUrl.href,
+      updateViaCache: "none"
+    }).then(function (registration) {
       if (registration.waiting && navigator.serviceWorker.controller) {
         showUpdatePrompt(registration);
       }

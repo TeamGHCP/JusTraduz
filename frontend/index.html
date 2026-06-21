@@ -18,9 +18,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="assets/img/app-mark.png" as="image" type="image/png">
   <link rel="preload" href="assets/img/app-mark-edge.png" as="image" type="image/png">
-  <link rel="preload" href="assets/img/loading-background.png" as="image" type="image/png">
+  <script>
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    if (!window.location.hash || window.location.hash === "#top") window.scrollTo(0, 0);
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=cinematic-opening-6">
+  <link rel="stylesheet" href="assets/css/style.css?v=phone-interactive-2">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
   <style>
     @media (max-width: 980px) {
@@ -87,13 +90,35 @@
       .home-page .home-hero-visual,
       .home-page .hero-phone-wrap,
       .home-page .iphone-mockup {
-        display: none !important;
-        min-height: 0 !important;
-        height: 0 !important;
-        max-height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        display: grid !important;
+        max-height: none !important;
+        overflow: visible !important;
+      }
+
+      .home-page .home-hero-visual {
+        position: relative !important;
+        width: 100% !important;
+        min-height: 610px !important;
+        height: 610px !important;
+        margin: 8px auto 0 !important;
         overflow: hidden !important;
+      }
+
+      .home-page .hero-phone-wrap {
+        --phone-offset-x: 0px !important;
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+      }
+
+      .home-page .iphone-mockup {
+        width: 390px !important;
+        height: 844px !important;
+        min-height: 844px !important;
+        transform: scale(.68) !important;
       }
     }
 
@@ -133,11 +158,20 @@
       .home-page .home-btn-outline {
         width: min(100%, 320px) !important;
       }
+
+      .home-page .home-hero-visual {
+        min-height: 680px !important;
+        height: 680px !important;
+      }
+
+      .home-page .iphone-mockup {
+        transform: scale(.54) !important;
+      }
     }
   </style>
-  <script src="assets/js/pwa.js" defer></script>
+  <script src="assets/js/pwa.js?v=2026.06.20-01" defer></script>
 </head>
-<body class="home-page has-opening-loader">
+<body id="top" class="home-page has-opening-loader">
   <div class="jt-cinematic-loader" data-opening-loader aria-hidden="true">
     <div class="jt-cinematic-loader__mark">
       <img class="jt-cinematic-loader__logo jt-cinematic-loader__logo--dim" src="assets/img/app-mark.png" alt="">
@@ -146,7 +180,7 @@
   </div>
   <header class="site-header home-header" data-site-header>
     <div class="container nav-bar">
-      <a class="brand" href="index.html" aria-label="JusTraduz">
+      <a class="brand" href="#top" aria-label="Voltar ao início">
         <img src="assets/img/logo.png" alt="JusTraduz">
       </a>
 
@@ -252,32 +286,95 @@
                 <div class="iphone-screen">
                   <div class="phone-boot-mark" aria-hidden="true"></div>
                   <div class="iphone-island" aria-hidden="true"></div>
-                  <div class="jt-phone-screen">
+                  <div class="jt-phone-screen" data-phone-demo>
                     <div class="jt-phone-top">
-                      <strong>JusTraduz</strong>
-                      <span>IA jurídica</span>
+                      <h3 class="phone-logo"><span class="logo-jus">Jus</span><span class="logo-traduz">Traduz</span></h3>
+                      <span class="phone-ai-label">IA jurídica</span>
                     </div>
 
-                    <div class="jt-phone-card active">
-                      <small>Documento</small>
-                      <h4>Contrato analisado</h4>
-                      <p>Resumo pronto em linguagem simples.</p>
-                    </div>
-
-                    <div class="jt-phone-card">
-                      <small>Explicação</small>
-                      <h4>Sem juridiquês</h4>
-                      <p>Cláusulas importantes traduzidas com clareza.</p>
-                    </div>
-
-                    <div class="jt-phone-confidence">
-                      <span>Confiança</span>
-                      <strong>92%</strong>
-                    </div>
-
-                    <button class="jt-phone-btn" type="button">
-                      Solicitar orientação
+                    <button class="jt-phone-card phone-card" type="button" data-phone-open="document" aria-controls="phone-sheet-document" aria-expanded="false">
+                      <span class="phone-card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M10 12h5M10 16h5"/></svg>
+                      </span>
+                      <span class="phone-card-content">
+                        <small>Documento</small>
+                        <strong>Contrato analisado</strong>
+                        <span>Resumo pronto em linguagem simples.</span>
+                      </span>
+                      <span class="phone-chevron" aria-hidden="true">›</span>
                     </button>
+
+                    <button class="jt-phone-card phone-card" type="button" data-phone-open="explanation" aria-controls="phone-sheet-explanation" aria-expanded="false">
+                      <span class="phone-card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M5 5h14v11H9l-4 4z"/><path d="M9 9h1M14 9h1M9 12h6"/></svg>
+                      </span>
+                      <span class="phone-card-content">
+                        <small>Explicação</small>
+                        <strong>Sem juridiquês</strong>
+                        <span>Cláusulas importantes traduzidas com clareza.</span>
+                      </span>
+                      <span class="phone-chevron" aria-hidden="true">›</span>
+                    </button>
+
+                    <div class="jt-phone-confidence phone-confidence">
+                      <div>
+                        <span>Confiança</span>
+                        <strong class="phone-confidence-number" data-confidence-number>0%</strong>
+                        <p>Análise confiável para apoiar decisões com segurança.</p>
+                      </div>
+                      <div class="phone-confidence-ring" aria-hidden="true"><i>✦</i></div>
+                    </div>
+
+                    <button class="jt-phone-btn phone-button" type="button" data-phone-open="request" aria-controls="phone-sheet-request" aria-expanded="false">
+                      Solicitar orientação <span aria-hidden="true">→</span>
+                    </button>
+
+                    <div class="phone-toast" data-phone-toast role="status" aria-live="polite">
+                      <span class="phone-toast-check" aria-hidden="true">✓</span>
+                      <strong>Solicitação enviada com segurança</strong>
+                      <button type="button" data-toast-close aria-label="Fechar notificação">×</button>
+                    </div>
+
+                    <div class="phone-sheet-backdrop" data-sheet-backdrop aria-hidden="true"></div>
+
+                    <section class="phone-bottom-sheet" id="phone-sheet-document" data-phone-sheet="document" aria-hidden="true" aria-labelledby="document-sheet-title">
+                      <span class="sheet-handle" aria-hidden="true"></span>
+                      <button class="sheet-close" type="button" data-sheet-close aria-label="Fechar resumo do documento">×</button>
+                      <h4 class="sheet-title" id="document-sheet-title">Resumo do documento</h4>
+                      <p class="sheet-subtitle">Veja os principais pontos do contrato analisado.</p>
+                      <div class="sheet-list">
+                        <div class="sheet-item"><span class="sheet-item-icon">▣</span><div><strong>Prazo: 12 meses</strong><p>Vigência de 01/06/2024 a 31/05/2025.</p></div></div>
+                        <div class="sheet-item"><span class="sheet-item-icon">$</span><div><strong>Multa rescisória</strong><p>Equivalente a 2 meses de aluguel.</p></div></div>
+                        <div class="sheet-item"><span class="sheet-item-icon">↗</span><div><strong>Reajuste anual</strong><p>Índice: IPCA acumulado no período.</p></div></div>
+                        <div class="sheet-item"><span class="sheet-item-icon">♙</span><div><strong>Responsabilidades do locatário</strong><p>Manutenção, conservação e despesas de consumo.</p></div></div>
+                      </div>
+                    </section>
+
+                    <section class="phone-bottom-sheet phone-bottom-sheet--explanation" id="phone-sheet-explanation" data-phone-sheet="explanation" aria-hidden="true" aria-labelledby="explanation-sheet-title">
+                      <span class="sheet-handle" aria-hidden="true"></span>
+                      <button class="sheet-close" type="button" data-sheet-close aria-label="Fechar explicação">×</button>
+                      <h4 class="sheet-title" id="explanation-sheet-title">Em linguagem simples</h4>
+                      <p class="sheet-subtitle">Entenda as cláusulas mais importantes.</p>
+                      <div class="sheet-comparison">
+                        <div class="sheet-comparison-head"><strong>Cláusula original</strong><strong>O que isso significa</strong></div>
+                        <div class="sheet-comparison-row"><p>O LOCATÁRIO arcará com todas as despesas ordinárias do imóvel.</p><span>→</span><p>Você paga contas como água, luz, gás e condomínio.</p></div>
+                        <div class="sheet-comparison-row"><p>Fica vedada a sublocação do imóvel sem autorização expressa do LOCADOR.</p><span>→</span><p>Você não pode alugar para outra pessoa sem permissão do proprietário.</p></div>
+                        <div class="sheet-comparison-row"><p>O contrato será reajustado anualmente pelo IPCA.</p><span>→</span><p>O valor do aluguel será ajustado todo ano conforme a inflação.</p></div>
+                      </div>
+                    </section>
+
+                    <section class="phone-bottom-sheet phone-bottom-sheet--actions" id="phone-sheet-request" data-phone-sheet="request" aria-hidden="true" aria-labelledby="request-sheet-title">
+                      <span class="sheet-handle" aria-hidden="true"></span>
+                      <button class="sheet-close" type="button" data-sheet-close aria-label="Fechar próximos passos">×</button>
+                      <h4 class="sheet-title" id="request-sheet-title">O que você gostaria de fazer agora?</h4>
+                      <p class="sheet-subtitle">Sua solicitação foi recebida com sucesso.</p>
+                      <div class="sheet-actions">
+                        <button class="sheet-action" type="button"><span class="sheet-item-icon">◉</span><span><strong>Falar com especialista</strong><small>Converse agora por chat com um advogado.</small></span><b>›</b></button>
+                        <button class="sheet-action" type="button"><span class="sheet-item-icon">▣</span><span><strong>Agendar atendimento</strong><small>Escolha um melhor horário para falar com um especialista.</small></span><b>›</b></button>
+                        <button class="sheet-action" type="button"><span class="sheet-item-icon">≡</span><span><strong>Acompanhar solicitação</strong><small>Veja o status e detalhes da sua solicitação.</small></span><b>›</b></button>
+                      </div>
+                      <button class="sheet-home" type="button" data-sheet-home>← Voltar para o início</button>
+                    </section>
                   </div>
                 </div>
               </div>
@@ -755,7 +852,7 @@
     <div class="container footer-shell">
       <div class="footer-grid">
         <div class="footer-brand">
-          <a class="footer-logo-text" href="index.html">Jus<span>Traduz</span></a>
+          <a class="footer-logo-text" href="#top">Jus<span>Traduz</span></a>
           <p>Direito em linguagem simples para entender documentos, agir com seguran&ccedil;a e resolver pr&oacute;ximos passos.</p>
 
           <p class="footer-social-links">
@@ -779,9 +876,9 @@
           <div class="footer-col">
             <h4>Produto</h4>
             <ul>
-              <li><a href="index.html#recursos"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5Z"/><path d="M8 6h8"/><path d="M8 10h8"/></svg>Recursos</a></li>
-              <li><a href="index.html#fluxo"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h11"/><path d="M17 19h3v3"/></svg>Fluxo</a></li>
-              <li><a href="index.html#seguranca"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>Seguran&ccedil;a</a></li>
+              <li><a href="#recursos"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5Z"/><path d="M8 6h8"/><path d="M8 10h8"/></svg>Recursos</a></li>
+              <li><a href="#fluxo"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h11"/><path d="M17 19h3v3"/></svg>Fluxo</a></li>
+              <li><a href="#seguranca"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>Seguran&ccedil;a</a></li>
             </ul>
           </div>
 
@@ -799,7 +896,7 @@
             <ul>
               <li><a href="termos.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>Termos de Uso</a></li>
               <li><a href="privacidade.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Privacidade</a></li>
-              <li><a href="index.html#seguranca"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Seguran&ccedil;a</a></li>
+              <li><a href="#seguranca"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Seguran&ccedil;a</a></li>
             </ul>
           </div>
         </nav>
@@ -870,7 +967,7 @@
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=cinematic-opening-6"></script>
+  <script src="assets/js/main.js?v=phone-interactive-3"></script>
   <script src="assets/js/chatbot.js?v=2026.06.18-02"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>

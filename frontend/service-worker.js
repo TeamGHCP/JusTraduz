@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justraduz-pwa-2026-06-18-06";
+const CACHE_VERSION = "justraduz-pwa-2026-06-21-01";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "offline.html";
 const PUBLIC_PAGE_FALLBACKS = new Set([
@@ -143,7 +143,8 @@ async function staleWhileRevalidate(request) {
 
 function normalizeStaticRequest(request) {
   const url = new URL(request.url);
-  url.search = "";
+  // Keep cache-busting query strings. A file requested as style.css?v=7
+  // must not receive the cached response from style.css?v=6.
   return new Request(url.href, { credentials: "same-origin" });
 }
 
