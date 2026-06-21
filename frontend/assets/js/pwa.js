@@ -227,7 +227,10 @@
   var scopeUrl = new URL("../../", scriptUrl);
 
   window.addEventListener("load", function () {
-    navigator.serviceWorker.register(workerUrl.href, { scope: scopeUrl.href }).then(function (registration) {
+    navigator.serviceWorker.register(workerUrl.href, {
+      scope: scopeUrl.href,
+      updateViaCache: "none"
+    }).then(function (registration) {
       if (registration.waiting && navigator.serviceWorker.controller) {
         showUpdatePrompt(registration);
       }
