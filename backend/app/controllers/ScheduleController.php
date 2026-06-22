@@ -344,7 +344,7 @@ class ScheduleController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado'])) {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para continuar.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para continuar.')));
         }
     }
 

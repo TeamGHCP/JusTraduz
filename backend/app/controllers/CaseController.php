@@ -10,17 +10,6 @@ class CaseController extends BaseController
 {
     private const MESSAGE_ATTACHMENT_MAX_SIZE = 25 * 1024 * 1024;
     private const MESSAGE_ATTACHMENT_ALLOWED_EXTENSIONS = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'txt', 'doc', 'docx'];
-    private const MESSAGE_ATTACHMENT_ALLOWED_MIMES = [
-        'application/pdf',
-        'image/png',
-        'image/jpeg',
-        'image/webp',
-        'text/plain',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/zip',
-    ];
-
     private NotificationService $notifications;
     private AuditService $audit;
     private StorageService $storage;
@@ -38,7 +27,7 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] !== 'cliente') {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login como cliente para solicitar ajuda.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login como cliente para solicitar ajuda.')));
         }
 
         $titulo = trim((string) $this->request->post('titulo', ''));
@@ -98,7 +87,7 @@ class CaseController extends BaseController
             'status' => $status,
         ]);
 
-        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&sucesso=' . urlencode('Solicitacao criada. Use o chat para acompanhar o atendimento.')));
+        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&sucesso=' . urlencode('Solicitação criada. Use o chat para acompanhar o atendimento.')));
     }
 
     public function accept(): void
@@ -106,7 +95,7 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] !== 'advogado') {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login como advogado.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login como advogado.')));
         }
 
         if (!$this->currentProfessionalIsVerified()) {
@@ -137,7 +126,7 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado'])) {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para continuar.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para continuar.')));
         }
 
         $caseId = (int) $this->request->post('case_id', 0);
@@ -247,7 +236,7 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado'])) {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para enviar mensagens.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para enviar mensagens.')));
         }
 
         $caseId = (int) $this->request->post('case_id', 0);
@@ -312,7 +301,7 @@ class CaseController extends BaseController
 
         if (empty($_SESSION['logado'])) {
             http_response_code(401);
-            echo 'Faca login para acessar este anexo.';
+            echo 'Faça login para acessar este anexo.';
             return;
         }
 
@@ -461,7 +450,7 @@ class CaseController extends BaseController
         $tmpName = (string) ($file['tmp_name'] ?? '');
         $mime = $tmpName !== '' && is_file($tmpName) ? (mime_content_type($tmpName) ?: '') : '';
 
-        if (!in_array($extension, self::MESSAGE_ATTACHMENT_ALLOWED_EXTENSIONS, true) || !in_array($mime, self::MESSAGE_ATTACHMENT_ALLOWED_MIMES, true)) {
+        if (!in_array($extension, self::MESSAGE_ATTACHMENT_ALLOWED_EXTENSIONS, true) || !$this->isAllowedAttachmentMime($extension, $mime)) {
             $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Formato de anexo não permitido.')));
         }
 
@@ -507,6 +496,25 @@ class CaseController extends BaseController
     private function messageAttachmentPath(array $message): ?string
     {
         return $this->storage->attachmentPathFromReference((string) ($message['attachment_path'] ?? ''));
+    }
+
+    private function isAllowedAttachmentMime(string $extension, string $mime): bool
+    {
+        $allowedByExtension = [
+            'pdf' => ['application/pdf'],
+            'png' => ['image/png'],
+            'jpg' => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'webp' => ['image/webp'],
+            'txt' => ['text/plain'],
+            'doc' => ['application/msword'],
+            'docx' => [
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/zip',
+            ],
+        ];
+
+        return in_array($mime, $allowedByExtension[$extension] ?? [], true);
     }
 
     private function hasValidDocxStructure(string $path): bool

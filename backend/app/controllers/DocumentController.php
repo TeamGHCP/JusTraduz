@@ -56,16 +56,23 @@ class DocumentController extends BaseController
 
         $maxSize = 50 * 1024 * 1024;
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'webp'];
-        $allowedMimes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
-
+        $allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'docx'];
         if ($file['size'] <= 0 || $file['size'] > $maxSize) {
-            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('O arquivo deve ter no m?ximo 50 MB.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('O arquivo deve ter no máximo 50 MB.')));
         }
 
         $mime = mime_content_type($file['tmp_name']) ?: '';
-        if (!in_array($extension, $allowedExtensions, true) || !in_array($mime, $allowedMimes, true)) {
+        if (!in_array($extension, $allowedExtensions, true) || !$this->isAllowedUploadMime($extension, $mime)) {
             $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Formato não permitido.')));
+        }
+
+        if ($extension === 'docx' && !$this->hasValidDocxStructure((string) $file['tmp_name'])) {
+            $this->audit->log('document.upload_blocked', 'document', null, [
+                'nome_arquivo' => $file['name'],
+                'mime' => $mime,
+                'reason' => 'DOCX sem estrutura interna obrigatoria.',
+            ]);
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Arquivo DOCX invalido ou corrompido.')));
         }
 
         $scanner = new UploadScannerService();
@@ -130,7 +137,7 @@ class DocumentController extends BaseController
 
         $message = $analysis
             ? 'Documento enviado e analisado com IA.'
-            : 'Documento enviado com sucesso. A an?lise por IA pode ser gerada ao abrir o documento.';
+            : 'Documento enviado com sucesso. A análise por IA pode ser gerada ao abrir o documento.';
 
         if ($queued) {
             $message = 'Documento enviado. A análise por IA entrou na fila de processamento.';
@@ -167,7 +174,7 @@ class DocumentController extends BaseController
         }
 
         if ((string) $this->request->post('autorizar_ia', '') !== '1') {
-            $this->response->redirect(app_url('/frontend/visualizar-documento.php?id=' . $documentId . '&erro=' . urlencode('Autorize a an?lise por IA antes de enviar o documento para processamento.')));
+            $this->response->redirect(app_url('/frontend/visualizar-documento.php?id=' . $documentId . '&erro=' . urlencode('Autorize a análise por IA antes de enviar o documento para processamento.')));
         }
 
         $document = $this->findDocumentForCurrentUser($documentId);
@@ -282,7 +289,7 @@ class DocumentController extends BaseController
             'owner_id' => (int) ($document['user_id'] ?? 0),
         ]);
 
-        $this->response->redirect(app_url('/frontend/visualizar-documento.php?sucesso=' . urlencode('Documento exclu?do.')));
+        $this->response->redirect(app_url('/frontend/visualizar-documento.php?sucesso=' . urlencode('Documento excluído.')));
     }
 
     private function generateAnalysis(string $filePath, string $mime, ?string $textoExtraido): ?array
@@ -460,6 +467,51 @@ class DocumentController extends BaseController
     {
         $filename = trim(preg_replace('/[^\w.\- ]+/u', '_', $filename) ?? '');
         return $filename !== '' ? $filename : 'documento';
+    }
+
+    private function isAllowedUploadMime(string $extension, string $mime): bool
+    {
+        $allowedByExtension = [
+            'pdf' => ['application/pdf'],
+            'png' => ['image/png'],
+            'jpg' => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'webp' => ['image/webp'],
+            'docx' => [
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/zip',
+            ],
+        ];
+
+        return in_array($mime, $allowedByExtension[$extension] ?? [], true);
+    }
+
+    private function hasValidDocxStructure(string $path): bool
+    {
+        if (!class_exists(ZipArchive::class) || !is_readable($path)) {
+            return false;
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($path) !== true) {
+            return false;
+        }
+
+        $requiredEntries = [
+            '[Content_Types].xml',
+            '_rels/.rels',
+            'word/document.xml',
+        ];
+
+        foreach ($requiredEntries as $entry) {
+            if ($zip->locateName($entry) === false) {
+                $zip->close();
+                return false;
+            }
+        }
+
+        $zip->close();
+        return true;
     }
 
     private function extractWithOcrOrFallback(string $path, string $mime, int $userId): string

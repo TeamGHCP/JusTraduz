@@ -8,6 +8,7 @@ require_once dirname(__DIR__) . '/app/services/UploadScannerService.php';
 require_once dirname(__DIR__) . '/app/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/app/services/DataJudService.php';
 require_once dirname(__DIR__) . '/app/controllers/CaseController.php';
+require_once dirname(__DIR__) . '/app/controllers/DocumentController.php';
 require_once dirname(__DIR__) . '/app/controllers/HealthController.php';
 
 $pdo = test_pdo();
@@ -37,9 +38,15 @@ assertTrue($scanner->scan($tmpFile, 'teste.pdf', 'application/pdf') === true, 'S
 unlink($tmpFile);
 
 $caseController = new CaseController();
+$documentController = new DocumentController();
+assertTrue(callPrivate($caseController, 'isAllowedAttachmentMime', ['pdf', 'application/zip']) === false, 'Anexo PDF nao deve aceitar MIME application/zip.');
+assertTrue(callPrivate($documentController, 'isAllowedUploadMime', ['pdf', 'application/zip']) === false, 'Upload PDF nao deve aceitar MIME application/zip.');
+assertTrue(callPrivate($caseController, 'isAllowedAttachmentMime', ['docx', 'application/zip']) === true, 'Anexo DOCX pode aceitar MIME application/zip com validacao estrutural.');
+assertTrue(callPrivate($documentController, 'isAllowedUploadMime', ['docx', 'application/zip']) === true, 'Upload DOCX pode aceitar MIME application/zip com validacao estrutural.');
 $fakeDocx = tempnam(sys_get_temp_dir(), 'docx_');
 file_put_contents($fakeDocx, 'PK arquivo zip falso sem estrutura docx');
 assertTrue(callPrivate($caseController, 'hasValidDocxStructure', [$fakeDocx]) === false, 'ZIP generico nao deve passar como DOCX.');
+assertTrue(callPrivate($documentController, 'hasValidDocxStructure', [$fakeDocx]) === false, 'Upload de documento deve bloquear ZIP generico como DOCX.');
 unlink($fakeDocx);
 
 if (class_exists(ZipArchive::class)) {
@@ -51,6 +58,7 @@ if (class_exists(ZipArchive::class)) {
     $zip->addFromString('word/document.xml', '<w:document></w:document>');
     $zip->close();
     assertTrue(callPrivate($caseController, 'hasValidDocxStructure', [$validDocx]) === true, 'DOCX com estrutura minima deve ser aceito.');
+    assertTrue(callPrivate($documentController, 'hasValidDocxStructure', [$validDocx]) === true, 'Upload de documento deve aceitar DOCX com estrutura minima.');
     unlink($validDocx);
 }
 

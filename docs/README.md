@@ -10,3 +10,5 @@ A documentação ativa fica centralizada aqui para evitar várias versões da ve
 - `CHECKLIST_RELEASE.md`: checklist antes de release/deploy.
 - `CHECKLIST_APRESENTACAO_SA.md`: checklist para apresentacao local da SA.
 - `OPERACAO_BACKUP_RESTORE.md`: procedimento de backup, restore, rollback e healthcheck.
+- `STATUS_MODULOS_2026-06-22.md`: status tecnico da passada pelos 12 modulos.
+- `ROTEIRO_QA_MANUAL.md`: roteiro manual para validar cliente, profissional, admin, responsivo e acessibilidade.

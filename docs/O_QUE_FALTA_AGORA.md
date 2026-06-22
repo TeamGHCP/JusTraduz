@@ -1,45 +1,59 @@
 # O que falta agora
 
-Data da revisão: 17/06/2026
+Data da revisao: 22/06/2026
 
-Este documento é a lista única de pendências reais do JusTraduz. Itens já implementados no sistema foram removidos da documentação ativa para evitar várias versões da verdade.
+Este documento e a lista unica de pendencias reais do JusTraduz. Itens ja implementados no sistema foram removidos da documentacao ativa para evitar varias versoes da verdade.
 
-## Antes de colocar em produção real
+## Ambiente local
+
+O ambiente local esta separado do criterio de producao. Para validar a maquina de desenvolvimento/apresentacao, use:
+
+```powershell
+php scripts\check-local-readiness.php
+php scripts\check-orphan-storage.php
+php backend\tests\run.php
+php scripts\check-references.php
+```
+
+O check de producao (`scripts/check-production-readiness.php --env=backend/.env`) exige HTTPS e dominio real.
+
+## Antes de colocar em producao real
 
 - Configurar `backend/.env` real com `APP_URL` e `HEALTHCHECK_URL` em HTTPS, sem placeholders.
 - Instalar certificado TLS no servidor e aplicar o modelo `docs/apache-justraduz-production.conf`.
-- Definir `BACKUP_ENCRYPTION_PASSWORD` e rodar um restore testado em ambiente separado.
+- Definir `BACKUP_ENCRYPTION_PASSWORD` e rodar restore testado em ambiente separado.
 - Configurar SMTP real ou provedor transacional e validar entregabilidade.
 - Configurar monitoramento externo para `/backend/public/index.php?rota=/health`.
 - Agendar `scripts/run-jobs.php` para processar a fila quando `ASYNC_JOBS_ENABLED=true`.
 - Definir storage privado fora do webroot em `DOCUMENT_STORAGE_PATH` e `ATTACHMENT_STORAGE_PATH`.
-- Instalar/configurar ClamAV via `CLAMAV_BINARY` se a produção exigir scanner externo além da heurística interna.
+- Instalar/configurar ClamAV via `CLAMAV_BINARY` se a producao exigir scanner externo alem da heuristica interna.
 - Instalar/configurar Tesseract se `OCR_ENABLED=true`.
-- Preencher e assinar `docs/REGISTRO_REVISAO_JURIDICA.md` com profissional jurídico.
-- Validar o PWA em HTTPS real no domínio final, incluindo instalação em Android e iPhone.
-- Rodar em produção/homologação:
+- Preencher e assinar `docs/REGISTRO_REVISAO_JURIDICA.md` com profissional juridico.
+- Validar o PWA em HTTPS real no dominio final, incluindo instalacao em Android e iPhone.
+- Rodar em producao/homologacao:
 
 ```powershell
-C:\xampp\php\php.exe backend\tests\run.php
-C:\xampp\php\php.exe scripts\check-references.php
-C:\xampp\php\php.exe scripts\check-production-readiness.php --env=backend/.env
+php backend\tests\run.php
+php scripts\check-references.php
+php scripts\check-production-readiness.php --env=backend/.env
 ```
 
-## Produto ainda não implementado
+## Produto ainda nao implementado
 
-- Planos e cobrança.
-- Multiempresa/escritórios.
+- Planos e cobranca.
+- Multiempresa/escritorios.
 - RBAC granular por recurso.
-- Relatórios gerenciais.
+- Relatorios gerenciais.
 - SLA, prioridade operacional e escalonamento.
 - API versionada `/api/v1`.
 - Acessibilidade WCAG AA validada por matriz formal.
-- Consulta processual por CPF com API jurídica paga, contrato, consentimento reforçado e auditoria.
+- Consulta processual por CPF com API juridica paga, contrato, consentimento reforcado e auditoria.
 
-## Polimento ainda não implementado
+## Polimento ainda nao implementado
 
 - Teste visual em mobile/tablet/projetor com matriz real.
 - Empty/loading/error states revisados em todas as telas.
-- Revisão final de copy jurídica por profissional.
+- Revisao final de copy juridica por profissional.
 - Manual operacional interno para admin/suporte.
-- Scripts adicionais de manutenção, como limpeza de arquivos órfãos e relatório de saúde periódico.
+- Automatizar limpeza de arquivos orfaos somente depois de revisar o relatorio de `scripts/check-orphan-storage.php`.
+- Relatorio periodico de saude operacional.

@@ -61,7 +61,7 @@ class AuthController extends BaseController
         }
 
         if (strlen($senha) < 6) {
-            $this->response->redirectWithError($frontUrl, 'A senha deve ter no m?nimo 6 caracteres.');
+            $this->response->redirectWithError($frontUrl, 'A senha deve ter no mínimo 6 caracteres.');
         }
 
         $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
@@ -579,7 +579,7 @@ class AuthController extends BaseController
 
         if ($novaSenha !== '' || $novaSenha2 !== '' || $senhaAtual !== '') {
             if (strlen($novaSenha) < 6) {
-                $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A nova senha deve ter no m?nimo 6 caracteres.'));
+                $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A nova senha deve ter no mínimo 6 caracteres.'));
             }
 
             if ($novaSenha !== $novaSenha2) {
@@ -688,7 +688,7 @@ class AuthController extends BaseController
         }
 
         if ((int) ($file['size'] ?? 0) > 2 * 1024 * 1024) {
-            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A foto deve ter no m?ximo 2 MB.'));
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A foto deve ter no máximo 2 MB.'));
         }
 
         $tmpPath = (string) ($file['tmp_name'] ?? '');
@@ -805,11 +805,11 @@ class AuthController extends BaseController
         $senha2 = trim((string) $this->request->post('senha2', ''));
 
         if (strlen($codigo) !== 6) {
-            $this->response->redirectWithError($frontUrl, 'Informe o c?digo de 6 d?gitos enviado por e-mail.');
+            $this->response->redirectWithError($frontUrl, 'Informe o código de 6 dígitos enviado por e-mail.');
         }
 
         if (strlen($senha) < 6) {
-            $this->response->redirectWithError($frontUrl, 'A nova senha deve ter no m?nimo 6 caracteres.');
+            $this->response->redirectWithError($frontUrl, 'A nova senha deve ter no mínimo 6 caracteres.');
         }
 
         if ($senha !== $senha2) {
@@ -835,7 +835,7 @@ class AuthController extends BaseController
         }
 
         if ((int) ($reset['attempts'] ?? 0) >= 5) {
-            $this->response->redirectWithError($frontUrl, 'Muitas tentativas incorretas. Solicite um novo c?digo.');
+            $this->response->redirectWithError($frontUrl, 'Muitas tentativas incorretas. Solicite um novo código.');
         }
 
         if (!password_verify($codigo, (string) $reset['code_hash'])) {
@@ -908,12 +908,12 @@ class AuthController extends BaseController
         $senha2 = trim((string) $this->request->post('senha2', ''));
 
         if (strlen($codigo) !== 6) {
-            $this->response->json(['success' => false, 'message' => 'Informe o c?digo de 6 d?gitos enviado por e-mail.'], 422);
+            $this->response->json(['success' => false, 'message' => 'Informe o código de 6 dígitos enviado por e-mail.'], 422);
             return;
         }
 
         if (strlen($senha) < 6) {
-            $this->response->json(['success' => false, 'message' => 'A nova senha deve ter no m?nimo 6 caracteres.'], 422);
+            $this->response->json(['success' => false, 'message' => 'A nova senha deve ter no mínimo 6 caracteres.'], 422);
             return;
         }
 
@@ -942,7 +942,7 @@ class AuthController extends BaseController
         }
 
         if ((int) ($reset['attempts'] ?? 0) >= 5) {
-            $this->response->json(['success' => false, 'message' => 'Muitas tentativas incorretas. Solicite um novo c?digo.'], 429);
+            $this->response->json(['success' => false, 'message' => 'Muitas tentativas incorretas. Solicite um novo código.'], 429);
             return;
         }
 

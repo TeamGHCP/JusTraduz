@@ -22,7 +22,7 @@ class ProcessController extends BaseController
         CsrfMiddleware::validate();
 
         if (empty($_SESSION['logado']) || empty($_SESSION['id'])) {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para consultar processos.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para consultar processos.')));
         }
 
         $userId = (int) $_SESSION['id'];

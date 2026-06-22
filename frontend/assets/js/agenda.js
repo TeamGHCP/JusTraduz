@@ -226,11 +226,17 @@
 
       const header = document.createElement("div");
       header.className = "calendar-day-header";
-      header.innerHTML = `<span class="day-num">${day}</span>`;
+      const dayNumber = document.createElement("span");
+      dayNumber.className = "day-num";
+      dayNumber.textContent = String(day);
+      header.appendChild(dayNumber);
 
       if (dayTotal > 0) {
         cell.classList.add("has-schedule");
-        header.insertAdjacentHTML("beforeend", `<span class="calendar-day-count">${dayTotal}</span>`);
+        const dayCount = document.createElement("span");
+        dayCount.className = "calendar-day-count";
+        dayCount.textContent = String(dayTotal);
+        header.appendChild(dayCount);
       }
 
       cell.appendChild(header);
@@ -239,7 +245,9 @@
         const dot = document.createElement("button");
         dot.type = "button";
         dot.className = "day-dot";
-        dot.innerHTML = `<span>${dayTotal}</span>`;
+        const dotCount = document.createElement("span");
+        dotCount.textContent = String(dayTotal);
+        dot.appendChild(dotCount);
         dot.title = `${dayTotal} item(ns) de agenda`;
         dot.addEventListener("click", (event) => {
           event.preventDefault();
