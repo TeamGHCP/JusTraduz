@@ -139,6 +139,10 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $paymentStatus = $this->paymentStatusFromEvent($event);
 
         $subscription = $this->findLocalSubscription($providerSubscriptionId);
+        $hadLocalSubscription = (bool) $subscription;
+        $alreadyProcessedPaidEvent = $paymentStatus === 'paid'
+            && $providerEventId !== ''
+            && $this->hasProcessedPaidEvent($providerEventId);
         if (!$subscription && $paymentStatus === 'paid') {
             $subscription = $this->createLocalSubscriptionFromPendingEvent($providerSubscriptionId);
         }
@@ -152,6 +156,10 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         if ($subscriptionId && $newStatus !== null) {
             $stmt = $this->pdo->prepare('UPDATE subscriptions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
             $stmt->execute([$newStatus, $subscriptionId]);
+        }
+
+        if ($subscriptionId && $paymentStatus === 'paid' && $hadLocalSubscription && !$alreadyProcessedPaidEvent) {
+            $this->subscriptions->renewCurrentPeriod($subscriptionId);
         }
 
         if ($userId && $paymentStatus === 'paid') {
@@ -214,6 +222,10 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $providerPaymentId = (string) ($payment['id'] ?? '');
 
         $subscription = $this->findLocalSubscription($providerSubscriptionId);
+        $hadLocalSubscription = (bool) $subscription;
+        $alreadyProcessedPaidEvent = $paymentStatus === 'paid'
+            && $providerPaymentId !== ''
+            && $this->hasProcessedPaidEvent($providerPaymentId);
         if (!$subscription && $paymentStatus === 'paid') {
             $subscription = $this->createLocalSubscriptionFromPendingEvent($providerSubscriptionId);
         }
@@ -228,6 +240,9 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         if ($subscriptionId && $paymentStatus === 'paid') {
             $stmt = $this->pdo->prepare('UPDATE subscriptions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
             $stmt->execute(['active', $subscriptionId]);
+            if ($hadLocalSubscription && !$alreadyProcessedPaidEvent) {
+                $this->subscriptions->renewCurrentPeriod($subscriptionId);
+            }
             $this->notifyPlanPaid($userId, $subscriptionId, $amount);
         }
 
@@ -744,6 +759,20 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             date('Y-m-d H:i:s'),
         ]);
+    }
+
+    private function hasProcessedPaidEvent(string $providerEventId): bool
+    {
+        if ($providerEventId === '' || !database_table_exists($this->pdo, 'payment_events')) {
+            return false;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM payment_events WHERE provider = ? AND provider_event_id = ? AND status = ?'
+        );
+        $stmt->execute([$this->name(), $providerEventId, 'paid']);
+
+        return (int) $stmt->fetchColumn() > 0;
     }
 
     private function notifyPlanPaid(int $userId, ?int $subscriptionId, int $amount): void

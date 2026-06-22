@@ -61,21 +61,37 @@ class DocumentController extends BaseController
 
         $quota = $this->usage->allow($userId, 'document_upload');
         if (!$quota['allowed']) {
-            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Limite diario de uploads atingido. Tente novamente amanha.')));
+            $this->audit->log('usage.limit_blocked', 'document', null, [
+                'feature' => 'document_upload',
+                'limit' => (int) ($quota['limit'] ?? 0),
+                'used' => (int) ($quota['used'] ?? 0),
+            ]);
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode($this->usage->limitMessage('document_upload', $quota))));
         }
 
         $maxSize = 50 * 1024 * 1024;
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'webp'];
-        $allowedMimes = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+        $allowedExtensions = ['pdf', 'docx', 'png', 'jpg', 'jpeg', 'webp'];
+        $allowedMimes = [
+            'application/pdf',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/zip',
+            'image/png',
+            'image/jpeg',
+            'image/webp',
+        ];
 
         if ($file['size'] <= 0 || $file['size'] > $maxSize) {
-            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('O arquivo deve ter no m?ximo 50 MB.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('O arquivo deve ter no máximo 50 MB.')));
         }
 
         $mime = mime_content_type($file['tmp_name']) ?: '';
         if (!in_array($extension, $allowedExtensions, true) || !in_array($mime, $allowedMimes, true)) {
             $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Formato não permitido.')));
+        }
+
+        if ($extension === 'docx' && class_exists(ZipArchive::class) && !$this->hasValidDocxStructure((string) $file['tmp_name'])) {
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Arquivo DOCX inválido ou corrompido.')));
         }
 
         $scanner = new UploadScannerService();
@@ -108,6 +124,11 @@ class DocumentController extends BaseController
             $textoExtraido = PdfTextExtractor::extract($destination);
             if ($textoExtraido === '') {
                 $textoExtraido = 'Não foi possível extrair texto selecionável deste PDF. O arquivo pode estar escaneado como imagem e precisar de OCR.';
+            }
+        } elseif ($extension === 'docx') {
+            $textoExtraido = $this->extractDocxText($destination);
+            if ($textoExtraido === '') {
+                $textoExtraido = 'Não foi possível extrair texto deste DOCX. O arquivo pode estar vazio, protegido ou corrompido.';
             }
         } elseif (str_starts_with($mime, 'image/')) {
             $textoExtraido = $this->extractWithOcrOrFallback($destination, $mime, $userId);
@@ -148,7 +169,7 @@ class DocumentController extends BaseController
 
         $message = $analysis
             ? 'Documento enviado e analisado com IA.'
-            : 'Documento enviado com sucesso. A an?lise por IA pode ser gerada ao abrir o documento.';
+            : 'Documento enviado com sucesso. A análise por IA pode ser gerada ao abrir o documento.';
 
         if ($queued) {
             $message = 'Documento enviado. A análise por IA entrou na fila de processamento.';
@@ -185,7 +206,7 @@ class DocumentController extends BaseController
         }
 
         if ((string) $this->request->post('autorizar_ia', '') !== '1') {
-            $this->response->redirect(app_url('/frontend/visualizar-documento.php?id=' . $documentId . '&erro=' . urlencode('Autorize a an?lise por IA antes de enviar o documento para processamento.')));
+            $this->response->redirect(app_url('/frontend/visualizar-documento.php?id=' . $documentId . '&erro=' . urlencode('Autorize a análise por IA antes de enviar o documento para processamento.')));
         }
 
         $document = $this->findDocumentForCurrentUser($documentId);
@@ -219,9 +240,9 @@ class DocumentController extends BaseController
         }
 
         $this->saveAnalysis($documentId, $analysis);
-        $this->notifications->notify((int) $document['user_id'], 'An?lise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
+        $this->notifications->notify((int) $document['user_id'], 'Análise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
         $this->audit->log('document.analyze', 'document', $documentId, ['analysis_generated' => true]);
-        $this->response->redirect($redirect . '&sucesso=' . urlencode('An?lise por IA gerada.'));
+        $this->response->redirect($redirect . '&sucesso=' . urlencode('Análise por IA gerada.'));
     }
 
     public function download(): void
@@ -300,7 +321,7 @@ class DocumentController extends BaseController
             'owner_id' => (int) ($document['user_id'] ?? 0),
         ]);
 
-        $this->response->redirect(app_url('/frontend/visualizar-documento.php?sucesso=' . urlencode('Documento exclu?do.')));
+        $this->response->redirect(app_url('/frontend/visualizar-documento.php?sucesso=' . urlencode('Documento excluído.')));
     }
 
     private function generateAnalysis(string $filePath, string $mime, ?string $textoExtraido): ?array
@@ -493,6 +514,50 @@ class DocumentController extends BaseController
         }
 
         return $ocr->fallbackMessage($mime);
+    }
+
+    private function hasValidDocxStructure(string $path): bool
+    {
+        if (!class_exists(ZipArchive::class) || !is_readable($path)) {
+            return false;
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($path) !== true) {
+            return false;
+        }
+
+        $hasDocument = $zip->locateName('word/document.xml') !== false;
+        $hasContentTypes = $zip->locateName('[Content_Types].xml') !== false;
+        $zip->close();
+
+        return $hasDocument && $hasContentTypes;
+    }
+
+    private function extractDocxText(string $path): string
+    {
+        if (!class_exists(ZipArchive::class) || !is_readable($path)) {
+            return '';
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($path) !== true) {
+            return '';
+        }
+
+        $xml = $zip->getFromName('word/document.xml');
+        $zip->close();
+        if (!is_string($xml) || $xml === '') {
+            return '';
+        }
+
+        $xml = preg_replace('/<\/w:p>/', "\n", $xml) ?? $xml;
+        $xml = preg_replace('/<\/w:tr>/', "\n", $xml) ?? $xml;
+        $text = html_entity_decode(strip_tags($xml), ENT_QUOTES | ENT_XML1, 'UTF-8');
+        $text = preg_replace('/[ \t]+/', ' ', $text) ?? $text;
+        $text = preg_replace('/\R{3,}/', "\n\n", $text) ?? $text;
+
+        return trim($text);
     }
 
     private function enqueueDocumentAnalysis(int $documentId, int $userId): void

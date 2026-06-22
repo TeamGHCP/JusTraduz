@@ -67,7 +67,7 @@ $usage = new UsageLimiter($pdo);
 putenv('USAGE_DAILY_DOCUMENT_AI=1');
 assertTrue($usage->allow(1, 'document_ai')['allowed'] === true, 'Primeiro uso deve caber na quota.');
 $usage->record(1, 'document_ai', 1, 1);
-assertTrue($usage->allow(1, 'document_ai')['allowed'] === false, 'Quota diaria deve bloquear uso excedente.');
+assertTrue($usage->allow(1, 'document_ai')['allowed'] === false, 'Quota mensal deve bloquear uso excedente.');
 
 $queue = new JobQueueService($pdo);
 $jobId = $queue->enqueue('document_analysis', ['document_id' => 1], 1);

@@ -110,7 +110,7 @@ $quickLinks = [
             <a class="btn btn-soft btn-sm" href="visualizar-documento.php?id=<?= (int) $lastDocument['id'] ?>">Abrir</a>
           <?php else: ?>
             <strong>Nenhum envio</strong>
-            <p>Comece pelo upload de PDF, PNG, JPEG ou WebP.</p>
+            <p>Comece pelo upload de PDF, DOCX, PNG, JPEG ou WebP.</p>
           <?php endif; ?>
         </article>
 

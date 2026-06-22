@@ -98,7 +98,7 @@ class CaseController extends BaseController
             'status' => $status,
         ]);
 
-        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&sucesso=' . urlencode('Solicitacao criada. Use o chat para acompanhar o atendimento.')));
+        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&sucesso=' . urlencode('Solicitação criada. Use o chat para acompanhar o atendimento.')));
     }
 
     public function accept(): void

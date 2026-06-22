@@ -52,6 +52,44 @@ function profile_oab_status_meta(array $user): array
     ];
 }
 
+function profile_billing_renewal_message(?array $subscription): string
+{
+    if (!$subscription) {
+        return '';
+    }
+
+    if ((string) ($subscription['status'] ?? '') === 'past_due') {
+        return 'Seu plano está com pagamento em aberto. Regularize para evitar bloqueios.';
+    }
+
+    $periodEnd = trim((string) ($subscription['current_period_end'] ?? ''));
+    if ($periodEnd === '') {
+        return '';
+    }
+
+    try {
+        $today = new DateTimeImmutable('today');
+        $renewalDay = (new DateTimeImmutable($periodEnd))->setTime(0, 0);
+    } catch (Throwable) {
+        return '';
+    }
+
+    $daysRemaining = (int) $today->diff($renewalDay)->format('%r%a');
+    if ($daysRemaining > 1) {
+        return 'Faltam ' . $daysRemaining . ' dias para a renovação do seu plano.';
+    }
+
+    if ($daysRemaining === 1) {
+        return 'Falta 1 dia para a renovação do seu plano.';
+    }
+
+    if ($daysRemaining === 0) {
+        return 'Seu plano renova hoje.';
+    }
+
+    return 'O período do plano terminou. Verifique o pagamento.';
+}
+
 $isProfessional = in_array($user['tipo'] ?? '', ['advogado', 'estagiario'], true);
 $oabStatus = $isProfessional ? profile_oab_status_meta($user) : null;
 $activeProfileTab = (string) ($_GET['tab'] ?? 'conta');
@@ -77,6 +115,7 @@ if ($type === 'cliente' && database_table_exists($pdo, 'payment_events')) {
 
 $billingPlanName = $currentSubscription ? (string) ($currentSubscription['plan_name'] ?? 'Plano ativo') : 'Grátis';
 $billingCycle = (string) ($currentSubscription['billing_cycle'] ?? 'monthly');
+$billingRenewalMessage = profile_billing_renewal_message($currentSubscription);
 $billingPrice = 0;
 if ($currentSubscription) {
     $billingPrice = (int) ($billingCycle === 'yearly'
@@ -213,7 +252,14 @@ $profileTourKey = match ($type) {
                   <h3><?= e($billingPlanName) ?></h3>
                   <?php if ($currentSubscription): ?>
                     <p><?= e($billingCycle === 'yearly' ? 'Cobrança anual' : 'Cobrança mensal') ?> · <?= e(billing_money($billingPrice)) ?></p>
-                    <p>Período atual até <?= e(billing_date((string) ($currentSubscription['current_period_end'] ?? ''))) ?></p>
+                    <?php if ((string) ($currentSubscription['status'] ?? '') === 'past_due'): ?>
+                      <p>Pagamento pendente</p>
+                    <?php else: ?>
+                      <p>Renova em <?= e(billing_date((string) ($currentSubscription['current_period_end'] ?? ''))) ?></p>
+                    <?php endif; ?>
+                    <?php if ($billingRenewalMessage !== ''): ?>
+                      <p><?= e($billingRenewalMessage) ?></p>
+                    <?php endif; ?>
                   <?php else: ?>
                     <p>Você está usando o modo gratuito. Assine um plano para liberar mais volume e prioridade.</p>
                   <?php endif; ?>

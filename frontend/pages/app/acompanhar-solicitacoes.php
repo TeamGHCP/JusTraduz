@@ -158,7 +158,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
           <select class="select" id="prioridade" name="prioridade">
             <option value="">Todas</option>
             <option value="alta" <?= $priority === 'alta' ? 'selected' : '' ?>>Alta</option>
-            <option value="media" <?= $priority === 'media' ? 'selected' : '' ?>>M?dia</option>
+            <option value="media" <?= $priority === 'media' ? 'selected' : '' ?>>Média</option>
             <option value="baixa" <?= $priority === 'baixa' ? 'selected' : '' ?>>Baixa</option>
           </select>
         </div>
@@ -228,7 +228,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
                 <div class="case-card-foot">
                   <span class="text-muted">
                     Criado em <?= e(date('d/m/Y H:i', strtotime((string) $case['created_at']))) ?>
-                    <?php if (!empty($case['last_message_at'])): ?> | ?ltima msg <?= e(date('d/m/Y H:i', strtotime((string) $case['last_message_at']))) ?><?php endif; ?>
+                    <?php if (!empty($case['last_message_at'])): ?> | Última msg <?= e(date('d/m/Y H:i', strtotime((string) $case['last_message_at']))) ?><?php endif; ?>
                   </span>
                   <div class="case-actions">
                     <?php if ($isOpenForLawyer): ?>

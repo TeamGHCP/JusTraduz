@@ -73,17 +73,89 @@ class SubscriptionService
 
     public function featureLimit(int $userId, string $feature): int
     {
+        $limit = $this->featureLimitValue($userId, $feature);
+        return $limit === null ? 0 : $limit;
+    }
+
+    public function featureLimitValue(int $userId, string $feature): ?int
+    {
         $subscription = $this->currentForUser($userId);
         if (!$subscription) {
-            return 0;
+            return null;
         }
 
         $limits = json_decode((string) ($subscription['limits_json'] ?? ''), true);
         if (!is_array($limits) || !array_key_exists($feature, $limits)) {
-            return 0;
+            return null;
         }
 
         return max(0, (int) $limits[$feature]);
+    }
+
+    public function currentUsageWindow(int $userId): array
+    {
+        $subscription = $this->currentForUser($userId);
+        if ($subscription && !empty($subscription['current_period_start'])) {
+            return [
+                'start' => (string) $subscription['current_period_start'],
+                'end' => (string) ($subscription['current_period_end'] ?? ''),
+            ];
+        }
+
+        return [
+            'start' => date('Y-m-01 00:00:00'),
+            'end' => date('Y-m-t 23:59:59'),
+        ];
+    }
+
+    public function renewCurrentPeriod(int $subscriptionId, ?DateTimeImmutable $paidAt = null): ?array
+    {
+        if ($subscriptionId <= 0 || !database_table_exists($this->pdo, 'subscriptions')) {
+            return null;
+        }
+
+        $stmt = $this->pdo->prepare('SELECT * FROM subscriptions WHERE id = ? LIMIT 1');
+        $stmt->execute([$subscriptionId]);
+        $subscription = $stmt->fetch();
+        if (!$subscription) {
+            return null;
+        }
+
+        $billingCycle = (string) ($subscription['billing_cycle'] ?? 'monthly');
+        if (!in_array($billingCycle, ['monthly', 'yearly'], true)) {
+            $billingCycle = 'monthly';
+        }
+
+        $paidAt ??= new DateTimeImmutable();
+        $currentEndValue = trim((string) ($subscription['current_period_end'] ?? ''));
+        try {
+            $currentEnd = $currentEndValue !== '' ? new DateTimeImmutable($currentEndValue) : $paidAt;
+        } catch (Throwable) {
+            $currentEnd = $paidAt;
+        }
+
+        $periodStart = $currentEnd > $paidAt ? $currentEnd : $paidAt;
+        $periodEnd = $periodStart->modify($billingCycle === 'yearly' ? '+1 year' : '+1 month');
+
+        $stmt = $this->pdo->prepare(
+            "UPDATE subscriptions
+             SET status = 'active',
+                 current_period_start = ?,
+                 current_period_end = ?,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?"
+        );
+        $stmt->execute([
+            $periodStart->format('Y-m-d H:i:s'),
+            $periodEnd->format('Y-m-d H:i:s'),
+            $subscriptionId,
+        ]);
+
+        $stmt = $this->pdo->prepare('SELECT * FROM subscriptions WHERE id = ? LIMIT 1');
+        $stmt->execute([$subscriptionId]);
+        $renewed = $stmt->fetch();
+
+        return $renewed ?: null;
     }
 
     public function plans(): array

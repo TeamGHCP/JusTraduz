@@ -418,8 +418,9 @@ function seed_test_data(PDO $pdo): void
     }
 
     $pdo->exec("INSERT INTO plans (id, slug, name, description, monthly_price_cents, yearly_price_cents, limits_json, features_json, active, sort_order) VALUES
-        (1, 'essencial', 'Essencial', 'Teste', 1500, 14400, '{\"document_upload\":10,\"document_ai\":10,\"ai_chat\":30,\"datajud_cnj\":20,\"ocr\":5}', '[\"Teste\"]', 1, 10),
-        (2, 'pro', 'Pro', 'Teste', 5000, 48000, '{\"document_upload\":60,\"document_ai\":60,\"ai_chat\":200,\"datajud_cnj\":100,\"ocr\":40}', '[\"Teste\"]', 1, 20)");
+        (1, 'essencial', 'Essencial', 'Ideal para cidadãos, estudantes e usuários ocasionais.', 1490, 14300, '{\"document_upload\":30,\"document_ai\":30,\"ai_chat\":300,\"datajud_cnj\":30,\"ocr\":30}', '[\"Tradução de documentos jurídicos\",\"IA Jurídica (Chat)\",\"Consulta CNJ\",\"Resumo automático de documentos\",\"Histórico de documentos\",\"Upload de PDF, DOCX e imagens\",\"Até 30 documentos por mês\"]', 1, 10),
+        (2, 'pro', 'Pro', 'Ideal para advogados autônomos e profissionais jurídicos.', 4990, 47900, '{\"document_upload\":500,\"document_ai\":500,\"ai_chat\":5000,\"datajud_cnj\":500,\"ocr\":500,\"contract_analysis\":500,\"draft_generation\":250,\"info_extraction\":500}', '[\"OCR avançado\",\"Análise de contratos por IA\",\"Identificação de cláusulas importantes\",\"Extração automática de informações\",\"Geração de minutas jurídicas\",\"Até 500 documentos por mês\",\"Atendimento prioritário\"]', 1, 20),
+        (3, 'escritorio', 'Escritório', 'Ideal para escritórios e equipes jurídicas.', 9990, 95900, '{\"document_upload\":0,\"document_ai\":0,\"ai_chat\":10000,\"datajud_cnj\":1000,\"ocr\":0,\"contract_analysis\":0,\"draft_generation\":0,\"info_extraction\":0,\"seats\":10,\"storage_mb\":51200}', '[\"Até 10 usuários adicionais\",\"Compartilhamento interno de documentos\",\"50 GB de armazenamento\",\"Documentos, OCR e IA documental ilimitados\",\"Até 1.000 consultas CNJ por mês\",\"Relatórios básicos de utilização\",\"Suporte prioritário\"]', 1, 30)");
     $pdo->exec("INSERT INTO organizations (id, name, slug, owner_user_id, status) VALUES (1, 'Escritorio Teste', 'escritorio-teste', 3, 'active')");
     $pdo->exec("INSERT INTO organization_members (organization_id, user_id, role, status) VALUES
         (1, 1, 'member', 'active'),

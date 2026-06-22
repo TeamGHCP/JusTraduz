@@ -146,6 +146,9 @@ class ManualPaymentProvider implements PaymentProviderInterface
         $paymentStatus = $this->normalizePaymentStatus((string) ($payload['status'] ?? 'paid'));
         $amount = max(0, (int) ($payload['amount_cents'] ?? 0));
         $providerEventId = trim((string) ($payload['provider_event_id'] ?? ''));
+        $alreadyProcessedPaidEvent = $paymentStatus === 'paid'
+            && $providerEventId !== ''
+            && $this->hasProcessedPaidEvent($providerEventId);
 
         if ($subscriptionId <= 0 && $userId <= 0) {
             throw new InvalidArgumentException('Webhook sem usuario ou assinatura.');
@@ -165,6 +168,10 @@ class ManualPaymentProvider implements PaymentProviderInterface
         if ($subscriptionId > 0 && $subscriptionStatus !== null) {
             $stmt = $this->pdo->prepare('UPDATE subscriptions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
             $stmt->execute([$subscriptionStatus, $subscriptionId]);
+        }
+
+        if ($subscriptionId > 0 && $paymentStatus === 'paid' && !$alreadyProcessedPaidEvent) {
+            $this->subscriptions->renewCurrentPeriod($subscriptionId);
         }
 
         if ($userId > 0 && $paymentStatus === 'paid') {
@@ -215,6 +222,20 @@ class ManualPaymentProvider implements PaymentProviderInterface
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             date('Y-m-d H:i:s'),
         ]);
+    }
+
+    private function hasProcessedPaidEvent(string $providerEventId): bool
+    {
+        if ($providerEventId === '' || !database_table_exists($this->pdo, 'payment_events')) {
+            return false;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM payment_events WHERE provider = ? AND provider_event_id = ? AND status = ?'
+        );
+        $stmt->execute([$this->name(), $providerEventId, 'paid']);
+
+        return (int) $stmt->fetchColumn() > 0;
     }
 
     private function notify(int $userId, string $message): bool

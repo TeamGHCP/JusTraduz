@@ -90,6 +90,10 @@ if ($isPlanActive) {
 
 $cycleLabel = $billingCycle === 'yearly' ? 'Anual' : 'Mensal';
 $periodLabel = $billingCycle === 'yearly' ? '/ano' : '/mês';
+$monthlyPlanCents = (int) ($plan['monthly_price_cents'] ?? 0);
+$yearlyPlanCents = (int) ($plan['yearly_price_cents'] ?? 0);
+$yearlyFullPriceCents = $monthlyPlanCents * 12;
+$yearlyDiscountCents = $billingCycle === 'yearly' ? max(0, $yearlyFullPriceCents - $yearlyPlanCents) : 0;
 $dueLabel = '';
 if ($dueDate !== '') {
     $timestamp = strtotime($dueDate);
@@ -105,7 +109,7 @@ function payment_mask_document(string $document): string
 {
     $digits = preg_replace('/\D+/', '', $document) ?: '';
     if (strlen($digits) !== 11) {
-        return $document !== '' ? $document : 'Nao informado';
+        return $document !== '' ? $document : 'Não informado';
     }
 
     return substr($digits, 0, 3) . '.***.***-' . substr($digits, -2);
@@ -114,7 +118,17 @@ function payment_mask_document(string $document): string
 function payment_display(string $value): string
 {
     $value = trim($value);
-    return $value !== '' ? $value : 'Nao informado';
+    return $value !== '' ? $value : 'Não informado';
+}
+
+function payment_asaas_environment_label(): string
+{
+    $env = function_exists('database_env_values')
+        ? database_env_values(PROJECT_ROOT_PATH . '/backend/.env')
+        : [];
+    $apiUrl = (string) (getenv('ASAAS_API_URL') ?: ($env['ASAAS_API_URL'] ?? ''));
+
+    return str_contains($apiUrl, 'api-sandbox.asaas.com') ? 'Asaas sandbox' : 'Asaas';
 }
 
 $cardPayUrl = $invoiceUrl !== '' ? $invoiceUrl : $payUrl;
@@ -130,6 +144,7 @@ $holderEmail = payment_display((string) ($checkoutUser['email'] ?? ''));
 $holderCpf = preg_replace('/\D+/', '', (string) ($checkoutUser['cpf'] ?? '')) ?: '';
 $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? '')) ?: '';
 $currentPlanName = (string) ($currentSubscription['plan_name'] ?? '');
+$asaasEnvironmentLabel = payment_asaas_environment_label();
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -211,6 +226,13 @@ $currentPlanName = (string) ($currentSubscription['plan_name'] ?? '');
 
             <div class="payment-order-lines">
               <div><span>Subtotal</span><strong><?= e(payment_money($amountCents)) ?></strong></div>
+              <?php if ($billingCycle === 'yearly'): ?>
+                <div><span>Valor mensal equivalente</span><strong><?= e(payment_money((int) round($amountCents / 12))) ?>/mês</strong></div>
+                <?php if ($yearlyDiscountCents > 0): ?>
+                  <div><span>Preço em 12 mensalidades</span><strong><?= e(payment_money($yearlyFullPriceCents)) ?></strong></div>
+                  <div><span>Desconto anual aplicado</span><strong>-<?= e(payment_money($yearlyDiscountCents)) ?></strong></div>
+                <?php endif; ?>
+              <?php endif; ?>
               <div><span>Entrega</span><strong>Digital</strong></div>
               <?php if ($isPlanChange): ?>
                 <div><span>Plano atual</span><strong><?= e($currentPlanName !== '' ? $currentPlanName : 'Atual') ?></strong></div>
@@ -227,7 +249,7 @@ $currentPlanName = (string) ($currentSubscription['plan_name'] ?? '');
             </div>
 
             <div class="payment-status-card">
-              <span class="badge badge-success">Asaas sandbox</span>
+              <span class="badge badge-success"><?= e($asaasEnvironmentLabel) ?></span>
               <h3><?= $isPlanActive ? 'Pagamento confirmado' : 'Pagamento pendente' ?></h3>
               <p><?= $isPlanActive ? 'A assinatura foi ativada no JusTraduz.' : ($isCheckoutCreated ? 'A cobrança existe no Asaas. Depois de pagar, use a verificação abaixo caso o webhook ainda não tenha atualizado automaticamente.' : 'A cobrança ainda não foi registrada no Asaas. Confirme os dados para gerar as opções de pagamento.') ?></p>
             </div>

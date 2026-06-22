@@ -53,7 +53,7 @@ class AiController
             $usage = new UsageLimiter(database_connection());
             $quota = $usage->allow($userId, 'ai_chat');
             if (!$quota['allowed']) {
-                $this->json(['erro' => 'Limite diario de mensagens com IA atingido. Tente novamente amanha.'], 429);
+                $this->json(['erro' => $usage->limitMessage('ai_chat', $quota)], 429);
                 return;
             }
         }

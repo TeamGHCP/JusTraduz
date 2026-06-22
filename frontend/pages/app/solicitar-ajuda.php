@@ -26,12 +26,12 @@ if ($selectedDocumentId > 0) {
 
         $prefillDescription = "Documento relacionado: " . (string) $selectedDocument['nome_arquivo'] . "\n";
         if ($summary !== '') {
-            $prefillDescription .= "\nResumo da an?lise:\n" . mb_substr($summary, 0, 900) . "\n";
+            $prefillDescription .= "\nResumo da análise:\n" . mb_substr($summary, 0, 900) . "\n";
         }
         if ($analysis !== '') {
-            $prefillDescription .= "\nPontos da an?lise para o profissional revisar:\n" . mb_substr(strip_tags($analysis), 0, 1200) . "\n";
+            $prefillDescription .= "\nPontos da análise para o profissional revisar:\n" . mb_substr(strip_tags($analysis), 0, 1200) . "\n";
         }
-        $prefillDescription .= "\nMinha duvida principal:\n";
+        $prefillDescription .= "\nMinha dúvida principal:\n";
     }
 }
 ?>
@@ -59,16 +59,16 @@ if ($selectedDocumentId > 0) {
     <?php render_sidebar('cliente', 'solicitar-ajuda.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Solicitar ajuda jur?dica', 'Transforme a an?lise do documento em atendimento humano.', current_user_name()); ?>
+      <?php render_topbar('Solicitar ajuda jurídica', 'Transforme a análise do documento em atendimento humano.', current_user_name()); ?>
 
       <?php if ($selectedDocument): ?>
         <section class="selected-document-context">
           <div>
             <span class="badge badge-info">Documento relacionado</span>
             <h2><?= e($selectedDocument['nome_arquivo']) ?></h2>
-            <p>Enviado em <?= e(date('d/m/Y H:i', strtotime((string) $selectedDocument['created_at']))) ?><?= $selectedDocument['confianca'] !== null ? ' | Confianca IA: ' . e(number_format((float) $selectedDocument['confianca'], 1, ',', '.')) . '%' : '' ?></p>
+            <p>Enviado em <?= e(date('d/m/Y H:i', strtotime((string) $selectedDocument['created_at']))) ?><?= $selectedDocument['confianca'] !== null ? ' | Confiança IA: ' . e(number_format((float) $selectedDocument['confianca'], 1, ',', '.')) . '%' : '' ?></p>
           </div>
-          <a class="btn btn-outline btn-sm" href="visualizar-documento.php?id=<?= (int) $selectedDocument['id'] ?>"><?= icon_svg('file') ?> Ver an?lise</a>
+          <a class="btn btn-outline btn-sm" href="visualizar-documento.php?id=<?= (int) $selectedDocument['id'] ?>"><?= icon_svg('file') ?> Ver análise</a>
         </section>
       <?php elseif ($selectedDocumentId > 0): ?>
         <div class="alert alert-error is-visible">Documento não encontrado para a sua conta. A solicitação será criada sem contexto automático.</div>
@@ -105,7 +105,7 @@ if ($selectedDocumentId > 0) {
           </select>
         </div>
         <div class="field">
-          <label for="descricao">Descreva sua duvida</label>
+          <label for="descricao">Descreva sua dúvida</label>
           <textarea class="textarea textarea-tall" id="descricao" name="descricao" required><?= e($prefillDescription) ?></textarea>
         </div>
         <div class="alert alert-info is-visible">A IA organiza o contexto, mas a decisão e a orientação jurídica devem vir de um profissional.</div>

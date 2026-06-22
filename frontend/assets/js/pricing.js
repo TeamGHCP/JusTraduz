@@ -1,6 +1,9 @@
 (function () {
   function money(cents) {
-    return "R$ " + Math.round(cents / 100).toLocaleString("pt-BR");
+    return "R$ " + (cents / 100).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   }
 
   function yearlySaving(note) {

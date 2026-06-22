@@ -43,7 +43,12 @@ class ProcessController extends BaseController
             $usage = new UsageLimiter($this->pdo);
             $quota = $usage->allow($userId, 'datajud_cnj');
             if (!$quota['allowed']) {
-                $this->response->redirect(app_url('/frontend/processos.php?erro=' . urlencode('Limite diario de consultas DataJud atingido. Tente novamente amanha.')));
+                $this->audit->log('usage.limit_blocked', 'external_process', null, [
+                    'feature' => 'datajud_cnj',
+                    'limit' => (int) ($quota['limit'] ?? 0),
+                    'used' => (int) ($quota['used'] ?? 0),
+                ]);
+                $this->response->redirect(app_url('/frontend/processos.php?erro=' . urlencode($usage->limitMessage('datajud_cnj', $quota))));
             }
 
             $result = $service->syncProcessByCnj($userId, $cpf, $processNumber, $lgpdConsent);

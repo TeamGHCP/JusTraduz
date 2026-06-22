@@ -7748,6 +7748,7 @@ body.has-modal-open {
 .pricing-page {
   display: grid;
   gap: 20px;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
 }
 
 .pricing-hero {
@@ -7869,9 +7870,9 @@ body.has-modal-open {
   --pricing-card-rotate-x: 0deg;
   --pricing-card-rotate-y: 0deg;
   position: relative;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
-  align-content: start;
   min-height: 100%;
   padding: 22px;
   border: 1px solid var(--line);
@@ -7970,6 +7971,13 @@ body.has-modal-open {
   color: var(--muted);
 }
 
+.pricing-included-prefix {
+  margin: -4px 0 0;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 850;
+}
+
 .pricing-price-row {
   display: grid;
   gap: 6px;
@@ -8039,6 +8047,32 @@ body.has-modal-open {
   transition: transform .18s ease;
 }
 
+.pricing-benefit {
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  min-height: 82px;
+  margin-top: auto;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, var(--teal-2));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-2) 86%, var(--mint));
+}
+
+.pricing-benefit span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.pricing-benefit strong {
+  color: var(--navy);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 .pricing-card:hover .pricing-features .svg-icon,
 .pricing-card:focus-visible .pricing-features .svg-icon,
 .pricing-card.is-card-active .pricing-features .svg-icon {
@@ -8047,6 +8081,7 @@ body.has-modal-open {
 
 .pricing-card form {
   align-self: end;
+  width: 100%;
   margin: 0;
 }
 

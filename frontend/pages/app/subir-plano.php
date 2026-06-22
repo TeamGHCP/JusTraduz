@@ -16,7 +16,7 @@ $successMessage = trim((string) ($_GET['sucesso'] ?? ''));
 
 function pricing_money(int $cents): string
 {
-    return 'R$ ' . number_format($cents / 100, 0, ',', '.');
+    return 'R$ ' . number_format($cents / 100, 2, ',', '.');
 }
 
 function pricing_features(array $plan): array
@@ -39,6 +39,25 @@ function pricing_features(array $plan): array
     ];
 }
 
+function pricing_included_prefix(array $plan): string
+{
+    return match ((string) ($plan['slug'] ?? '')) {
+        'pro' => 'Tudo do Essencial +',
+        'escritorio' => 'Tudo do Pro +',
+        default => '',
+    };
+}
+
+function pricing_benefit(array $plan): string
+{
+    return match ((string) ($plan['slug'] ?? '')) {
+        'essencial' => 'Entenda documentos jurídicos sem complicação.',
+        'pro' => 'Automatize tarefas jurídicas e economize horas de trabalho.',
+        'escritorio' => 'Centralize documentos e aumente a produtividade da equipe.',
+        default => '',
+    };
+}
+
 $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] ?? '') === 'yearly') ? 'yearly' : 'monthly';
 ?>
 <!DOCTYPE html>
@@ -48,7 +67,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Subir de plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=plan-alert-dark-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=pricing-accent-fix-2">
 </head>
 <body>
   <div class="app-shell">
@@ -134,11 +153,24 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
 
               <p class="pricing-description"><?= e($plan['description']) ?></p>
 
+              <?php $includedPrefix = pricing_included_prefix($plan); ?>
+              <?php if ($includedPrefix !== ''): ?>
+                <p class="pricing-included-prefix"><?= e($includedPrefix) ?></p>
+              <?php endif; ?>
+
               <ul class="pricing-features">
                 <?php foreach (pricing_features($plan) as $feature): ?>
                   <li><?= icon_svg('check') ?> <?= e($feature) ?></li>
                 <?php endforeach; ?>
               </ul>
+
+              <?php $benefit = pricing_benefit($plan); ?>
+              <?php if ($benefit !== ''): ?>
+                <div class="pricing-benefit">
+                  <span>Benefício principal</span>
+                  <strong><?= e($benefit) ?></strong>
+                </div>
+              <?php endif; ?>
 
               <form class="auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/billing/subscribe')) ?>" method="post">
                 <?= csrf_input() ?>

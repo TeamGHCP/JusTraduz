@@ -301,6 +301,11 @@ html[data-a11y-readable="true"] body {
 html[data-a11y-readable="true"] p,
 html[data-a11y-readable="true"] li { max-width: 75ch; }
 
+.pricing-page,
+.pricing-page * {
+  font-family: "Segoe UI", Roboto, Arial, sans-serif !important;
+}
+
 html[data-a11y-contrast="true"] {
   --bg: #000;
   --surface: #000;

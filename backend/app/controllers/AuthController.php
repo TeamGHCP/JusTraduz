@@ -688,7 +688,7 @@ class AuthController extends BaseController
         }
 
         if ((int) ($file['size'] ?? 0) > 2 * 1024 * 1024) {
-            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A foto deve ter no m?ximo 2 MB.'));
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A foto deve ter no máximo 2 MB.'));
         }
 
         $tmpPath = (string) ($file['tmp_name'] ?? '');
