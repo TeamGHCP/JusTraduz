@@ -126,8 +126,9 @@ button {
 }
 
 :focus-visible {
-  outline: 3px solid rgba(17, 138, 126, .24);
+  outline: 3px solid rgba(17, 138, 126, .82);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(17, 138, 126, .16);
 }
 
 ::selection {

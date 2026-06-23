@@ -8,9 +8,11 @@ A documentacao ativa fica em `docs/`:
 
 - `docs/README.md`
 - `docs/O_QUE_FALTA_AGORA.md`
+- `docs/API_V1.md`
 - `docs/REGISTRO_REVISAO_JURIDICA.md`
 - `docs/apache-justraduz-production.conf`
 - `docs/CONFIGURAR_CLAMAV.md`
+- `docs/MATRIZ_WCAG_AA.md`
 - `docs/CHECKLIST_RELEASE.md`
 - `docs/CHECKLIST_APRESENTACAO_SA.md`
 - `docs/OPERACAO_BACKUP_RESTORE.md`

@@ -52,6 +52,13 @@ foreach (['curl', 'gd', 'zip'] as $extension) {
     assertStringContains($extension, $ci, 'CI deve habilitar a extensao PHP ' . $extension . '.');
 }
 
+$routes = (string) file_get_contents(dirname(__DIR__) . '/routes/api.php');
+assertStringContains("'/api/v1' . \$path", $routes, 'Rotas devem registrar alias versionado /api/v1.');
+assertStringContains("'/admin/reports/summary'", $routes, 'Rotas devem expor resumo gerencial.');
+
+$wcagMatrix = (string) file_get_contents(dirname(__DIR__, 2) . '/docs/MATRIZ_WCAG_AA.md');
+assertStringContains('2.4.7 Foco visivel', $wcagMatrix, 'Matriz WCAG deve registrar foco visivel.');
+
 $tmpFile = tempnam(sys_get_temp_dir(), 'scan_');
 file_put_contents($tmpFile, '<?php echo "malicioso";');
 $scanner = new UploadScannerService();

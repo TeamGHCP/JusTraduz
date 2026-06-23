@@ -54,6 +54,21 @@ function require_role(array $roles): void
     }
 }
 
+function current_user_can(string $permission): bool
+{
+    return PermissionService::sessionHas($permission);
+}
+
+function require_permission(string $permission): void
+{
+    require_login();
+
+    if (!current_user_can($permission)) {
+        header('Location: ' . dashboard_url($_SESSION['tipo'] ?? 'cliente'));
+        exit;
+    }
+}
+
 function current_user_id(): int
 {
     return (int) ($_SESSION['id'] ?? 0);

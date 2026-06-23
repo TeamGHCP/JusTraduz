@@ -42,12 +42,14 @@ php scripts\check-production-readiness.php --env=backend/.env
 
 - Planos e cobranca.
 - Multiempresa/escritorios.
-- RBAC granular por recurso.
-- Relatorios gerenciais.
-- SLA, prioridade operacional e escalonamento.
-- API versionada `/api/v1`.
-- Acessibilidade WCAG AA validada por matriz formal.
-- Consulta processual por CPF com API juridica paga, contrato, consentimento reforcado e auditoria.
+
+## Produto implementado em base inicial
+
+- RBAC granular por recurso via `PermissionService`, ainda sem tela de edicao dinamica de permissoes.
+- Relatorios gerenciais basicos para admin em `frontend/admin/relatorios.php` e endpoint `/api/v1/admin/reports/summary`.
+- SLA calculado por prioridade via `SlaService`; migration revisavel em `database/migrations/2026_06_23_cases_sla.sql` para persistencia futura.
+- API versionada `/api/v1` como alias das rotas atuais, preservando compatibilidade retroativa.
+- Matriz WCAG AA inicial em `docs/MATRIZ_WCAG_AA.md`, ainda pendente de validacao manual com evidencias.
 
 ## Polimento ainda nao implementado
 

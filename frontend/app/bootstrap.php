@@ -10,6 +10,7 @@ secure_session_start();
 
 require_once PROJECT_ROOT_PATH . '/backend/app/config/app.php';
 require_once PROJECT_ROOT_PATH . '/backend/app/config/database.php';
+require_once PROJECT_ROOT_PATH . '/backend/app/services/PermissionService.php';
 
 require_once FRONTEND_APP_PATH . '/support/http.php';
 require_once FRONTEND_APP_PATH . '/support/database.php';
