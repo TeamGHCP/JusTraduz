@@ -10,6 +10,8 @@ Use este checklist no dia da apresentacao local.
 - [ ] Porta planejada funcionando (`http://localhost/JusTraduz/frontend/index.html` ou servidor PHP local).
 - [ ] `backend/.env` existe.
 - [ ] Banco importado com `database/justraduz_completo_com_demo.sql`.
+- [ ] `php scripts\check-local-readiness.php` passando.
+- [ ] `php scripts\check-orphan-storage.php` sem orfaos inesperados.
 - [ ] Navegador com cache limpo ou janela anonima preparada.
 
 ## Contas demo
@@ -33,6 +35,7 @@ Use este checklist no dia da apresentacao local.
 - [ ] Validacao OAB.
 - [ ] Exportacao LGPD.
 - [ ] PWA offline, se for demonstrado.
+- [ ] Roteiro completo conferido em `docs/ROTEIRO_QA_MANUAL.md`.
 
 ## Plano B
 

@@ -13,6 +13,8 @@ A documentacao ativa fica em `docs/`:
 - `docs/CHECKLIST_RELEASE.md`
 - `docs/CHECKLIST_APRESENTACAO_SA.md`
 - `docs/OPERACAO_BACKUP_RESTORE.md`
+- `docs/ROTEIRO_QA_MANUAL.md`
+- `docs/STATUS_MODULOS_2026-06-22.md`
 
 Os documentos antigos e os guias de entregas ja implementadas foram removidos para evitar varias versoes da verdade. A documentacao ativa mostra apenas o que ainda falta para o sistema ficar pronto para uso real/comercial.
 
@@ -30,13 +32,14 @@ Copy-Item backend\.env.example backend\.env
 
 ```env
 APP_ENV=local
-APP_URL=http://localhost:9999
+APP_URL=http://localhost/JusTraduz
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_NAME=justraduz
 DB_USER=root
 DB_PASS=
 MAIL_LOG_ONLY=true
+HEALTHCHECK_URL=http://localhost/JusTraduz/backend/public/index.php?rota=/health
 ```
 
 4. Importe o banco sem demo:
@@ -108,6 +111,18 @@ Checagem de referencias:
 C:\xampp\php\php.exe scripts\check-references.php
 ```
 
+Prontidao local:
+
+```powershell
+C:\xampp\php\php.exe scripts\check-local-readiness.php
+```
+
+Storage orfao:
+
+```powershell
+C:\xampp\php\php.exe scripts\check-orphan-storage.php
+```
+
 Prontidao P0 de producao:
 
 ```powershell
@@ -145,7 +160,7 @@ Pendencias que ainda dependem de ambiente real ou validacao manual:
 1. Configurar `backend/.env` de producao com `APP_DEBUG=false`, URLs HTTPS reais, SMTP, Google OAuth, Gemini/DataJud, backup e ClamAV.
 2. Validar `/backend/public/index.php?rota=/health` com MySQL ativo e, se exposto, com `HEALTHCHECK_TOKEN`.
 3. Executar restore real de backup em ambiente limpo.
-4. Fazer QA manual dos fluxos principais: cadastro, login, reset de senha, upload, analise IA, solicitacao, chat, agenda, LGPD e admin.
+4. Fazer QA manual dos fluxos principais com `docs/ROTEIRO_QA_MANUAL.md`.
 5. Testar SMTP real, entregabilidade e logs de erro.
 6. Validar integracoes externas em sucesso, falha, timeout e limite de uso.
 7. Fazer matriz visual mobile/tablet/desktop e instalacao PWA em navegador real.

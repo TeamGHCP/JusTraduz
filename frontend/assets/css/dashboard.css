@@ -2409,3 +2409,376 @@ body.attachment-modal-open {
   font-size: 13px;
   font-weight: 500;
 }
+
+/* Professional app visual system */
+.app-main {
+  padding-top: 32px;
+}
+
+.topbar {
+  margin-bottom: 28px;
+}
+
+.topbar h1 {
+  max-width: 860px;
+  letter-spacing: 0;
+}
+
+.topbar p,
+.dash-section-title p,
+.command-card p,
+.professional-case-card > p,
+.lawyer-directory-card > p,
+.case-card-rich > p {
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+}
+
+.client-command,
+.lawyer-command {
+  grid-template-columns: minmax(0, 1.55fr) minmax(230px, .74fr) minmax(230px, .74fr);
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.command-card,
+.stat-card,
+.case-card,
+.case-card-rich,
+.professional-case-card,
+.lawyer-directory-card,
+.permission-card,
+.professional-list-item,
+.process-detail-card,
+.process-detail-summary,
+.process-detail-latest,
+.agenda-slot-card {
+  border-color: color-mix(in srgb, var(--line) 84%, var(--navy));
+  box-shadow: 0 12px 30px rgba(23, 32, 51, .07);
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
+}
+
+.command-card:hover,
+.stat-card:hover,
+.case-card:hover,
+.case-card-rich:hover,
+.professional-case-card:hover,
+.lawyer-directory-card:hover,
+.permission-card:hover,
+.professional-list-item:hover,
+.agenda-slot-card:hover {
+  border-color: color-mix(in srgb, var(--line-strong) 72%, var(--teal));
+  box-shadow: 0 18px 38px rgba(23, 32, 51, .10);
+}
+
+.command-card {
+  display: flex;
+  min-height: 204px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 22px;
+}
+
+.command-card-primary {
+  position: relative;
+  min-height: 244px;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--teal) 34%, var(--line));
+  background:
+    linear-gradient(135deg, rgba(17, 138, 126, .14), transparent 46%),
+    linear-gradient(180deg, #ffffff 0%, color-mix(in srgb, var(--mint) 62%, #ffffff) 100%);
+  color: var(--navy);
+  box-shadow: 0 22px 48px rgba(23, 32, 51, .11);
+}
+
+.command-card-primary::after {
+  content: "";
+  position: absolute;
+  right: -72px;
+  bottom: -92px;
+  width: 220px;
+  height: 220px;
+  border: 1px solid rgba(17, 138, 126, .16);
+  border-radius: 50%;
+  background: rgba(17, 138, 126, .08);
+  pointer-events: none;
+}
+
+.command-card-primary h2,
+.command-card-primary p {
+  position: relative;
+  z-index: 1;
+  color: var(--navy);
+}
+
+.command-card-primary p {
+  max-width: 680px;
+  color: color-mix(in srgb, var(--muted) 82%, var(--text));
+  font-size: 16px;
+}
+
+.command-card-primary .badge {
+  position: relative;
+  z-index: 1;
+  border-color: rgba(17, 138, 126, .24);
+  background: rgba(17, 138, 126, .10);
+  color: var(--teal-2);
+}
+
+.command-card-primary .form-actions {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+}
+
+.command-card-primary .btn-primary {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+.command-card-primary .btn-outline {
+  border-color: color-mix(in srgb, var(--teal) 24%, var(--line-strong));
+  background: rgba(255, 255, 255, .72);
+  color: var(--navy);
+}
+
+.command-card-primary .field label {
+  color: var(--navy);
+}
+
+.command-card-primary .lgpd-consent {
+  border-color: color-mix(in srgb, var(--teal) 18%, var(--line));
+  background: rgba(255, 255, 255, .78);
+  color: color-mix(in srgb, var(--muted) 86%, var(--text));
+}
+
+.command-card-secondary {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, var(--surface-2)), var(--surface));
+}
+
+.command-card-secondary > span:not(.badge) {
+  margin-bottom: 10px;
+}
+
+.command-card-secondary .badge {
+  margin-bottom: 12px;
+}
+
+.command-card strong {
+  overflow-wrap: anywhere;
+}
+
+.command-card > .btn {
+  margin-top: auto;
+}
+
+.dashboard-metrics {
+  margin-top: 26px;
+}
+
+.stat-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  align-items: center;
+  min-height: 124px;
+  padding: 18px;
+}
+
+.stat-card .svg-icon {
+  grid-row: 1 / span 2;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--mint) 82%, var(--surface));
+  color: var(--teal);
+}
+
+.stat-card span {
+  align-self: end;
+  letter-spacing: .04em;
+}
+
+.stat-card strong {
+  align-self: start;
+  margin-top: 5px;
+  font-size: clamp(28px, 3vw, 36px);
+}
+
+.dash-section {
+  margin-top: 28px;
+}
+
+.dash-section-title {
+  align-items: flex-end;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+}
+
+.dash-section-title h2 {
+  font-size: 20px;
+  letter-spacing: 0;
+}
+
+.dash-section-title p {
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+.quick-actions-grid {
+  gap: 16px;
+}
+
+.quick-action-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  min-height: 190px;
+  gap: 10px;
+}
+
+.quick-action-card > .svg-icon,
+.card > .svg-icon {
+  width: 42px;
+  height: 42px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--teal) 16%, transparent);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--mint) 82%, var(--surface));
+  color: var(--teal);
+}
+
+.quick-action-card h3 {
+  margin: 2px 0 0;
+}
+
+.quick-action-card p {
+  line-height: 1.5;
+}
+
+.quick-action-card .btn {
+  width: fit-content;
+  margin-top: auto;
+}
+
+.quick-action-card-priority {
+  border-color: color-mix(in srgb, var(--teal) 34%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mint) 42%, var(--surface)), var(--surface));
+}
+
+.quick-action-card-priority::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: var(--radius) 0 0 var(--radius);
+  background: var(--teal);
+}
+
+.empty-state {
+  display: grid;
+  min-height: 126px;
+  place-items: center;
+  border-style: dashed;
+  background: color-mix(in srgb, var(--surface-2) 72%, var(--surface));
+  text-align: center;
+}
+
+.empty-state p {
+  max-width: 520px;
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.admin-filter,
+.agenda-filter,
+.task-filter-grid,
+.case-filter,
+.lawyer-directory-filter,
+.process-filter {
+  border-color: color-mix(in srgb, var(--line) 84%, var(--navy));
+  background: color-mix(in srgb, var(--surface) 88%, var(--surface-2));
+}
+
+.case-card-rich,
+.professional-case-card,
+.lawyer-directory-card {
+  align-content: start;
+}
+
+.case-meta-grid div,
+.chat-context-grid div {
+  background: color-mix(in srgb, var(--surface-2) 84%, var(--surface));
+}
+
+.case-card-head h3,
+.lawyer-directory-head h3,
+.professional-list-item strong {
+  letter-spacing: 0;
+}
+
+.table-wrap {
+  box-shadow: 0 12px 30px rgba(23, 32, 51, .07);
+}
+
+.chat-layout {
+  box-shadow: 0 18px 42px rgba(23, 32, 51, .09);
+}
+
+:root[data-theme="dark"] .command-card-primary {
+  border-color: color-mix(in srgb, var(--teal) 36%, var(--navy));
+  background:
+    linear-gradient(135deg, rgba(45, 212, 191, .14), transparent 42%),
+    linear-gradient(135deg, #111827 0%, #182233 58%, #115e59 145%);
+  color: #fff;
+  box-shadow: 0 24px 54px rgba(0, 0, 0, .28);
+}
+
+:root[data-theme="dark"] .command-card-primary::after {
+  border-color: rgba(255, 255, 255, .12);
+  background: rgba(255, 255, 255, .05);
+}
+
+:root[data-theme="dark"] .command-card-primary h2,
+:root[data-theme="dark"] .command-card-primary p {
+  color: #fff;
+}
+
+:root[data-theme="dark"] .command-card-primary p {
+  color: rgba(255, 255, 255, .78);
+}
+
+:root[data-theme="dark"] .command-card-primary .badge {
+  border-color: rgba(255, 255, 255, .24);
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+}
+
+:root[data-theme="dark"] .command-card-primary .btn-primary {
+  background: #26c6b8;
+  border-color: #26c6b8;
+  color: #06231f;
+}
+
+:root[data-theme="dark"] .command-card-primary .btn-outline {
+  border-color: rgba(255, 255, 255, .30);
+  background: rgba(255, 255, 255, .08);
+  color: #fff;
+}
+
+:root[data-theme="dark"] .command-card-primary .field label {
+  color: rgba(255, 255, 255, .78);
+}
+
+:root[data-theme="dark"] .command-card-primary .lgpd-consent {
+  border-color: rgba(255, 255, 255, .16);
+  background: rgba(255, 255, 255, .08);
+  color: rgba(255, 255, 255, .78);
+}

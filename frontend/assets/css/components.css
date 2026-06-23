@@ -353,6 +353,72 @@
   font-family: Consolas, "SFMono-Regular", Menlo, monospace;
 }
 
+/* Shared app polish */
+.btn {
+  box-shadow: none;
+}
+
+.btn-primary {
+  border-color: color-mix(in srgb, var(--teal) 76%, #000);
+  box-shadow: 0 12px 22px rgba(17, 138, 126, .20);
+}
+
+.btn-primary:focus-visible,
+.btn-soft:focus-visible,
+.btn-outline:focus-visible {
+  box-shadow: 0 0 0 4px rgba(17, 138, 126, .16);
+}
+
+.btn-soft {
+  border-color: color-mix(in srgb, var(--teal) 22%, transparent);
+  background: color-mix(in srgb, var(--mint) 84%, var(--surface));
+}
+
+.card,
+.table-wrap {
+  border-color: color-mix(in srgb, var(--line) 86%, var(--navy));
+  box-shadow: 0 10px 26px rgba(23, 32, 51, .06);
+}
+
+.card {
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease, background .16s ease;
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--line-strong) 78%, var(--teal));
+  box-shadow: 0 16px 34px rgba(23, 32, 51, .09);
+}
+
+.badge {
+  border: 1px solid transparent;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badge-success {
+  border-color: rgba(20, 123, 93, .18);
+}
+
+.badge-warning {
+  border-color: rgba(168, 103, 22, .20);
+}
+
+.badge-danger {
+  border-color: rgba(194, 65, 58, .18);
+}
+
+.badge-info {
+  border-color: rgba(47, 95, 152, .18);
+}
+
+.table th {
+  background: color-mix(in srgb, var(--surface-2) 82%, var(--surface-3));
+}
+
+.table tbody tr {
+  transition: background .16s ease;
+}
+
 .table-user {
   display: flex;
   align-items: center;

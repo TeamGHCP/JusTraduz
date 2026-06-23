@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
@@ -38,7 +38,7 @@ class DocumentController extends BaseController
     {
         $this->startSession();
 
-        // Validação CSRF adicional (defensiva)
+        // ValidaÃ§Ã£o CSRF adicional (defensiva)
         CsrfMiddleware::validate();
 
         $uploadRedirect = (string) $this->request->post('redirect_to', '') === 'documents'
@@ -46,11 +46,11 @@ class DocumentController extends BaseController
             : '/frontend/dashboard-cliente.php';
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] !== 'cliente') {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login como cliente para enviar documentos.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('FaÃ§a login como cliente para enviar documentos.')));
         }
 
         if (empty($_FILES['documento']) || $_FILES['documento']['error'] !== UPLOAD_ERR_OK) {
-            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Arquivo inválido ou não enviado.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Arquivo invÃ¡lido ou nÃ£o enviado.')));
         }
 
         $file = $_FILES['documento'];
@@ -71,27 +71,23 @@ class DocumentController extends BaseController
 
         $maxSize = 50 * 1024 * 1024;
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $allowedExtensions = ['pdf', 'docx', 'png', 'jpg', 'jpeg', 'webp'];
-        $allowedMimes = [
-            'application/pdf',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/zip',
-            'image/png',
-            'image/jpeg',
-            'image/webp',
-        ];
-
+        $allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'webp', 'docx'];
         if ($file['size'] <= 0 || $file['size'] > $maxSize) {
-            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('O arquivo deve ter no máximo 50 MB.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('O arquivo deve ter no mÃ¡ximo 50 MB.')));
         }
 
         $mime = mime_content_type($file['tmp_name']) ?: '';
-        if (!in_array($extension, $allowedExtensions, true) || !in_array($mime, $allowedMimes, true)) {
-            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Formato não permitido.')));
+        if (!in_array($extension, $allowedExtensions, true) || !$this->isAllowedUploadMime($extension, $mime)) {
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Formato nÃ£o permitido.')));
         }
 
-        if ($extension === 'docx' && class_exists(ZipArchive::class) && !$this->hasValidDocxStructure((string) $file['tmp_name'])) {
-            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Arquivo DOCX inválido ou corrompido.')));
+        if ($extension === 'docx' && !$this->hasValidDocxStructure((string) $file['tmp_name'])) {
+            $this->audit->log('document.upload_blocked', 'document', null, [
+                'nome_arquivo' => $file['name'],
+                'mime' => $mime,
+                'reason' => 'DOCX sem estrutura interna obrigatoria.',
+            ]);
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Arquivo DOCX invalido ou corrompido.')));
         }
 
         $scanner = new UploadScannerService();
@@ -101,7 +97,7 @@ class DocumentController extends BaseController
                 'mime' => $mime,
                 'reason' => $scanner->lastError(),
             ]);
-            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode($scanner->lastError() ?: 'Arquivo reprovado pelo scanner de segurança.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode($scanner->lastError() ?: 'Arquivo reprovado pelo scanner de seguranÃ§a.')));
         }
 
         $storageDir = $this->storage->documentDirectory($userId);
@@ -114,7 +110,7 @@ class DocumentController extends BaseController
         $destination = $storageDir . '/' . $safeName;
 
         if (!move_uploaded_file($file['tmp_name'], $destination)) {
-            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Não foi possível salvar o arquivo.')));
+            $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('NÃ£o foi possÃ­vel salvar o arquivo.')));
         }
 
         $relativePath = $this->storage->documentReference($userId, $safeName);
@@ -123,12 +119,12 @@ class DocumentController extends BaseController
         if ($extension === 'pdf') {
             $textoExtraido = PdfTextExtractor::extract($destination);
             if ($textoExtraido === '') {
-                $textoExtraido = 'Não foi possível extrair texto selecionável deste PDF. O arquivo pode estar escaneado como imagem e precisar de OCR.';
+                $textoExtraido = 'NÃ£o foi possÃ­vel extrair texto selecionÃ¡vel deste PDF. O arquivo pode estar escaneado como imagem e precisar de OCR.';
             }
         } elseif ($extension === 'docx') {
             $textoExtraido = $this->extractDocxText($destination);
             if ($textoExtraido === '') {
-                $textoExtraido = 'Não foi possível extrair texto deste DOCX. O arquivo pode estar vazio, protegido ou corrompido.';
+                $textoExtraido = 'NÃ£o foi possÃ­vel extrair texto deste DOCX. O arquivo pode estar vazio, protegido ou corrompido.';
             }
         } elseif (str_starts_with($mime, 'image/')) {
             $textoExtraido = $this->extractWithOcrOrFallback($destination, $mime, $userId);
@@ -169,10 +165,10 @@ class DocumentController extends BaseController
 
         $message = $analysis
             ? 'Documento enviado e analisado com IA.'
-            : 'Documento enviado com sucesso. A análise por IA pode ser gerada ao abrir o documento.';
+            : 'Documento enviado com sucesso. A anÃ¡lise por IA pode ser gerada ao abrir o documento.';
 
         if ($queued) {
-            $message = 'Documento enviado. A análise por IA entrou na fila de processamento.';
+            $message = 'Documento enviado. A anÃ¡lise por IA entrou na fila de processamento.';
         }
 
         $this->notifications->notify($userId, $message . ' Arquivo: ' . $file['name']);
@@ -193,25 +189,25 @@ class DocumentController extends BaseController
     {
         $this->startSession();
 
-        // Validação CSRF adicional (defensiva)
+        // ValidaÃ§Ã£o CSRF adicional (defensiva)
         CsrfMiddleware::validate();
 
         if (empty($_SESSION['logado'])) {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para analisar documentos.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('FaÃ§a login para analisar documentos.')));
         }
 
         $documentId = (int) ($_POST['document_id'] ?? 0);
         if ($documentId <= 0) {
-            $this->response->redirect(app_url('/frontend/visualizar-documento.php?erro=' . urlencode('Documento inválido.')));
+            $this->response->redirect(app_url('/frontend/visualizar-documento.php?erro=' . urlencode('Documento invÃ¡lido.')));
         }
 
         if ((string) $this->request->post('autorizar_ia', '') !== '1') {
-            $this->response->redirect(app_url('/frontend/visualizar-documento.php?id=' . $documentId . '&erro=' . urlencode('Autorize a análise por IA antes de enviar o documento para processamento.')));
+            $this->response->redirect(app_url('/frontend/visualizar-documento.php?id=' . $documentId . '&erro=' . urlencode('Autorize a anÃ¡lise por IA antes de enviar o documento para processamento.')));
         }
 
         $document = $this->findDocumentForCurrentUser($documentId);
         if (!$document) {
-            $this->response->redirect(app_url('/frontend/visualizar-documento.php?erro=' . urlencode('Documento não encontrado ou indisponível para seu perfil.')));
+            $this->response->redirect(app_url('/frontend/visualizar-documento.php?erro=' . urlencode('Documento nÃ£o encontrado ou indisponÃ­vel para seu perfil.')));
         }
 
         $absolutePath = $this->documentPath($document);
@@ -226,23 +222,23 @@ class DocumentController extends BaseController
 
         if ($this->asyncJobsEnabled()) {
             $this->enqueueDocumentAnalysis($documentId, (int) $document['user_id']);
-            $this->response->redirect($redirect . '&sucesso=' . urlencode('Análise por IA enfileirada. Atualize a página após o processamento.'));
+            $this->response->redirect($redirect . '&sucesso=' . urlencode('AnÃ¡lise por IA enfileirada. Atualize a pÃ¡gina apÃ³s o processamento.'));
         }
 
         if ($absolutePath === null) {
-            $this->response->redirect($redirect . '&erro=' . urlencode('Arquivo original não encontrado para análise.'));
+            $this->response->redirect($redirect . '&erro=' . urlencode('Arquivo original nÃ£o encontrado para anÃ¡lise.'));
         }
 
         $analysis = $this->generateAnalysisForUser($documentId, $absolutePath, $mime, $textoExtraido, (int) $document['user_id']);
 
         if (!$analysis) {
-            $this->response->redirect($redirect . '&erro=' . urlencode('Não foi possível gerar a análise por IA agora. Confira a chave/modelo da Gemini ou tente novamente.'));
+            $this->response->redirect($redirect . '&erro=' . urlencode('NÃ£o foi possÃ­vel gerar a anÃ¡lise por IA agora. Confira a chave/modelo da Gemini ou tente novamente.'));
         }
 
         $this->saveAnalysis($documentId, $analysis);
-        $this->notifications->notify((int) $document['user_id'], 'Análise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
+        $this->notifications->notify((int) $document['user_id'], 'AnÃ¡lise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
         $this->audit->log('document.analyze', 'document', $documentId, ['analysis_generated' => true]);
-        $this->response->redirect($redirect . '&sucesso=' . urlencode('Análise por IA gerada.'));
+        $this->response->redirect($redirect . '&sucesso=' . urlencode('AnÃ¡lise por IA gerada.'));
     }
 
     public function download(): void
@@ -251,28 +247,28 @@ class DocumentController extends BaseController
 
         if (empty($_SESSION['logado'])) {
             http_response_code(401);
-            echo 'Faça login para acessar este documento.';
+            echo 'FaÃ§a login para acessar este documento.';
             return;
         }
 
         $documentId = (int) $this->request->get('id', 0);
         if ($documentId <= 0) {
             http_response_code(400);
-            echo 'Documento inválido.';
+            echo 'Documento invÃ¡lido.';
             return;
         }
 
         $document = $this->findDocumentForCurrentUser($documentId);
         if (!$document) {
             http_response_code(404);
-            echo 'Documento não encontrado ou indisponível para seu perfil.';
+            echo 'Documento nÃ£o encontrado ou indisponÃ­vel para seu perfil.';
             return;
         }
 
         $absolutePath = $this->documentPath($document);
         if ($absolutePath === null || !is_file($absolutePath) || !is_readable($absolutePath)) {
             http_response_code(404);
-            echo 'Arquivo não encontrado.';
+            echo 'Arquivo nÃ£o encontrado.';
             return;
         }
 
@@ -294,17 +290,17 @@ class DocumentController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado'])) {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login para continuar.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('FaÃ§a login para continuar.')));
         }
 
         $documentId = (int) $this->request->post('document_id', 0);
         if ($documentId <= 0) {
-            $this->response->redirect(app_url('/frontend/visualizar-documento.php?erro=' . urlencode('Documento inválido.')));
+            $this->response->redirect(app_url('/frontend/visualizar-documento.php?erro=' . urlencode('Documento invÃ¡lido.')));
         }
 
         $document = $this->findDocumentForCurrentUser($documentId);
         if (!$document || !$this->canDeleteDocument($document)) {
-            $this->response->redirect(app_url('/frontend/visualizar-documento.php?erro=' . urlencode('Você não tem permissão para excluir este documento.')));
+            $this->response->redirect(app_url('/frontend/visualizar-documento.php?erro=' . urlencode('VocÃª nÃ£o tem permissÃ£o para excluir este documento.')));
         }
 
         $absolutePath = $this->documentPath($document);
@@ -321,7 +317,7 @@ class DocumentController extends BaseController
             'owner_id' => (int) ($document['user_id'] ?? 0),
         ]);
 
-        $this->response->redirect(app_url('/frontend/visualizar-documento.php?sucesso=' . urlencode('Documento excluído.')));
+        $this->response->redirect(app_url('/frontend/visualizar-documento.php?sucesso=' . urlencode('Documento excluÃ­do.')));
     }
 
     private function generateAnalysis(string $filePath, string $mime, ?string $textoExtraido): ?array
@@ -363,7 +359,7 @@ class DocumentController extends BaseController
         }
 
         $this->saveAnalysis($documentId, $analysis);
-        $this->notifications->notify((int) $document['user_id'], 'Análise por IA concluída para o documento: ' . (string) $document['nome_arquivo']);
+        $this->notifications->notify((int) $document['user_id'], 'AnÃ¡lise por IA concluÃ­da para o documento: ' . (string) $document['nome_arquivo']);
         $this->audit->log('document.analyze_queued_completed', 'document', $documentId);
         return true;
     }
@@ -501,19 +497,21 @@ class DocumentController extends BaseController
         return $filename !== '' ? $filename : 'documento';
     }
 
-    private function extractWithOcrOrFallback(string $path, string $mime, int $userId): string
+    private function isAllowedUploadMime(string $extension, string $mime): bool
     {
-        $ocr = new OcrService();
-        $quota = $this->usage->allow($userId, 'ocr');
-        if ($quota['allowed']) {
-            $text = $ocr->extract($path, $mime);
-            if ($text !== '') {
-                $this->usage->record($userId, 'ocr', 1, null, ['mime' => $mime]);
-                return $text;
-            }
-        }
+        $allowedByExtension = [
+            'pdf' => ['application/pdf'],
+            'png' => ['image/png'],
+            'jpg' => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'webp' => ['image/webp'],
+            'docx' => [
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/zip',
+            ],
+        ];
 
-        return $ocr->fallbackMessage($mime);
+        return in_array($mime, $allowedByExtension[$extension] ?? [], true);
     }
 
     private function hasValidDocxStructure(string $path): bool
@@ -527,11 +525,36 @@ class DocumentController extends BaseController
             return false;
         }
 
-        $hasDocument = $zip->locateName('word/document.xml') !== false;
-        $hasContentTypes = $zip->locateName('[Content_Types].xml') !== false;
-        $zip->close();
+        $requiredEntries = [
+            '[Content_Types].xml',
+            '_rels/.rels',
+            'word/document.xml',
+        ];
 
-        return $hasDocument && $hasContentTypes;
+        foreach ($requiredEntries as $entry) {
+            if ($zip->locateName($entry) === false) {
+                $zip->close();
+                return false;
+            }
+        }
+
+        $zip->close();
+        return true;
+    }
+
+    private function extractWithOcrOrFallback(string $path, string $mime, int $userId): string
+    {
+        $ocr = new OcrService();
+        $quota = $this->usage->allow($userId, 'ocr');
+        if ($quota['allowed']) {
+            $text = $ocr->extract($path, $mime);
+            if ($text !== '') {
+                $this->usage->record($userId, 'ocr', 1, null, ['mime' => $mime]);
+                return $text;
+            }
+        }
+
+        return $ocr->fallbackMessage($mime);
     }
 
     private function extractDocxText(string $path): string

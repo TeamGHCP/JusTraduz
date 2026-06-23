@@ -102,25 +102,29 @@ $quickLinks = [
           </div>
         </article>
 
-        <article class="command-card">
+        <article class="command-card command-card-secondary">
           <span>Último documento</span>
           <?php if ($lastDocument): ?>
+            <span class="badge <?= !empty($lastDocument['analysis_id']) ? 'badge-success' : 'badge-warning' ?>"><?= !empty($lastDocument['analysis_id']) ? 'Análise gerada' : 'Pendente de IA' ?></span>
             <strong><?= e($lastDocument['nome_arquivo']) ?></strong>
             <p><?= !empty($lastDocument['analysis_id']) ? 'Análise disponível para consulta.' : 'Análise ainda pendente.' ?></p>
             <a class="btn btn-soft btn-sm" href="visualizar-documento.php?id=<?= (int) $lastDocument['id'] ?>">Abrir</a>
           <?php else: ?>
+            <span class="badge badge-info">Aguardando envio</span>
             <strong>Nenhum envio</strong>
             <p>Comece pelo upload de PDF, DOCX, PNG, JPEG ou WebP.</p>
           <?php endif; ?>
         </article>
 
-        <article class="command-card">
+        <article class="command-card command-card-secondary">
           <span>Atendimento</span>
           <?php if ($lastCase): ?>
+            <span class="badge badge-info"><?= e(status_label($lastCase['status'] ?? '')) ?></span>
             <strong><?= e($lastCase['titulo']) ?></strong>
             <p>Status: <?= e(status_label($lastCase['status'] ?? '')) ?></p>
             <a class="btn btn-soft btn-sm" href="chat.php?case_id=<?= (int) $lastCase['id'] ?>">Abrir chat</a>
           <?php else: ?>
+            <span class="badge badge-warning">Sem caso ativo</span>
             <strong>Sem solicitação</strong>
             <p>Peça ajuda quando quiser orientação profissional.</p>
             <a class="btn btn-soft btn-sm" href="solicitar-ajuda.php">Pedir ajuda</a>
@@ -128,7 +132,7 @@ $quickLinks = [
         </article>
       </section>
 
-      <section class="grid grid-4" data-tour-step="7" data-tour-title="Análises e pendências" data-tour-description="Estes indicadores mostram o que já foi analisado e o que ainda aguarda processamento.">
+      <section class="grid grid-4 dashboard-metrics" data-tour-step="7" data-tour-title="Análises e pendências" data-tour-description="Estes indicadores mostram o que já foi analisado e o que ainda aguarda processamento.">
         <?= stat_card('Documentos', $documentCount, 'file') ?>
         <?= stat_card('Análises feitas', $analysisCount, 'chart') ?>
         <?= stat_card('Pendentes de IA', $pendingAnalysisCount, 'help') ?>
@@ -142,9 +146,10 @@ $quickLinks = [
             <p class="text-muted">Acesse documentos, atendimento, conversas e conta sem procurar no menu.</p>
           </div>
         </div>
-        <div class="grid grid-3">
+        <div class="grid grid-3 quick-actions-grid">
           <?php foreach ($quickLinks as $link): ?>
-            <article class="card">
+            <?php $isPriorityAction = in_array($link['href'], ['visualizar-documento.php#novo-documento', 'solicitar-ajuda.php', 'chat.php'], true); ?>
+            <article class="card quick-action-card<?= $isPriorityAction ? ' quick-action-card-priority' : '' ?>">
               <?= icon_svg($link['icon']) ?>
               <h3><?= e($link['title']) ?></h3>
               <p class="text-muted"><?= e($link['description']) ?></p>
