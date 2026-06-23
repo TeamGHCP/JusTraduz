@@ -211,7 +211,7 @@ class PrivacyController extends BaseController
     {
         $projectRoot = dirname(__DIR__, 3);
         $absolutePath = realpath($projectRoot . '/' . ltrim(str_replace('\\', '/', $relativePath), '/'));
-        $profileRoot = realpath($projectRoot . '/backend/storage/profile_photos');
+        $profileRoot = realpath($this->profilePhotoRoot($projectRoot));
 
         if (!$absolutePath || !$profileRoot) {
             return;
@@ -225,6 +225,23 @@ class PrivacyController extends BaseController
         if ($insideProfileRoot) {
             $this->unlinkIfFile($absolutePath);
         }
+    }
+
+    private function profilePhotoRoot(string $projectRoot): string
+    {
+        $configuredPath = trim((string) getenv('PROFILE_PHOTO_STORAGE_PATH'));
+        if ($configuredPath === '' && function_exists('database_env_values')) {
+            $env = database_env_values($projectRoot . '/backend/.env');
+            $configuredPath = trim((string) ($env['PROFILE_PHOTO_STORAGE_PATH'] ?? ''));
+        }
+
+        $configuredPath = $configuredPath !== '' ? $configuredPath : 'backend/storage/profile_photos';
+        $normalizedPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $configuredPath);
+        if (preg_match('/^[A-Za-z]:[\\\\\\/]/', $normalizedPath) === 1 || str_starts_with($normalizedPath, DIRECTORY_SEPARATOR)) {
+            return $normalizedPath;
+        }
+
+        return $projectRoot . DIRECTORY_SEPARATOR . ltrim($normalizedPath, DIRECTORY_SEPARATOR);
     }
 
     private function unlinkIfFile(?string $absolutePath): void
