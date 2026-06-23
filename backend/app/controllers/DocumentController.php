@@ -208,9 +208,9 @@ class DocumentController extends BaseController
         }
 
         $this->saveAnalysis($documentId, $analysis);
-        $this->notifications->notify((int) $document['user_id'], 'An?lise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
+        $this->notifications->notify((int) $document['user_id'], 'Análise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
         $this->audit->log('document.analyze', 'document', $documentId, ['analysis_generated' => true]);
-        $this->response->redirect($redirect . '&sucesso=' . urlencode('An?lise por IA gerada.'));
+        $this->response->redirect($redirect . '&sucesso=' . urlencode('Análise por IA gerada.'));
     }
 
     public function download(): void

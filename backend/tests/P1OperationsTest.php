@@ -3,10 +3,12 @@
 require_once __DIR__ . '/bootstrap.php';
 require_once dirname(__DIR__) . '/app/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/app/services/MailerService.php';
+require_once dirname(__DIR__) . '/app/services/ProcessRunnerService.php';
 require_once dirname(__DIR__) . '/app/services/StorageService.php';
 require_once dirname(__DIR__) . '/app/services/UploadScannerService.php';
 require_once dirname(__DIR__) . '/app/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/app/services/DataJudService.php';
+require_once dirname(__DIR__) . '/app/controllers/AuthController.php';
 require_once dirname(__DIR__) . '/app/controllers/CaseController.php';
 require_once dirname(__DIR__) . '/app/controllers/DocumentController.php';
 require_once dirname(__DIR__) . '/app/controllers/HealthController.php';
@@ -25,6 +27,30 @@ $health = json_decode($healthOutput, true);
 assertEquals('degraded', $health['status'] ?? '', 'Healthcheck deve responder degradado quando o banco esta indisponivel.');
 assertTrue(($health['checks']['database'] ?? true) === false, 'Healthcheck deve marcar database como falso sem fatal error.');
 putenv('DB_DSN=' . $originalDsn);
+
+$processResult = ProcessRunnerService::run([PHP_BINARY, '-r', 'sleep(2);'], 1);
+assertEquals(124, (int) $processResult['exit_code'], 'ProcessRunner deve retornar codigo 124 em timeout.');
+assertTrue(($processResult['timed_out'] ?? false) === true, 'ProcessRunner deve marcar timed_out quando encerrar processo lento.');
+
+$authController = new AuthController();
+assertTrue(callPrivate($authController, 'passwordValidationError', ['NovaSenha@123']) === null, 'Senha forte deve passar na validacao.');
+assertTrue(callPrivate($authController, 'passwordValidationError', ['fraca']) !== null, 'Senha fraca deve ser rejeitada.');
+$oldHash = (string) $pdo->query('SELECT senha FROM users WHERE id = 1')->fetchColumn();
+assertTrue(password_needs_rehash($oldHash, callPrivate($authController, 'passwordHashAlgorithm'), callPrivate($authController, 'passwordHashOptions')), 'Hash antigo deve indicar necessidade de rehash.');
+callPrivate($authController, 'rehashUserPasswordIfNeeded', [1, 'Senha@123', $oldHash]);
+$rehash = (string) $pdo->query('SELECT senha FROM users WHERE id = 1')->fetchColumn();
+assertTrue($rehash !== $oldHash, 'Rehash deve atualizar o hash salvo no banco.');
+assertTrue(password_verify('Senha@123', $rehash), 'Rehash deve preservar a senha original.');
+
+$envExample = (string) file_get_contents(dirname(__DIR__, 2) . '/backend/.env.example');
+foreach (['CLAMAV_TIMEOUT_SECONDS=15', 'OCR_TIMEOUT_SECONDS=30', 'PDFTOTEXT_BINARY='] as $expectedEnvLine) {
+    assertStringContains($expectedEnvLine, $envExample, '.env.example deve documentar ' . $expectedEnvLine);
+}
+
+$ci = (string) file_get_contents(dirname(__DIR__, 2) . '/.github/workflows/ci.yml');
+foreach (['curl', 'gd', 'zip'] as $extension) {
+    assertStringContains($extension, $ci, 'CI deve habilitar a extensao PHP ' . $extension . '.');
+}
 
 $tmpFile = tempnam(sys_get_temp_dir(), 'scan_');
 file_put_contents($tmpFile, '<?php echo "malicioso";');

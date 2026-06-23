@@ -46,12 +46,12 @@ class AuthController extends BaseController
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->response->redirectWithError($frontUrl, 'Informe um e-mail v?lido.');
+            $this->response->redirectWithError($frontUrl, 'Informe um e-mail válido.');
         }
 
         $telefone = preg_replace('/[^\d()+\-\s]/', '', $telefone) ?? '';
         if ($telefone === '' || strlen(preg_replace('/\D+/', '', $telefone) ?? '') < 10) {
-            $this->response->redirectWithError($frontUrl, 'Informe um telefone v?lido com DDD.');
+            $this->response->redirectWithError($frontUrl, 'Informe um telefone válido com DDD.');
         }
 
         if (!in_array($tipo, ['cliente', 'advogado', 'estagiario'], true)) {
@@ -95,11 +95,11 @@ class AuthController extends BaseController
             $oab_uf = null;
         }
 
-        // Verifica se e-mail j? existe
+        // Verifica se e-mail já existe
         $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
-            $this->response->redirectWithError($frontUrl, 'E-mail j? cadastrado.');
+            $this->response->redirectWithError($frontUrl, 'E-mail já cadastrado.');
         }
 
         if ($cpf && $this->cpfExists($cpf)) {
@@ -559,7 +559,7 @@ class AuthController extends BaseController
         $passwordUpdated = false;
 
         if (!$nome || !$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe nome e e-mail v?lidos.'));
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe nome e e-mail válidos.'));
         }
 
         $currentType = (string) ($_SESSION['tipo'] ?? '');
@@ -857,7 +857,7 @@ class AuthController extends BaseController
         $frontUrl = APP_URL . '/frontend/recuperar-senha.html';
 
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->response->redirectWithError($frontUrl, 'Informe um e-mail v?lido.');
+            $this->response->redirectWithError($frontUrl, 'Informe um e-mail válido.');
         }
 
         if ($action === 'request_code') {
@@ -1202,7 +1202,7 @@ class AuthController extends BaseController
           </tr>
           <tr>
             <td align="center" style="padding:0 40px 28px;color:#3c4043;font-size:14px;line-height:20px;">
-              Ol?, {$safeName}.
+              Olá, {$safeName}.
             </td>
           </tr>
           <tr>

@@ -181,7 +181,7 @@ $profileTourKey = match ($type) {
                 <button class="btn btn-outline" type="submit"><?= icon_svg('download') ?> Baixar meus dados</button>
               </form>
             </div>
-            <form class="auth-form mt-16" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/delete-account')) ?>" method="post" onsubmit="return confirm('Encerrar a conta remove dados pessoais e nao pode ser desfeito. Continuar?');">
+            <form class="auth-form mt-16" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/delete-account')) ?>" method="post" data-confirm="Encerrar a conta remove dados pessoais e não pode ser desfeito. Continuar?">
               <?= csrf_input() ?>
               <div class="field">
                 <label for="privacy_delete_confirm">Digite EXCLUIR para encerrar a conta</label>
@@ -249,6 +249,7 @@ $profileTourKey = match ($type) {
   </div>
   <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
   <script src="assets/js/profile-password.js"></script>
+  <script src="assets/js/confirm-actions.js"></script>
   <?php render_onboarding_assets($profileTourKey, '2026.06.11', $type, false); ?>
   <?php render_vlibras(); ?>
 </body>
