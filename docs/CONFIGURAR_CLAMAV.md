@@ -1,12 +1,8 @@
-# Configurar ClamAV
+# Configuração pendente do ClamAV
 
-O JusTraduz ja usa `UploadScannerService` para bloquear assinaturas perigosas e, quando `CLAMAV_BINARY` esta configurado, tambem executa o ClamAV nos uploads.
+O JusTraduz já suporta ClamAV via `CLAMAV_BINARY`, mas a instalação ainda depende do ambiente real. Para apresentação local, ele é opcional. Para produção com uploads reais de usuários, ele deve ser configurado e testado.
 
-Para apresentacao local, o ClamAV e opcional. Para producao com uploads reais de usuarios, ele e recomendado.
-
-## Linux/VPS
-
-Instale os pacotes:
+## Falta fazer em Linux/VPS
 
 ```bash
 sudo apt update
@@ -14,56 +10,38 @@ sudo apt install clamav clamav-daemon
 sudo systemctl stop clamav-freshclam || true
 sudo freshclam
 sudo systemctl enable --now clamav-freshclam
-```
-
-Confirme o caminho:
-
-```bash
 which clamscan
 clamscan --version
 ```
 
-No `backend/.env` de producao:
+Depois preencher no `backend/.env` real:
 
 ```env
 CLAMAV_BINARY=/usr/bin/clamscan
 CLAMAV_TIMEOUT_SECONDS=15
 ```
 
-## Windows/XAMPP
+## Falta fazer em Windows/XAMPP
 
-Instale o ClamAV para Windows pelo instalador oficial ou gerenciador de pacotes confiavel. Depois confirme o caminho do executavel:
+Instalar o ClamAV para Windows e confirmar o caminho:
 
 ```powershell
 where.exe clamscan
 clamscan --version
 ```
 
-No `backend/.env` local, use o caminho encontrado. Exemplo:
+Exemplo para `backend/.env` local:
 
 ```env
 CLAMAV_BINARY=C:\Program Files\ClamAV\clamscan.exe
 CLAMAV_TIMEOUT_SECONDS=15
 ```
 
-## Validacao
-
-Rode:
+## Validação pendente
 
 ```powershell
 php backend\tests\run.php
 php scripts\check-production-readiness.php --env=backend/.env
 ```
 
-Depois teste um upload valido pelo sistema. Se o ClamAV estiver mal configurado, o upload sera recusado para evitar aceitar arquivo sem varredura.
-
-## Comportamento sem ClamAV
-
-Se `CLAMAV_BINARY` ficar vazio, o sistema continua usando a heuristica interna:
-
-- bloqueio de EICAR;
-- bloqueio de scripts e PHP embutido;
-- bloqueio de extensoes executaveis;
-- validacao adicional de DOCX no fluxo de documentos e anexos.
-
-Esse modo e suficiente para desenvolvimento e apresentacao, mas nao substitui antivirus em producao real.
+Também falta testar upload válido e upload bloqueado depois da instalação.

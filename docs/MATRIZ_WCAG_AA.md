@@ -1,25 +1,26 @@
-# Matriz WCAG AA
+# Matriz WCAG AA pendente
 
-Data da validacao inicial: 23/06/2026
+Data da revisão: 23/06/2026
 
-Escopo revisado: login/cadastro, dashboards, documentos, casos/chat, admin, validacao OAB, relatorios e navegacao principal.
+Esta matriz ainda precisa ser validada manualmente. O sistema já possui recursos de acessibilidade, mas a validação WCAG AA formal só deve ser marcada como concluída depois de evidências reais em navegador.
 
-| Criterio | Tela/componente | Status | Evidencia | Acao recomendada |
+| Critério | Tela/componente | Status | Evidência pendente | Próxima ação |
 | --- | --- | --- | --- | --- |
-| 1.1.1 Texto alternativo | Logo, avatar e imagens principais | Parcial | Logos e avatars possuem `alt` ou `aria-hidden` nos componentes principais. | Revisar imagens editoriais futuras antes de publicar. |
-| 1.3.1 Informacao e relacoes | Formularios principais | Parcial | Campos revisados usam labels em telas criticas; filtros admin usam labels visiveis. | Validar todos os formulários em QA manual com leitor de tela. |
-| 1.4.3 Contraste minimo | Tema padrao e alto contraste | Parcial | Existe modo de alto contraste e foco reforcado em CSS. | Medir contraste com ferramenta dedicada em todas as telas finais. |
-| 2.1.1 Teclado | Menu lateral, botoes e formularios | Parcial | Controles principais sao botoes/links nativos e foco visivel foi reforcado. | Executar roteiro completo somente por teclado. |
-| 2.4.1 Ignorar blocos | Navegacao principal | Parcial | Classe `.skip-link` existe no CSS. | Garantir skip link renderizado em todas as telas base. |
-| 2.4.3 Ordem do foco | Dashboards e admin | Parcial | Estrutura segue ordem DOM natural. | Validar em desktop e mobile apos ajustes visuais. |
-| 2.4.7 Foco visivel | CSS global | OK | `:focus-visible` reforcado em `base.css` e `accessibility.css`. | Manter regra em novos componentes. |
-| 3.3.1 Identificacao de erro | Login, uploads e admin | Parcial | Mensagens de erro usam alerts e query messages. | Associar erros inline com `aria-describedby` em formularios longos. |
-| 3.3.2 Labels ou instrucoes | Formularios de login/cadastro/admin | Parcial | Labels existem nos fluxos principais revisados. | Auditar campos dinamicos e filtros avancados. |
-| 4.1.2 Nome, funcao e valor | Botoes, menus e widgets | Parcial | Sidebar usa `aria-expanded`, `aria-controls` e nomes acessiveis. | Testar widgets de chat, VLibras e acessibilidade com leitor de tela. |
+| 1.1.1 Texto alternativo | Logos, avatars e imagens | Pendente | Capturas e inspeção de `alt`/`aria-hidden`. | Revisar imagens em login, dashboards e páginas públicas. |
+| 1.3.1 Informação e relações | Formulários principais | Pendente | Conferência de labels e relação campo/erro. | Testar cadastro, login, upload, filtros admin e perfil. |
+| 1.4.3 Contraste mínimo | Tema padrão e alto contraste | Pendente | Medição com ferramenta externa. | Medir contraste em desktop e mobile. |
+| 2.1.1 Teclado | Menu, formulários, chat e admin | Pendente | Roteiro executado sem mouse. | Navegar pelos fluxos principais usando Tab/Enter/Esc. |
+| 2.4.1 Ignorar blocos | Páginas com menu lateral | Pendente | Confirmação de skip link funcional. | Validar em todas as telas autenticadas. |
+| 2.4.3 Ordem do foco | Dashboards e formulários | Pendente | Sequência documentada por tela. | Registrar problemas encontrados e corrigir. |
+| 2.4.7 Foco visível | Botões, links e campos | Pendente | Capturas do foco em componentes críticos. | Conferir foco em tema claro, escuro e alto contraste. |
+| 3.3.1 Identificação de erro | Login, uploads e admin | Pendente | Erros associados a campos e regiões de alerta. | Testar entradas inválidas em cada fluxo. |
+| 3.3.2 Labels ou instruções | Campos obrigatórios | Pendente | Lista de campos sem instrução suficiente. | Ajustar labels e textos auxiliares quando necessário. |
+| 4.1.2 Nome, função e valor | Sidebar, modais, widgets e VLibras | Pendente | Teste com leitor de tela. | Validar nomes acessíveis e estados ARIA. |
 
-## Pendencias formais
+## Falta concluir
 
-- Rodar validacao manual com NVDA ou leitor de tela equivalente.
-- Medir contraste por tela com ferramenta externa.
-- Registrar evidencias por captura para login, dashboards, documentos, casos/chat, admin e validacao OAB.
-- Completar matriz depois do QA manual em desktop, tablet e celular.
+- Rodar validação com NVDA ou leitor de tela equivalente.
+- Medir contraste por tela.
+- Registrar evidências por captura.
+- Validar desktop, tablet e celular.
+- Atualizar esta matriz com `OK`, `Parcial` ou `Reprovado` somente depois dos testes.
