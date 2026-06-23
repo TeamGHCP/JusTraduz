@@ -123,6 +123,7 @@ if ($type === 'advogado') {
 }
 
 $canManageTasks = in_array($type, ['advogado', 'admin'], true);
+$hasTaskFilters = $q !== '' || $status !== '' || $caseFilter > 0;
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -147,8 +148,8 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
   <div class="app-shell">
     <?php render_sidebar($type, 'tarefas.php'); ?>
 
-    <main class="app-main">
-      <?php render_topbar('Tarefas', 'Próximos passos com caso, cliente, prioridade e responsável visiveis.', current_user_name()); ?>
+    <main class="app-main tasks-page">
+      <?php render_topbar('Tarefas', 'Acompanhe próximos passos por caso e prioridade.', current_user_name()); ?>
 
       <?php if ($type === 'estagiario'): ?>
         <section class="professional-alert professional-alert-locked">
@@ -160,49 +161,65 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
         </section>
       <?php endif; ?>
 
-      <section class="grid grid-4">
-        <?= stat_card('Resultado', $totalTasks, 'check') ?>
-        <?= stat_card('Pendentes', $pendingCount, 'help') ?>
-        <?= stat_card('Em andamento', $progressCount, 'case') ?>
-        <?= stat_card('Concluidas', $doneCount, 'shield') ?>
+      <section class="task-summary-grid" aria-label="Resumo das tarefas">
+        <article class="task-summary-card">
+          <?= icon_svg('check') ?>
+          <span>Resultado</span>
+          <strong><?= e((string) $totalTasks) ?></strong>
+        </article>
+        <article class="task-summary-card">
+          <?= icon_svg('help') ?>
+          <span>Pendentes</span>
+          <strong><?= e((string) $pendingCount) ?></strong>
+        </article>
+        <article class="task-summary-card">
+          <?= icon_svg('case') ?>
+          <span>Em andamento</span>
+          <strong><?= e((string) $progressCount) ?></strong>
+        </article>
+        <article class="task-summary-card">
+          <?= icon_svg('shield') ?>
+          <span>Concluídas</span>
+          <strong><?= e((string) $doneCount) ?></strong>
+        </article>
       </section>
 
       <?php if ($canManageTasks): ?>
-        <form class="card auth-form task-create-card" action="<?= e(app_url('/backend/public/index.php?rota=/tasks/create')) ?>" method="post">
-          <?= csrf_input() ?>
-          <div class="dash-section-title">
-            <h2>Nova tarefa</h2>
-            <span class="badge badge-success"><?= e((string) count($cases)) ?> casos ativos</span>
-          </div>
-          <?php if (!$cases): ?>
-            <p class="text-muted">Nenhum caso ativo disponível para criar tarefas.</p>
-          <?php else: ?>
-            <div class="form-grid">
-              <div class="field">
-                <label for="case_id">Caso</label>
-                <select class="select" id="case_id" name="case_id" required>
-                  <?php foreach ($cases as $case): ?>
-                    <option value="<?= (int) $case['id'] ?>" <?= $caseFilter === (int) $case['id'] ? 'selected' : '' ?>>
-                      <?= e('#' . $case['id'] . ' - ' . $case['titulo'] . ' (' . $case['cliente'] . ')') ?>
-                    </option>
-                  <?php endforeach; ?>
-                </select>
+        <details class="task-tools task-create-panel">
+          <summary>Nova tarefa <span><?= e((string) count($cases)) ?> casos ativos</span></summary>
+          <form class="card auth-form task-create-card" action="<?= e(app_url('/backend/public/index.php?rota=/tasks/create')) ?>" method="post">
+            <?= csrf_input() ?>
+            <?php if (!$cases): ?>
+              <p class="text-muted">Nenhum caso ativo disponível para criar tarefas.</p>
+            <?php else: ?>
+              <div class="form-grid">
+                <div class="field">
+                  <label for="case_id">Caso</label>
+                  <select class="select" id="case_id" name="case_id" required>
+                    <?php foreach ($cases as $case): ?>
+                      <option value="<?= (int) $case['id'] ?>" <?= $caseFilter === (int) $case['id'] ? 'selected' : '' ?>>
+                        <?= e('#' . $case['id'] . ' - ' . $case['titulo'] . ' (' . $case['cliente'] . ')') ?>
+                      </option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="titulo">Título</label>
+                  <input class="input" id="titulo" name="titulo" required>
+                </div>
               </div>
               <div class="field">
-                <label for="titulo">Titulo</label>
-                <input class="input" id="titulo" name="titulo" required>
+                <label for="descricao">Descrição</label>
+                <textarea class="textarea" id="descricao" name="descricao" placeholder="O que precisa acontecer, por que importa e qual é a próxima evidência esperada."></textarea>
               </div>
-            </div>
-            <div class="field">
-              <label for="descricao">Descricao</label>
-              <textarea class="textarea" id="descricao" name="descricao" placeholder="O que precisa acontecer, por que importa e qual é a próxima evidência esperada."></textarea>
-            </div>
-            <button class="btn btn-primary" type="submit"><?= icon_svg('check') ?> Criar tarefa</button>
-          <?php endif; ?>
-        </form>
+              <button class="btn btn-primary" type="submit"><?= icon_svg('check') ?> Criar tarefa</button>
+            <?php endif; ?>
+          </form>
+        </details>
       <?php endif; ?>
 
-      <section class="dash-section">
+      <details class="task-tools"<?= $hasTaskFilters ? ' open' : '' ?>>
+        <summary>Filtros</summary>
         <form class="card admin-filter task-filter-grid" method="get">
           <div class="field">
             <label for="q">Busca</label>
@@ -214,7 +231,7 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
               <option value="">Todos</option>
               <option value="pendente" <?= $status === 'pendente' ? 'selected' : '' ?>>Pendente</option>
               <option value="em_andamento" <?= $status === 'em_andamento' ? 'selected' : '' ?>>Em andamento</option>
-              <option value="concluida" <?= $status === 'concluida' ? 'selected' : '' ?>>Concluida</option>
+              <option value="concluida" <?= $status === 'concluida' ? 'selected' : '' ?>>Concluída</option>
             </select>
           </div>
           <div class="field">
@@ -233,10 +250,10 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
             <a class="btn btn-outline" href="tarefas.php">Limpar</a>
           </div>
         </form>
-      </section>
+      </details>
 
-      <section class="dash-section">
-        <div class="dash-section-title">
+      <section class="dash-section task-list-section">
+        <div class="dash-section-title task-list-title">
           <h2>Lista de tarefas</h2>
           <span class="badge badge-info"><?= e((string) $totalTasks) ?> registros</span>
         </div>
@@ -244,39 +261,43 @@ $canManageTasks = in_array($type, ['advogado', 'admin'], true);
         <?php if (!$tasks): ?>
           <?= empty_state($type === 'estagiario' ? 'Sem tarefas acessíveis para este perfil.' : 'Nenhuma tarefa encontrada para os filtros atuais.') ?>
         <?php else: ?>
-          <div class="professional-card-grid task-card-grid">
+          <div class="task-list">
             <?php foreach ($tasks as $task): ?>
-              <article class="professional-case-card task-card">
-                <div class="case-card-head">
-                  <div>
-                    <span class="badge <?= e(task_status_badge($task['status'] ?? '')) ?>"><?= e(status_label($task['status'] ?? '')) ?></span>
+              <article class="task-row">
+                <div class="task-row-main">
+                  <div class="task-row-head">
                     <h3><?= e($task['titulo']) ?></h3>
+                    <div class="task-row-badges">
+                      <span class="badge <?= e(task_status_badge($task['status'] ?? '')) ?>"><?= e(status_label($task['status'] ?? '')) ?></span>
+                      <span class="badge <?= e(task_priority_badge($task['prioridade'] ?? '')) ?>"><?= e(status_label($task['prioridade'] ?? '')) ?></span>
+                    </div>
                   </div>
-                  <span class="badge <?= e(task_priority_badge($task['prioridade'] ?? '')) ?>"><?= e(status_label($task['prioridade'] ?? '')) ?></span>
+                  <p><?= e(task_short($task['descricao'] ?? '')) ?></p>
                 </div>
-                <p><?= e(task_short($task['descricao'] ?? '')) ?></p>
-                <div class="case-meta-grid">
-                  <div><span>Caso</span><strong><?= e($task['caso']) ?></strong></div>
-                  <div><span>Cliente</span><strong><?= e($task['cliente']) ?></strong></div>
-                  <div><span>Responsável</span><strong><?= e($task['advogado'] ?? 'Sem advogado') ?></strong></div>
-                  <div><span>Criada</span><strong><?= e(task_datetime($task['created_at'] ?? '')) ?></strong></div>
-                </div>
-                <div class="case-actions">
-                  <?php if ($canManageTasks): ?>
-                    <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/tasks/update')) ?>" method="post">
-                      <?= csrf_input() ?>
-                      <input type="hidden" name="task_id" value="<?= (int) $task['id'] ?>">
-                      <select class="select select-sm" name="status" aria-label="Status da tarefa">
-                        <option value="pendente" <?= ($task['status'] ?? '') === 'pendente' ? 'selected' : '' ?>>Pendente</option>
-                        <option value="em_andamento" <?= ($task['status'] ?? '') === 'em_andamento' ? 'selected' : '' ?>>Em andamento</option>
-                        <option value="concluida" <?= ($task['status'] ?? '') === 'concluida' ? 'selected' : '' ?>>Concluida</option>
-                      </select>
-                      <button class="btn btn-soft btn-sm" type="submit">Salvar</button>
-                    </form>
-                  <?php endif; ?>
-                  <?php if ($type !== 'estagiario'): ?>
-                    <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $task['case_id'] ?>"><?= icon_svg('chat') ?> Chat</a>
-                  <?php endif; ?>
+                <div class="task-row-footer">
+                  <div class="task-row-meta">
+                    <span><strong>Caso</strong> <?= e($task['caso']) ?></span>
+                    <span><strong>Cliente</strong> <?= e($task['cliente']) ?></span>
+                    <span><strong>Responsável</strong> <?= e($task['advogado'] ?? 'Sem advogado') ?></span>
+                    <span><strong>Criada</strong> <?= e(task_datetime($task['created_at'] ?? '')) ?></span>
+                  </div>
+                  <div class="task-row-actions">
+                    <?php if ($canManageTasks): ?>
+                      <form class="action-form" action="<?= e(app_url('/backend/public/index.php?rota=/tasks/update')) ?>" method="post">
+                        <?= csrf_input() ?>
+                        <input type="hidden" name="task_id" value="<?= (int) $task['id'] ?>">
+                        <select class="select select-sm" name="status" aria-label="Status da tarefa">
+                          <option value="pendente" <?= ($task['status'] ?? '') === 'pendente' ? 'selected' : '' ?>>Pendente</option>
+                          <option value="em_andamento" <?= ($task['status'] ?? '') === 'em_andamento' ? 'selected' : '' ?>>Em andamento</option>
+                          <option value="concluida" <?= ($task['status'] ?? '') === 'concluida' ? 'selected' : '' ?>>Concluída</option>
+                        </select>
+                        <button class="btn btn-soft btn-sm" type="submit">Salvar</button>
+                      </form>
+                    <?php endif; ?>
+                    <?php if ($type !== 'estagiario'): ?>
+                      <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $task['case_id'] ?>"><?= icon_svg('chat') ?> Chat</a>
+                    <?php endif; ?>
+                  </div>
                 </div>
               </article>
             <?php endforeach; ?>
