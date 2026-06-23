@@ -2,7 +2,12 @@
 
 putenv('APP_DEBUG=false');
 putenv('APP_BASE_PATH=JusTraduz');
-putenv('DB_DSN=sqlite::memory:');
+
+$testDbPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-test-' . getmypid() . '.sqlite';
+if (file_exists($testDbPath)) {
+    @unlink($testDbPath);
+}
+putenv('DB_DSN=sqlite:' . $testDbPath);
 
 $testSessionPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-test-sessions';
 if (!is_dir($testSessionPath)) {
@@ -21,8 +26,30 @@ $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $_SERVER['HTTP_USER_AGENT'] = 'JusTraduzTest/1.0';
 $_SERVER['SCRIPT_NAME'] = '/JusTraduz/backend/public/index.php';
 
-require_once dirname(__DIR__) . '/app/config/database.php';
-require_once dirname(__DIR__) . '/app/core/RedirectException.php';
+$databasePath = dirname(__DIR__) . '/app/config/database.php';
+$redirectExceptionPath = dirname(__DIR__) . '/app/core/RedirectException.php';
+
+if (!file_exists($databasePath)) {
+    throw new RuntimeException('Arquivo database.php não encontrado em: ' . $databasePath);
+}
+
+if (!file_exists($redirectExceptionPath)) {
+    throw new RuntimeException('Arquivo RedirectException.php não encontrado em: ' . $redirectExceptionPath);
+}
+
+require_once $databasePath;
+require_once $redirectExceptionPath;
+
+/*
+ * Polyfill para caso o XAMPP esteja usando PHP abaixo de 8.0.
+ * Se estiver em PHP 8+, a função nativa será usada.
+ */
+if (!function_exists('str_contains')) {
+    function str_contains(string $haystack, string $needle): bool
+    {
+        return $needle === '' || strpos($haystack, $needle) !== false;
+    }
+}
 
 function test_pdo(): PDO
 {
@@ -34,6 +61,8 @@ function reset_test_state(): void
     $_GET = [];
     $_POST = [];
     $_FILES = [];
+    $_REQUEST = [];
+
     $_SERVER['REQUEST_METHOD'] = 'GET';
     $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
     $_SERVER['HTTP_USER_AGENT'] = 'JusTraduzTest/1.0';
@@ -44,6 +73,7 @@ function reset_test_state(): void
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_unset();
     }
+
     $_SESSION = [];
 }
 
@@ -57,28 +87,54 @@ function assertTrue(bool $condition, string $message): void
 function assertEquals($expected, $actual, string $message): void
 {
     if ($expected !== $actual) {
-        throw new RuntimeException($message . ' Esperado: ' . var_export($expected, true) . ' Obtido: ' . var_export($actual, true));
-    }
-}
-
-function assertStringContains(string $needle, string $haystack, string $message): void
-{
-    if (!str_contains($haystack, $needle)) {
-        throw new RuntimeException($message . ' Procurado: ' . $needle . ' Em: ' . $haystack);
+        throw new RuntimeException(
+            $message .
+            PHP_EOL . 'Esperado: ' . var_export($expected, true) .
+            PHP_EOL . 'Obtido: ' . var_export($actual, true)
+        );
     }
 }
 
 function normalizeTextForAssertions(string $text): string
 {
-    $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
-    $text = $converted !== false ? $converted : $text;
-    return str_replace(["'", '`', '^', '~'], '', $text);
+    if (function_exists('iconv')) {
+        $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        $text = $converted !== false ? $converted : $text;
+    }
+
+    $text = str_replace(["'", '`', '^', '~'], '', $text);
+    $text = strtolower($text);
+
+    return trim($text);
+}
+
+function assertStringContains(string $needle, string $haystack, string $message): void
+{
+    $normalizedNeedle = normalizeTextForAssertions($needle);
+    $normalizedHaystack = normalizeTextForAssertions($haystack);
+
+    if (!str_contains($normalizedHaystack, $normalizedNeedle)) {
+        throw new RuntimeException(
+            $message .
+            PHP_EOL . 'Procurado: ' . var_export($needle, true) .
+            PHP_EOL . 'Procurado normalizado: ' . var_export($normalizedNeedle, true) .
+            PHP_EOL . 'Em: ' . var_export($haystack, true) .
+            PHP_EOL . 'Em normalizado: ' . var_export($normalizedHaystack, true)
+        );
+    }
 }
 
 function callPrivate(object|string $target, string $method, array $arguments = [])
 {
     $reflection = new ReflectionMethod($target, $method);
     $reflection->setAccessible(true);
+
+    if (!$reflection->isStatic() && !is_object($target)) {
+        throw new RuntimeException(
+            "O método {$method} não é estático. Passe uma instância do objeto em vez do nome da classe."
+        );
+    }
+
     return $reflection->invoke(is_object($target) ? $target : null, ...$arguments);
 }
 
@@ -93,8 +149,40 @@ function expectRedirect(callable $callback): string
     throw new RuntimeException('Era esperado um redirect.');
 }
 
+function reset_test_database(PDO $pdo): void
+{
+    $pdo->exec('PRAGMA foreign_keys = OFF');
+
+    $tables = [
+        'mail_logs',
+        'usage_events',
+        'job_queue',
+        'external_processes',
+        'cna_validacao_logs',
+        'password_reset_codes',
+        'audit_logs',
+        'notifications',
+        'appointments',
+        'schedule_slots',
+        'tasks',
+        'messages',
+        'cases',
+        'ai_results',
+        'documents',
+        'users',
+    ];
+
+    foreach ($tables as $table) {
+        $pdo->exec("DROP TABLE IF EXISTS {$table}");
+    }
+
+    $pdo->exec('PRAGMA foreign_keys = ON');
+}
+
 function build_test_schema(PDO $pdo): void
 {
+    reset_test_database($pdo);
+
     $schema = [
         'CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -309,6 +397,7 @@ function build_test_schema(PDO $pdo): void
 function seed_test_data(PDO $pdo): void
 {
     $password = password_hash('Senha@123', PASSWORD_DEFAULT);
+
     $users = [
         [1, 'Cliente Um', 'cliente1@teste.local', 'cliente', 0, 'not_required', null, '52998224725'],
         [2, 'Cliente Dois', 'cliente2@teste.local', 'cliente', 0, 'not_required', null, '39053344705'],
@@ -319,26 +408,61 @@ function seed_test_data(PDO $pdo): void
     ];
 
     $stmt = $pdo->prepare(
-        'INSERT INTO users (id, nome, email, senha, tipo, oab_verificado, oab_status, status_cna, cpf, status, profile_completed)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "ativo", 1)'
+        'INSERT INTO users (
+            id,
+            nome,
+            email,
+            senha,
+            tipo,
+            oab_verificado,
+            oab_status,
+            status_cna,
+            cpf,
+            status,
+            profile_completed
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "ativo", 1)'
     );
 
     foreach ($users as $user) {
-        $stmt->execute([$user[0], $user[1], $user[2], $password, $user[3], $user[4], $user[5], $user[6], $user[7]]);
+        $stmt->execute([
+            $user[0],
+            $user[1],
+            $user[2],
+            $password,
+            $user[3],
+            $user[4],
+            $user[5],
+            $user[6],
+            $user[7],
+        ]);
     }
 
-    $pdo->exec("INSERT INTO documents (id, user_id, nome_arquivo, tipo_arquivo, caminho) VALUES
+    $pdo->exec("
+        INSERT INTO documents (id, user_id, nome_arquivo, tipo_arquivo, caminho) VALUES
         (1, 1, 'cliente-um.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-um.pdf'),
-        (2, 2, 'cliente-dois.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-dois.pdf')");
-    $pdo->exec("INSERT INTO cases (id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade) VALUES
+        (2, 2, 'cliente-dois.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-dois.pdf')
+    ");
+
+    $pdo->exec("
+        INSERT INTO cases (id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade) VALUES
         (1, 1, 3, 1, 'Caso atendido', 'Descricao', 'em_andamento', 'media'),
-        (2, 2, NULL, 2, 'Caso aberto', 'Descricao', 'aberto', 'media')");
-    $pdo->exec("INSERT INTO messages (id, case_id, sender_id, mensagem) VALUES
+        (2, 2, NULL, 2, 'Caso aberto', 'Descricao', 'aberto', 'media')
+    ");
+
+    $pdo->exec("
+        INSERT INTO messages (id, case_id, sender_id, mensagem) VALUES
         (1, 1, 1, 'Ola'),
-        (2, 1, 3, 'Resposta')");
-    $pdo->exec("INSERT INTO schedule_slots (id, professional_id, starts_at, ends_at, status, titulo) VALUES
+        (2, 1, 3, 'Resposta')
+    ");
+
+    $pdo->exec("
+        INSERT INTO schedule_slots (id, professional_id, starts_at, ends_at, status, titulo) VALUES
         (1, 3, '2030-01-10 10:00:00', '2030-01-10 11:00:00', 'livre', 'Consulta'),
-        (2, 4, '2030-01-10 12:00:00', '2030-01-10 13:00:00', 'livre', 'Pendente')");
-    $pdo->exec("INSERT INTO appointments (id, slot_id, client_id, case_id, assunto, status) VALUES
-        (1, 1, 1, 1, 'Reuniao', 'agendado')");
+        (2, 4, '2030-01-10 12:00:00', '2030-01-10 13:00:00', 'livre', 'Pendente')
+    ");
+
+    $pdo->exec("
+        INSERT INTO appointments (id, slot_id, client_id, case_id, assunto, status) VALUES
+        (1, 1, 1, 1, 'Reuniao', 'agendado')
+    ");
 }
