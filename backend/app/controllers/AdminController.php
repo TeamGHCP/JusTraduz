@@ -4,6 +4,7 @@ require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/MailerService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
+require_once dirname(__DIR__) . '/services/SlaService.php';
 
 class AdminController extends BaseController
 {
@@ -19,7 +20,7 @@ class AdminController extends BaseController
 
     public function updateUserStatus(): void
     {
-        $this->requireAdmin();
+        $this->requirePermission('users.manage', app_url('/frontend/admin/login-admin.html'), 'Acesso administrativo obrigatório.');
 
         $userId = (int) $this->request->post('user_id', 0);
         $status = (string) $this->request->post('status', '');
@@ -42,7 +43,7 @@ class AdminController extends BaseController
 
     public function updateCase(): void
     {
-        $this->requireAdmin();
+        $this->requirePermission('cases.manage', app_url('/frontend/admin/login-admin.html'), 'Acesso administrativo obrigatório.');
 
         $caseId = (int) $this->request->post('case_id', 0);
         $status = (string) $this->request->post('status', '');
@@ -91,7 +92,7 @@ class AdminController extends BaseController
 
     public function updateProfessionalOab(): void
     {
-        $this->requireAdmin();
+        $this->requirePermission('oab.validate', app_url('/frontend/admin/login-admin.html'), 'Acesso administrativo obrigatório.');
 
         $userId = (int) $this->request->post('user_id', 0);
         $action = (string) $this->request->post('action', '');
@@ -214,6 +215,67 @@ class AdminController extends BaseController
         $this->response->redirect(app_url('/frontend/admin/validar-oab.php?sucesso=' . urlencode('Revisão profissional atualizada.')));
     }
 
+    public function reportsSummary(): void
+    {
+        $this->requirePermission('reports.view', app_url('/frontend/admin/login-admin.html'), 'Acesso a relatórios obrigatório.');
+
+        $cases = $this->fetchAll(
+            "SELECT id, titulo, status, prioridade, created_at, advogado_id
+             FROM cases
+             WHERE status <> 'finalizado'"
+        );
+        $overdueCases = 0;
+        $dueSoonCases = 0;
+        foreach ($cases as $case) {
+            $sla = SlaService::statusForCase($case);
+            if ($sla['state'] === 'overdue') {
+                $overdueCases++;
+            } elseif ($sla['state'] === 'due_soon') {
+                $dueSoonCases++;
+            }
+        }
+
+        $payload = [
+            'generated_at' => date(DATE_ATOM),
+            'users_by_role' => $this->keyValueRows('SELECT tipo AS label, COUNT(*) AS total FROM users GROUP BY tipo ORDER BY tipo'),
+            'documents' => [
+                'total' => $this->count('SELECT COUNT(*) FROM documents'),
+                'analyzed' => $this->count('SELECT COUNT(DISTINCT document_id) FROM ai_results'),
+                'last_7_days' => $this->keyValueRows(
+                    "SELECT DATE(created_at) AS label, COUNT(*) AS total
+                     FROM documents
+                     WHERE created_at >= ?
+                     GROUP BY DATE(created_at)
+                     ORDER BY label",
+                    [date('Y-m-d 00:00:00', strtotime('-6 days'))]
+                ),
+            ],
+            'cases_by_status' => $this->keyValueRows('SELECT status AS label, COUNT(*) AS total FROM cases GROUP BY status ORDER BY status'),
+            'cases_by_priority' => $this->keyValueRows('SELECT prioridade AS label, COUNT(*) AS total FROM cases GROUP BY prioridade ORDER BY prioridade'),
+            'sla' => [
+                'overdue' => $overdueCases,
+                'due_soon' => $dueSoonCases,
+                'unassigned' => $this->count("SELECT COUNT(*) FROM cases WHERE status <> 'finalizado' AND advogado_id IS NULL"),
+            ],
+            'oab' => [
+                'pending' => $this->count(
+                    "SELECT COUNT(*) FROM users
+                     WHERE tipo IN ('advogado', 'estagiario')
+                       AND status = 'ativo'
+                       AND oab_verificado = FALSE
+                       AND COALESCE(status_cna, 'pendente') = 'pendente'"
+                ),
+                'validated' => $this->count("SELECT COUNT(*) FROM users WHERE tipo IN ('advogado', 'estagiario') AND oab_verificado = TRUE"),
+            ],
+            'ai' => [
+                'analyses' => $this->count('SELECT COUNT(*) FROM ai_results'),
+                'errors' => $this->count("SELECT COUNT(*) FROM audit_logs WHERE action = 'document.ai_error'"),
+            ],
+        ];
+
+        $this->response->json($payload);
+    }
+
     private function sendProfessionalApprovedEmail(string $email, string $name): void
     {
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
@@ -273,8 +335,35 @@ class AdminController extends BaseController
     {
         $this->startSession();
 
-        if (empty($_SESSION['logado']) || ($_SESSION['tipo'] ?? '') !== 'admin') {
+        if (empty($_SESSION['logado']) || !PermissionService::sessionHas('admin.access')) {
             $this->response->redirect(app_url('/frontend/admin/login-admin.html?erro=' . urlencode('Acesso administrativo obrigatório.')));
         }
+    }
+
+    private function count(string $sql, array $params = []): int
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function fetchAll(string $sql, array $params = []): array
+    {
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    private function keyValueRows(string $sql, array $params = []): array
+    {
+        $rows = [];
+        foreach ($this->fetchAll($sql, $params) as $row) {
+            $rows[] = [
+                'label' => (string) ($row['label'] ?? ''),
+                'total' => (int) ($row['total'] ?? 0),
+            ];
+        }
+
+        return $rows;
     }
 }

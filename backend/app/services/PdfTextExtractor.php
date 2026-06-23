@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/ProcessRunnerService.php';
+
 class PdfTextExtractor
 {
     public static function extract(string $filePath): string
@@ -41,22 +43,38 @@ class PdfTextExtractor
 
     private static function extractWithPdftotext(string $filePath): string
     {
-        if (!function_exists('shell_exec')) {
+        if (!function_exists('proc_open')) {
             return '';
         }
 
-        $isWindows = stripos(PHP_OS, 'WIN') === 0;
-        $command = $isWindows ? 'where pdftotext 2>NUL' : 'command -v pdftotext 2>/dev/null';
-        $binary = trim((string) @shell_exec($command));
-
+        $binary = self::pdftotextBinary();
         if ($binary === '') {
             return '';
         }
 
-        $binary = strtok($binary, "\r\n");
-        $redirect = $isWindows ? ' 2>NUL' : ' 2>/dev/null';
-        $output = @shell_exec('"' . $binary . '" -layout -enc UTF-8 ' . escapeshellarg($filePath) . ' -' . $redirect);
-        return self::cleanText((string) $output);
+        $result = ProcessRunnerService::run([$binary, '-layout', '-enc', 'UTF-8', $filePath, '-'], 15);
+        if ((int) $result['exit_code'] !== 0 || !empty($result['timed_out'])) {
+            return '';
+        }
+
+        return self::cleanText((string) $result['stdout']);
+    }
+
+    private static function pdftotextBinary(): string
+    {
+        $configured = trim((string) getenv('PDFTOTEXT_BINARY'));
+        if ($configured !== '') {
+            return $configured;
+        }
+
+        $isWindows = stripos(PHP_OS, 'WIN') === 0;
+        $finder = $isWindows ? ['where.exe', 'pdftotext'] : ['/bin/sh', '-lc', 'command -v pdftotext'];
+        $result = ProcessRunnerService::run($finder, 5);
+        if ((int) $result['exit_code'] !== 0) {
+            return '';
+        }
+
+        return trim((string) strtok((string) $result['stdout'], "\r\n"));
     }
 
     private static function extractTextFromStream(string $stream): string

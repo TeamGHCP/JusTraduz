@@ -3,6 +3,7 @@
 require_once __DIR__ . '/Request.php';
 require_once __DIR__ . '/Response.php';
 require_once dirname(__DIR__) . '/config/app.php';
+require_once dirname(__DIR__) . '/services/PermissionService.php';
 require_once dirname(__DIR__) . '/support/session.php';
 
 if (!defined('APP_URL')) {
@@ -45,5 +46,14 @@ abstract class BaseController
     protected function currentUserType(): string
     {
         return (string) ($_SESSION['tipo'] ?? '');
+    }
+
+    protected function requirePermission(string $permission, string $redirectUrl, string $message = 'Acesso não autorizado.'): void
+    {
+        $this->startSession();
+
+        if (empty($_SESSION['logado']) || !PermissionService::sessionHas($permission)) {
+            $this->response->redirect($redirectUrl . '?erro=' . urlencode($message));
+        }
     }
 }

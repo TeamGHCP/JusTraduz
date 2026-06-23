@@ -30,21 +30,33 @@ if ($BackupPath.EndsWith(".enc")) {
     if ($encryptPass -eq "") {
         throw "BACKUP_ENCRYPTION_PASSWORD e obrigatorio para restaurar backup criptografado."
     }
-    $restorePath = [System.IO.Path]::GetTempFileName() + ".sql"
-    & openssl enc -d -aes-256-cbc -pbkdf2 -in $BackupPath -out $restorePath -pass "pass:$encryptPass"
-    if ($LASTEXITCODE -ne 0) {
-        throw "openssl falhou ao descriptografar o backup"
+    try {
+        $previousBackupPass = [Environment]::GetEnvironmentVariable("JTD_BACKUP_PASSWORD", "Process")
+        [Environment]::SetEnvironmentVariable("JTD_BACKUP_PASSWORD", $encryptPass, "Process")
+
+        $restorePath = [System.IO.Path]::GetTempFileName() + ".sql"
+        & openssl enc -d -aes-256-cbc -pbkdf2 -in $BackupPath -out $restorePath -pass "env:JTD_BACKUP_PASSWORD"
+        if ($LASTEXITCODE -ne 0) {
+            throw "openssl falhou ao descriptografar o backup"
+        }
+    } finally {
+        [Environment]::SetEnvironmentVariable("JTD_BACKUP_PASSWORD", $previousBackupPass, "Process")
     }
 }
 
-$args = @("--host=$hostName", "--port=$port", "--user=$dbUser")
-if ($dbPass -ne "") {
-    $args = @("--password=$dbPass") + $args
-}
+try {
+    $previousMysqlPwd = [Environment]::GetEnvironmentVariable("MYSQL_PWD", "Process")
+    if ($dbPass -ne "") {
+        [Environment]::SetEnvironmentVariable("MYSQL_PWD", $dbPass, "Process")
+    }
 
-Get-Content -LiteralPath $restorePath -Raw | & $Mysql @args
-if ($LASTEXITCODE -ne 0) {
-    throw "mysql falhou ao restaurar o backup"
+    $args = @("--host=$hostName", "--port=$port", "--user=$dbUser")
+    Get-Content -LiteralPath $restorePath -Raw | & $Mysql @args
+    if ($LASTEXITCODE -ne 0) {
+        throw "mysql falhou ao restaurar o backup"
+    }
+} finally {
+    [Environment]::SetEnvironmentVariable("MYSQL_PWD", $previousMysqlPwd, "Process")
 }
 
 if ($restorePath -ne $BackupPath) {

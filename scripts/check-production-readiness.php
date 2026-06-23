@@ -46,6 +46,8 @@ $requiredFiles = [
     '.htaccess',
     'backend/storage/documents/.htaccess',
     'backend/storage/message-attachments/.htaccess',
+    'storage-private/documents/.htaccess',
+    'storage-private/message-attachments/.htaccess',
     '.github/workflows/ci.yml',
     'backend/tests/run.php',
     'scripts/backup-database.ps1',
@@ -72,7 +74,7 @@ foreach ($requiredFiles as $file) {
 }
 
 $rootHtaccess = is_file($root . '/.htaccess') ? file_get_contents($root . '/.htaccess') : '';
-foreach (['Options -Indexes', 'Header set X-Content-Type-Options', 'backend/storage/(?:documents|message-attachments)'] as $needle) {
+foreach (['Options -Indexes', 'Header set X-Content-Type-Options', 'storage-private(?:/|$)', 'backend/storage/(?:documents|message-attachments)'] as $needle) {
     if (!str_contains((string) $rootHtaccess, $needle)) {
         $failures[] = ".htaccess raiz não contém proteção esperada: $needle";
     }

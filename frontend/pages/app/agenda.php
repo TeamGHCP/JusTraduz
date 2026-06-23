@@ -176,6 +176,7 @@ $activeAppointments = count(array_filter($appointments, static function (array $
     return $status === 'agendado';
 }));
 $canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
+$hasAgendaFilters = $professionalFilter > 0 || $roleFilter !== '';
 $calendarSubtitle = $type === 'cliente'
     ? 'Encontre horário livre, vincule a um caso e confirme atendimento.'
     : ($type === 'admin' ? 'Visao operacional de disponibilidade e atendimentos.' : 'Crie horários, bloqueie agenda e acompanhe atendimentos.');
@@ -197,14 +198,14 @@ $calendarSubtitle = $type === 'cliente'
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
-  <link rel="stylesheet" href="assets/css/agenda.css?v=module-5">
+  <link rel="stylesheet" href="assets/css/agenda.css?v=agenda-book-full-1">
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
   <div class="app-shell">
     <?php render_sidebar($type, 'agenda.php'); ?>
 
-    <main class="app-main">
+    <main class="app-main agenda-page">
       <?php render_topbar('Agenda', $calendarSubtitle, current_user_name()); ?>
 
       <?php if ($successMessage !== ''): ?>
@@ -214,22 +215,55 @@ $calendarSubtitle = $type === 'cliente'
         <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
       <?php endif; ?>
 
-      <section class="grid grid-4">
+      <section class="agenda-summary-strip" aria-label="Resumo da agenda">
         <?php if ($type === 'cliente'): ?>
-          <?= stat_card('Horários livres', count($freeSlots), 'calendar') ?>
-          <?= stat_card('Meus atendimentos', count($appointments), 'case') ?>
-          <?= stat_card('Ativos', $activeAppointments, 'chat') ?>
-          <?= stat_card('Casos abertos', count($clientsCases), 'help') ?>
+          <article class="agenda-summary-card">
+            <?= icon_svg('calendar') ?>
+            <span>Horários livres</span>
+            <strong><?= e((string) count($freeSlots)) ?></strong>
+          </article>
+          <article class="agenda-summary-card">
+            <?= icon_svg('case') ?>
+            <span>Meus atendimentos</span>
+            <strong><?= e((string) count($appointments)) ?></strong>
+          </article>
+          <article class="agenda-summary-card">
+            <?= icon_svg('chat') ?>
+            <span>Ativos</span>
+            <strong><?= e((string) $activeAppointments) ?></strong>
+          </article>
+          <article class="agenda-summary-card">
+            <?= icon_svg('help') ?>
+            <span>Casos abertos</span>
+            <strong><?= e((string) count($clientsCases)) ?></strong>
+          </article>
         <?php else: ?>
-          <?= stat_card('Slots exibidos', count($slots), 'calendar') ?>
-          <?= stat_card('Atendimentos', count($appointments), 'case') ?>
-          <?= stat_card('Ativos', $activeAppointments, 'chat') ?>
-          <?= stat_card('Profissionais', count($professionals), 'users') ?>
+          <article class="agenda-summary-card">
+            <?= icon_svg('calendar') ?>
+            <span>Horários exibidos</span>
+            <strong><?= e((string) count($slots)) ?></strong>
+          </article>
+          <article class="agenda-summary-card">
+            <?= icon_svg('case') ?>
+            <span>Atendimentos</span>
+            <strong><?= e((string) count($appointments)) ?></strong>
+          </article>
+          <article class="agenda-summary-card">
+            <?= icon_svg('chat') ?>
+            <span>Ativos</span>
+            <strong><?= e((string) $activeAppointments) ?></strong>
+          </article>
+          <article class="agenda-summary-card">
+            <?= icon_svg('users') ?>
+            <span>Profissionais</span>
+            <strong><?= e((string) count($professionals)) ?></strong>
+          </article>
         <?php endif; ?>
       </section>
 
       <?php if ($type === 'cliente' || $type === 'admin'): ?>
-        <section class="dash-section">
+        <details class="agenda-tools"<?= $hasAgendaFilters ? ' open' : '' ?>>
+          <summary>Filtros</summary>
           <form class="card agenda-filter" method="get">
             <div class="field">
               <label for="professional_id">Profissional</label>
@@ -255,11 +289,12 @@ $calendarSubtitle = $type === 'cliente'
               <a class="btn btn-outline" href="agenda.php">Limpar</a>
             </div>
           </form>
-        </section>
+        </details>
       <?php endif; ?>
 
       <?php if ($canManageSlots): ?>
-        <section class="dash-section agenda-create-section">
+        <details class="agenda-tools agenda-create-section">
+          <summary>Abrir horário</summary>
           <div class="card agenda-create-card">
             <div>
               <span class="badge badge-info">Disponibilidade</span>
@@ -290,10 +325,10 @@ $calendarSubtitle = $type === 'cliente'
               <button class="btn btn-primary" type="submit"><?= icon_svg('calendar') ?> Criar horário</button>
             </form>
           </div>
-        </section>
+        </details>
       <?php endif; ?>
 
-      <section class="dash-section">
+      <section class="dash-section agenda-calendar-section">
         <div class="dash-section-title">
           <h2>Calendario</h2>
           <span class="badge badge-info">Clique no contador do dia para ver detalhes</span>
@@ -302,11 +337,11 @@ $calendarSubtitle = $type === 'cliente'
       </section>
 
       <?php if ($type === 'cliente'): ?>
-        <section class="dash-section">
-          <div class="dash-section-title">
+        <details class="dash-section agenda-list-section" open>
+          <summary class="dash-section-title">
             <h2>Horários disponíveis</h2>
             <span class="badge badge-success"><?= e((string) count($freeSlots)) ?> livres</span>
-          </div>
+          </summary>
 
           <?php if (!$freeSlots): ?>
             <?= empty_state('Nenhum horário livre encontrado para os filtros atuais.') ?>
@@ -353,13 +388,13 @@ $calendarSubtitle = $type === 'cliente'
               <?php endforeach; ?>
             </div>
           <?php endif; ?>
-        </section>
+        </details>
 
-        <section class="dash-section">
-          <div class="dash-section-title">
+        <details class="dash-section agenda-list-section">
+          <summary class="dash-section-title">
             <h2>Meus atendimentos</h2>
             <span class="badge badge-info"><?= e((string) count($appointments)) ?> registros</span>
-          </div>
+          </summary>
 
           <?php if (!$appointments): ?>
             <?= empty_state('Você ainda não tem atendimentos agendados.') ?>
@@ -384,13 +419,13 @@ $calendarSubtitle = $type === 'cliente'
               <?php endforeach; ?>
             </div>
           <?php endif; ?>
-        </section>
+        </details>
       <?php else: ?>
-        <section class="dash-section">
-          <div class="dash-section-title">
+        <details class="dash-section agenda-list-section" open>
+          <summary class="dash-section-title">
             <h2><?= $type === 'admin' ? 'Agenda operacional' : 'Minha disponibilidade' ?></h2>
             <span class="badge badge-info"><?= e((string) count($slots)) ?> slots</span>
-          </div>
+          </summary>
 
           <?php if (!$slots): ?>
             <?= empty_state($type === 'admin' ? 'Nenhum horário encontrado para os filtros atuais.' : 'Você ainda não cadastrou horários.') ?>
@@ -450,7 +485,7 @@ $calendarSubtitle = $type === 'cliente'
               <?php endforeach; ?>
             </div>
           <?php endif; ?>
-        </section>
+        </details>
       <?php endif; ?>
 
       <div id="slot-modal" class="modal" style="display:none;">

@@ -192,55 +192,51 @@ $appointments = fetch_all(
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=lawyer-topic-labels-1">
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body data-tour-page="dashboard_advogado">
   <div class="app-shell">
     <?php render_sidebar('advogado', 'dashboard-advogado.php'); ?>
 
-    <main class="app-main" data-tour-step="1" data-tour-title="Visão geral do advogado" data-tour-description="Esta mesa reúne fila, casos, documentos, tarefas e agenda profissional.">
+    <main class="app-main lawyer-dashboard" data-tour-step="1" data-tour-title="Visão geral do advogado" data-tour-description="Esta mesa reúne fila, casos, documentos, tarefas e agenda profissional.">
       <?php render_topbar('Mesa do advogado', 'Fila, prioridades, documentos, tarefas e agenda em uma unica area de trabalho.', current_user_name()); ?>
 
-      <section class="lawyer-command" data-tour-step="2" data-tour-title="Casos atribuídos" data-tour-description="Veja sua carga ativa e mantenha cada atendimento com responsável e próximos passos.">
-        <article class="command-card command-card-primary">
-          <span class="badge badge-info">Fila juridica</span>
-          <h2><?= e((string) $openCount) ?> solicitações aguardando aceite</h2>
-          <p><?= e((string) $highPriorityOpenCount) ?> estao em prioridade alta. Aceite o que você consegue conduzir com resposta, tarefa e agenda.</p>
-          <div class="form-actions">
-            <a class="btn btn-primary" href="acompanhar-solicitacoes.php?scope=abertos"><?= icon_svg('case') ?> Ver fila</a>
-            <a class="btn btn-outline" href="tarefas.php"><?= icon_svg('check') ?> Tarefas</a>
-            <a class="btn btn-soft" href="agenda.php"><?= icon_svg('calendar') ?> Agenda</a>
-          </div>
-        </article>
-        <article class="command-card">
+      <section class="lawyer-focus-panel" data-tour-step="2" data-tour-title="Prioridade do dia" data-tour-description="Comece pelos sinais que mais afetam atendimento, prazo e resposta ao cliente.">
+        <div>
+          <span class="badge <?= $highPriorityOpenCount > 0 ? 'badge-warning' : 'badge-info' ?>">Prioridade agora</span>
+          <h2><?= $highPriorityOpenCount > 0 ? e((string) $highPriorityOpenCount) . ' casos de alta prioridade na fila' : 'Fila sob controle' ?></h2>
+          <p><?= $openCount > 0 ? e((string) $openCount) . ' solicitações aguardam aceite. Entre, escolha com critério e já deixe o próximo passo encaminhado.' : 'Nenhuma solicitação aberta no momento. Use a agenda e tarefas para manter os casos ativos andando.' ?></p>
+        </div>
+        <div class="lawyer-focus-actions">
+          <a class="btn btn-primary" href="acompanhar-solicitacoes.php?scope=abertos"><?= icon_svg('case') ?> Ver fila</a>
+          <a class="btn btn-outline" href="tarefas.php"><?= icon_svg('check') ?> Tarefas</a>
+          <a class="btn btn-soft" href="agenda.php"><?= icon_svg('calendar') ?> Agenda</a>
+        </div>
+      </section>
+
+      <section class="lawyer-summary-grid" data-tour-step="6" data-tour-title="Prioridade e status" data-tour-description="Use os indicadores para identificar urgências, pendências e volume de trabalho.">
+        <article class="lawyer-summary-card">
+          <?= icon_svg('case') ?>
           <span>Casos ativos</span>
           <strong><?= e((string) $assignedActiveCount) ?></strong>
-          <p>Casos sob sua responsabilidade que ainda precisam de acompanhamento.</p>
         </article>
-        <article class="command-card">
-          <span>Próximos compromissos</span>
+        <article class="lawyer-summary-card">
+          <?= icon_svg('help') ?>
+          <span>Fila aberta</span>
+          <strong><?= e((string) $openCount) ?></strong>
+        </article>
+        <article class="lawyer-summary-card">
+          <?= icon_svg('check') ?>
+          <span>Tarefas abertas</span>
+          <strong><?= e((string) $taskCount) ?></strong>
+        </article>
+        <article class="lawyer-summary-card">
+          <?= icon_svg('calendar') ?>
+          <span>Compromissos</span>
           <strong><?= e((string) $appointmentCount) ?></strong>
-          <p>Atendimentos agendados para não deixar o caso morrer no chat.</p>
         </article>
       </section>
-
-      <section class="grid grid-4" data-tour-step="6" data-tour-title="Prioridade e status" data-tour-description="Use os indicadores para identificar urgências, pendências e volume de trabalho.">
-        <?= stat_card('Fila aberta', $openCount, 'help') ?>
-        <?= stat_card('Alta prioridade', $highPriorityOpenCount, 'shield') ?>
-        <?= stat_card('Tarefas abertas', $taskCount, 'check') ?>
-        <?= stat_card('Documentos vinculados', $documentCount, 'file') ?>
-      </section>
-
-      <?php if ($highPriorityOpenCount > 0): ?>
-        <div class="professional-alert">
-          <div>
-            <strong>Prioridade real exige decisao.</strong>
-            <span>Ha casos abertos de prioridade alta. O custo de ignorar a fila e simples: o cliente perde confianca e a demo parece parada.</span>
-          </div>
-          <a class="btn btn-primary btn-sm" href="acompanhar-solicitacoes.php?scope=abertos&prioridade=alta">Resolver fila alta</a>
-        </div>
-      <?php endif; ?>
 
       <section class="dash-section" data-tour-step="3" data-tour-title="Fila de solicitações" data-tour-description="Aqui aparecem solicitações abertas, ordenadas por urgência e ainda sem responsável.">
         <div class="dash-section-title">
@@ -250,7 +246,7 @@ $appointments = fetch_all(
         <?php if (!$openCases): ?>
           <?= empty_state('Nenhuma solicitação aberta no momento.') ?>
         <?php else: ?>
-          <div class="case-board">
+          <div class="case-board lawyer-case-board">
             <?php foreach ($openCases as $case): ?>
               <article class="case-card-rich">
                 <div class="case-card-head">
@@ -261,7 +257,7 @@ $appointments = fetch_all(
                   <span class="badge badge-warning">Aberto</span>
                 </div>
                 <p><?= e(lawyer_short_text($case['descricao'] ?? '', 210)) ?></p>
-                <div class="case-meta-grid">
+                <div class="case-meta-grid lawyer-card-topics">
                   <div><span>Cliente</span><strong><?= e($case['cliente']) ?></strong></div>
                   <div><span>Criado</span><strong><?= e(lawyer_datetime($case['created_at'] ?? '')) ?></strong></div>
                   <div><span>Mensagens</span><strong><?= e((string) (int) $case['message_count']) ?></strong></div>
@@ -280,7 +276,7 @@ $appointments = fetch_all(
                       <input type="hidden" name="case_id" value="<?= (int) $case['id'] ?>">
                       <button class="btn btn-primary btn-sm" type="submit">Aceitar caso</button>
                     </form>
-                    <a class="btn btn-outline btn-sm" href="acompanhar-solicitacoes.php?scope=abertos">Ver detalhes</a>
+                    <a class="btn btn-outline btn-sm" href="acompanhar-solicitacoes.php?scope=abertos">Detalhes</a>
                   </div>
                 </div>
               </article>
@@ -308,7 +304,7 @@ $appointments = fetch_all(
                   <span class="badge <?= e(lawyer_status_badge($case['status'] ?? '')) ?>"><?= e(status_label($case['status'] ?? '')) ?></span>
                 </div>
                 <p><?= e(lawyer_short_text($case['descricao'] ?? '', 150)) ?></p>
-                <div class="case-meta-grid">
+                <div class="case-meta-grid lawyer-card-topics">
                   <div><span>Cliente</span><strong><?= e($case['cliente']) ?></strong></div>
                   <div><span>Mensagens</span><strong><?= e((string) (int) $case['message_count']) ?></strong></div>
                   <div><span>Tarefas</span><strong><?= e((string) (int) $case['task_count']) ?></strong></div>
@@ -320,10 +316,15 @@ $appointments = fetch_all(
                     <span><?= e($case['document_name'] ?? 'Documento relacionado') ?></span>
                   </a>
                 <?php endif; ?>
-                <div class="case-actions">
+                <div class="case-actions lawyer-primary-actions">
                   <a class="btn btn-primary btn-sm" href="chat.php?case_id=<?= (int) $case['id'] ?>"><?= icon_svg('chat') ?> Chat</a>
-                  <a class="btn btn-outline btn-sm" href="tarefas.php?case_id=<?= (int) $case['id'] ?>"><?= icon_svg('check') ?> Tarefas</a>
-                  <a class="btn btn-soft btn-sm" href="agenda.php"><?= icon_svg('calendar') ?> Agenda</a>
+                  <details class="case-more-actions">
+                    <summary>Mais ações</summary>
+                    <div>
+                      <a class="btn btn-outline btn-sm" href="tarefas.php?case_id=<?= (int) $case['id'] ?>"><?= icon_svg('check') ?> Tarefas</a>
+                      <a class="btn btn-soft btn-sm" href="agenda.php"><?= icon_svg('calendar') ?> Agenda</a>
+                    </div>
+                  </details>
                 </div>
               </article>
             <?php endforeach; ?>
@@ -342,14 +343,24 @@ $appointments = fetch_all(
           <?php else: ?>
             <div class="professional-list">
               <?php foreach ($tasks as $task): ?>
-                <article class="professional-list-item">
-                  <div>
-                    <span class="badge <?= e(lawyer_status_badge($task['status'] ?? '')) ?>"><?= e(status_label($task['status'] ?? '')) ?></span>
-                    <strong><?= e($task['titulo']) ?></strong>
-                    <small><?= e($task['caso']) ?> | <?= e($task['cliente']) ?> | <?= e(status_label($task['prioridade'] ?? '')) ?></small>
+                <details class="professional-list-item lawyer-work-item">
+                  <summary>
+                    <span class="lawyer-work-main">
+                      <span class="badge <?= e(lawyer_status_badge($task['status'] ?? '')) ?>"><?= e(status_label($task['status'] ?? '')) ?></span>
+                      <strong><?= e($task['titulo']) ?></strong>
+                    </span>
+                    <span class="lawyer-work-preview"><?= e($task['cliente']) ?></span>
+                    <span class="lawyer-work-toggle">Detalhes</span>
+                  </summary>
+                  <div class="lawyer-work-details">
+                    <div class="lawyer-work-meta">
+                      <span><strong>Caso</strong><?= e($task['caso']) ?></span>
+                      <span><strong>Cliente</strong><?= e($task['cliente']) ?></span>
+                      <span><strong>Prioridade</strong><?= e(status_label($task['prioridade'] ?? '')) ?></span>
+                    </div>
+                    <a class="btn btn-outline btn-sm" href="tarefas.php?case_id=<?= (int) $task['case_id'] ?>">Abrir tarefa</a>
                   </div>
-                  <a class="btn btn-outline btn-sm" href="tarefas.php?case_id=<?= (int) $task['case_id'] ?>">Abrir</a>
-                </article>
+                </details>
               <?php endforeach; ?>
             </div>
           <?php endif; ?>
@@ -365,18 +376,29 @@ $appointments = fetch_all(
           <?php else: ?>
             <div class="professional-list">
               <?php foreach ($appointments as $appointment): ?>
-                <article class="professional-list-item">
-                  <div>
-                    <span class="badge badge-info"><?= e(lawyer_datetime($appointment['starts_at'] ?? '')) ?></span>
-                    <strong><?= e($appointment['assunto']) ?></strong>
-                    <small><?= e($appointment['cliente']) ?><?= !empty($appointment['caso']) ? ' | ' . e($appointment['caso']) : '' ?></small>
+                <details class="professional-list-item lawyer-work-item">
+                  <summary>
+                    <span class="lawyer-work-main">
+                      <span class="badge badge-info"><?= e(lawyer_datetime($appointment['starts_at'] ?? '')) ?></span>
+                      <strong><?= e($appointment['assunto']) ?></strong>
+                    </span>
+                    <span class="lawyer-work-preview"><?= e($appointment['cliente']) ?></span>
+                    <span class="lawyer-work-toggle">Detalhes</span>
+                  </summary>
+                  <div class="lawyer-work-details">
+                    <div class="lawyer-work-meta">
+                      <span><strong>Cliente</strong><?= e($appointment['cliente']) ?></span>
+                      <?php if (!empty($appointment['caso'])): ?>
+                        <span><strong>Caso</strong><?= e($appointment['caso']) ?></span>
+                      <?php endif; ?>
+                    </div>
+                    <?php if (!empty($appointment['case_id'])): ?>
+                      <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $appointment['case_id'] ?>">Abrir chat</a>
+                    <?php else: ?>
+                      <a class="btn btn-outline btn-sm" href="agenda.php">Abrir agenda</a>
+                    <?php endif; ?>
                   </div>
-                  <?php if (!empty($appointment['case_id'])): ?>
-                    <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $appointment['case_id'] ?>">Chat</a>
-                  <?php else: ?>
-                    <a class="btn btn-outline btn-sm" href="agenda.php">Agenda</a>
-                  <?php endif; ?>
-                </article>
+                </details>
               <?php endforeach; ?>
             </div>
           <?php endif; ?>

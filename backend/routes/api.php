@@ -67,6 +67,7 @@ $routes = [
     ['POST', '/admin/p2/organizations/create', 'P2AdminController', 'createOrganization'],
     ['POST', '/admin/p2/organizations/member', 'P2AdminController', 'addOrganizationMember'],
     ['POST', '/admin/p2/permissions/update', 'P2AdminController', 'updatePermission'],
+    ['GET', '/admin/reports/summary', 'AdminController', 'reportsSummary'],
     ['GET', '/admin/audit/export', 'AuditExportController', 'csv'],
     ['GET', '/api/v1/me', 'ApiV1Controller', 'me'],
     ['GET', '/api/v1/cases', 'ApiV1Controller', 'cases'],
@@ -75,6 +76,7 @@ $routes = [
 
 foreach ($routes as [$method, $path, $controller, $action]) {
     $router->{strtolower($method)}($path, $controller, $action);
+    $router->{strtolower($method)}('/api/v1' . $path, $controller, $action);
 }
 
 $router->dispatch();

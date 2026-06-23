@@ -67,13 +67,14 @@
     }
   </style>
   <script src="assets/js/pwa.js" defer></script>
+  <script src="assets/js/offline.js" defer></script>
 </head>
 <body>
   <main>
     <img src="assets/img/app-mark.png" alt="JusTraduz">
     <h1>Você está sem conexão</h1>
     <p>O JusTraduz precisa de internet para carregar dados, documentos, mensagens e atendimentos. Verifique sua conexão e tente novamente.</p>
-    <button type="button" onclick="window.location.reload()">Tentar novamente</button>
+    <button type="button" data-reload-page>Tentar novamente</button>
   </main>
 </body>
 </html>

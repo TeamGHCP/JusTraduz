@@ -1,13 +1,10 @@
 # Banco de dados
 
-## Instalacao limpa
+Este arquivo lista apenas ações pendentes ou perigosas relacionadas ao banco.
 
-Use um dos instaladores consolidados:
+## Reset local quando necessário
 
-- `database/justraduz_completo_sem_demo.sql`: recria o banco `justraduz` vazio, somente com estrutura.
-- `database/justraduz_completo_com_demo.sql`: recria o banco `justraduz` com estrutura e dados de apresentacao.
-
-Atencao: os dois arquivos executam `DROP DATABASE IF EXISTS justraduz`. Faca backup antes de rodar em uma base com dados reais.
+Os instaladores consolidados recriam o banco `justraduz`. Eles executam `DROP DATABASE IF EXISTS justraduz`, então não rode em base com dados reais sem backup.
 
 Sem demo:
 
@@ -21,14 +18,16 @@ Com demo:
 Get-Content database\justraduz_completo_com_demo.sql -Raw | & C:\xampp\mysql\bin\mysql.exe -h localhost -u root
 ```
 
-As contas `@justraduz.demo` usam `Demo@2026!`.
+Senha demo:
 
-## Atualizacao de banco existente
+```text
+Demo@2026!
+```
 
-Os scripts incrementais antigos foram removidos para nao existir duas formas conflitantes de instalar o banco. Para atualizar uma base real existente, faca backup e gere um script incremental especifico a partir da diferenca necessaria.
+## Pendências de banco real
 
-## Operacao atual
-
-Os instaladores consolidados ja incluem as estruturas usadas por P0/P1: auditoria, LGPD, fila, limites de uso, logs de e-mail, DataJud/CNJ e cache de processos.
-
-Pendencias reais restantes depois de P0/P1 ficam em `../docs/O_QUE_FALTA_AGORA.md`.
+- Revisar `database/migrations/2026_06_23_cases_sla.sql` antes de aplicar.
+- Criar backup antes de qualquer migration.
+- Testar migration e rollback em cópia do banco.
+- Gerar script incremental específico para bases reais existentes.
+- Não rodar os instaladores consolidados em produção.

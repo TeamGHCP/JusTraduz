@@ -16,6 +16,13 @@ backend/storage/documents/*
 backend/storage/profile_photos/
 backend/storage/message-attachments/*
 !backend/storage/message-attachments/.htaccess
+storage-private/*
+!storage-private/documents/
+!storage-private/documents/.htaccess
+!storage-private/documents/.gitkeep
+!storage-private/message-attachments/
+!storage-private/message-attachments/.htaccess
+!storage-private/message-attachments/.gitkeep
 
 # Dependências
 vendor/

@@ -3,10 +3,12 @@
 require_once __DIR__ . '/bootstrap.php';
 require_once dirname(__DIR__) . '/app/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/app/services/MailerService.php';
+require_once dirname(__DIR__) . '/app/services/ProcessRunnerService.php';
 require_once dirname(__DIR__) . '/app/services/StorageService.php';
 require_once dirname(__DIR__) . '/app/services/UploadScannerService.php';
 require_once dirname(__DIR__) . '/app/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/app/services/DataJudService.php';
+require_once dirname(__DIR__) . '/app/controllers/AuthController.php';
 require_once dirname(__DIR__) . '/app/controllers/CaseController.php';
 require_once dirname(__DIR__) . '/app/controllers/DocumentController.php';
 require_once dirname(__DIR__) . '/app/controllers/HealthController.php';
@@ -25,6 +27,37 @@ $health = json_decode($healthOutput, true);
 assertEquals('degraded', $health['status'] ?? '', 'Healthcheck deve responder degradado quando o banco esta indisponivel.');
 assertTrue(($health['checks']['database'] ?? true) === false, 'Healthcheck deve marcar database como falso sem fatal error.');
 putenv('DB_DSN=' . $originalDsn);
+
+$processResult = ProcessRunnerService::run([PHP_BINARY, '-r', 'sleep(2);'], 1);
+assertEquals(124, (int) $processResult['exit_code'], 'ProcessRunner deve retornar codigo 124 em timeout.');
+assertTrue(($processResult['timed_out'] ?? false) === true, 'ProcessRunner deve marcar timed_out quando encerrar processo lento.');
+
+$authController = new AuthController();
+assertTrue(callPrivate($authController, 'passwordValidationError', ['NovaSenha@123']) === null, 'Senha forte deve passar na validacao.');
+assertTrue(callPrivate($authController, 'passwordValidationError', ['fraca']) !== null, 'Senha fraca deve ser rejeitada.');
+$oldHash = (string) $pdo->query('SELECT senha FROM users WHERE id = 1')->fetchColumn();
+assertTrue(password_needs_rehash($oldHash, callPrivate($authController, 'passwordHashAlgorithm'), callPrivate($authController, 'passwordHashOptions')), 'Hash antigo deve indicar necessidade de rehash.');
+callPrivate($authController, 'rehashUserPasswordIfNeeded', [1, 'Senha@123', $oldHash]);
+$rehash = (string) $pdo->query('SELECT senha FROM users WHERE id = 1')->fetchColumn();
+assertTrue($rehash !== $oldHash, 'Rehash deve atualizar o hash salvo no banco.');
+assertTrue(password_verify('Senha@123', $rehash), 'Rehash deve preservar a senha original.');
+
+$envExample = (string) file_get_contents(dirname(__DIR__, 2) . '/backend/.env.example');
+foreach (['CLAMAV_TIMEOUT_SECONDS=15', 'OCR_TIMEOUT_SECONDS=30', 'PDFTOTEXT_BINARY='] as $expectedEnvLine) {
+    assertStringContains($expectedEnvLine, $envExample, '.env.example deve documentar ' . $expectedEnvLine);
+}
+
+$ci = (string) file_get_contents(dirname(__DIR__, 2) . '/.github/workflows/ci.yml');
+foreach (['curl', 'gd', 'zip'] as $extension) {
+    assertStringContains($extension, $ci, 'CI deve habilitar a extensao PHP ' . $extension . '.');
+}
+
+$routes = (string) file_get_contents(dirname(__DIR__) . '/routes/api.php');
+assertStringContains("'/api/v1' . \$path", $routes, 'Rotas devem registrar alias versionado /api/v1.');
+assertStringContains("'/admin/reports/summary'", $routes, 'Rotas devem expor resumo gerencial.');
+
+$wcagMatrix = (string) file_get_contents(dirname(__DIR__, 2) . '/docs/MATRIZ_WCAG_AA.md');
+assertStringContains('2.4.7 Foco visivel', $wcagMatrix, 'Matriz WCAG deve registrar foco visivel.');
 
 $tmpFile = tempnam(sys_get_temp_dir(), 'scan_');
 file_put_contents($tmpFile, '<?php echo "malicioso";');
@@ -70,6 +103,16 @@ $reference = $storage->documentReference(7, 'arquivo.pdf');
 assertStringContains('private://documents/7/arquivo.pdf', $reference, 'Storage fora do projeto deve usar referencia private.');
 file_put_contents($privateRoot . DIRECTORY_SEPARATOR . '7' . DIRECTORY_SEPARATOR . 'arquivo.pdf', 'ok');
 assertTrue(is_file((string) $storage->documentPathFromReference($reference)), 'Storage deve resolver private:// para caminho real seguro.');
+
+$projectPrivateRoot = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage-private' . DIRECTORY_SEPARATOR . 'documents';
+putenv('DOCUMENT_STORAGE_PATH=' . $projectPrivateRoot);
+$storage = new StorageService();
+assertEquals('private://documents/7/arquivo.pdf', $storage->documentReference(7, 'arquivo.pdf'), 'Storage privado do projeto deve usar referencia private.');
+
+$legacyRoot = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'documents';
+putenv('DOCUMENT_STORAGE_PATH=' . $legacyRoot);
+$storage = new StorageService();
+assertEquals('backend/storage/documents/7/arquivo.pdf', $storage->documentReference(7, 'arquivo.pdf'), 'Storage legado deve manter caminho antigo para compatibilidade.');
 
 $usage = new UsageLimiter($pdo);
 putenv('USAGE_DAILY_DOCUMENT_AI=1');

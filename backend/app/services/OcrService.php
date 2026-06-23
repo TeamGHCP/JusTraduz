@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/ProcessRunnerService.php';
+
 class OcrService
 {
     private ?string $lastError = null;
@@ -27,14 +29,15 @@ class OcrService
         }
 
         @unlink($tmpBase);
-        $command = escapeshellarg($binary) . ' ' . escapeshellarg($path) . ' ' . escapeshellarg($tmpBase) . ' -l ' . escapeshellarg($language);
-        $output = [];
-        $exitCode = 0;
-        exec($command, $output, $exitCode);
+        $timeout = max(1, (int) ($this->envValue('OCR_TIMEOUT_SECONDS') ?: 30));
+        $result = ProcessRunnerService::run([$binary, $path, $tmpBase, '-l', $language], $timeout);
 
         $textPath = $tmpBase . '.txt';
-        if ($exitCode !== 0 || !is_file($textPath)) {
-            $this->lastError = 'Falha ao executar OCR: ' . trim(implode(' ', $output));
+        if ((int) $result['exit_code'] !== 0 || !is_file($textPath)) {
+            $details = trim((string) $result['stdout'] . ' ' . (string) $result['stderr']);
+            $this->lastError = !empty($result['timed_out'])
+                ? 'OCR excedeu o tempo limite.'
+                : 'Falha ao executar OCR' . ($details !== '' ? ': ' . mb_substr($details, 0, 180) : '.');
             @unlink($textPath);
             return '';
         }

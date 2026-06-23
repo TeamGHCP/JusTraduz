@@ -32,24 +32,36 @@ $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $sqlPath = Join-Path $OutputDir "$dbName-$timestamp.sql"
 $finalPath = $sqlPath
 
-$args = @("--host=$hostName", "--port=$port", "--user=$dbUser", "--single-transaction", "--routines", "--triggers", "--databases", $dbName)
-if ($dbPass -ne "") {
-    $args = @("--password=$dbPass") + $args
-}
+try {
+    $previousMysqlPwd = [Environment]::GetEnvironmentVariable("MYSQL_PWD", "Process")
+    if ($dbPass -ne "") {
+        [Environment]::SetEnvironmentVariable("MYSQL_PWD", $dbPass, "Process")
+    }
 
-& $MysqlDump @args | Out-File -LiteralPath $sqlPath -Encoding utf8
-if ($LASTEXITCODE -ne 0) {
-    throw "mysqldump falhou com codigo $LASTEXITCODE"
+    $args = @("--host=$hostName", "--port=$port", "--user=$dbUser", "--single-transaction", "--routines", "--triggers", "--databases", $dbName)
+    & $MysqlDump @args | Out-File -LiteralPath $sqlPath -Encoding utf8
+    if ($LASTEXITCODE -ne 0) {
+        throw "mysqldump falhou com codigo $LASTEXITCODE"
+    }
+} finally {
+    [Environment]::SetEnvironmentVariable("MYSQL_PWD", $previousMysqlPwd, "Process")
 }
 
 if ($encryptPass -ne "") {
-    $encryptedPath = "$sqlPath.enc"
-    & openssl enc -aes-256-cbc -salt -pbkdf2 -in $sqlPath -out $encryptedPath -pass "pass:$encryptPass"
-    if ($LASTEXITCODE -ne 0) {
-        throw "openssl falhou ao criptografar o backup"
+    try {
+        $previousBackupPass = [Environment]::GetEnvironmentVariable("JTD_BACKUP_PASSWORD", "Process")
+        [Environment]::SetEnvironmentVariable("JTD_BACKUP_PASSWORD", $encryptPass, "Process")
+
+        $encryptedPath = "$sqlPath.enc"
+        & openssl enc -aes-256-cbc -salt -pbkdf2 -in $sqlPath -out $encryptedPath -pass "env:JTD_BACKUP_PASSWORD"
+        if ($LASTEXITCODE -ne 0) {
+            throw "openssl falhou ao criptografar o backup"
+        }
+        Remove-Item -LiteralPath $sqlPath
+        $finalPath = $encryptedPath
+    } finally {
+        [Environment]::SetEnvironmentVariable("JTD_BACKUP_PASSWORD", $previousBackupPass, "Process")
     }
-    Remove-Item -LiteralPath $sqlPath
-    $finalPath = $encryptedPath
 }
 
 $cutoff = (Get-Date).AddDays(-$RetentionDays)
