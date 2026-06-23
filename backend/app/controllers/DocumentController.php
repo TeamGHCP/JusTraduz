@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/services/GeminiService.php';
 require_once dirname(__DIR__) . '/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
 require_once dirname(__DIR__) . '/services/OcrService.php';
+require_once dirname(__DIR__) . '/services/PermissionService.php';
 require_once dirname(__DIR__) . '/services/PdfTextExtractor.php';
 require_once dirname(__DIR__) . '/services/StorageService.php';
 require_once dirname(__DIR__) . '/services/UploadScannerService.php';
@@ -208,9 +209,9 @@ class DocumentController extends BaseController
         }
 
         $this->saveAnalysis($documentId, $analysis);
-        $this->notifications->notify((int) $document['user_id'], 'An?lise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
+        $this->notifications->notify((int) $document['user_id'], 'Análise por IA atualizada para o documento: ' . (string) $document['nome_arquivo']);
         $this->audit->log('document.analyze', 'document', $documentId, ['analysis_generated' => true]);
-        $this->response->redirect($redirect . '&sucesso=' . urlencode('An?lise por IA gerada.'));
+        $this->response->redirect($redirect . '&sucesso=' . urlencode('Análise por IA gerada.'));
     }
 
     public function download(): void
@@ -415,10 +416,10 @@ class DocumentController extends BaseController
         $userId = (int) ($_SESSION['id'] ?? 0);
         $type = (string) ($_SESSION['tipo'] ?? '');
 
-        if ($type === 'cliente') {
+        if (PermissionService::roleHas($type, 'documents.view_own')) {
             $sql = 'SELECT d.* FROM documents d WHERE d.id = ? AND d.user_id = ?';
             $params = [$documentId, $userId];
-        } elseif ($type === 'advogado') {
+        } elseif (PermissionService::roleHas($type, 'documents.view_assigned')) {
             $sql = "SELECT d.* FROM documents d
                     WHERE d.id = ?
                     AND EXISTS (
@@ -427,7 +428,7 @@ class DocumentController extends BaseController
                         AND c.advogado_id = ?
                     )";
             $params = [$documentId, $userId];
-        } elseif ($type === 'admin') {
+        } elseif (PermissionService::roleHas($type, 'documents.view_all')) {
             $sql = 'SELECT d.* FROM documents d WHERE d.id = ?';
             $params = [$documentId];
         } else {
@@ -460,7 +461,7 @@ class DocumentController extends BaseController
         $type = (string) ($_SESSION['tipo'] ?? '');
         $userId = (int) ($_SESSION['id'] ?? 0);
 
-        return $type === 'admin' || ($type === 'cliente' && (int) ($document['user_id'] ?? 0) === $userId);
+        return PermissionService::canDeleteDocument($type, $userId, $document);
     }
 
     private function safeDownloadName(string $filename): string

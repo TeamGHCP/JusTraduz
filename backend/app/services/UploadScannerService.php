@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/ProcessRunnerService.php';
+
 class UploadScannerService
 {
     private ?string $lastError = null;
@@ -64,16 +66,20 @@ class UploadScannerService
             return true;
         }
 
-        $command = escapeshellarg($binary) . ' --no-summary ' . escapeshellarg($path);
-        $output = [];
-        $exitCode = 0;
-        exec($command, $output, $exitCode);
+        $timeout = max(1, (int) ($this->envValue('CLAMAV_TIMEOUT_SECONDS') ?: 15));
+        $result = ProcessRunnerService::run([$binary, '--no-summary', $path], $timeout);
 
-        if ($exitCode === 0) {
+        if ((int) $result['exit_code'] === 0) {
             return true;
         }
 
-        $this->lastError = 'Scanner antimalware reprovou o arquivo: ' . trim(implode(' ', $output));
+        if (!empty($result['timed_out'])) {
+            $this->lastError = 'Scanner antimalware excedeu o tempo limite.';
+            return false;
+        }
+
+        $details = trim((string) $result['stdout'] . ' ' . (string) $result['stderr']);
+        $this->lastError = 'Scanner antimalware reprovou o arquivo' . ($details !== '' ? ': ' . mb_substr($details, 0, 180) : '.');
         return false;
     }
 

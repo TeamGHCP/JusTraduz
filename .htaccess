@@ -17,6 +17,7 @@ ErrorDocument 500 /JusTraduz/frontend/500.html
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^(?:database|docs|\.git)(?:/|$) - [F,L]
+    RewriteRule ^storage-private(?:/|$) - [F,L]
     RewriteRule ^backend/(?:\.env|app|routes)(?:/|$) - [F,L]
     RewriteRule ^backend/storage/(?:documents|message-attachments)(?:/|$) - [F,L]
 </IfModule>

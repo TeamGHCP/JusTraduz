@@ -1,48 +1,48 @@
-# Operacao: Backup, Restore e Healthcheck
+# Operação pendente: backup, restore e healthcheck
 
-## Backup
+Estes passos ainda precisam ser executados e evidenciados em ambiente de homologação ou produção.
 
-Execute antes de deploys e periodicamente em producao:
+## Backup pendente
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\backup-database.ps1 -EnvFile backend\.env -OutputDir backups
 ```
 
-O script usa `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS` e `BACKUP_ENCRYPTION_PASSWORD`.
-
-Depois de gerar, valide o arquivo:
+Validar o arquivo gerado:
 
 ```powershell
 php scripts\check-backup-file.php backups\arquivo.sql
 ```
 
-Tambem copie os diretorios configurados em:
+Também falta definir rotina de cópia para:
 
 - `DOCUMENT_STORAGE_PATH`
 - `ATTACHMENT_STORAGE_PATH`
 - logs operacionais relevantes
 
-## Restore
+Em produção, esses caminhos devem ficar fora do webroot sempre que possível.
 
-Restaure primeiro em ambiente limpo ou homologacao:
+## Restore pendente
+
+Testar primeiro em ambiente limpo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\restore-database.ps1 -EnvFile backend\.env -BackupPath backups\arquivo.sql
 ```
 
-Depois restaure documentos e anexos para os caminhos configurados no `.env`.
+Depois restaurar documentos e anexos para os caminhos configurados no `.env`.
 
-## Validacao apos restore
+## Validação pendente após restore
 
 - [ ] Login funciona.
-- [ ] Usuarios e perfis existem.
+- [ ] Usuários e perfis existem.
 - [ ] Documentos aparecem.
-- [ ] Download exige autenticacao.
-- [ ] Solicitacoes e mensagens aparecem.
-- [ ] Auditoria esta preservada.
+- [ ] Download exige autenticação.
+- [ ] Solicitações e mensagens aparecem.
+- [ ] Auditoria está preservada.
 - [ ] Healthcheck responde.
 
-## Healthcheck
+## Healthcheck pendente em ambiente real
 
 Rota:
 
@@ -50,17 +50,10 @@ Rota:
 /backend/public/index.php?rota=/health
 ```
 
-Ela verifica aplicacao sem debug, banco, storage, fila, logs de e-mail e eventos de uso.
-
-Para validacao local completa, rode:
+Comandos:
 
 ```powershell
 php scripts\check-local-readiness.php
 php scripts\check-orphan-storage.php
-```
-
-O check de producao continua separado porque exige HTTPS e dominio real:
-
-```powershell
 php scripts\check-production-readiness.php --env=backend/.env
 ```

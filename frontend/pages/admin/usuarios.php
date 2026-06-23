@@ -222,7 +222,7 @@ $pendingProfessionalTotal = count_query(
                               <input class="input admin-reason-input" name="justificativa" placeholder="Fonte da validação" required>
                               <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
                             </form>
-                            <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar está OAB vai excluir a conta do profissional. Continuar?');">
+                            <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" data-confirm="Reprovar esta OAB vai manter a conta profissional bloqueada. Continuar?">
                               <?= csrf_input() ?>
                               <input type="hidden" name="user_id" value="<?= (int) $user['id'] ?>">
                               <input type="hidden" name="action" value="reject">
@@ -242,6 +242,7 @@ $pendingProfessionalTotal = count_query(
       </section>
     </main>
   </div>
+  <script src="../assets/js/confirm-actions.js"></script>
   <?php render_vlibras(); ?>
 </body>
 </html>

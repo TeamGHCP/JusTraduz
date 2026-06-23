@@ -8,6 +8,8 @@ require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
 
 class AuthController extends BaseController
 {
+    private const MIN_PASSWORD_LENGTH = 10;
+
     private AuditService $audit;
 
     public function __construct()
@@ -44,12 +46,12 @@ class AuthController extends BaseController
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->response->redirectWithError($frontUrl, 'Informe um e-mail v?lido.');
+            $this->response->redirectWithError($frontUrl, 'Informe um e-mail válido.');
         }
 
         $telefone = preg_replace('/[^\d()+\-\s]/', '', $telefone) ?? '';
         if ($telefone === '' || strlen(preg_replace('/\D+/', '', $telefone) ?? '') < 10) {
-            $this->response->redirectWithError($frontUrl, 'Informe um telefone v?lido com DDD.');
+            $this->response->redirectWithError($frontUrl, 'Informe um telefone válido com DDD.');
         }
 
         if (!in_array($tipo, ['cliente', 'advogado', 'estagiario'], true)) {
@@ -60,8 +62,9 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'As senhas não coincidem.');
         }
 
-        if (strlen($senha) < 6) {
-            $this->response->redirectWithError($frontUrl, 'A senha deve ter no mínimo 6 caracteres.');
+        $passwordError = $this->passwordValidationError($senha);
+        if ($passwordError !== null) {
+            $this->response->redirectWithError($frontUrl, $passwordError);
         }
 
         $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
@@ -92,11 +95,11 @@ class AuthController extends BaseController
             $oab_uf = null;
         }
 
-        // Verifica se e-mail j? existe
+        // Verifica se e-mail já existe
         $stmt = $this->pdo->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetch()) {
-            $this->response->redirectWithError($frontUrl, 'E-mail j? cadastrado.');
+            $this->response->redirectWithError($frontUrl, 'E-mail já cadastrado.');
         }
 
         if ($cpf && $this->cpfExists($cpf)) {
@@ -104,7 +107,7 @@ class AuthController extends BaseController
         }
 
         // Insere no banco
-        $senhaCriptografada = password_hash($senha, PASSWORD_DEFAULT);
+        $senhaCriptografada = $this->hashUserPassword($senha);
 
         $sql = "INSERT INTO users (nome, email, senha, tipo, telefone, cpf, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna, oab_submitted_at, profile_completed)
                 VALUES (:nome, :email, :senha, :tipo, :telefone, :cpf, :oab, :oab_uf, :oab_status, :oab_parametro, :oab_verificado, :oab_tipo, :status_cna, :oab_submitted_at, 1)";
@@ -196,11 +199,11 @@ class AuthController extends BaseController
             $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'wrong_password']);
             $this->response->redirectWithError($frontUrl, 'Email ou senha incorretos.');
         }
-
         if ((string) ($usuario['tipo'] ?? '') === 'admin') {
             $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'admin_used_common_login']);
             $this->response->redirectWithError($frontUrl, 'Email ou senha incorretos.');
         }
+        $this->rehashUserPasswordIfNeeded((int) $usuario['id'], $senha, (string) $usuario['senha']);
 
         if ((int) ($usuario['profile_completed'] ?? 1) !== 1) {
             $_SESSION['google_pending_user_id'] = (int) $usuario['id'];
@@ -216,6 +219,7 @@ class AuthController extends BaseController
         // Cria sessão
         // Protege contra fixation e rotaciona token CSRF
         secure_session_regenerate_now();
+
         $_SESSION['id']     = $usuario['id'];
         $_SESSION['nome']   = $usuario['nome'];
         $_SESSION['tipo']   = $usuario['tipo'];
@@ -531,6 +535,7 @@ class AuthController extends BaseController
         $_SESSION['logado'] = true;
         secure_session_regenerate_now();
         CsrfMiddleware::generateToken();
+        $this->rehashUserPasswordIfNeeded((int) $usuario['id'], $senha, (string) $usuario['senha']);
         $this->audit->log('auth.admin_login', 'user', (int) $usuario['id']);
 
         $this->response->redirect(APP_URL . '/frontend/admin/dashboard-admin.php');
@@ -554,7 +559,7 @@ class AuthController extends BaseController
         $passwordUpdated = false;
 
         if (!$nome || !$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe nome e e-mail v?lidos.'));
+            $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Informe nome e e-mail válidos.'));
         }
 
         $currentType = (string) ($_SESSION['tipo'] ?? '');
@@ -578,8 +583,9 @@ class AuthController extends BaseController
         }
 
         if ($novaSenha !== '' || $novaSenha2 !== '' || $senhaAtual !== '') {
-            if (strlen($novaSenha) < 6) {
-                $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A nova senha deve ter no mínimo 6 caracteres.'));
+            $passwordError = $this->passwordValidationError($novaSenha);
+            if ($passwordError !== null) {
+                $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode($passwordError));
             }
 
             if ($novaSenha !== $novaSenha2) {
@@ -676,6 +682,31 @@ class AuthController extends BaseController
         return (bool) $stmt->fetch();
     }
 
+    private function passwordValidationError(string $password): ?string
+    {
+        if (mb_strlen($password) < self::MIN_PASSWORD_LENGTH) {
+            return 'A senha deve ter pelo menos ' . self::MIN_PASSWORD_LENGTH . ' caracteres.';
+        }
+
+        if (!preg_match('/[A-Z]/', $password)) {
+            return 'A senha deve conter pelo menos uma letra maiuscula.';
+        }
+
+        if (!preg_match('/[a-z]/', $password)) {
+            return 'A senha deve conter pelo menos uma letra minuscula.';
+        }
+
+        if (!preg_match('/\d/', $password)) {
+            return 'A senha deve conter pelo menos um numero.';
+        }
+
+        if (!preg_match('/[^A-Za-z0-9]/', $password)) {
+            return 'A senha deve conter pelo menos um caractere especial.';
+        }
+
+        return null;
+    }
+
     private function handleProfilePhotoUpload(int $userId): ?string
     {
         $file = $_FILES['foto_perfil'] ?? null;
@@ -721,11 +752,45 @@ class AuthController extends BaseController
         $filename = $userId . '_' . bin2hex(random_bytes(12)) . '.' . $extensions[$mime];
         $targetPath = $targetDir . '/' . $filename;
 
-        if (!move_uploaded_file($tmpPath, $targetPath)) {
+        if (!$this->saveProfilePhotoWithoutMetadata($tmpPath, $targetPath, $mime)) {
             $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('Não foi possível salvar a foto.'));
         }
 
         return $relativeDir . '/' . $filename;
+    }
+
+    private function saveProfilePhotoWithoutMetadata(string $sourcePath, string $targetPath, string $mime): bool
+    {
+        if (!function_exists('imagecreatetruecolor')) {
+            return move_uploaded_file($sourcePath, $targetPath);
+        }
+
+        $image = match ($mime) {
+            'image/jpeg' => function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($sourcePath) : false,
+            'image/png' => function_exists('imagecreatefrompng') ? @imagecreatefrompng($sourcePath) : false,
+            'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($sourcePath) : false,
+            default => false,
+        };
+
+        if (!$image) {
+            return move_uploaded_file($sourcePath, $targetPath);
+        }
+
+        $saved = match ($mime) {
+            'image/jpeg' => imagejpeg($image, $targetPath, 88),
+            'image/png' => imagepng($image, $targetPath, 6),
+            'image/webp' => function_exists('imagewebp') ? imagewebp($image, $targetPath, 86) : false,
+            default => false,
+        };
+        imagedestroy($image);
+
+        if (!$saved) {
+            @unlink($targetPath);
+            return move_uploaded_file($sourcePath, $targetPath);
+        }
+
+        @unlink($sourcePath);
+        return true;
     }
 
     private function deleteOldProfilePhoto(string $oldPhoto, string $newPhoto): void
@@ -792,7 +857,7 @@ class AuthController extends BaseController
         $frontUrl = APP_URL . '/frontend/recuperar-senha.html';
 
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->response->redirectWithError($frontUrl, 'Informe um e-mail v?lido.');
+            $this->response->redirectWithError($frontUrl, 'Informe um e-mail válido.');
         }
 
         if ($action === 'request_code') {
@@ -808,8 +873,9 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'Informe o código de 6 dígitos enviado por e-mail.');
         }
 
-        if (strlen($senha) < 6) {
-            $this->response->redirectWithError($frontUrl, 'A nova senha deve ter no mínimo 6 caracteres.');
+        $passwordError = $this->passwordValidationError($senha);
+        if ($passwordError !== null) {
+            $this->response->redirectWithError($frontUrl, $passwordError);
         }
 
         if ($senha !== $senha2) {
@@ -912,8 +978,9 @@ class AuthController extends BaseController
             return;
         }
 
-        if (strlen($senha) < 6) {
-            $this->response->json(['success' => false, 'message' => 'A nova senha deve ter no mínimo 6 caracteres.'], 422);
+        $passwordError = $this->passwordValidationError($senha);
+        if ($passwordError !== null) {
+            $this->response->json(['success' => false, 'message' => $passwordError], 422);
             return;
         }
 
@@ -1055,11 +1122,44 @@ class AuthController extends BaseController
     private function updateUserPassword(int $userId, string $plainPassword): void
     {
         $stmt = $this->pdo->prepare("UPDATE users SET senha = ? WHERE id = ? AND status = 'ativo'");
-        $stmt->execute([password_hash($plainPassword, PASSWORD_DEFAULT), $userId]);
+        $stmt->execute([$this->hashUserPassword($plainPassword), $userId]);
 
         if ($stmt->rowCount() !== 1) {
             throw new RuntimeException('Não foi possível atualizar a senha da conta ativa.');
         }
+    }
+
+    private function hashUserPassword(string $plainPassword): string
+    {
+        return password_hash($plainPassword, $this->passwordHashAlgorithm(), $this->passwordHashOptions());
+    }
+
+    private function rehashUserPasswordIfNeeded(int $userId, string $plainPassword, string $currentHash): void
+    {
+        if (!password_needs_rehash($currentHash, $this->passwordHashAlgorithm(), $this->passwordHashOptions())) {
+            return;
+        }
+
+        $stmt = $this->pdo->prepare("UPDATE users SET senha = ? WHERE id = ? AND status = 'ativo'");
+        $stmt->execute([$this->hashUserPassword($plainPassword), $userId]);
+    }
+
+    private function passwordHashAlgorithm()
+    {
+        return defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_BCRYPT;
+    }
+
+    private function passwordHashOptions(): array
+    {
+        if (defined('PASSWORD_ARGON2ID')) {
+            return [
+                'memory_cost' => PASSWORD_ARGON2_DEFAULT_MEMORY_COST,
+                'time_cost' => PASSWORD_ARGON2_DEFAULT_TIME_COST,
+                'threads' => PASSWORD_ARGON2_DEFAULT_THREADS,
+            ];
+        }
+
+        return ['cost' => 12];
     }
 
     private function destroySessionCookies(): void
@@ -1102,7 +1202,7 @@ class AuthController extends BaseController
           </tr>
           <tr>
             <td align="center" style="padding:0 40px 28px;color:#3c4043;font-size:14px;line-height:20px;">
-              Ol?, {$safeName}.
+              Olá, {$safeName}.
             </td>
           </tr>
           <tr>
@@ -1217,7 +1317,7 @@ HTML;
         $stmt->execute([
             mb_substr($nome, 0, 100),
             $email,
-            password_hash(bin2hex(random_bytes(32)), PASSWORD_DEFAULT),
+            $this->hashUserPassword(bin2hex(random_bytes(32))),
             $googleSub,
             $picture !== '' ? mb_substr($picture, 0, 255) : null,
         ]);

@@ -56,11 +56,13 @@ $routes = [
     ['POST', '/admin/users/status', 'AdminController', 'updateUserStatus'],
     ['POST', '/admin/cases/update', 'AdminController', 'updateCase'],
     ['POST', '/admin/professionals/oab', 'AdminController', 'updateProfessionalOab'],
+    ['GET', '/admin/reports/summary', 'AdminController', 'reportsSummary'],
     ['GET', '/admin/audit/export', 'AuditExportController', 'csv'],
 ];
 
 foreach ($routes as [$method, $path, $controller, $action]) {
     $router->{strtolower($method)}($path, $controller, $action);
+    $router->{strtolower($method)}('/api/v1' . $path, $controller, $action);
 }
 
 $router->dispatch();

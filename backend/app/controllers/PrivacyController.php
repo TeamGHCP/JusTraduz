@@ -53,6 +53,8 @@ class PrivacyController extends BaseController
         }
 
         $documents = $this->fetchAll('SELECT id, caminho FROM documents WHERE user_id = ?', [$userId]);
+        $attachments = $this->fetchAll('SELECT id, attachment_path FROM messages WHERE sender_id = ? AND attachment_path IS NOT NULL', [$userId]);
+        $profilePhoto = (string) ($this->fetchOne('SELECT foto_perfil FROM users WHERE id = ?', [$userId])['foto_perfil'] ?? '');
 
         $this->pdo->beginTransaction();
         try {
@@ -68,7 +70,15 @@ class PrivacyController extends BaseController
         }
 
         foreach ($documents as $document) {
-            $this->deleteStoredFile((string) ($document['caminho'] ?? ''));
+            $this->deleteStoredDocument((string) ($document['caminho'] ?? ''));
+        }
+
+        foreach ($attachments as $attachment) {
+            $this->deleteStoredAttachment((string) ($attachment['attachment_path'] ?? ''));
+        }
+
+        if ($profilePhoto !== '') {
+            $this->deleteStoredProfilePhoto($profilePhoto);
         }
 
         secure_session_destroy_current();
@@ -185,9 +195,57 @@ class PrivacyController extends BaseController
         return (int) $stmt->fetchColumn();
     }
 
-    private function deleteStoredFile(string $relativePath): void
+    private function deleteStoredDocument(string $reference): void
     {
-        $absolutePath = $this->storage->documentPathFromReference($relativePath);
+        $absolutePath = $this->storage->documentPathFromReference($reference);
+        $this->unlinkIfFile($absolutePath);
+    }
+
+    private function deleteStoredAttachment(string $reference): void
+    {
+        $absolutePath = $this->storage->attachmentPathFromReference($reference);
+        $this->unlinkIfFile($absolutePath);
+    }
+
+    private function deleteStoredProfilePhoto(string $relativePath): void
+    {
+        $projectRoot = dirname(__DIR__, 3);
+        $absolutePath = realpath($projectRoot . '/' . ltrim(str_replace('\\', '/', $relativePath), '/'));
+        $profileRoot = realpath($this->profilePhotoRoot($projectRoot));
+
+        if (!$absolutePath || !$profileRoot) {
+            return;
+        }
+
+        $insideProfileRoot = str_starts_with(
+            str_replace('\\', '/', $absolutePath),
+            rtrim(str_replace('\\', '/', $profileRoot), '/') . '/'
+        );
+
+        if ($insideProfileRoot) {
+            $this->unlinkIfFile($absolutePath);
+        }
+    }
+
+    private function profilePhotoRoot(string $projectRoot): string
+    {
+        $configuredPath = trim((string) getenv('PROFILE_PHOTO_STORAGE_PATH'));
+        if ($configuredPath === '' && function_exists('database_env_values')) {
+            $env = database_env_values($projectRoot . '/backend/.env');
+            $configuredPath = trim((string) ($env['PROFILE_PHOTO_STORAGE_PATH'] ?? ''));
+        }
+
+        $configuredPath = $configuredPath !== '' ? $configuredPath : 'backend/storage/profile_photos';
+        $normalizedPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $configuredPath);
+        if (preg_match('/^[A-Za-z]:[\\\\\\/]/', $normalizedPath) === 1 || str_starts_with($normalizedPath, DIRECTORY_SEPARATOR)) {
+            return $normalizedPath;
+        }
+
+        return $projectRoot . DIRECTORY_SEPARATOR . ltrim($normalizedPath, DIRECTORY_SEPARATOR);
+    }
+
+    private function unlinkIfFile(?string $absolutePath): void
+    {
         if ($absolutePath === null) {
             return;
         }

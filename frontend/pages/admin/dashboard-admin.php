@@ -430,7 +430,7 @@ $healthChecks = [
                       <input type="hidden" name="justificativa" value="Aprovado pela central admin após validação manual.">
                       <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
                     </form>
-                    <form action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Reprovar está OAB vai excluir a conta do profissional. Continuar?');">
+                    <form action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" data-confirm="Reprovar esta OAB vai manter a conta profissional bloqueada. Continuar?">
                       <?= csrf_input() ?>
                       <input type="hidden" name="user_id" value="<?= (int) $professional['id'] ?>">
                       <input type="hidden" name="action" value="reject">
@@ -536,6 +536,7 @@ $healthChecks = [
       </section>
     </main>
   </div>
+  <script src="../assets/js/confirm-actions.js"></script>
   <?php render_onboarding_assets('dashboard_admin', '2026.06.11', 'admin'); ?>
   <?php render_vlibras(); ?>
 </body>

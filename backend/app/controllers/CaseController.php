@@ -3,6 +3,7 @@
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
+require_once dirname(__DIR__) . '/services/PermissionService.php';
 require_once dirname(__DIR__) . '/services/StorageService.php';
 require_once dirname(__DIR__) . '/services/UploadScannerService.php';
 
@@ -383,12 +384,7 @@ class CaseController extends BaseController
         $userId = (int) ($_SESSION['id'] ?? 0);
         $type = (string) ($_SESSION['tipo'] ?? '');
 
-        return match ($type) {
-            'admin' => true,
-            'advogado' => (int) ($case['advogado_id'] ?? 0) === $userId,
-            'cliente' => (int) ($case['cliente_id'] ?? 0) === $userId,
-            default => false,
-        };
+        return PermissionService::canManageCase($type, $userId, $case);
     }
 
     private function currentProfessionalIsVerified(): bool
@@ -420,7 +416,7 @@ class CaseController extends BaseController
 
     private function canAccessCaseId(int $caseId, int $userId, string $type): bool
     {
-        if ($type === 'admin') {
+        if (PermissionService::roleHas($type, 'cases.view_all')) {
             $stmt = $this->pdo->prepare('SELECT id FROM cases WHERE id = ?');
             $stmt->execute([$caseId]);
         } else {

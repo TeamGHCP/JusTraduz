@@ -53,6 +53,9 @@ $_POST = ['email' => 'admin@teste.local', 'senha' => 'Senha@123'];
 $redirect = expectRedirect(static fn () => (new AuthController())->adminLogin());
 assertStringContains('/frontend/admin/dashboard-admin.php', $redirect, 'Admin ativo deve entrar no painel administrativo.');
 assertEquals('admin', $_SESSION['tipo'] ?? '', 'Admin login deve manter perfil admin na sessao.');
+assertTrue(PermissionService::roleHas('admin', 'reports.view') === true, 'Admin deve ter permissao para relatorios.');
+assertTrue(PermissionService::roleHas('cliente', 'reports.view') === false, 'Cliente nao deve ter permissao para relatorios.');
+assertTrue(PermissionService::roleHas('estagiario', 'cases.view_assigned') === true, 'Perfil estagiario deve permanecer com permissao assistiva.');
 
 reset_test_state();
 secure_session_start();
@@ -149,6 +152,24 @@ assertEquals('approved', $approvedProfessional['oab_status'] ?? '', 'Aprovacao O
 assertEquals('verificado', $approvedProfessional['status_cna'] ?? '', 'Aprovacao OAB deve atualizar status CNA.');
 $pendingQueueCount = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE id = 4 AND oab_verificado = 0 AND COALESCE(status_cna, 'pendente') = 'pendente'")->fetchColumn();
 assertEquals(0, $pendingQueueCount, 'Profissional aprovado nao deve continuar na fila pendente.');
+
+reset_test_state();
+secure_session_start();
+$_SESSION = ['logado' => true, 'id' => 5, 'tipo' => 'admin'];
+$_SERVER['REQUEST_METHOD'] = 'GET';
+ob_start();
+(new AdminController())->reportsSummary();
+$reportsJson = ob_get_clean();
+$reports = json_decode((string) $reportsJson, true);
+assertTrue(is_array($reports['users_by_role'] ?? null), 'Relatorio gerencial deve retornar usuarios por perfil.');
+assertTrue(isset($reports['sla']['overdue']), 'Relatorio gerencial deve retornar resumo de SLA.');
+
+$slaStatus = SlaService::statusForCase([
+    'status' => 'aberto',
+    'prioridade' => 'alta',
+    'created_at' => date('Y-m-d H:i:s', time() - 90000),
+]);
+assertEquals('overdue', $slaStatus['state'] ?? '', 'SLA deve marcar caso antigo de alta prioridade como vencido.');
 
 reset_test_state();
 secure_session_start();

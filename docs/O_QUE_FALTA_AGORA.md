@@ -1,59 +1,59 @@
 # O que falta agora
 
-Data da revisao: 22/06/2026
+Data da revisão: 23/06/2026
 
-Este documento e a lista unica de pendencias reais do JusTraduz. Itens ja implementados no sistema foram removidos da documentacao ativa para evitar varias versoes da verdade.
+Esta é a lista única de pendências reais do JusTraduz. Itens já implementados foram removidos.
 
-## Ambiente local
+## Apresentação escolar da SA
 
-O ambiente local esta separado do criterio de producao. Para validar a maquina de desenvolvimento/apresentacao, use:
+- Rodar o roteiro completo de QA manual em `docs/ROTEIRO_QA_MANUAL.md`.
+- Testar visualmente em desktop, notebook, celular e projetor.
+- Conferir login e fluxo dos quatro perfis: Cliente, Advogado, Estagiário e Admin.
+- Ensaiar fluxo principal: upload, análise/explicação, solicitação, chat, agenda, admin e LGPD.
+- Preparar plano B para falha de internet, Gemini, DataJud ou SMTP.
 
-```powershell
-php scripts\check-local-readiness.php
-php scripts\check-orphan-storage.php
-php backend\tests\run.php
-php scripts\check-references.php
-```
+## Produção ou homologação real
 
-O check de producao (`scripts/check-production-readiness.php --env=backend/.env`) exige HTTPS e dominio real.
-
-## Antes de colocar em producao real
-
-- Configurar `backend/.env` real com `APP_URL` e `HEALTHCHECK_URL` em HTTPS, sem placeholders.
-- Instalar certificado TLS no servidor e aplicar o modelo `docs/apache-justraduz-production.conf`.
-- Definir `BACKUP_ENCRYPTION_PASSWORD` e rodar restore testado em ambiente separado.
-- Configurar SMTP real ou provedor transacional e validar entregabilidade.
+- Configurar `backend/.env` real com `APP_DEBUG=false`, URLs HTTPS reais e sem placeholders.
+- Instalar certificado TLS e aplicar o modelo `docs/apache-justraduz-production.conf`.
+- Configurar SMTP real e validar entregabilidade.
+- Configurar Gemini, DataJud, Google OAuth e demais integrações externas somente quando forem usadas.
 - Configurar monitoramento externo para `/backend/public/index.php?rota=/health`.
-- Agendar `scripts/run-jobs.php` para processar a fila quando `ASYNC_JOBS_ENABLED=true`.
-- Definir storage privado fora do webroot em `DOCUMENT_STORAGE_PATH` e `ATTACHMENT_STORAGE_PATH`.
-- Instalar/configurar ClamAV via `CLAMAV_BINARY` se a producao exigir scanner externo alem da heuristica interna.
+- Definir `BACKUP_ENCRYPTION_PASSWORD`.
+- Executar backup e restore em ambiente limpo.
+- Definir storage privado fora do webroot para documentos e anexos.
+- Instalar/configurar ClamAV se houver uploads reais de usuários.
 - Instalar/configurar Tesseract se `OCR_ENABLED=true`.
-- Preencher e assinar `docs/REGISTRO_REVISAO_JURIDICA.md` com profissional juridico.
-- Validar o PWA em HTTPS real no dominio final, incluindo instalacao em Android e iPhone.
-- Rodar em producao/homologacao:
+- Agendar `scripts/run-jobs.php` se `ASYNC_JOBS_ENABLED=true`.
+- Validar PWA em HTTPS real, incluindo instalação em Android/iPhone.
 
-```powershell
-php backend\tests\run.php
-php scripts\check-references.php
-php scripts\check-production-readiness.php --env=backend/.env
-```
+## Banco de dados
 
-## Produto ainda nao implementado
+- Revisar antes de aplicar a migration `database/migrations/2026_06_23_cases_sla.sql`.
+- Decidir se SLA, escalonamento e responsável operacional serão persistidos no banco ou mantidos apenas calculados em tela.
+- Criar migration incremental específica para qualquer base real existente.
+- Testar rollback de migration em cópia do banco antes de produção.
 
-- Planos e cobranca.
-- Multiempresa/escritorios.
-- RBAC granular por recurso.
-- Relatorios gerenciais.
-- SLA, prioridade operacional e escalonamento.
-- API versionada `/api/v1`.
-- Acessibilidade WCAG AA validada por matriz formal.
-- Consulta processual por CPF com API juridica paga, contrato, consentimento reforcado e auditoria.
+## Produto ainda futuro
 
-## Polimento ainda nao implementado
+- Planos e cobrança.
+- Multiempresa/escritórios.
+- Tela administrativa para editar permissões dinamicamente.
+- Relatórios gerenciais avançados e exportáveis.
+- Escalonamento operacional com notificações automáticas e regras anti-spam.
+- API pública documentada para integrações externas, caso o projeto vire produto real.
 
-- Teste visual em mobile/tablet/projetor com matriz real.
-- Empty/loading/error states revisados em todas as telas.
-- Revisao final de copy juridica por profissional.
-- Manual operacional interno para admin/suporte.
-- Automatizar limpeza de arquivos orfaos somente depois de revisar o relatorio de `scripts/check-orphan-storage.php`.
-- Relatorio periodico de saude operacional.
+## Acessibilidade e revisão formal
+
+- Completar `docs/MATRIZ_WCAG_AA.md` com evidências reais.
+- Rodar navegação por teclado em todas as telas principais.
+- Validar com leitor de tela, como NVDA ou equivalente.
+- Medir contraste com ferramenta externa.
+- Revisar textos jurídicos com profissional habilitado e preencher `docs/REGISTRO_REVISAO_JURIDICA.md`.
+
+## Polimento
+
+- Revisar empty/loading/error states em todas as telas.
+- Criar manual operacional interno para admin/suporte.
+- Automatizar limpeza de arquivos órfãos somente depois de revisar o relatório de `scripts/check-orphan-storage.php`.
+- Criar relatório periódico de saúde operacional.

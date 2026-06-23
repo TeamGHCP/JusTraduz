@@ -1,16 +1,17 @@
-# Registro de Revisão Jurídica
+# Registro de revisão jurídica pendente
 
-Use este arquivo para registrar a aprovação profissional antes da venda comercial.
+Este arquivo ainda precisa ser preenchido por profissional habilitado antes de venda comercial ou uso real com clientes.
 
-## Escopo revisado
+## Escopo a revisar
 
 - `frontend/termos.html`
 - `frontend/privacidade.html`
-- consentimento de IA no chat público;
-- consentimento de análise de documentos por IA;
-- consentimento DataJud por número CNJ;
-- mensagens de OAB pendente/aprovada/rejeitada;
-- disclaimers de que IA é apoio informativo e não parecer jurídico.
+- Consentimento de IA no chat público.
+- Consentimento de análise de documentos por IA.
+- Consentimento DataJud por número CNJ.
+- Mensagens de OAB pendente, aprovada e rejeitada.
+- Disclaimers de que IA é apoio informativo e não parecer jurídico.
+- Fluxos LGPD de exportação e encerramento de conta.
 
 ## Responsável pela revisão
 

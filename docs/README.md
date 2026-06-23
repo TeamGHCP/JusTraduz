@@ -1,14 +1,16 @@
-# Documentação do JusTraduz
+# Documentação de pendências
 
-A documentação ativa fica centralizada aqui para evitar várias versões da verdade.
+Esta pasta deve conter apenas pendências reais, checklists de validação e guias necessários para ações que ainda dependem de ambiente, revisão manual ou decisão futura.
 
-## Documentos ativos
+## Arquivos ativos
 
-- `O_QUE_FALTA_AGORA.md`: lista única das pendências reais que ainda não foram feitas.
-- `REGISTRO_REVISAO_JURIDICA.md`: modelo para registrar aprovação jurídica externa ainda pendente.
-- `apache-justraduz-production.conf`: modelo Apache/HTTPS/HSTS para deploy real.
-- `CHECKLIST_RELEASE.md`: checklist antes de release/deploy.
-- `CHECKLIST_APRESENTACAO_SA.md`: checklist para apresentacao local da SA.
-- `OPERACAO_BACKUP_RESTORE.md`: procedimento de backup, restore, rollback e healthcheck.
-- `STATUS_MODULOS_2026-06-22.md`: status tecnico da passada pelos 12 modulos.
-- `ROTEIRO_QA_MANUAL.md`: roteiro manual para validar cliente, profissional, admin, responsivo e acessibilidade.
+- `O_QUE_FALTA_AGORA.md`: lista única do que ainda falta.
+- `ROTEIRO_QA_MANUAL.md`: roteiro manual ainda não executado por completo.
+- `CHECKLIST_APRESENTACAO_SA.md`: preparação para a apresentação escolar.
+- `CHECKLIST_RELEASE.md`: validações antes de deploy/homologação.
+- `MATRIZ_WCAG_AA.md`: matriz de acessibilidade ainda pendente de evidências formais.
+- `REGISTRO_REVISAO_JURIDICA.md`: registro de revisão jurídica externa ainda pendente.
+- `CONFIGURAR_CLAMAV.md`: guia para configurar ClamAV quando houver servidor real.
+- `OPERACAO_BACKUP_RESTORE.md`: validação operacional de backup, restore e healthcheck.
+
+Documentos de histórico, status antigo e funcionalidades já implementadas não devem ficar aqui.

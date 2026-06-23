@@ -1,25 +1,25 @@
-# Roteiro de QA manual local
+# Roteiro pendente de QA manual
 
-Use este roteiro antes de apresentacao ou depois de qualquer mudanca grande.
+Execute este roteiro antes da apresentação ou depois de mudança grande.
 
-## Preparacao
+## Preparação
 
 - [ ] XAMPP com Apache e MySQL ativos.
 - [ ] `php scripts\check-local-readiness.php` passando.
 - [ ] `php backend\tests\run.php` passando.
 - [ ] `php scripts\check-references.php` passando.
-- [ ] `php scripts\check-orphan-storage.php` sem orfaos inesperados.
-- [ ] Navegador em janela anonima ou cache limpo.
+- [ ] `php scripts\check-orphan-storage.php` sem órfãos inesperados.
+- [ ] Navegador em janela anônima ou cache limpo.
 
-## Fluxo cliente
+## Fluxo Cliente
 
-- [ ] Entrar com usuario cliente demo.
+- [ ] Entrar com usuário cliente demo.
 - [ ] Abrir dashboard do cliente.
-- [ ] Enviar documento valido.
-- [ ] Confirmar que upload grande, vazio ou formato proibido mostra erro claro.
+- [ ] Enviar documento válido.
+- [ ] Confirmar erro claro para upload grande, vazio ou formato proibido.
 - [ ] Abrir documento enviado.
-- [ ] Gerar ou explicar analise por IA quando configurada.
-- [ ] Criar solicitacao de ajuda vinculada ao documento.
+- [ ] Gerar ou explicar análise por IA quando configurada.
+- [ ] Criar solicitação de ajuda vinculada ao documento.
 - [ ] Abrir chat do caso.
 - [ ] Enviar mensagem com e sem anexo.
 - [ ] Agendar atendimento.
@@ -33,15 +33,17 @@ Use este roteiro antes de apresentacao ou depois de qualquer mudanca grande.
 - [ ] Aceitar caso aberto.
 - [ ] Ver documentos vinculados permitidos.
 - [ ] Usar chat, tarefas e agenda.
-- [ ] Confirmar que profissional pendente nao acessa area liberada.
+- [ ] Confirmar que profissional pendente não acessa área liberada.
+- [ ] Entrar como Estagiário e conferir limites do perfil.
 
-## Fluxo admin
+## Fluxo Admin
 
 - [ ] Entrar pelo login administrativo.
 - [ ] Abrir dashboard admin.
-- [ ] Revisar usuarios.
+- [ ] Revisar usuários.
 - [ ] Aprovar/rejeitar profissional OAB.
 - [ ] Consultar documentos.
+- [ ] Abrir relatórios admin.
 - [ ] Exportar auditoria CSV.
 - [ ] Confirmar que telas admin exigem perfil admin.
 
@@ -50,15 +52,15 @@ Use este roteiro antes de apresentacao ou depois de qualquer mudanca grande.
 - [ ] Desktop.
 - [ ] Notebook.
 - [ ] Celular pelo DevTools.
-- [ ] Menu lateral sem sobrepor conteudo.
-- [ ] Chat e agenda usaveis em tela estreita.
-- [ ] Foco visivel ao navegar por teclado.
+- [ ] Menu lateral sem sobrepor conteúdo.
+- [ ] Chat e agenda usáveis em tela estreita.
+- [ ] Foco visível ao navegar por teclado.
 - [ ] Inputs com labels.
-- [ ] Mensagens de erro legiveis.
+- [ ] Mensagens de erro legíveis.
 
-## Plano B para apresentacao
+## Plano B para apresentação
 
 - [ ] Se Gemini/DataJud/SMTP falharem, demonstrar dados demo e explicar fallback.
 - [ ] Manter arquivo de exemplo local para upload.
-- [ ] Ter uma conta cliente, profissional e admin ja testadas.
-- [ ] Nao depender de API externa para o roteiro principal.
+- [ ] Ter conta Cliente, Advogado, Estagiário e Admin já testadas.
+- [ ] Não depender de API externa para o roteiro principal.

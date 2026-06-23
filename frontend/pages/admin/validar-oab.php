@@ -242,7 +242,7 @@ $recentReviews = fetch_all(
                           <button class="btn btn-success btn-sm" type="submit"><?= icon_svg('check') ?> Aprovar</button>
                         </form>
 
-                        <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" onsubmit="return confirm('Rejeitar este cadastro manterá a conta bloqueada e enviará o motivo ao usuário. Continuar?');">
+                        <form class="action-form action-form-stack" action="<?= e(app_url('/backend/public/index.php?rota=/admin/professionals/oab')) ?>" method="post" data-confirm="Rejeitar este cadastro manterá a conta bloqueada e enviará o motivo ao usuário. Continuar?">
                           <?= csrf_input() ?>
                           <input type="hidden" name="user_id" value="<?= (int) $professional['id'] ?>">
                           <input type="hidden" name="action" value="reject">
@@ -312,6 +312,7 @@ $recentReviews = fetch_all(
     </main>
   </div>
   <script src="../assets/js/admin-oab-validation.js"></script>
+  <script src="../assets/js/confirm-actions.js"></script>
   <?php render_vlibras(); ?>
 </body>
 </html>
