@@ -10,6 +10,7 @@ A documentacao ativa fica em `docs/`:
 - `docs/O_QUE_FALTA_AGORA.md`
 - `docs/REGISTRO_REVISAO_JURIDICA.md`
 - `docs/apache-justraduz-production.conf`
+- `docs/CONFIGURAR_CLAMAV.md`
 - `docs/CHECKLIST_RELEASE.md`
 - `docs/CHECKLIST_APRESENTACAO_SA.md`
 - `docs/OPERACAO_BACKUP_RESTORE.md`
@@ -89,6 +90,7 @@ Principais grupos:
 - DataJud/CNJ: `DATAJUD_*`.
 - Operacao: `HEALTHCHECK_TOKEN`, `BACKUP_*`, `CLAMAV_BINARY`.
 - Storage: `DOCUMENT_STORAGE_PATH`, `ATTACHMENT_STORAGE_PATH`, `PROFILE_PHOTO_STORAGE_PATH`. Para documentos e anexos, use `storage-private/...` no ambiente local e, em producao, prefira um caminho absoluto fora do webroot.
+- Upload seguro: `CLAMAV_BINARY` e `CLAMAV_TIMEOUT_SECONDS`. O sistema funciona sem ClamAV usando heuristica interna, mas para producao real siga `docs/CONFIGURAR_CLAMAV.md`.
 
 ## Limpeza aplicada
 

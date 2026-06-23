@@ -26,7 +26,7 @@ O check de producao (`scripts/check-production-readiness.php --env=backend/.env`
 - Configurar monitoramento externo para `/backend/public/index.php?rota=/health`.
 - Agendar `scripts/run-jobs.php` para processar a fila quando `ASYNC_JOBS_ENABLED=true`.
 - Definir `DOCUMENT_STORAGE_PATH` e `ATTACHMENT_STORAGE_PATH` como storage privado. Localmente `storage-private/...` esta protegido por `.htaccess`; em producao, prefira caminho absoluto fora do webroot.
-- Instalar/configurar ClamAV via `CLAMAV_BINARY` se a producao exigir scanner externo alem da heuristica interna.
+- Instalar/configurar ClamAV via `CLAMAV_BINARY` seguindo `docs/CONFIGURAR_CLAMAV.md` se a producao receber uploads reais de usuarios.
 - Instalar/configurar Tesseract se `OCR_ENABLED=true`.
 - Preencher e assinar `docs/REGISTRO_REVISAO_JURIDICA.md` com profissional juridico.
 - Validar o PWA em HTTPS real no dominio final, incluindo instalacao em Android e iPhone.
