@@ -257,6 +257,8 @@
   .admin-hero,
   .analysis-hero,
   .admin-filter,
+  .lawyer-focus-panel,
+  .lawyer-summary-grid,
   .task-summary-grid,
   .task-filter-grid,
   .lawyer-directory-filter,
@@ -305,13 +307,15 @@
   .admin-hero,
   .analysis-hero,
   .lawyer-directory-hero,
+  .lawyer-focus-panel,
   .professional-alert {
     align-items: flex-start;
     flex-direction: column;
   }
 
   .admin-hero-actions,
-  .analysis-hero-actions {
+  .analysis-hero-actions,
+  .lawyer-focus-actions {
     justify-content: flex-start;
   }
 
@@ -388,6 +392,7 @@
   .form-actions,
   .hero-actions,
   .admin-hero-actions,
+  .lawyer-focus-actions,
   .selected-document-context .btn,
   .analysis-hero-actions {
     width: 100%;
@@ -396,6 +401,7 @@
   .form-actions .btn,
   .hero-actions .btn,
   .admin-hero-actions .btn,
+  .lawyer-focus-actions .btn,
   .analysis-hero-actions .btn,
   .chat-compose .btn {
     width: 100%;
@@ -495,9 +501,28 @@
   }
 
   .case-meta-grid,
+  .lawyer-work-meta,
   .task-row-meta,
   .chat-context-grid {
     grid-template-columns: 1fr;
+  }
+
+  .lawyer-work-item {
+    grid-template-columns: 1fr;
+  }
+
+  .lawyer-work-item summary,
+  .lawyer-work-details {
+    grid-template-columns: 1fr;
+  }
+
+  .lawyer-work-preview {
+    white-space: normal;
+  }
+
+  .lawyer-work-toggle,
+  .lawyer-work-details .btn {
+    width: 100%;
   }
 
   .message {
