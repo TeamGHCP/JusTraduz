@@ -129,20 +129,20 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
   <div class="app-shell">
     <?php render_sidebar($type, 'acompanhar-solicitacoes.php'); ?>
 
-    <main class="app-main">
-      <?php render_topbar('Acompanhar solicitações', 'Fila de casos, responsáveis, chat e próximas ações.', current_user_name()); ?>
+    <main class="app-main cases-page">
+      <?php render_topbar('Acompanhar solicitações', 'Veja o que precisa de atenção e abra o atendimento certo.', current_user_name()); ?>
 
-      <section class="grid grid-4">
-        <?= stat_card('Resultado filtrado', $total, 'case') ?>
-        <?= stat_card('Abertas', $openCount, 'help') ?>
-        <?= stat_card('Em andamento', $progressCount, 'chat') ?>
-        <?= stat_card('Prioridade alta', $highCount, 'shield') ?>
+      <section class="case-summary-strip" aria-label="Resumo das solicitações">
+        <strong><?= e((string) $total) ?> caso<?= $total === 1 ? '' : 's' ?></strong>
+        <span><?= e((string) $openCount) ?> aberto<?= $openCount === 1 ? '' : 's' ?></span>
+        <span><?= e((string) $progressCount) ?> em andamento</span>
+        <span><?= e((string) $highCount) ?> prioridade alta</span>
       </section>
 
-      <form class="card admin-filter case-filter" method="get">
+      <form class="card admin-filter case-filter case-filter-compact" method="get">
         <div class="field">
           <label for="q">Busca</label>
-          <input class="input" id="q" name="q" value="<?= e($q) ?>" placeholder="Caso, descricao, cliente ou advogado">
+          <input class="input" id="q" name="q" value="<?= e($q) ?>" placeholder="Caso, descrição, cliente ou advogado">
         </div>
         <div class="field">
           <label for="status">Status</label>
@@ -158,7 +158,7 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
           <select class="select" id="prioridade" name="prioridade">
             <option value="">Todas</option>
             <option value="alta" <?= $priority === 'alta' ? 'selected' : '' ?>>Alta</option>
-            <option value="media" <?= $priority === 'media' ? 'selected' : '' ?>>M?dia</option>
+            <option value="media" <?= $priority === 'media' ? 'selected' : '' ?>>Média</option>
             <option value="baixa" <?= $priority === 'baixa' ? 'selected' : '' ?>>Baixa</option>
           </select>
         </div>
@@ -199,68 +199,68 @@ $unassignedCount = count(array_filter($cases, static fn (array $case): bool => e
               <?php
                 $caseId = (int) $case['id'];
                 $isOpenForLawyer = $type === 'advogado' && empty($case['advogado_id']) && ($case['status'] ?? '') === 'aberto';
+                $lastActivity = !empty($case['last_message_at']) ? (string) $case['last_message_at'] : (string) $case['created_at'];
               ?>
               <article class="case-card-rich">
                 <div class="case-card-head">
                   <div>
-                    <span class="badge <?= e(case_priority_badge_class((string) $case['prioridade'])) ?>"><?= e((string) $case['prioridade']) ?></span>
                     <h3><?= e($case['titulo']) ?></h3>
+                    <div class="case-card-badges">
+                      <span class="badge <?= e(case_status_badge_class((string) $case['status'])) ?>"><?= e(status_label($case['status'] ?? '')) ?></span>
+                      <span class="badge <?= e(case_priority_badge_class((string) $case['prioridade'])) ?>"><?= e(status_label($case['prioridade'] ?? '')) ?></span>
+                    </div>
                   </div>
-                  <span class="badge <?= e(case_status_badge_class((string) $case['status'])) ?>"><?= e(status_label($case['status'] ?? '')) ?></span>
+                  <?php if ($isOpenForLawyer): ?>
+                    <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/accept')) ?>" method="post">
+                      <?= csrf_input() ?>
+                      <input type="hidden" name="case_id" value="<?= $caseId ?>">
+                      <button class="btn btn-primary btn-sm" type="submit">Aceitar</button>
+                    </form>
+                  <?php else: ?>
+                    <a class="btn btn-primary btn-sm" href="chat.php?case_id=<?= $caseId ?>"><?= icon_svg('chat') ?> Abrir chat</a>
+                  <?php endif; ?>
                 </div>
 
-                <p><?= e(mb_substr((string) ($case['descricao'] ?? ''), 0, 220)) ?><?= mb_strlen((string) ($case['descricao'] ?? '')) > 220 ? '...' : '' ?></p>
+                <p><?= e(mb_substr((string) ($case['descricao'] ?? ''), 0, 150)) ?><?= mb_strlen((string) ($case['descricao'] ?? '')) > 150 ? '...' : '' ?></p>
 
-                <div class="case-meta-grid">
-                  <div><span>Cliente</span><strong><?= e($case['cliente'] ?? '-') ?></strong></div>
-                  <div><span>Responsável</span><strong><?= e($case['advogado'] ?? 'Aguardando') ?></strong></div>
-                  <div><span>Mensagens</span><strong><?= e((string) (int) $case['message_count']) ?></strong></div>
-                  <div><span>Tarefas</span><strong><?= e((string) (int) $case['task_count']) ?></strong></div>
+                <div class="case-quick-meta">
+                  <span><strong>Cliente:</strong> <?= e($case['cliente'] ?? '-') ?></span>
+                  <span><strong>Responsável:</strong> <?= e($case['advogado'] ?? 'Aguardando') ?></span>
+                  <span><strong>Última atividade:</strong> <?= e(date('d/m/Y H:i', strtotime($lastActivity))) ?></span>
                 </div>
-
-                <?php if (!empty($case['document_id'])): ?>
-                  <a class="case-linked-doc" href="visualizar-documento.php?id=<?= (int) $case['document_id'] ?>">
-                    <?= icon_svg('file') ?>
-                    <span><?= e($case['document_name'] ?? 'Documento relacionado') ?></span>
-                  </a>
-                <?php endif; ?>
 
                 <div class="case-card-foot">
-                  <span class="text-muted">
-                    Criado em <?= e(date('d/m/Y H:i', strtotime((string) $case['created_at']))) ?>
-                    <?php if (!empty($case['last_message_at'])): ?> | ?ltima msg <?= e(date('d/m/Y H:i', strtotime((string) $case['last_message_at']))) ?><?php endif; ?>
-                  </span>
-                  <div class="case-actions">
-                    <?php if ($isOpenForLawyer): ?>
-                      <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/accept')) ?>" method="post">
-                        <?= csrf_input() ?>
-                        <input type="hidden" name="case_id" value="<?= $caseId ?>">
-                        <button class="btn btn-primary btn-sm" type="submit">Aceitar</button>
-                      </form>
-                    <?php else: ?>
-                      <a class="btn btn-primary btn-sm" href="chat.php?case_id=<?= $caseId ?>"><?= icon_svg('chat') ?> Chat</a>
-                      <a class="btn btn-outline btn-sm" href="tarefas.php?case_id=<?= $caseId ?>"><?= icon_svg('check') ?> Tarefas</a>
-                      <a class="btn btn-soft btn-sm" href="agenda.php"><?= icon_svg('calendar') ?> Agenda</a>
-                    <?php endif; ?>
+                  <details class="case-more-actions">
+                    <summary>Mais ações</summary>
+                    <div class="case-actions">
+                      <?php if (!$isOpenForLawyer): ?>
+                        <a class="btn btn-outline btn-sm" href="tarefas.php?case_id=<?= $caseId ?>"><?= icon_svg('check') ?> Tarefas (<?= e((string) (int) $case['task_count']) ?>)</a>
+                        <a class="btn btn-soft btn-sm" href="agenda.php"><?= icon_svg('calendar') ?> Agenda (<?= e((string) (int) $case['appointment_count']) ?>)</a>
+                      <?php endif; ?>
 
-                    <?php if (($case['status'] ?? '') !== 'finalizado' && !$isOpenForLawyer): ?>
-                      <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/status')) ?>" method="post">
-                        <?= csrf_input() ?>
-                        <input type="hidden" name="case_id" value="<?= $caseId ?>">
-                        <?php if ($type === 'cliente'): ?>
-                          <input type="hidden" name="status" value="finalizado">
-                          <button class="btn btn-outline btn-sm" type="submit">Finalizar</button>
-                        <?php elseif (in_array($type, ['advogado', 'admin'], true)): ?>
-                          <select class="select select-sm" name="status" aria-label="Status do caso">
-                            <option value="aberto" <?= ($case['status'] ?? '') === 'aberto' ? 'selected' : '' ?>>Aberto</option>
-                            <option value="em_andamento" <?= ($case['status'] ?? '') === 'em_andamento' ? 'selected' : '' ?>>Em andamento</option>
-                            <option value="finalizado" <?= ($case['status'] ?? '') === 'finalizado' ? 'selected' : '' ?>>Finalizado</option>
-                          </select>
-                          <button class="btn btn-outline btn-sm" type="submit">Salvar</button>
-                        <?php endif; ?>
-                      </form>
-                    <?php endif; ?>
-                  </div>
+                      <?php if (!empty($case['document_id'])): ?>
+                        <a class="btn btn-outline btn-sm" href="visualizar-documento.php?id=<?= (int) $case['document_id'] ?>"><?= icon_svg('file') ?> Documento</a>
+                      <?php endif; ?>
+
+                      <?php if (($case['status'] ?? '') !== 'finalizado' && !$isOpenForLawyer): ?>
+                        <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/status')) ?>" method="post">
+                          <?= csrf_input() ?>
+                          <input type="hidden" name="case_id" value="<?= $caseId ?>">
+                          <?php if ($type === 'cliente'): ?>
+                            <input type="hidden" name="status" value="finalizado">
+                            <button class="btn btn-outline btn-sm" type="submit">Finalizar</button>
+                          <?php elseif (in_array($type, ['advogado', 'admin'], true)): ?>
+                            <select class="select select-sm" name="status" aria-label="Status do caso">
+                              <option value="aberto" <?= ($case['status'] ?? '') === 'aberto' ? 'selected' : '' ?>>Aberto</option>
+                              <option value="em_andamento" <?= ($case['status'] ?? '') === 'em_andamento' ? 'selected' : '' ?>>Em andamento</option>
+                              <option value="finalizado" <?= ($case['status'] ?? '') === 'finalizado' ? 'selected' : '' ?>>Finalizado</option>
+                            </select>
+                            <button class="btn btn-outline btn-sm" type="submit">Salvar status</button>
+                          <?php endif; ?>
+                        </form>
+                      <?php endif; ?>
+                    </div>
+                  </details>
                 </div>
               </article>
             <?php endforeach; ?>

@@ -164,7 +164,7 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
     <?php render_sidebar($type, 'chat.php'); ?>
 
     <main class="app-main chat-main">
-      <?php render_topbar('Chat por caso', 'Conversa vinculada a uma solicitação, documento e próximas ações.', current_user_name()); ?>
+      <?php render_topbar('Chat por caso', 'Conversa vinculada ao atendimento selecionado.', current_user_name()); ?>
 
       <?php if ($successMessage !== ''): ?>
         <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
@@ -199,35 +199,41 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
               </div>
             <?php else: ?>
               <section class="chat-case-context">
-                <div class="chat-context-head">
-                  <div>
+                <div class="chat-case-bar">
+                  <div class="chat-case-title">
+                    <h2><?= e($selectedCase['titulo']) ?></h2>
                     <div class="chat-head-badges">
                       <span class="badge <?= e(chat_status_badge_class((string) $selectedCase['status'])) ?>"><?= e(status_label($selectedCase['status'] ?? '')) ?></span>
-                      <span class="badge <?= e(chat_priority_badge_class((string) $selectedCase['prioridade'])) ?>"><?= e((string) $selectedCase['prioridade']) ?></span>
+                      <span class="badge <?= e(chat_priority_badge_class((string) $selectedCase['prioridade'])) ?>"><?= e(status_label($selectedCase['prioridade'] ?? '')) ?></span>
+                      <span class="chat-party"><?= e(chat_other_party($selectedCase, $type)) ?></span>
                     </div>
-                    <h2><?= e($selectedCase['titulo']) ?></h2>
-                    <p><?= e($selectedCase['descricao'] ?: 'Sem descrição cadastrada.') ?></p>
                   </div>
+
                   <div class="chat-context-actions">
                     <a class="btn btn-outline btn-sm" href="acompanhar-solicitacoes.php"><?= icon_svg('case') ?> Casos</a>
-                    <a class="btn btn-outline btn-sm" href="tarefas.php?case_id=<?= $caseId ?>"><?= icon_svg('check') ?> Tarefas</a>
-                    <a class="btn btn-soft btn-sm" href="agenda.php"><?= icon_svg('calendar') ?> Agenda</a>
+                    <details class="chat-more-actions">
+                      <summary>Mais ações</summary>
+                      <div>
+                        <a class="btn btn-outline btn-sm" href="tarefas.php?case_id=<?= $caseId ?>"><?= icon_svg('check') ?> Tarefas (<?= e((string) (int) $selectedCase['task_count']) ?>)</a>
+                        <a class="btn btn-soft btn-sm" href="agenda.php"><?= icon_svg('calendar') ?> Agenda (<?= e((string) (int) $selectedCase['appointment_count']) ?>)</a>
+                        <?php if (!empty($selectedCase['document_id'])): ?>
+                          <a class="btn btn-outline btn-sm" href="visualizar-documento.php?id=<?= (int) $selectedCase['document_id'] ?>"><?= icon_svg('file') ?> Documento</a>
+                        <?php endif; ?>
+                      </div>
+                    </details>
                   </div>
                 </div>
 
-                <div class="chat-context-grid">
-                  <div><span>Cliente</span><strong><?= e($selectedCase['cliente'] ?? '-') ?></strong></div>
-                  <div><span>Responsável</span><strong><?= e($selectedCase['advogado'] ?? 'Aguardando') ?></strong></div>
-                  <div><span>Mensagens</span><strong><?= e((string) (int) $selectedCase['message_count']) ?></strong></div>
-                  <div><span>Criado em</span><strong><?= e(date('d/m/Y H:i', strtotime((string) $selectedCase['created_at']))) ?></strong></div>
-                </div>
-
-                <?php if (!empty($selectedCase['document_id'])): ?>
-                  <a class="case-linked-doc chat-linked-doc" href="visualizar-documento.php?id=<?= (int) $selectedCase['document_id'] ?>">
-                    <?= icon_svg('file') ?>
-                    <span><?= e($selectedCase['document_name'] ?? 'Documento relacionado') ?></span>
-                  </a>
-                <?php endif; ?>
+                <details class="chat-case-details">
+                  <summary>Detalhes do caso</summary>
+                  <p><?= e($selectedCase['descricao'] ?: 'Sem descrição cadastrada.') ?></p>
+                  <div class="chat-context-grid">
+                    <div><span>Cliente</span><strong><?= e($selectedCase['cliente'] ?? '-') ?></strong></div>
+                    <div><span>Responsável</span><strong><?= e($selectedCase['advogado'] ?? 'Aguardando') ?></strong></div>
+                    <div><span>Mensagens</span><strong><?= e((string) (int) $selectedCase['message_count']) ?></strong></div>
+                    <div><span>Criado em</span><strong><?= e(date('d/m/Y H:i', strtotime((string) $selectedCase['created_at']))) ?></strong></div>
+                  </div>
+                </details>
               </section>
 
               <div class="chat-messages" data-chat-messages>

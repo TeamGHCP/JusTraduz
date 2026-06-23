@@ -257,6 +257,7 @@
   .admin-hero,
   .analysis-hero,
   .admin-filter,
+  .task-summary-grid,
   .task-filter-grid,
   .lawyer-directory-filter,
   .permission-grid {
@@ -268,8 +269,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .chat-context-head {
+  .chat-context-head,
+  .chat-case-bar {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .chat-context-actions {
@@ -435,7 +438,11 @@
   .case-card,
   .case-card-head,
   .case-card-foot,
+  .task-row,
+  .task-row-head,
+  .task-row-footer,
   .chat-context-head,
+  .chat-case-bar,
   .professional-list-item,
   .review-item,
   .audit-feed-item {
@@ -450,6 +457,7 @@
   .review-actions,
   .stacked-actions,
   .case-actions,
+  .task-row-actions,
   .chat-context-actions,
   .professional-list-item {
     width: 100%;
@@ -458,11 +466,36 @@
   .case-actions .btn,
   .case-actions .inline-form,
   .case-actions .select,
-  .chat-context-actions .btn {
+  .task-row-actions .btn,
+  .task-row-actions .action-form,
+  .task-row-actions .select,
+  .chat-context-actions .btn,
+  .chat-more-actions,
+  .chat-more-actions summary {
     width: 100%;
   }
 
+  .task-row-actions {
+    align-items: stretch;
+  }
+
+  .task-row-actions .action-form {
+    flex-direction: column;
+  }
+
+  .task-row-actions > .btn {
+    margin-left: 0;
+  }
+
+  .chat-more-actions > div {
+    position: static;
+    min-width: 0;
+    margin-top: 8px;
+    box-shadow: none;
+  }
+
   .case-meta-grid,
+  .task-row-meta,
   .chat-context-grid {
     grid-template-columns: 1fr;
   }
