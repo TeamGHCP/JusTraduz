@@ -8,6 +8,8 @@ require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
 
 class AuthController extends BaseController
 {
+    private const MIN_PASSWORD_LENGTH = 10;
+
     private AuditService $audit;
 
     public function __construct()
@@ -60,8 +62,9 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'As senhas não coincidem.');
         }
 
-        if (strlen($senha) < 6) {
-            $this->response->redirectWithError($frontUrl, 'A senha deve ter no mínimo 6 caracteres.');
+        $passwordError = $this->passwordValidationError($senha);
+        if ($passwordError !== null) {
+            $this->response->redirectWithError($frontUrl, $passwordError);
         }
 
         $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
@@ -578,8 +581,9 @@ class AuthController extends BaseController
         }
 
         if ($novaSenha !== '' || $novaSenha2 !== '' || $senhaAtual !== '') {
-            if (strlen($novaSenha) < 6) {
-                $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode('A nova senha deve ter no mínimo 6 caracteres.'));
+            $passwordError = $this->passwordValidationError($novaSenha);
+            if ($passwordError !== null) {
+                $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode($passwordError));
             }
 
             if ($novaSenha !== $novaSenha2) {
@@ -808,8 +812,9 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'Informe o código de 6 dígitos enviado por e-mail.');
         }
 
-        if (strlen($senha) < 6) {
-            $this->response->redirectWithError($frontUrl, 'A nova senha deve ter no mínimo 6 caracteres.');
+        $passwordError = $this->passwordValidationError($senha);
+        if ($passwordError !== null) {
+            $this->response->redirectWithError($frontUrl, $passwordError);
         }
 
         if ($senha !== $senha2) {
@@ -912,8 +917,9 @@ class AuthController extends BaseController
             return;
         }
 
-        if (strlen($senha) < 6) {
-            $this->response->json(['success' => false, 'message' => 'A nova senha deve ter no mínimo 6 caracteres.'], 422);
+        $passwordError = $this->passwordValidationError($senha);
+        if ($passwordError !== null) {
+            $this->response->json(['success' => false, 'message' => $passwordError], 422);
             return;
         }
 
@@ -1409,3 +1415,5 @@ HTML;
         $this->response->redirect(APP_URL . '/frontend/login.html');
     }
 }
+
+

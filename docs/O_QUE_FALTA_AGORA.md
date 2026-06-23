@@ -25,7 +25,7 @@ O check de producao (`scripts/check-production-readiness.php --env=backend/.env`
 - Configurar SMTP real ou provedor transacional e validar entregabilidade.
 - Configurar monitoramento externo para `/backend/public/index.php?rota=/health`.
 - Agendar `scripts/run-jobs.php` para processar a fila quando `ASYNC_JOBS_ENABLED=true`.
-- Definir storage privado fora do webroot em `DOCUMENT_STORAGE_PATH` e `ATTACHMENT_STORAGE_PATH`.
+- Definir `DOCUMENT_STORAGE_PATH` e `ATTACHMENT_STORAGE_PATH` como storage privado. Localmente `storage-private/...` esta protegido por `.htaccess`; em producao, prefira caminho absoluto fora do webroot.
 - Instalar/configurar ClamAV via `CLAMAV_BINARY` se a producao exigir scanner externo alem da heuristica interna.
 - Instalar/configurar Tesseract se `OCR_ENABLED=true`.
 - Preencher e assinar `docs/REGISTRO_REVISAO_JURIDICA.md` com profissional juridico.

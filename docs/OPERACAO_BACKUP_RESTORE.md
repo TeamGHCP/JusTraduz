@@ -22,6 +22,8 @@ Tambem copie os diretorios configurados em:
 - `ATTACHMENT_STORAGE_PATH`
 - logs operacionais relevantes
 
+No ambiente local esses caminhos podem apontar para `storage-private/...`. Em producao, prefira caminhos absolutos fora do webroot e mantenha permissao de leitura/escrita apenas para o usuario do PHP/Apache.
+
 ## Restore
 
 Restaure primeiro em ambiente limpo ou homologacao:

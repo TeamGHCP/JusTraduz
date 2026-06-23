@@ -5,12 +5,16 @@ class StorageService
     private string $projectRoot;
     private string $documentRoot;
     private string $attachmentRoot;
+    private string $legacyDocumentRoot;
+    private string $legacyAttachmentRoot;
 
     public function __construct()
     {
         $this->projectRoot = dirname(__DIR__, 3);
-        $this->documentRoot = $this->configuredPath('DOCUMENT_STORAGE_PATH', $this->projectRoot . '/backend/storage/documents');
-        $this->attachmentRoot = $this->configuredPath('ATTACHMENT_STORAGE_PATH', $this->projectRoot . '/backend/storage/message-attachments');
+        $this->legacyDocumentRoot = $this->projectRoot . '/backend/storage/documents';
+        $this->legacyAttachmentRoot = $this->projectRoot . '/backend/storage/message-attachments';
+        $this->documentRoot = $this->configuredPath('DOCUMENT_STORAGE_PATH', $this->projectRoot . '/storage-private/documents');
+        $this->attachmentRoot = $this->configuredPath('ATTACHMENT_STORAGE_PATH', $this->projectRoot . '/storage-private/message-attachments');
     }
 
     public function documentDirectory(int $userId): string
@@ -20,7 +24,7 @@ class StorageService
 
     public function documentReference(int $userId, string $filename): string
     {
-        if ($this->isInsideProject($this->documentRoot)) {
+        if ($this->isSameStorageRoot($this->documentRoot, $this->legacyDocumentRoot)) {
             return 'backend/storage/documents/' . $userId . '/' . $filename;
         }
 
@@ -36,7 +40,7 @@ class StorageService
             return $this->safeJoin($this->documentRoot, $relative);
         }
 
-        return $this->safeLegacyProjectPath($reference, $this->projectRoot . '/backend/storage/documents');
+        return $this->safeLegacyProjectPath($reference, $this->legacyDocumentRoot);
     }
 
     public function attachmentDirectory(int $caseId): string
@@ -46,7 +50,7 @@ class StorageService
 
     public function attachmentReference(int $caseId, string $filename): string
     {
-        if ($this->isInsideProject($this->attachmentRoot)) {
+        if ($this->isSameStorageRoot($this->attachmentRoot, $this->legacyAttachmentRoot)) {
             return 'backend/storage/message-attachments/' . $caseId . '/' . $filename;
         }
 
@@ -62,12 +66,12 @@ class StorageService
             return $this->safeJoin($this->attachmentRoot, $relative);
         }
 
-        return $this->safeLegacyProjectPath($reference, $this->projectRoot . '/backend/storage/message-attachments');
+        return $this->safeLegacyProjectPath($reference, $this->legacyAttachmentRoot);
     }
 
     public function isDocumentStorageOutsideWebroot(): bool
     {
-        return !$this->isInsideProject($this->documentRoot);
+        return !$this->isSameStorageRoot($this->documentRoot, $this->legacyDocumentRoot);
     }
 
     private function configuredPath(string $key, string $default): string
@@ -120,10 +124,14 @@ class StorageService
         return str_starts_with($absolutePath, rtrim($storageRoot, "\\/") . DIRECTORY_SEPARATOR) ? $absolutePath : null;
     }
 
-    private function isInsideProject(string $path): bool
+    private function isSameStorageRoot(string $left, string $right): bool
     {
-        $root = realpath($this->projectRoot) ?: $this->projectRoot;
+        return $this->normalizePath($left) === $this->normalizePath($right);
+    }
+
+    private function normalizePath(string $path): string
+    {
         $real = realpath($path) ?: $path;
-        return str_starts_with(str_replace('\\', '/', $real), rtrim(str_replace('\\', '/', $root), '/') . '/');
+        return rtrim(strtolower(str_replace('\\', '/', $real)), '/');
     }
 }

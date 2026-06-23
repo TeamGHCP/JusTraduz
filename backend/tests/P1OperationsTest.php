@@ -71,6 +71,16 @@ assertStringContains('private://documents/7/arquivo.pdf', $reference, 'Storage f
 file_put_contents($privateRoot . DIRECTORY_SEPARATOR . '7' . DIRECTORY_SEPARATOR . 'arquivo.pdf', 'ok');
 assertTrue(is_file((string) $storage->documentPathFromReference($reference)), 'Storage deve resolver private:// para caminho real seguro.');
 
+$projectPrivateRoot = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'storage-private' . DIRECTORY_SEPARATOR . 'documents';
+putenv('DOCUMENT_STORAGE_PATH=' . $projectPrivateRoot);
+$storage = new StorageService();
+assertEquals('private://documents/7/arquivo.pdf', $storage->documentReference(7, 'arquivo.pdf'), 'Storage privado do projeto deve usar referencia private.');
+
+$legacyRoot = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'documents';
+putenv('DOCUMENT_STORAGE_PATH=' . $legacyRoot);
+$storage = new StorageService();
+assertEquals('backend/storage/documents/7/arquivo.pdf', $storage->documentReference(7, 'arquivo.pdf'), 'Storage legado deve manter caminho antigo para compatibilidade.');
+
 $usage = new UsageLimiter($pdo);
 putenv('USAGE_DAILY_DOCUMENT_AI=1');
 assertTrue($usage->allow(1, 'document_ai')['allowed'] === true, 'Primeiro uso deve caber na quota.');

@@ -88,7 +88,7 @@ Principais grupos:
 - Google OAuth: `GOOGLE_*`.
 - DataJud/CNJ: `DATAJUD_*`.
 - Operacao: `HEALTHCHECK_TOKEN`, `BACKUP_*`, `CLAMAV_BINARY`.
-- Storage: `DOCUMENT_STORAGE_PATH`, `ATTACHMENT_STORAGE_PATH`, `PROFILE_PHOTO_STORAGE_PATH`.
+- Storage: `DOCUMENT_STORAGE_PATH`, `ATTACHMENT_STORAGE_PATH`, `PROFILE_PHOTO_STORAGE_PATH`. Para documentos e anexos, use `storage-private/...` no ambiente local e, em producao, prefira um caminho absoluto fora do webroot.
 
 ## Limpeza aplicada
 

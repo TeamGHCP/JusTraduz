@@ -26,7 +26,7 @@ Use este checklist antes de qualquer deploy ou entrega homologada.
 - [ ] SQL/migrations revisados.
 - [ ] Backup do banco criado antes do deploy.
 - [ ] Restore testado em ambiente limpo ou de homologacao.
-- [ ] `DOCUMENT_STORAGE_PATH` e `ATTACHMENT_STORAGE_PATH` fora do webroot em producao.
+- [ ] `DOCUMENT_STORAGE_PATH` e `ATTACHMENT_STORAGE_PATH` apontando para storage privado; em producao, preferencialmente fora do webroot.
 - [ ] Permissoes de diretorio conferidas.
 - [ ] Upload de PDF/DOCX/anexo validado apos deploy.
 
