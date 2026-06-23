@@ -16,11 +16,18 @@ seed_test_data($pdo);
 $subscriptions = new SubscriptionService($pdo);
 $current = $subscriptions->ensureDefaultSubscription(1);
 assertTrue($current !== null, 'Assinatura padrao deve ser criada.');
-assertEquals('essencial', $current['plan_slug'], 'Plano padrao deve ser Essencial.');
+assertEquals('gratuito', $current['plan_slug'], 'Plano padrao deve ser Gratuito.');
 assertTrue($subscriptions->ensureDefaultSubscription(3) === null, 'Advogado nao deve receber assinatura.');
 assertTrue($subscriptions->changePlan(3, 2, 'monthly', 'active') === false, 'Advogado nao deve trocar plano.');
-
 $usage = new UsageLimiter($pdo);
+assertTrue($usage->allow(1, 'document_upload', 5)['allowed'] === true, 'Plano Gratuito deve permitir ate 5 uploads mensais.');
+assertTrue($usage->allow(1, 'document_upload', 6)['allowed'] === false, 'Plano Gratuito deve bloquear mais de 5 uploads mensais.');
+assertTrue($usage->allow(1, 'document_ai', 6)['allowed'] === false, 'Plano Gratuito deve bloquear mais de 5 analises com IA.');
+assertTrue($usage->allow(1, 'ai_chat', 51)['allowed'] === false, 'Plano Gratuito deve bloquear mais de 50 mensagens com IA.');
+assertTrue($usage->allow(1, 'datajud_cnj', 2)['allowed'] === false, 'Plano Gratuito deve bloquear mais de 1 consulta CNJ.');
+assertTrue($usage->allow(1, 'ocr', 6)['allowed'] === false, 'Plano Gratuito deve bloquear mais de 5 OCRs.');
+assertTrue($subscriptions->changePlan(1, 1, 'monthly', 'active') === true, 'Troca para Essencial deve funcionar.');
+
 $quota = $usage->allow(1, 'document_upload', 31);
 assertTrue($quota['allowed'] === false, 'Limite do plano Essencial deve bloquear mais de 30 uploads mensais.');
 assertStringContains('limite mensal', $usage->limitMessage('document_upload', $quota), 'Mensagem de quota deve falar em limite mensal.');
@@ -119,13 +126,27 @@ $asaas->handleWebhook(json_encode([
 ]), ['asaas-access-token' => 'test-webhook-token']);
 $asaasSubscription = $subscriptions->currentForUser(2);
 assertEquals($asaasPeriodEndAfterRenewal, (string) $asaasSubscription['current_period_end'], 'Webhook Asaas duplicado nao deve renovar duas vezes.');
+$asaas->handleWebhook(json_encode([
+    'event' => 'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED',
+    'payment' => [
+        'id' => 'pay_test_cartao_recusado_001',
+        'subscription' => $asaasProviderSubscriptionId,
+        'value' => 49.90,
+    ],
+]), ['asaas-access-token' => 'test-webhook-token']);
+$asaasSubscription = $subscriptions->currentForUser(2);
+assertEquals('past_due', $asaasSubscription['status'], 'Webhook de cartao recusado deve marcar assinatura Asaas como inadimplente.');
 putenv('ASAAS_WEBHOOK_TOKEN');
 
 $cancel = $payments->cancelSubscription(1);
 assertTrue(($cancel['ok'] ?? false) === true, 'Cancelamento manual deve funcionar.');
+$current = $subscriptions->currentForUser(1);
+assertEquals('gratuito', $current['plan_slug'], 'Cancelamento de plano pago deve retornar ao Gratuito.');
 $latestNotification = (string) $pdo->query('SELECT mensagem FROM notifications WHERE user_id = 1 ORDER BY id DESC LIMIT 1')->fetchColumn();
 assertStringContains('cancelado', $latestNotification, 'Cancelamento de plano deve notificar o cliente.');
 assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM mail_logs WHERE recipient = 'cliente1@teste.local' AND subject = 'Plano cancelado - JusTraduz' AND status = 'sent'")->fetchColumn(), 'Cancelamento de plano deve enviar e-mail ao cliente.');
+$cancelFree = $payments->cancelSubscription(1);
+assertTrue(($cancelFree['already_free'] ?? false) === true, 'Cancelamento do Gratuito deve ser ignorado.');
 putenv('MAIL_LOG_ONLY');
 
 $organizations = new OrganizationService($pdo);

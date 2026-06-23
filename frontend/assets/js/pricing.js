@@ -23,6 +23,10 @@
     });
 
     document.querySelectorAll(".pricing-card").forEach(function (card) {
+      if (card.hasAttribute("data-pricing-fixed")) {
+        return;
+      }
+
       var price = card.querySelector(".pricing-price");
       var period = card.querySelector("[data-pricing-period]");
       var note = card.querySelector("[data-pricing-note]");

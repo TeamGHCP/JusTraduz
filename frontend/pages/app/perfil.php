@@ -100,6 +100,8 @@ if (!in_array($activeProfileTab, $allowedProfileTabs, true)) {
 
 $subscriptionService = new SubscriptionService($pdo);
 $currentSubscription = ($type === 'cliente') ? $subscriptionService->currentForUser(current_user_id()) : null;
+$isFreeSubscription = $currentSubscription
+    && in_array((string) ($currentSubscription['plan_slug'] ?? ''), ['gratuito', 'free'], true);
 $paymentEvents = [];
 if ($type === 'cliente' && database_table_exists($pdo, 'payment_events')) {
     $stmt = $pdo->prepare(
@@ -251,9 +253,11 @@ $profileTourKey = match ($type) {
                 <div>
                   <h3><?= e($billingPlanName) ?></h3>
                   <?php if ($currentSubscription): ?>
-                    <p><?= e($billingCycle === 'yearly' ? 'Cobrança anual' : 'Cobrança mensal') ?> · <?= e(billing_money($billingPrice)) ?></p>
-                    <?php if ((string) ($currentSubscription['status'] ?? '') === 'past_due'): ?>
+                    <p><?= e($isFreeSubscription ? 'Modo gratuito' : ($billingCycle === 'yearly' ? 'Cobrança anual' : 'Cobrança mensal')) ?> · <?= e(billing_money($billingPrice)) ?></p>
+                    <?php if (!$isFreeSubscription && (string) ($currentSubscription['status'] ?? '') === 'past_due'): ?>
                       <p>Pagamento pendente</p>
+                    <?php elseif ($isFreeSubscription): ?>
+                      <p>Cota gratuita ativa</p>
                     <?php else: ?>
                       <p>Renova em <?= e(billing_date((string) ($currentSubscription['current_period_end'] ?? ''))) ?></p>
                     <?php endif; ?>
@@ -265,8 +269,8 @@ $profileTourKey = match ($type) {
                   <?php endif; ?>
                 </div>
                 <div class="profile-billing-actions">
-                  <a class="btn btn-outline" href="<?= e(app_url('/frontend/subir-plano.php')) ?>"><?= $currentSubscription ? 'Alterar plano' : 'Assinar plano' ?></a>
-                  <?php if ($currentSubscription): ?>
+                  <a class="btn btn-outline" href="<?= e(app_url('/frontend/subir-plano.php')) ?>"><?= ($currentSubscription && !$isFreeSubscription) ? 'Alterar plano' : 'Subir de plano' ?></a>
+                  <?php if ($currentSubscription && !$isFreeSubscription): ?>
                     <form action="<?= e(app_url('/backend/public/index.php?rota=/billing/cancel')) ?>" method="post" data-billing-cancel-form>
                       <?= csrf_input() ?>
                       <button class="btn btn-outline" type="submit">Cancelar plano</button>

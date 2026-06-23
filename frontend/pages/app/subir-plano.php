@@ -51,6 +51,7 @@ function pricing_included_prefix(array $plan): string
 function pricing_benefit(array $plan): string
 {
     return match ((string) ($plan['slug'] ?? '')) {
+        'gratuito', 'free' => 'Comece sem custo e suba de plano quando precisar de mais volume.',
         'essencial' => 'Entenda documentos jurídicos sem complicação.',
         'pro' => 'Automatize tarefas jurídicas e economize horas de trabalho.',
         'escritorio' => 'Centralize documentos e aumente a produtividade da equipe.',
@@ -58,7 +59,31 @@ function pricing_benefit(array $plan): string
     };
 }
 
+function pricing_free_plan_fallback(): array
+{
+    return [
+        'plan_name' => 'Gratuito',
+        'plan_slug' => 'gratuito',
+        'limits_json' => json_encode([
+            'document_upload' => 5,
+            'document_ai' => 5,
+            'ai_chat' => 50,
+            'datajud_cnj' => 1,
+            'ocr' => 5,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        'features_json' => json_encode([
+            '5 documentos por mês',
+            '5 análises com IA',
+            '50 mensagens com IA Jurídica',
+            '1 consulta CNJ por mês',
+            'OCR básico para até 5 arquivos',
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ];
+}
+
 $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] ?? '') === 'yearly') ? 'yearly' : 'monthly';
+$displayCurrentPlan = $currentSubscription ?: pricing_free_plan_fallback();
+$hasFreeCurrentPlan = in_array((string) ($displayCurrentPlan['plan_slug'] ?? ''), ['gratuito', 'free'], true);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -67,7 +92,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Subir de plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=pricing-accent-fix-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=pricing-current-button-align-1">
 </head>
 <body>
   <div class="app-shell">
@@ -101,7 +126,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
           </button>
         </div>
 
-        <?php if ($currentSubscription): ?>
+        <?php if ($currentSubscription && !$hasFreeCurrentPlan): ?>
           <section class="pricing-current-alert card">
             <span><?= icon_svg('shield') ?></span>
             <div>
@@ -112,6 +137,54 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
         <?php endif; ?>
 
         <div class="pricing-grid">
+          <?php if ($hasFreeCurrentPlan): ?>
+            <article
+              class="pricing-card pricing-card-current pricing-card-free"
+              tabindex="0"
+              role="button"
+              aria-labelledby="pricing-plan-title-free"
+              data-pricing-card
+              data-pricing-fixed
+            >
+              <span class="pricing-popular pricing-current-badge">Seu plano atual</span>
+
+              <div class="pricing-card-head">
+                <div>
+                  <h3 id="pricing-plan-title-free"><?= e((string) ($displayCurrentPlan['plan_name'] ?? 'Gratuito')) ?></h3>
+                  <p>Seu plano atual</p>
+                </div>
+              </div>
+
+              <div class="pricing-price-row">
+                <div>
+                  <span class="pricing-price" data-monthly-price="R$ 0,00" data-yearly-price="R$ 0,00">R$ 0,00</span>
+                  <span class="pricing-period" data-pricing-period>/mês</span>
+                </div>
+                <small data-pricing-note data-monthly-cents="0" data-yearly-cents="0">Sem cobrança mensal</small>
+              </div>
+
+              <p class="pricing-description">Use os recursos iniciais do JusTraduz sem custo e suba de plano quando precisar de mais volume.</p>
+
+              <ul class="pricing-features">
+                <?php foreach (pricing_features($displayCurrentPlan) as $feature): ?>
+                  <li><?= icon_svg('check') ?> <?= e($feature) ?></li>
+                <?php endforeach; ?>
+              </ul>
+
+              <?php $freeBenefit = pricing_benefit($displayCurrentPlan); ?>
+              <?php if ($freeBenefit !== ''): ?>
+                <div class="pricing-benefit">
+                  <span>Benefício principal</span>
+                  <strong><?= e($freeBenefit) ?></strong>
+                </div>
+              <?php endif; ?>
+
+              <div class="auth-form pricing-current-action">
+                <button class="btn btn-outline btn-block" type="button" disabled>Seu plano atual</button>
+              </div>
+            </article>
+          <?php endif; ?>
+
           <?php foreach ($plans as $plan): ?>
             <?php
               $isCurrent = $currentSubscription && (int) ($currentSubscription['plan_id'] ?? 0) === (int) $plan['id'];
@@ -131,7 +204,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
               <div class="pricing-card-head">
                 <div>
                   <h3 id="pricing-plan-title-<?= (int) $plan['id'] ?>"><?= e($plan['name']) ?></h3>
-                  <p><?= $isCurrent ? 'Seu plano atual' : ($currentSubscription ? 'Troca disponível' : 'Disponível para assinatura') ?></p>
+                  <p><?= $isCurrent ? 'Seu plano atual' : 'Troca disponível' ?></p>
                 </div>
               </div>
 
@@ -177,7 +250,7 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
                 <input type="hidden" name="plan_id" value="<?= (int) $plan['id'] ?>">
                 <input type="hidden" name="billing_cycle" value="<?= e($currentCycle) ?>" data-billing-cycle-input>
                 <button class="btn <?= $isHighlighted ? 'btn-primary' : 'btn-outline' ?> btn-block" type="submit">
-                  <?= $isCurrent ? 'Renovar este plano' : ($currentSubscription ? 'Mudar para ' : 'Assinar ') . e($plan['name']) ?>
+                  <?= $isCurrent ? 'Renovar este plano' : 'Mudar para ' . e($plan['name']) ?>
                 </button>
               </form>
             </article>
@@ -196,6 +269,6 @@ $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] 
   </div>
 
   <?php render_vlibras(); ?>
-  <script src="assets/js/pricing.js?v=pricing-interactive-cards-1"></script>
+  <script src="assets/js/pricing.js?v=pricing-fixed-current-plan-1"></script>
 </body>
 </html>

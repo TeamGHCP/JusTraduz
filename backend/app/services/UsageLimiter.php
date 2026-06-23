@@ -47,7 +47,7 @@ class UsageLimiter
         );
         $stmt->execute([
             $userId,
-            mb_substr($feature, 0, 80),
+            substr($feature, 0, 80),
             max(1, $units),
             $entityId,
             $metadata ? json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,

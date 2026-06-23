@@ -3,17 +3,20 @@
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/OnboardingService.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
+require_once dirname(__DIR__) . '/services/SubscriptionService.php';
 
 class OnboardingController extends BaseController
 {
     private OnboardingService $onboarding;
     private AuditService $audit;
+    private SubscriptionService $subscriptions;
 
     public function __construct()
     {
         parent::__construct();
         $this->onboarding = new OnboardingService($this->pdo);
         $this->audit = new AuditService($this->pdo);
+        $this->subscriptions = new SubscriptionService($this->pdo);
     }
 
     public function state(): void
@@ -44,8 +47,14 @@ class OnboardingController extends BaseController
         $this->requireApiUser();
         [$tourKey, $tourVersion, $profile] = $this->tourPayload();
         $this->onboarding->complete($this->currentUserId(), $tourKey, $tourVersion, $profile, $this->step());
+        $subscription = $this->activateDefaultClientPlan($profile);
         $this->audit('onboarding.complete', $tourKey, $tourVersion, $profile);
-        $this->response->json(['ok' => true, 'status' => 'completed']);
+        $this->response->json([
+            'ok' => true,
+            'status' => 'completed',
+            'subscription_activated' => $subscription !== null,
+            'plan_slug' => $subscription['plan_slug'] ?? null,
+        ]);
     }
 
     public function skip(): void
@@ -129,6 +138,20 @@ class OnboardingController extends BaseController
             ], $extra));
         } catch (Throwable $e) {
             error_log('Onboarding audit failed: ' . $e->getMessage());
+        }
+    }
+
+    private function activateDefaultClientPlan(string $profile): ?array
+    {
+        if ($profile !== 'cliente') {
+            return null;
+        }
+
+        try {
+            return $this->subscriptions->ensureDefaultSubscription($this->currentUserId());
+        } catch (Throwable $e) {
+            error_log('Default subscription activation failed: ' . $e->getMessage());
+            return null;
         }
     }
 }

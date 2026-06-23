@@ -93,13 +93,43 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
         $paymentSource = $firstPayment ?: $subscription;
         $providerPaymentId = (string) ($firstPayment['id'] ?? '');
+        $paymentStatus = $firstPayment
+            ? $this->paymentStatusFromAsaasStatus((string) ($firstPayment['status'] ?? ''))
+            : 'pending';
+        $activatedSubscription = null;
+        if ($paymentMethod === 'credit_card' && $paymentStatus === 'paid') {
+            $activatedSubscription = $this->activatePaidCheckout(
+                $providerSubscriptionId,
+                $userId,
+                $amount,
+                $firstPayment,
+                $providerPaymentId
+            );
+        }
+
+        if ($paymentMethod === 'credit_card' && $paymentStatus === 'failed') {
+            $this->recordPaymentEvent(null, $userId, 'payment.card_immediate_failed', $amount, 'failed', [
+                'provider_subscription_id' => $providerSubscriptionId,
+                'asaas_payment' => $firstPayment,
+                'source' => 'billing.checkout',
+            ], $providerPaymentId !== '' ? $providerPaymentId : null);
+
+            try {
+                $this->request('DELETE', '/subscriptions/' . rawurlencode($providerSubscriptionId));
+            } catch (Throwable $exception) {
+                error_log('Asaas failed card subscription cleanup failed: ' . $exception->getMessage());
+            }
+
+            return PaymentCheckoutResult::error($this->errorMessage($firstPayment) ?: 'Cartao recusado pelo Asaas. Confira os dados ou tente outro cartao.');
+        }
+
         $pixQrCode = $providerPaymentId !== '' ? $this->pixQrCodeForPayment($providerPaymentId) : [];
         $redirectUrl = $this->checkoutUrlFromResponse($paymentSource);
         if ($redirectUrl === '') {
             $redirectUrl = app_url('/frontend/subir-plano.php?sucesso=' . urlencode('Assinatura criada no Asaas. Aguarde a confirmacao do pagamento.'));
         }
 
-        return PaymentCheckoutResult::success($redirectUrl, null, [
+        return PaymentCheckoutResult::success($redirectUrl, $activatedSubscription ? (int) $activatedSubscription['id'] : null, [
             'provider_subscription_id' => $providerSubscriptionId,
             'provider_customer_id' => $customerId,
             'provider_payment_id' => $providerPaymentId,
@@ -110,7 +140,13 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'due_date' => (string) ($paymentSource['dueDate'] ?? $subscription['nextDueDate'] ?? ''),
             'billing_type' => (string) ($paymentSource['billingType'] ?? $billingType),
             'payment_method' => $paymentMethod,
-            'payment_status' => (string) ($paymentSource['status'] ?? 'PENDING'),
+            'payment_status' => $paymentStatus,
+            'asaas_payment_status' => (string) ($paymentSource['status'] ?? 'PENDING'),
+            'local_subscription_activated' => $activatedSubscription !== null,
+            'previous_subscription_id' => (int) ($activatedSubscription['previous_subscription_id'] ?? 0),
+            'previous_plan_id' => (int) ($activatedSubscription['previous_plan_id'] ?? 0),
+            'previous_plan_name' => (string) ($activatedSubscription['previous_plan_name'] ?? ''),
+            'previous_remote_cancel_error' => (string) ($activatedSubscription['previous_remote_cancel_error'] ?? ''),
             'pix_qr_code' => $pixQrCode,
         ]);
     }
@@ -152,7 +188,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
         $this->recordPaymentEvent($subscriptionId, $userId, $event, $amount, $paymentStatus, $payload, $providerEventId ?: null);
 
-        $newStatus = $this->subscriptionStatusFromPaymentStatus($paymentStatus);
+        $newStatus = $this->subscriptionStatusFromEvent($event) ?? $this->subscriptionStatusFromPaymentStatus($paymentStatus);
         if ($subscriptionId && $newStatus !== null) {
             $stmt = $this->pdo->prepare('UPDATE subscriptions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
             $stmt->execute([$newStatus, $subscriptionId]);
@@ -303,6 +339,15 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             return ['ok' => true, 'provider' => $this->name(), 'already_free' => true];
         }
 
+        if ($this->isFreePlan($subscription)) {
+            return [
+                'ok' => true,
+                'provider' => $this->name(),
+                'already_free' => true,
+                'subscription_id' => (int) $subscription['id'],
+            ];
+        }
+
         $providerSubscriptionId = (string) ($subscription['provider_subscription_id'] ?? '');
         $remoteCanceled = false;
 
@@ -314,6 +359,8 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         if (!$this->subscriptions->cancelCurrentForUser($userId)) {
             throw new RuntimeException('Nao foi possivel cancelar a assinatura local.');
         }
+
+        $freeSubscription = $this->subscriptions->ensureDefaultSubscription($userId);
 
         $this->recordPaymentEvent(
             (int) $subscription['id'],
@@ -336,6 +383,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'ok' => true,
             'provider' => $this->name(),
             'subscription_id' => (int) $subscription['id'],
+            'free_subscription_id' => $freeSubscription ? (int) $freeSubscription['id'] : null,
             'provider_subscription_id' => $providerSubscriptionId ?: null,
             'remote_canceled' => $remoteCanceled,
         ];
@@ -500,6 +548,11 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         return $user ?: null;
     }
 
+    private function isFreePlan(array $subscription): bool
+    {
+        return in_array((string) ($subscription['plan_slug'] ?? ''), ['gratuito', 'free'], true);
+    }
+
     private function fetchPlan(int $planId): ?array
     {
         $stmt = $this->pdo->prepare('SELECT * FROM plans WHERE id = ? AND active = 1 LIMIT 1');
@@ -634,6 +687,47 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         ];
     }
 
+    private function activatePaidCheckout(
+        string $providerSubscriptionId,
+        int $userId,
+        int $amount,
+        array $payment,
+        string $providerPaymentId
+    ): ?array {
+        $subscription = $this->findLocalSubscription($providerSubscriptionId);
+        if (!$subscription) {
+            $subscription = $this->createLocalSubscriptionFromPendingEvent($providerSubscriptionId);
+        }
+
+        if (!$subscription) {
+            return null;
+        }
+
+        $subscriptionId = (int) $subscription['id'];
+        $alreadyProcessedPaidEvent = $providerPaymentId !== '' && $this->hasProcessedPaidEvent($providerPaymentId);
+
+        if (!$alreadyProcessedPaidEvent) {
+            $this->recordPaymentEvent($subscriptionId, $userId, 'payment.card_immediate_confirmed', $amount, 'paid', [
+                'provider_subscription_id' => $providerSubscriptionId,
+                'asaas_payment' => $payment,
+                'source' => 'billing.checkout',
+            ], $providerPaymentId !== '' ? $providerPaymentId : null);
+        }
+
+        $stmt = $this->pdo->prepare('UPDATE subscriptions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+        $stmt->execute(['active', $subscriptionId]);
+        $this->notifyPlanPaid($userId, $subscriptionId, $amount);
+
+        $withPlan = $this->subscriptionWithPlan($subscriptionId) ?: $subscription;
+        foreach (['previous_subscription_id', 'previous_plan_id', 'previous_plan_name', 'previous_remote_cancel_error'] as $key) {
+            if (array_key_exists($key, $subscription)) {
+                $withPlan[$key] = $subscription[$key];
+            }
+        }
+
+        return $withPlan;
+    }
+
     private function createLocalSubscriptionFromPendingEvent(string $providerSubscriptionId): ?array
     {
         $pending = $this->pendingEventForProviderSubscription($providerSubscriptionId);
@@ -753,7 +847,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             $userId,
             $this->name(),
             $providerEventId,
-            mb_substr($eventType, 0, 120),
+            substr($eventType, 0, 120),
             $amount,
             $status,
             json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
@@ -876,7 +970,18 @@ class AsaasPaymentProvider implements PaymentProviderInterface
     {
         return match ($event) {
             'PAYMENT_RECEIVED', 'PAYMENT_CONFIRMED' => 'paid',
-            'PAYMENT_OVERDUE', 'PAYMENT_DELETED', 'PAYMENT_RESTORED', 'PAYMENT_REFUNDED', 'PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_CHARGEBACK_DISPUTE', 'PAYMENT_AWAITING_CHARGEBACK_REVERSAL' => 'failed',
+            'PAYMENT_OVERDUE',
+            'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED',
+            'PAYMENT_REPROVED_BY_RISK_ANALYSIS',
+            'PAYMENT_DELETED',
+            'PAYMENT_REFUNDED',
+            'PAYMENT_PARTIALLY_REFUNDED',
+            'PAYMENT_REFUND_IN_PROGRESS',
+            'PAYMENT_RECEIVED_IN_CASH_UNDONE',
+            'PAYMENT_CHARGEBACK_REQUESTED',
+            'PAYMENT_CHARGEBACK_DISPUTE',
+            'PAYMENT_AWAITING_CHARGEBACK_REVERSAL',
+            'PAYMENT_BANK_SLIP_CANCELLED' => 'failed',
             default => 'pending',
         };
     }
@@ -885,8 +990,27 @@ class AsaasPaymentProvider implements PaymentProviderInterface
     {
         return match (strtoupper($status)) {
             'RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH' => 'paid',
-            'OVERDUE', 'REFUNDED', 'REFUND_REQUESTED', 'CHARGEBACK_REQUESTED', 'CHARGEBACK_DISPUTE', 'AWAITING_CHARGEBACK_REVERSAL' => 'failed',
+            'OVERDUE',
+            'REFUNDED',
+            'REFUND_REQUESTED',
+            'REFUND_IN_PROGRESS',
+            'CHARGEBACK_REQUESTED',
+            'CHARGEBACK_DISPUTE',
+            'AWAITING_CHARGEBACK_REVERSAL',
+            'DELETED',
+            'CANCELLED',
+            'CANCELED',
+            'FAILED' => 'failed',
             default => 'pending',
+        };
+    }
+
+    private function subscriptionStatusFromEvent(string $event): ?string
+    {
+        return match ($event) {
+            'SUBSCRIPTION_DELETED', 'SUBSCRIPTION_INACTIVATED' => 'canceled',
+            'SUBSCRIPTION_SPLIT_DIVERGENCE_BLOCK' => 'past_due',
+            default => null,
         };
     }
 

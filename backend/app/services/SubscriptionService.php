@@ -45,7 +45,18 @@ class SubscriptionService
             return $current;
         }
 
-        $stmt = $this->pdo->query("SELECT id FROM plans WHERE slug = 'essencial' AND active = 1 LIMIT 1");
+        $stmt = $this->pdo->query(
+            "SELECT id
+             FROM plans
+             WHERE slug IN ('gratuito', 'free')
+               AND active = 1
+             ORDER BY CASE slug
+                 WHEN 'gratuito' THEN 1
+                 WHEN 'free' THEN 2
+                 ELSE 9
+             END
+             LIMIT 1"
+        );
         $planId = (int) ($stmt->fetchColumn() ?: 0);
         if ($planId <= 0) {
             return null;
@@ -164,7 +175,7 @@ class SubscriptionService
             return [];
         }
 
-        $stmt = $this->pdo->query('SELECT * FROM plans WHERE active = 1 ORDER BY sort_order ASC, monthly_price_cents ASC');
+        $stmt = $this->pdo->query('SELECT * FROM plans WHERE active = 1 AND (monthly_price_cents > 0 OR yearly_price_cents > 0) ORDER BY sort_order ASC, monthly_price_cents ASC');
         return $stmt->fetchAll();
     }
 

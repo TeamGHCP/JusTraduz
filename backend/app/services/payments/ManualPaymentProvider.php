@@ -74,9 +74,20 @@ class ManualPaymentProvider implements PaymentProviderInterface
             return ['ok' => true, 'provider' => $this->name(), 'already_free' => true];
         }
 
+        if ($this->isFreePlan($subscription)) {
+            return [
+                'ok' => true,
+                'provider' => $this->name(),
+                'already_free' => true,
+                'subscription_id' => (int) $subscription['id'],
+            ];
+        }
+
         if (!$this->subscriptions->cancelCurrentForUser($userId)) {
             throw new RuntimeException('Nao foi possivel cancelar a assinatura.');
         }
+
+        $freeSubscription = $this->subscriptions->ensureDefaultSubscription($userId);
 
         $this->recordPaymentEvent(
             (int) $subscription['id'],
@@ -105,6 +116,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
             'ok' => true,
             'provider' => $this->name(),
             'subscription_id' => (int) $subscription['id'],
+            'free_subscription_id' => $freeSubscription ? (int) $freeSubscription['id'] : null,
         ];
     }
 
@@ -142,7 +154,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
 
         $subscriptionId = max(0, (int) ($payload['subscription_id'] ?? 0));
         $userId = max(0, (int) ($payload['user_id'] ?? 0));
-        $eventType = mb_substr((string) ($payload['event_type'] ?? 'webhook.received'), 0, 120);
+        $eventType = substr((string) ($payload['event_type'] ?? 'webhook.received'), 0, 120);
         $paymentStatus = $this->normalizePaymentStatus((string) ($payload['status'] ?? 'paid'));
         $amount = max(0, (int) ($payload['amount_cents'] ?? 0));
         $providerEventId = trim((string) ($payload['provider_event_id'] ?? ''));
@@ -268,6 +280,11 @@ class ManualPaymentProvider implements PaymentProviderInterface
         $user = $stmt->fetch();
 
         return $user ?: null;
+    }
+
+    private function isFreePlan(array $subscription): bool
+    {
+        return in_array((string) ($subscription['plan_slug'] ?? ''), ['gratuito', 'free'], true);
     }
 
     private function money(int $cents): string

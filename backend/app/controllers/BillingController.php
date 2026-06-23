@@ -107,6 +107,31 @@ class BillingController extends BaseController
             'metadata' => $checkout->metadata,
         ]);
 
+        if (
+            $this->payments->name() === 'asaas'
+            && $checkout->subscriptionId !== null
+            && (string) ($checkout->metadata['payment_status'] ?? '') === 'paid'
+        ) {
+            $subscription = $this->subscriptions->currentForUser($userId);
+            $_SESSION['payment_confirmed'] = [
+                'confirmed_at' => time(),
+                'plan_id' => (int) ($subscription['plan_id'] ?? $planId),
+                'plan_name' => (string) ($subscription['plan_name'] ?? 'Plano ativo'),
+                'billing_cycle' => (string) ($subscription['billing_cycle'] ?? $cycle),
+                'amount_cents' => (int) ($checkout->metadata['amount_cents'] ?? 0),
+                'subscription_id' => (int) $checkout->subscriptionId,
+                'provider' => $this->payments->name(),
+                'provider_subscription_id' => (string) ($checkout->metadata['provider_subscription_id'] ?? ''),
+                'provider_payment_id' => (string) ($checkout->metadata['provider_payment_id'] ?? ''),
+                'previous_subscription_id' => (int) ($checkout->metadata['previous_subscription_id'] ?? 0),
+                'previous_plan_id' => (int) ($checkout->metadata['previous_plan_id'] ?? 0),
+                'previous_plan_name' => (string) ($checkout->metadata['previous_plan_name'] ?? ''),
+                'previous_remote_cancel_error' => (string) ($checkout->metadata['previous_remote_cancel_error'] ?? ''),
+            ];
+            unset($_SESSION['billing_checkout']);
+            $this->response->redirect(app_url('/frontend/pagamento-confirmado.php'));
+        }
+
         if ($this->payments->name() === 'asaas') {
             $_SESSION['billing_checkout'] = [
                 'reference' => (string) ($checkoutSession['reference'] ?? bin2hex(random_bytes(12))),
@@ -205,7 +230,9 @@ class BillingController extends BaseController
             $this->response->redirect(app_url('/frontend/perfil.php?tab=faturamento&erro=' . urlencode($exception->getMessage())));
         }
 
-        $message = $planName !== '' ? 'Plano ' . $planName . ' cancelado' : 'Plano cancelado';
+        $message = !empty($result['already_free'])
+            ? 'Seu plano gratuito ja esta ativo.'
+            : ($planName !== '' ? 'Plano ' . $planName . ' cancelado' : 'Plano cancelado');
         $this->response->redirect(app_url('/frontend/perfil.php?tab=faturamento&sucesso=' . urlencode($message)));
     }
 

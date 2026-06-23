@@ -7940,6 +7940,20 @@ body.has-modal-open {
   box-shadow: 0 18px 38px rgba(17, 138, 126, .14);
 }
 
+.pricing-card-current {
+  border-color: rgba(45, 212, 191, .54);
+  box-shadow: 0 18px 38px rgba(17, 138, 126, .14), inset 0 0 0 1px rgba(45, 212, 191, .10);
+}
+
+.pricing-card-current .pricing-price-row {
+  border-color: rgba(45, 212, 191, .34);
+  background: color-mix(in srgb, var(--surface-2) 88%, var(--teal-2));
+}
+
+.pricing-card-current .pricing-card-head {
+  padding-right: 116px;
+}
+
 .pricing-popular {
   position: absolute;
   top: 14px;
@@ -7951,6 +7965,12 @@ body.has-modal-open {
   color: var(--surface);
   font-size: 11px;
   font-weight: 950;
+}
+
+.pricing-current-badge {
+  border: 1px solid rgba(45, 212, 191, .28);
+  background: rgba(45, 212, 191, .14);
+  color: var(--teal-2);
 }
 
 .pricing-card-head {
@@ -8091,6 +8111,12 @@ body.has-modal-open {
   margin: 0;
 }
 
+.pricing-card .pricing-current-action {
+  align-self: end;
+  width: 100%;
+  margin: auto 0 0;
+}
+
 .pricing-card .btn {
   min-height: 46px;
   transition:
@@ -8101,11 +8127,26 @@ body.has-modal-open {
     color .18s ease;
 }
 
+.pricing-card .btn[disabled] {
+  border-color: rgba(148, 163, 184, .26);
+  background: rgba(148, 163, 184, .08);
+  color: var(--muted);
+  cursor: default;
+  opacity: 1;
+}
+
 .pricing-card:hover .btn,
 .pricing-card:focus-visible .btn,
 .pricing-card.is-card-active .btn {
   box-shadow: 0 12px 24px rgba(17, 138, 126, .16);
   transform: translateY(-1px);
+}
+
+.pricing-card:hover .btn[disabled],
+.pricing-card:focus-visible .btn[disabled],
+.pricing-card.is-card-active .btn[disabled] {
+  box-shadow: none;
+  transform: none;
 }
 
 .pricing-note {
