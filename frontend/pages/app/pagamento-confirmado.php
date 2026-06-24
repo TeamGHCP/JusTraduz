@@ -10,8 +10,8 @@ function confirmed_redirect(string $url): void
 }
 
 $type = current_user_type();
-if ($type !== 'cliente') {
-    confirmed_redirect(dashboard_url($type) . '?erro=' . urlencode('Planos são exclusivos para clientes.'));
+if (!in_array($type, ['cliente', 'advogado'], true)) {
+    confirmed_redirect(dashboard_url($type) . '?erro=' . urlencode('Planos estão disponíveis para clientes e advogados verificados.'));
 }
 
 $billing = new SubscriptionService($pdo);
@@ -108,7 +108,7 @@ $receiptText = implode(' | ', [
             <h2>Pronto, seu plano <?= e($planName) ?> está liberado.</h2>
             <p><?= $hasPlanReplacement ? 'A confirmação foi registrada, o plano ' . e($previousPlanName) . ' foi substituído e os novos limites já estão disponíveis na sua conta JusTraduz.' : 'A confirmação foi registrada e os limites do plano já estão disponíveis na sua conta JusTraduz.' ?></p>
             <div class="payment-confirmed-actions">
-              <a class="btn btn-primary" href="<?= e(app_url('/frontend/dashboard-cliente.php')) ?>"><?= icon_svg('home') ?> Ir para dashboard</a>
+              <a class="btn btn-primary" href="<?= e(dashboard_url($type)) ?>"><?= icon_svg('home') ?> Ir para dashboard</a>
               <a class="btn btn-outline" href="<?= e(app_url('/frontend/perfil.php?tab=faturamento')) ?>"><?= icon_svg('chart') ?> Ver faturamento</a>
             </div>
           </div>

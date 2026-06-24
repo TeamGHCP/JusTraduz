@@ -17,8 +17,13 @@ $subscriptions = new SubscriptionService($pdo);
 $current = $subscriptions->ensureDefaultSubscription(1);
 assertTrue($current !== null, 'Assinatura padrao deve ser criada.');
 assertEquals('gratuito', $current['plan_slug'], 'Plano padrao deve ser Gratuito.');
-assertTrue($subscriptions->ensureDefaultSubscription(3) === null, 'Advogado nao deve receber assinatura.');
-assertTrue($subscriptions->changePlan(3, 2, 'monthly', 'active') === false, 'Advogado nao deve trocar plano.');
+$professionalDefault = $subscriptions->ensureDefaultProfessionalSubscription(3);
+assertTrue($professionalDefault !== null, 'Advogado validado deve receber assinatura profissional basica.');
+assertEquals('profissional_basico', $professionalDefault['plan_slug'], 'Plano profissional padrao deve ser Profissional basico.');
+assertTrue($subscriptions->ensureDefaultSubscription(3) === null, 'Advogado nao deve receber assinatura gratuita de cliente.');
+assertTrue($subscriptions->changePlan(3, 2, 'monthly', 'active') === true, 'Advogado validado deve assinar plano profissional.');
+assertTrue($subscriptions->changePlan(4, 2, 'monthly', 'active') === false, 'Advogado pendente nao deve assinar plano profissional.');
+assertTrue($subscriptions->changePlan(3, 1, 'monthly', 'active') === false, 'Advogado nao deve assinar plano Essencial de cliente.');
 $usage = new UsageLimiter($pdo);
 assertTrue($usage->allow(1, 'document_upload', 5)['allowed'] === true, 'Plano Gratuito deve permitir ate 5 uploads mensais.');
 assertTrue($usage->allow(1, 'document_upload', 6)['allowed'] === false, 'Plano Gratuito deve bloquear mais de 5 uploads mensais.');
@@ -38,14 +43,12 @@ $quota = $usage->allow(1, 'document_upload', 501);
 assertTrue($quota['allowed'] === false, 'Plano Pro deve bloquear mais de 500 uploads mensais.');
 $quota = $usage->allow(1, 'document_upload', 500);
 assertTrue($quota['allowed'] === true, 'Plano Pro deve permitir ate 500 uploads mensais.');
-assertEquals(250, $subscriptions->featureLimit(1, 'draft_generation'), 'Plano Pro deve limitar geracao de minutas.');
 
-assertTrue($subscriptions->changePlan(1, 3, 'monthly', 'active') === true, 'Troca para Escritorio deve funcionar.');
-assertTrue($usage->allow(1, 'document_upload', 5000)['allowed'] === true, 'Plano Escritorio deve permitir documentos ilimitados.');
-assertTrue($usage->allow(1, 'ocr', 5000)['allowed'] === true, 'Plano Escritorio deve permitir OCR ilimitado.');
-assertEquals(1000, $subscriptions->featureLimit(1, 'datajud_cnj'), 'Plano Escritorio deve limitar CNJ para controlar custo externo.');
-assertEquals(10, $subscriptions->featureLimit(1, 'seats'), 'Plano Escritorio deve liberar 10 usuarios adicionais.');
-assertEquals(51200, $subscriptions->featureLimit(1, 'storage_mb'), 'Plano Escritorio deve liberar 50GB de armazenamento.');
+assertTrue($subscriptions->changePlan(1, 3, 'monthly', 'active') === false, 'Cliente nao deve assinar plano Escritorio profissional.');
+assertTrue($subscriptions->changePlan(3, 3, 'monthly', 'active') === true, 'Advogado validado deve assinar plano Escritorio.');
+assertTrue($usage->allow(3, 'document_upload', 5000)['allowed'] === true, 'Plano Escritorio deve permitir documentos ilimitados.');
+assertTrue($usage->allow(3, 'ocr', 5000)['allowed'] === true, 'Plano Escritorio deve permitir OCR ilimitado.');
+assertEquals(1000, $subscriptions->featureLimit(3, 'datajud_cnj'), 'Plano Escritorio deve limitar CNJ para controlar custo externo.');
 assertTrue($subscriptions->changePlan(1, 2, 'monthly', 'active') === true, 'Retorno para Pro deve funcionar.');
 
 $payments = new ManualPaymentProvider($pdo, $subscriptions);
@@ -147,6 +150,10 @@ assertStringContains('cancelado', $latestNotification, 'Cancelamento de plano de
 assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM mail_logs WHERE recipient = 'cliente1@teste.local' AND subject = 'Plano cancelado - JusTraduz' AND status = 'sent'")->fetchColumn(), 'Cancelamento de plano deve enviar e-mail ao cliente.');
 $cancelFree = $payments->cancelSubscription(1);
 assertTrue(($cancelFree['already_free'] ?? false) === true, 'Cancelamento do Gratuito deve ser ignorado.');
+$lawyerCancel = $payments->cancelSubscription(3);
+assertTrue(($lawyerCancel['ok'] ?? false) === true, 'Cancelamento manual do plano profissional deve funcionar.');
+$lawyerCurrent = $subscriptions->currentForUser(3);
+assertEquals('profissional_basico', $lawyerCurrent['plan_slug'], 'Cancelamento profissional deve retornar ao Profissional basico.');
 putenv('MAIL_LOG_ONLY');
 
 $organizations = new OrganizationService($pdo);

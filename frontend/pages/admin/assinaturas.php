@@ -5,12 +5,22 @@ require_role(['admin']);
 $successMessage = trim((string) ($_GET['sucesso'] ?? ''));
 $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 $plans = database_table_exists($pdo, 'plans') ? fetch_all($pdo, 'SELECT * FROM plans WHERE active = 1 ORDER BY sort_order ASC') : [];
-$users = fetch_all($pdo, "SELECT id, nome, email, tipo FROM users WHERE status = 'ativo' AND tipo = 'cliente' ORDER BY nome");
+$users = fetch_all(
+    $pdo,
+    "SELECT id, nome, email, tipo
+     FROM users
+     WHERE status = 'ativo'
+       AND (
+           tipo = 'cliente'
+           OR (tipo = 'advogado' AND (oab_verificado = TRUE OR oab_status = 'approved' OR status_cna = 'verificado'))
+       )
+     ORDER BY tipo, nome"
+);
 $subscriptions = database_table_exists($pdo, 'subscriptions') ? fetch_all(
     $pdo,
     "SELECT s.*, u.nome, u.email, u.tipo, p.name AS plan_name, p.slug AS plan_slug
      FROM subscriptions s
-     INNER JOIN users u ON u.id = s.user_id AND u.tipo = 'cliente'
+     INNER JOIN users u ON u.id = s.user_id AND u.tipo IN ('cliente', 'advogado')
      INNER JOIN plans p ON p.id = s.plan_id
      ORDER BY s.created_at DESC
      LIMIT 150"
@@ -38,7 +48,7 @@ function billing_status_badge(string $status): string
   <div class="app-shell admin-shell">
     <?php render_sidebar('admin', 'assinaturas.php', true); ?>
     <main class="app-main">
-      <?php render_topbar('Assinaturas', 'Planos, ciclos, status e cobrança operacional apenas para clientes.', current_user_name()); ?>
+      <?php render_topbar('Assinaturas', 'Planos, ciclos, status e cobrança operacional para clientes e advogados verificados.', current_user_name()); ?>
 
       <?php if ($successMessage !== ''): ?><div class="alert is-visible alert-success"><?= e($successMessage) ?></div><?php endif; ?>
       <?php if ($errorMessage !== ''): ?><div class="alert is-visible alert-error"><?= e($errorMessage) ?></div><?php endif; ?>
@@ -56,7 +66,7 @@ function billing_status_badge(string $status): string
           <label for="user_id">Usuário</label>
           <select class="select" id="user_id" name="user_id" required>
             <?php foreach ($users as $user): ?>
-              <option value="<?= (int) $user['id'] ?>"><?= e($user['nome'] . ' · ' . $user['email']) ?></option>
+              <option value="<?= (int) $user['id'] ?>"><?= e($user['nome'] . ' · ' . $user['email'] . ' · ' . $user['tipo']) ?></option>
             <?php endforeach; ?>
           </select>
         </div>

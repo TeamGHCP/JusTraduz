@@ -26,8 +26,8 @@ class BillingController extends BaseController
             $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para escolher um plano.')));
         }
 
-        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
-            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode('Planos sao exclusivos para clientes.'));
+        if (!$this->canCurrentUserSubscribe()) {
+            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode($this->billingAccessMessage()));
         }
 
         $planId = (int) $this->request->post('plan_id', 0);
@@ -68,8 +68,8 @@ class BillingController extends BaseController
             $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para finalizar seu pagamento.')));
         }
 
-        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
-            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode('Planos sao exclusivos para clientes.'));
+        if (!$this->canCurrentUserSubscribe()) {
+            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode($this->billingAccessMessage()));
         }
 
         $userId = (int) $_SESSION['id'];
@@ -158,8 +158,8 @@ class BillingController extends BaseController
             $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para cancelar seu pagamento.')));
         }
 
-        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
-            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode('Planos sao exclusivos para clientes.'));
+        if (!$this->canCurrentUserSubscribe()) {
+            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode($this->billingAccessMessage()));
         }
 
         $checkout = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
@@ -215,8 +215,8 @@ class BillingController extends BaseController
             $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para gerenciar seu plano.')));
         }
 
-        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
-            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode('Planos sao exclusivos para clientes.'));
+        if (!$this->canCurrentUserSubscribe()) {
+            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode($this->billingAccessMessage()));
         }
 
         $userId = (int) $_SESSION['id'];
@@ -243,8 +243,8 @@ class BillingController extends BaseController
             $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faca login para verificar seu pagamento.')));
         }
 
-        if (($_SESSION['tipo'] ?? '') !== 'cliente') {
-            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode('Planos sao exclusivos para clientes.'));
+        if (!$this->canCurrentUserSubscribe()) {
+            $this->response->redirect($this->dashboardUrlFor((string) ($_SESSION['tipo'] ?? '')) . '?erro=' . urlencode($this->billingAccessMessage()));
         }
 
         $checkout = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
@@ -341,13 +341,19 @@ class BillingController extends BaseController
             return false;
         }
 
-        foreach ($this->subscriptions->plans() as $plan) {
-            if ((int) ($plan['id'] ?? 0) === $planId) {
-                return true;
-            }
-        }
+        return $this->subscriptions->planAvailableForUser((int) ($_SESSION['id'] ?? 0), $planId);
+    }
 
-        return false;
+    private function canCurrentUserSubscribe(): bool
+    {
+        return $this->subscriptions->userCanSubscribe((int) ($_SESSION['id'] ?? 0));
+    }
+
+    private function billingAccessMessage(): string
+    {
+        return ($_SESSION['tipo'] ?? '') === 'advogado'
+            ? 'Planos profissionais exigem OAB validada e conta ativa.'
+            : 'Planos estao disponiveis para clientes e advogados verificados.';
     }
 
     private function checkoutPaymentData(): array

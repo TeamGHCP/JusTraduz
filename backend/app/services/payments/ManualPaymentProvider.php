@@ -87,7 +87,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
             throw new RuntimeException('Nao foi possivel cancelar a assinatura.');
         }
 
-        $freeSubscription = $this->subscriptions->ensureDefaultSubscription($userId);
+        $freeSubscription = $this->subscriptions->ensureDefaultForUser($userId);
 
         $this->recordPaymentEvent(
             (int) $subscription['id'],
@@ -102,11 +102,8 @@ class ManualPaymentProvider implements PaymentProviderInterface
             ],
             null
         );
-        if ($this->notify(
-            $userId,
-            'Plano ' . (string) ($subscription['plan_name'] ?? '') . ' cancelado. Sua conta voltou para o modo gratuito.'
-        )) {
-            $user = $this->fetchUser($userId);
+        $user = $this->fetchUser($userId);
+        if ($this->notify($userId, $this->cancellationMessage($subscription, $user))) {
             if ($user) {
                 $this->billingEmails->sendPlanCanceled($user, $subscription);
             }
@@ -275,16 +272,28 @@ class ManualPaymentProvider implements PaymentProviderInterface
 
     private function fetchUser(int $userId): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT id, nome, email FROM users WHERE id = ? LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT id, nome, email, tipo FROM users WHERE id = ? LIMIT 1');
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
 
         return $user ?: null;
     }
 
+    private function cancellationMessage(array $subscription, ?array $user): string
+    {
+        $planName = trim((string) ($subscription['plan_name'] ?? ''));
+        $prefix = $planName !== '' ? 'Plano ' . $planName : 'Plano';
+
+        if ((string) ($user['tipo'] ?? '') === 'advogado') {
+            return $prefix . ' cancelado. Sua conta esta sem plano profissional ativo.';
+        }
+
+        return $prefix . ' cancelado. Sua conta voltou para o modo gratuito.';
+    }
+
     private function isFreePlan(array $subscription): bool
     {
-        return in_array((string) ($subscription['plan_slug'] ?? ''), ['gratuito', 'free'], true);
+        return in_array((string) ($subscription['plan_slug'] ?? ''), ['gratuito', 'free', 'profissional_basico', 'advogado_basico'], true);
     }
 
     private function money(int $cents): string

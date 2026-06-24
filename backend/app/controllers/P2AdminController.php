@@ -28,10 +28,8 @@ class P2AdminController extends BaseController
         $cycle = (string) $this->request->post('billing_cycle', 'monthly');
         $status = (string) $this->request->post('status', 'active');
 
-        $stmt = $this->pdo->prepare("SELECT id FROM users WHERE id = ? AND tipo = 'cliente' AND status = 'ativo'");
-        $stmt->execute([$userId]);
-        if (!$stmt->fetch()) {
-            $this->response->redirect(app_url('/frontend/admin/assinaturas.php?erro=' . urlencode('Assinaturas são permitidas apenas para clientes ativos.')));
+        if (!$this->subscriptions->userCanSubscribe($userId)) {
+            $this->response->redirect(app_url('/frontend/admin/assinaturas.php?erro=' . urlencode('Assinaturas são permitidas para clientes ativos e advogados com OAB validada.')));
         }
 
         if ($userId <= 0 || !$this->subscriptions->changePlan($userId, $planId, $cycle, $status)) {

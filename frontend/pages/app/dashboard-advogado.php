@@ -1,6 +1,8 @@
 <?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_role(['advogado']);
+require_once PROJECT_ROOT_PATH . '/backend/app/services/SubscriptionService.php';
+require_once PROJECT_ROOT_PATH . '/backend/app/services/UsageLimiter.php';
 
 $userId = current_user_id();
 
@@ -47,6 +49,19 @@ function lawyer_datetime(?string $value): string
     }
 
     return date('d/m/Y H:i', strtotime($value));
+}
+
+function lawyer_plan_usage(UsageLimiter $usage, string $feature): array
+{
+    return $usage->allow(current_user_id(), $feature, 0);
+}
+
+function lawyer_usage_label(array $quota): string
+{
+    $limit = (int) ($quota['limit'] ?? 0);
+    $used = (int) ($quota['used'] ?? 0);
+
+    return $limit <= 0 ? $used . ' / ilimitado' : $used . ' / ' . $limit;
 }
 
 $hasDocumentColumn = lawyer_cases_has_document_id($pdo);
@@ -175,6 +190,22 @@ $appointments = fetch_all(
      LIMIT 5",
     [$userId]
 );
+
+$subscriptionService = new SubscriptionService($pdo);
+$professionalSubscription = $subscriptionService->ensureDefaultProfessionalSubscription($userId);
+$usageLimiter = new UsageLimiter($pdo);
+$planName = (string) ($professionalSubscription['plan_name'] ?? 'Profissional básico');
+$planSlug = (string) ($professionalSubscription['plan_slug'] ?? 'profissional_basico');
+$isBasicProfessionalPlan = in_array($planSlug, ['profissional_basico', 'advogado_basico'], true);
+$planStatus = (string) ($professionalSubscription['status'] ?? 'active');
+$planRenewal = (string) ($professionalSubscription['current_period_end'] ?? '');
+$planUsage = [
+    'Documentos' => lawyer_plan_usage($usageLimiter, 'document_upload'),
+    'IA documental' => lawyer_plan_usage($usageLimiter, 'document_ai'),
+    'Chat IA' => lawyer_plan_usage($usageLimiter, 'ai_chat'),
+    'CNJ' => lawyer_plan_usage($usageLimiter, 'datajud_cnj'),
+    'OCR' => lawyer_plan_usage($usageLimiter, 'ocr'),
+];
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -192,7 +223,7 @@ $appointments = fetch_all(
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=lawyer-topic-labels-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=lawyer-plan-disclosure-1">
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body data-tour-page="dashboard_advogado">
@@ -212,6 +243,40 @@ $appointments = fetch_all(
           <a class="btn btn-primary" href="acompanhar-solicitacoes.php?scope=abertos"><?= icon_svg('case') ?> Ver fila</a>
           <a class="btn btn-outline" href="tarefas.php"><?= icon_svg('check') ?> Tarefas</a>
           <a class="btn btn-soft" href="agenda.php"><?= icon_svg('calendar') ?> Agenda</a>
+        </div>
+      </section>
+
+      <section class="lawyer-plan-disclosure">
+        <input class="lawyer-plan-checkbox" type="checkbox" id="lawyer-plan-toggle">
+        <label class="lawyer-plan-toggle" for="lawyer-plan-toggle">
+          <span class="lawyer-plan-summary-icon"><?= icon_svg('sparkles') ?></span>
+          <span class="lawyer-plan-summary-copy">
+            <span>Plano profissional</span>
+            <strong><?= e($planName) ?></strong>
+          </span>
+          <span class="badge <?= $planStatus === 'past_due' ? 'badge-warning' : 'badge-success' ?>"><?= e(status_label($planStatus)) ?></span>
+          <span class="lawyer-plan-summary-arrow" aria-hidden="true"><?= icon_svg('chevron-down') ?></span>
+        </label>
+        <div class="lawyer-plan-details">
+          <div class="dash-section-title">
+            <div>
+              <h2>Consumo do plano</h2>
+              <p class="text-muted">Acompanhe o uso do período atual e ajuste o plano quando precisar de mais volume.</p>
+            </div>
+            <a class="btn btn-soft btn-sm" href="subir-plano.php"><?= $isBasicProfessionalPlan ? 'Ver planos' : 'Alterar plano' ?></a>
+          </div>
+          <div class="lawyer-summary-grid lawyer-plan-grid">
+            <?php foreach ($planUsage as $label => $quota): ?>
+              <article class="lawyer-summary-card lawyer-plan-card">
+                <?= icon_svg('chart') ?>
+                <span><?= e($label) ?></span>
+                <strong><?= e(lawyer_usage_label($quota)) ?></strong>
+              </article>
+            <?php endforeach; ?>
+          </div>
+          <?php if ($planRenewal !== ''): ?>
+            <p class="text-muted mt-12">Período atual até <?= e(date('d/m/Y', strtotime($planRenewal))) ?>.</p>
+          <?php endif; ?>
         </div>
       </section>
 

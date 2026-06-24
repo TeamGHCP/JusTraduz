@@ -4,13 +4,16 @@ require_login();
 require_once PROJECT_ROOT_PATH . '/backend/app/services/SubscriptionService.php';
 
 $type = current_user_type();
-if ($type !== 'cliente') {
-    redirect(dashboard_url($type) . '?erro=' . urlencode('Planos são exclusivos para clientes.'));
+if (!in_array($type, ['cliente', 'advogado'], true)) {
+    redirect(dashboard_url($type) . '?erro=' . urlencode('Planos estão disponíveis para clientes e advogados verificados.'));
 }
 
 $billing = new SubscriptionService($pdo);
-$plans = $billing->plans();
-$currentSubscription = $billing->currentForUser(current_user_id());
+$plans = $billing->plans($type);
+$currentSubscription = $type === 'advogado'
+    ? $billing->ensureDefaultProfessionalSubscription(current_user_id())
+    : null;
+$currentSubscription = $currentSubscription ?: $billing->currentForUser(current_user_id());
 $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 $successMessage = trim((string) ($_GET['sucesso'] ?? ''));
 
@@ -41,6 +44,11 @@ function pricing_features(array $plan): array
 
 function pricing_included_prefix(array $plan): string
 {
+    $type = function_exists('current_user_type') ? current_user_type() : 'cliente';
+    if ($type === 'advogado' && (string) ($plan['slug'] ?? '') === 'pro') {
+        return '';
+    }
+
     return match ((string) ($plan['slug'] ?? '')) {
         'pro' => 'Tudo do Essencial +',
         'escritorio' => 'Tudo do Pro +',
@@ -83,14 +91,25 @@ function pricing_free_plan_fallback(): array
 
 $currentCycle = ($currentSubscription && ($currentSubscription['billing_cycle'] ?? '') === 'yearly') ? 'yearly' : 'monthly';
 $displayCurrentPlan = $currentSubscription ?: pricing_free_plan_fallback();
-$hasFreeCurrentPlan = in_array((string) ($displayCurrentPlan['plan_slug'] ?? ''), ['gratuito', 'free'], true);
+$hasFreeCurrentPlan = $type === 'cliente' && in_array((string) ($displayCurrentPlan['plan_slug'] ?? ''), ['gratuito', 'free'], true);
+$isProfessionalPricing = $type === 'advogado';
+$pageTitle = $isProfessionalPricing ? 'Planos profissionais' : 'Subir de plano';
+$pageSubtitle = $isProfessionalPricing
+    ? 'Escolha um plano para ampliar sua mesa jurídica, automações e volume de trabalho.'
+    : 'Escolha o plano ideal para usar o JusTraduz com mais volume e prioridade.';
+$heroTitle = $isProfessionalPricing
+    ? 'Planos para advogados que atendem, revisam e organizam casos em escala.'
+    : 'Planos que crescem junto com sua demanda jurídica.';
+$heroCopy = $isProfessionalPricing
+    ? 'Compare recursos profissionais, escolha cobrança mensal ou anual e finalize a assinatura pelo Asaas. A contratação fica vinculada à sua conta com OAB validada.'
+    : 'Compare limites, escolha a cobrança mensal ou anual e veja qual nível combina com seu momento. O checkout cria a cobrança no Asaas e ativa seus limites automaticamente após a confirmação do pagamento.';
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Subir de plano | JusTraduz</title>
+  <title><?= e($pageTitle) ?> | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link rel="stylesheet" href="assets/css/style.css?v=pricing-current-button-align-1">
 </head>
@@ -99,7 +118,7 @@ $hasFreeCurrentPlan = in_array((string) ($displayCurrentPlan['plan_slug'] ?? '')
     <?php render_sidebar($type, 'subir-plano.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Subir de plano', 'Escolha o plano ideal para usar o JusTraduz com mais volume e prioridade.', current_user_name()); ?>
+      <?php render_topbar($pageTitle, $pageSubtitle, current_user_name()); ?>
 
       <section class="pricing-page">
         <?php if ($errorMessage !== ''): ?>
@@ -111,8 +130,8 @@ $hasFreeCurrentPlan = in_array((string) ($displayCurrentPlan['plan_slug'] ?? '')
 
         <div class="pricing-hero card">
           <span class="pricing-kicker"><?= icon_svg('sparkles') ?> Planos mensais e anuais</span>
-          <h2>Planos que crescem junto com sua demanda jurídica.</h2>
-          <p>Compare limites, escolha a cobrança mensal ou anual e veja qual nível combina com seu momento. O checkout cria a cobrança no Asaas e ativa seus limites automaticamente após a confirmação do pagamento.</p>
+          <h2><?= e($heroTitle) ?></h2>
+          <p><?= e($heroCopy) ?></p>
           <button
             class="pricing-cycle-toggle<?= $currentCycle === 'yearly' ? ' is-yearly' : '' ?>"
             type="button"

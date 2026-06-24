@@ -34,13 +34,18 @@ class BillingEmailService
     public function sendPlanCanceled(array $user, array $subscription): bool
     {
         $planName = (string) ($subscription['plan_name'] ?? 'Plano JusTraduz');
+        $isProfessional = (string) ($user['tipo'] ?? '') === 'advogado';
+        $title = $isProfessional ? 'Seu plano profissional foi cancelado' : 'Sua conta voltou para o modo gratuito';
+        $intro = $isProfessional
+            ? 'Confirmamos o cancelamento da sua assinatura profissional. Você ainda pode consultar seu histórico de faturas no perfil.'
+            : 'Confirmamos o cancelamento da sua assinatura. Você ainda pode consultar seu histórico de faturas no perfil.';
 
         return $this->sendBillingEmail(
             $user,
             'Plano cancelado - JusTraduz',
             'Plano cancelado',
-            'Sua conta voltou para o modo gratuito',
-            'Confirmamos o cancelamento da sua assinatura. Você ainda pode consultar seu histórico de faturas no perfil.',
+            $title,
+            $intro,
             [
                 'Plano anterior' => $planName,
                 'Status' => 'Cancelado',

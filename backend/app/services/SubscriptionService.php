@@ -15,8 +15,9 @@ class SubscriptionService
             return null;
         }
 
+        $planAudienceSelect = $this->plansHaveAudience() ? ', p.audience AS plan_audience' : ", NULL AS plan_audience";
         $stmt = $this->pdo->prepare(
-            "SELECT s.*, p.name AS plan_name, p.slug AS plan_slug, p.monthly_price_cents, p.yearly_price_cents, p.limits_json, p.features_json
+            "SELECT s.*, p.name AS plan_name, p.slug AS plan_slug, p.monthly_price_cents, p.yearly_price_cents, p.limits_json, p.features_json{$planAudienceSelect}
              FROM subscriptions s
              INNER JOIN plans p ON p.id = s.plan_id
              WHERE s.user_id = ?
@@ -32,6 +33,12 @@ class SubscriptionService
 
     public function ensureDefaultSubscription(int $userId): ?array
     {
+        $stmt = $this->pdo->prepare("SELECT tipo FROM users WHERE id = ? LIMIT 1");
+        $stmt->execute([$userId]);
+        if ((string) ($stmt->fetchColumn() ?: '') !== 'cliente') {
+            return null;
+        }
+
         if (!$this->userCanSubscribe($userId)) {
             return null;
         }
@@ -70,6 +77,65 @@ class SubscriptionService
         $stmt->execute([$userId, $planId, $now->format('Y-m-d H:i:s'), $now->modify('+1 month')->format('Y-m-d H:i:s')]);
 
         return $this->currentForUser($userId);
+    }
+
+    public function ensureDefaultProfessionalSubscription(int $userId): ?array
+    {
+        if (!$this->userCanSubscribe($userId)) {
+            return null;
+        }
+
+        if (!database_table_exists($this->pdo, 'plans') || !database_table_exists($this->pdo, 'subscriptions')) {
+            return null;
+        }
+
+        $stmt = $this->pdo->prepare("SELECT tipo FROM users WHERE id = ? LIMIT 1");
+        $stmt->execute([$userId]);
+        if ((string) ($stmt->fetchColumn() ?: '') !== 'advogado') {
+            return null;
+        }
+
+        $current = $this->currentForUser($userId);
+        if ($current) {
+            return $current;
+        }
+
+        $stmt = $this->pdo->query(
+            "SELECT id
+             FROM plans
+             WHERE slug IN ('profissional_basico', 'advogado_basico')
+               AND active = 1
+             ORDER BY CASE slug
+                 WHEN 'profissional_basico' THEN 1
+                 WHEN 'advogado_basico' THEN 2
+                 ELSE 9
+             END
+             LIMIT 1"
+        );
+        $planId = (int) ($stmt->fetchColumn() ?: 0);
+        if ($planId <= 0) {
+            return null;
+        }
+
+        $now = new DateTimeImmutable();
+        $stmt = $this->pdo->prepare(
+            "INSERT INTO subscriptions (user_id, plan_id, billing_cycle, status, current_period_start, current_period_end)
+             VALUES (?, ?, 'monthly', 'active', ?, ?)"
+        );
+        $stmt->execute([$userId, $planId, $now->format('Y-m-d H:i:s'), $now->modify('+1 month')->format('Y-m-d H:i:s')]);
+
+        return $this->currentForUser($userId);
+    }
+
+    public function ensureDefaultForUser(int $userId): ?array
+    {
+        $stmt = $this->pdo->prepare("SELECT tipo FROM users WHERE id = ? LIMIT 1");
+        $stmt->execute([$userId]);
+        $type = (string) ($stmt->fetchColumn() ?: '');
+
+        return $type === 'advogado'
+            ? $this->ensureDefaultProfessionalSubscription($userId)
+            : $this->ensureDefaultSubscription($userId);
     }
 
     public function isBlocked(int $userId): bool
@@ -169,14 +235,51 @@ class SubscriptionService
         return $renewed ?: null;
     }
 
-    public function plans(): array
+    public function plans(?string $profile = null): array
     {
         if (!database_table_exists($this->pdo, 'plans')) {
             return [];
         }
 
-        $stmt = $this->pdo->query('SELECT * FROM plans WHERE active = 1 AND (monthly_price_cents > 0 OR yearly_price_cents > 0) ORDER BY sort_order ASC, monthly_price_cents ASC');
+        $sql = 'SELECT * FROM plans WHERE active = 1 AND (monthly_price_cents > 0 OR yearly_price_cents > 0)';
+        $params = [];
+
+        if ($profile !== null && $this->plansHaveAudience()) {
+            $sql .= " AND audience IN (?, 'ambos')";
+            $params[] = $this->audienceForProfile($profile);
+        } elseif ($profile === 'advogado') {
+            $sql .= " AND slug IN ('pro', 'escritorio')";
+        } elseif ($profile === 'cliente') {
+            $sql .= " AND slug NOT IN ('profissional_basico', 'advogado_basico')";
+        }
+
+        $sql .= ' ORDER BY sort_order ASC, monthly_price_cents ASC';
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    public function planAvailableForUser(int $userId, int $planId): bool
+    {
+        if ($planId <= 0 || !database_table_exists($this->pdo, 'plans')) {
+            return false;
+        }
+
+        $stmt = $this->pdo->prepare('SELECT tipo FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$userId]);
+        $profile = (string) ($stmt->fetchColumn() ?: '');
+        if (!in_array($profile, ['cliente', 'advogado'], true)) {
+            return false;
+        }
+
+        foreach ($this->plans($profile) as $plan) {
+            if ((int) ($plan['id'] ?? 0) === $planId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function changePlan(int $userId, int $planId, string $billingCycle = 'monthly', string $status = 'active'): bool
@@ -197,9 +300,7 @@ class SubscriptionService
             $status = 'active';
         }
 
-        $stmt = $this->pdo->prepare('SELECT id FROM plans WHERE id = ? AND active = 1');
-        $stmt->execute([$planId]);
-        if (!$stmt->fetch()) {
+        if (!$this->planAvailableForUser($userId, $planId)) {
             return false;
         }
 
@@ -247,12 +348,35 @@ class SubscriptionService
 
     public function userCanSubscribe(int $userId): bool
     {
-        $stmt = $this->pdo->prepare("SELECT tipo, status FROM users WHERE id = ? LIMIT 1");
+        $stmt = $this->pdo->prepare("SELECT tipo, status, oab_verificado, oab_status, status_cna FROM users WHERE id = ? LIMIT 1");
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
 
-        return $user
-            && (string) ($user['tipo'] ?? '') === 'cliente'
-            && (string) ($user['status'] ?? '') === 'ativo';
+        if (!$user || (string) ($user['status'] ?? '') !== 'ativo') {
+            return false;
+        }
+
+        $type = (string) ($user['tipo'] ?? '');
+        if ($type === 'cliente') {
+            return true;
+        }
+
+        if ($type !== 'advogado') {
+            return false;
+        }
+
+        return (int) ($user['oab_verificado'] ?? 0) === 1
+            || in_array((string) (($user['oab_status'] ?? '') ?: ($user['status_cna'] ?? '')), ['approved', 'verificado'], true);
+    }
+
+    private function plansHaveAudience(): bool
+    {
+        return database_table_exists($this->pdo, 'plans')
+            && database_table_has_column($this->pdo, 'plans', 'audience');
+    }
+
+    private function audienceForProfile(string $profile): string
+    {
+        return $profile === 'advogado' ? 'advogado' : 'cliente';
     }
 }

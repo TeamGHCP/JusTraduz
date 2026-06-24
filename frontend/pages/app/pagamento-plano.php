@@ -10,8 +10,8 @@ function payment_redirect(string $url): void
 }
 
 $type = current_user_type();
-if ($type !== 'cliente') {
-    payment_redirect(dashboard_url($type) . '?erro=' . urlencode('Planos são exclusivos para clientes.'));
+if (!in_array($type, ['cliente', 'advogado'], true)) {
+    payment_redirect(dashboard_url($type) . '?erro=' . urlencode('Planos estão disponíveis para clientes e advogados verificados.'));
 }
 
 $billing = new SubscriptionService($pdo);
@@ -49,16 +49,15 @@ $isCheckoutCreated = $providerSubscriptionId !== '' && $payUrl !== '';
 
 $checkoutUser = fetch_one($pdo, 'SELECT nome, email, cpf, telefone FROM users WHERE id = ? LIMIT 1', [current_user_id()]) ?: [];
 $isPlanActive = $currentSubscription
+    && $isCheckoutCreated
     && (int) ($currentSubscription['plan_id'] ?? 0) === $planId
-    && (
-        $providerSubscriptionId === ''
-        || (string) ($currentSubscription['provider_subscription_id'] ?? '') === $providerSubscriptionId
-        || (string) ($currentSubscription['provider'] ?? '') !== 'asaas'
-    );
+    && (string) ($currentSubscription['billing_cycle'] ?? 'monthly') === $billingCycle
+    && (string) ($currentSubscription['provider'] ?? '') === 'asaas'
+    && trim((string) ($currentSubscription['provider_subscription_id'] ?? '')) === $providerSubscriptionId;
 $isPlanChange = $currentSubscription
     && !$isPlanActive
     && in_array((string) ($currentSubscription['status'] ?? ''), ['active', 'trialing', 'past_due'], true);
-$plans = $billing->plans();
+$plans = $billing->plans($type);
 $plan = null;
 foreach ($plans as $candidate) {
     if ((int) ($candidate['id'] ?? 0) === $planId) {
@@ -178,7 +177,7 @@ $asaasEnvironmentLabel = payment_asaas_environment_label();
             <div class="payment-card-header">
               <span class="payment-step">1</span>
               <div>
-                <span class="pricing-kicker"><?= icon_svg('user') ?> Dados do cliente</span>
+                <span class="pricing-kicker"><?= icon_svg('user') ?> <?= $type === 'advogado' ? 'Dados profissionais' : 'Dados do cliente' ?></span>
                 <h2>Finalizar assinatura</h2>
               </div>
             </div>

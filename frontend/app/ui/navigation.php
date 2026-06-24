@@ -55,6 +55,7 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                     'icon' => 'user',
                     'items' => [
                         ['href' => 'perfil.php', 'label' => 'Perfil profissional', 'icon' => 'user'],
+                        ['href' => 'subir-plano.php', 'label' => 'Planos profissionais', 'icon' => 'sparkles'],
                     ],
                 ],
             ];

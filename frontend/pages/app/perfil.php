@@ -99,11 +99,15 @@ if (!in_array($activeProfileTab, $allowedProfileTabs, true)) {
 }
 
 $subscriptionService = new SubscriptionService($pdo);
-$currentSubscription = ($type === 'cliente') ? $subscriptionService->currentForUser(current_user_id()) : null;
+$currentSubscription = null;
+if ($type === 'advogado') {
+    $currentSubscription = $subscriptionService->ensureDefaultProfessionalSubscription(current_user_id());
+}
+$currentSubscription = $currentSubscription ?: (in_array($type, ['cliente', 'advogado'], true) ? $subscriptionService->currentForUser(current_user_id()) : null);
 $isFreeSubscription = $currentSubscription
-    && in_array((string) ($currentSubscription['plan_slug'] ?? ''), ['gratuito', 'free'], true);
+    && in_array((string) ($currentSubscription['plan_slug'] ?? ''), ['gratuito', 'free', 'profissional_basico', 'advogado_basico'], true);
 $paymentEvents = [];
-if ($type === 'cliente' && database_table_exists($pdo, 'payment_events')) {
+if (in_array($type, ['cliente', 'advogado'], true) && database_table_exists($pdo, 'payment_events')) {
     $stmt = $pdo->prepare(
         'SELECT id, subscription_id, user_id, provider, provider_event_id, event_type, amount_cents, status, payload_json, processed_at, created_at
          FROM payment_events
@@ -265,11 +269,11 @@ $profileTourKey = match ($type) {
                       <p><?= e($billingRenewalMessage) ?></p>
                     <?php endif; ?>
                   <?php else: ?>
-                    <p>Você está usando o modo gratuito. Assine um plano para liberar mais volume e prioridade.</p>
+                    <p><?= $type === 'advogado' ? 'Nenhum plano profissional ativo. Assine um plano para liberar mais volume e recursos profissionais.' : 'Você está usando o modo gratuito. Assine um plano para liberar mais volume e prioridade.' ?></p>
                   <?php endif; ?>
                 </div>
                 <div class="profile-billing-actions">
-                  <a class="btn btn-outline" href="<?= e(app_url('/frontend/subir-plano.php')) ?>"><?= ($currentSubscription && !$isFreeSubscription) ? 'Alterar plano' : 'Subir de plano' ?></a>
+                  <a class="btn btn-outline" href="<?= e(app_url('/frontend/subir-plano.php')) ?>"><?= ($currentSubscription && !$isFreeSubscription) ? 'Alterar plano' : ($type === 'advogado' ? 'Ver planos profissionais' : 'Subir de plano') ?></a>
                   <?php if ($currentSubscription && !$isFreeSubscription): ?>
                     <form action="<?= e(app_url('/backend/public/index.php?rota=/billing/cancel')) ?>" method="post" data-billing-cancel-form>
                       <?= csrf_input() ?>

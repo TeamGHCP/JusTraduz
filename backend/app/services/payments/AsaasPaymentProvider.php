@@ -41,8 +41,12 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         }
 
         $user = $this->fetchUser($userId);
+        if (!$user || !$this->subscriptions->planAvailableForUser($userId, $planId)) {
+            return PaymentCheckoutResult::error('Plano invalido.');
+        }
+
         $plan = $this->fetchPlan($planId);
-        if (!$user || !$plan) {
+        if (!$plan) {
             return PaymentCheckoutResult::error('Plano invalido.');
         }
 
@@ -360,7 +364,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             throw new RuntimeException('Nao foi possivel cancelar a assinatura local.');
         }
 
-        $freeSubscription = $this->subscriptions->ensureDefaultSubscription($userId);
+        $freeSubscription = $this->subscriptions->ensureDefaultForUser($userId);
 
         $this->recordPaymentEvent(
             (int) $subscription['id'],
@@ -541,7 +545,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
     private function fetchUser(int $userId): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT id, nome, email, cpf, telefone FROM users WHERE id = ? LIMIT 1');
+        $stmt = $this->pdo->prepare('SELECT id, nome, email, tipo, cpf, telefone FROM users WHERE id = ? LIMIT 1');
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
 
@@ -550,7 +554,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
     private function isFreePlan(array $subscription): bool
     {
-        return in_array((string) ($subscription['plan_slug'] ?? ''), ['gratuito', 'free'], true);
+        return in_array((string) ($subscription['plan_slug'] ?? ''), ['gratuito', 'free', 'profissional_basico', 'advogado_basico'], true);
     }
 
     private function fetchPlan(int $planId): ?array
@@ -897,9 +901,11 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         }
 
         $label = trim($planName) !== '' ? ' ' . trim($planName) : '';
-        $message = 'Plano' . $label . ' cancelado. Sua conta voltou para o modo gratuito.';
+        $user = $this->fetchUser($userId);
+        $message = (string) ($user['tipo'] ?? '') === 'advogado'
+            ? 'Plano' . $label . ' cancelado. Sua conta esta sem plano profissional ativo.'
+            : 'Plano' . $label . ' cancelado. Sua conta voltou para o modo gratuito.';
         if ($this->notifyRecentUnique($userId, $message)) {
-            $user = $this->fetchUser($userId);
             if ($user) {
                 $this->billingEmails->sendPlanCanceled($user, ['plan_name' => $planName]);
             }

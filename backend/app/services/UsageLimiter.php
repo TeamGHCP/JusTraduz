@@ -130,6 +130,10 @@ class UsageLimiter
         }
 
         if ($this->subscriptions !== null) {
+            if ($this->subscriptions->currentForUser($userId) === null) {
+                $this->subscriptions->ensureDefaultProfessionalSubscription($userId);
+            }
+
             $planLimit = method_exists($this->subscriptions, 'featureLimitValue')
                 ? $this->subscriptions->featureLimitValue($userId, $feature)
                 : $this->subscriptions->featureLimit($userId, $feature);
