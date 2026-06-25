@@ -40,6 +40,12 @@ php backend\tests\run.php
 php scripts\check-references.php
 ```
 
+Para gerar um resumo operacional periodico:
+
+```powershell
+php scripts\operational-health-report.php --output=storage-private\reports\saude-operacional.md
+```
+
 Para validar apenas o template versionado:
 
 ```powershell
@@ -62,6 +68,8 @@ php scripts\check-production-readiness.php --env=backend/.env
 - `docs/REGISTRO_REVISAO_JURIDICA.md`: revisão jurídica externa ainda pendente.
 - `docs/CONFIGURAR_CLAMAV.md`: configuração pendente quando houver servidor real.
 - `docs/OPERACAO_BACKUP_RESTORE.md`: backup, restore e operação ainda precisam ser validados fora do ambiente local.
+- `docs/MANUAL_OPERACIONAL_INTERNO.md`: rotina de admin/suporte.
+- `docs/API_PUBLICA.md`: estado atual da superficie `/api/v1`.
 
 ## Pendências principais
 

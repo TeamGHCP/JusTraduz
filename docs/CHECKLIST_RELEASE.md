@@ -10,6 +10,7 @@ Use este checklist somente antes de homologação ou deploy real.
 - [ ] `php scripts/check-references.php` passando.
 - [ ] `php backend/tests/run.php` passando.
 - [ ] `php scripts/check-production-readiness.php --env=backend/.env` passando no ambiente alvo.
+- [ ] `php scripts/operational-health-report.php --output=storage-private/reports/saude-operacional.md` executado no ambiente alvo.
 
 ## Configuração
 
@@ -23,7 +24,7 @@ Use este checklist somente antes de homologação ou deploy real.
 
 ## Banco e storage
 
-- [ ] SQL/migrations revisados.
+- [ ] SQL consolidado e eventual script incremental revisados.
 - [ ] Backup criado antes do deploy.
 - [ ] Restore testado em ambiente limpo.
 - [ ] `DOCUMENT_STORAGE_PATH` e `ATTACHMENT_STORAGE_PATH` apontando para storage privado fora do webroot em produção.
@@ -42,6 +43,7 @@ Use este checklist somente antes de homologação ou deploy real.
 - [ ] CSP conferida sem `unsafe-eval`.
 - [ ] Headers de segurança conferidos.
 - [ ] Healthcheck OK no domínio final.
+- [ ] Relatório operacional revisado sem fila, storage ou SLA inesperado.
 - [ ] Logs revisados sem segredos.
 - [ ] Plano de rollback validado.
 

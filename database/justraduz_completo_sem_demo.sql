@@ -2,7 +2,7 @@
 -- Contem schema final e migrations incorporadas.
 -- ATENCAO: este arquivo recria o banco justraduz do zero.
 -- Nao execute em uma base com dados reais sem backup.
--- Migration de onboarding/tour incorporada e registrada em schema_migrations.
+-- Migrations de onboarding, SLA e produto futuro incorporadas e registradas em schema_migrations.
 
 DROP DATABASE IF EXISTS justraduz;
 CREATE DATABASE IF NOT EXISTS justraduz
@@ -16,9 +16,22 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS organizations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(180) NOT NULL,
+    tipo ENUM('empresa', 'escritorio') NOT NULL DEFAULT 'empresa',
+    documento VARCHAR(32) NULL,
+    status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_organizations_status (status),
+    UNIQUE KEY uq_organizations_documento (documento)
+) DEFAULT CHARSET=utf8mb4;
+
 -- usuários
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL COLLATE utf8mb4_general_ci,
     senha VARCHAR(255) NOT NULL,
@@ -52,15 +65,45 @@ CREATE TABLE IF NOT EXISTS users (
     provider VARCHAR(30) NULL,
     profile_completed BOOLEAN DEFAULT TRUE,
     email_verified_at DATETIME NULL,
+    deletion_requested_at DATETIME NULL,
+    deletion_scheduled_at DATETIME NULL,
     status ENUM('ativo','inativo') DEFAULT 'ativo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_users_tipo_status (tipo, status),
     UNIQUE KEY uniq_users_cpf (cpf),
     INDEX idx_users_oab_status (oab_status),
+    INDEX idx_users_organization (organization_id),
     INDEX idx_users_provider (provider),
     INDEX idx_users_google_sub (google_sub),
+    INDEX idx_users_deletion_schedule (deletion_scheduled_at),
+    CONSTRAINT fk_users_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (oab_validated_by) REFERENCES users(id) ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_organizations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    organization_id INT NOT NULL,
+    papel ENUM('membro', 'gestor', 'suporte') NOT NULL DEFAULT 'membro',
+    is_primary TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_user_organization (user_id, organization_id),
+    INDEX idx_user_organizations_org (organization_id),
+    CONSTRAINT fk_user_organizations_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_organizations_org FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS role_permission_overrides (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(40) NOT NULL,
+    permission VARCHAR(100) NOT NULL,
+    effect ENUM('allow', 'deny') NOT NULL,
+    updated_by INT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_role_permission_override (role_name, permission),
+    INDEX idx_role_permission_role (role_name),
+    CONSTRAINT fk_role_permission_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS user_onboarding_progress (
@@ -87,12 +130,15 @@ CREATE TABLE IF NOT EXISTS user_onboarding_progress (
 CREATE TABLE IF NOT EXISTS documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    organization_id INT NULL,
     nome_arquivo VARCHAR(255),
     tipo_arquivo VARCHAR(20),
     caminho VARCHAR(255),
     texto_extraido LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_documents_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    INDEX idx_documents_organization (organization_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- resultados da ia
@@ -111,20 +157,43 @@ CREATE TABLE IF NOT EXISTS ai_results (
 -- casos (solicitações de ajuda)
 CREATE TABLE IF NOT EXISTS cases (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     cliente_id INT NOT NULL,
     advogado_id INT NULL,
     document_id INT NULL,
     titulo VARCHAR(255),
     descricao TEXT,
     status ENUM('aberto', 'em_andamento', 'finalizado') DEFAULT 'aberto',
-    prioridade ENUM('baixa', 'media', 'alta') DEFAULT 'media',
+    prioridade ENUM('baixa', 'media', 'normal', 'alta', 'urgente') DEFAULT 'media',
+    sla_deadline_at DATETIME NULL,
+    escalated_at DATETIME NULL,
+    assigned_to INT NULL,
+    escalation_status ENUM('none', 'due_soon', 'overdue', 'unassigned') NOT NULL DEFAULT 'none',
+    last_escalated_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cliente_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (advogado_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE SET NULL,
+    CONSTRAINT fk_cases_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    CONSTRAINT fk_cases_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_cases_cliente_status (cliente_id, status),
     INDEX idx_cases_advogado_status (advogado_id, status),
-    INDEX idx_cases_document (document_id)
+    INDEX idx_cases_document (document_id),
+    INDEX idx_cases_organization (organization_id),
+    INDEX idx_cases_sla_status_deadline (status, sla_deadline_at),
+    INDEX idx_cases_assigned_to (assigned_to),
+    INDEX idx_cases_escalation (status, escalation_status, last_escalated_at)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS case_escalations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT NOT NULL,
+    state ENUM('due_soon', 'overdue', 'unassigned') NOT NULL,
+    notified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    message VARCHAR(255) NOT NULL,
+    UNIQUE KEY uq_case_escalation_window (case_id, state, notified_at),
+    INDEX idx_case_escalations_case (case_id),
+    CONSTRAINT fk_case_escalations_case FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8mb4;
 
 -- mensagens
@@ -315,6 +384,19 @@ CREATE TABLE IF NOT EXISTS mail_logs (
     INDEX idx_mail_logs_status (status, created_at),
     INDEX idx_mail_logs_recipient (recipient, created_at)
 ) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS public_api_clients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(180) NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    scopes VARCHAR(255) NOT NULL DEFAULT 'health:read,reports:read',
+    status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+    last_used_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_public_api_client_name (nome),
+    INDEX idx_public_api_clients_status (status)
+) DEFAULT CHARSET=utf8mb4;
 -- Registro das migrations ja incorporadas neste schema consolidado.
 INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_telefone'),
@@ -329,6 +411,8 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_datajud_processes'),
     ('migration_case_document'),
     ('2026_06_11_create_user_onboarding_progress'),
-    ('2026_06_13_google_oab_profile_fields');
+    ('2026_06_13_google_oab_profile_fields'),
+    ('2026_06_23_cases_sla'),
+    ('2026_06_25_product_future');
 
 SELECT 'Banco JusTraduz instalado sem dados demo.' AS resultado;

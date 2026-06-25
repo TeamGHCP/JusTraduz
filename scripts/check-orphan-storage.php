@@ -3,7 +3,13 @@
 $root = dirname(__DIR__);
 $delete = in_array('--delete', $argv, true);
 
-require_once $root . '/backend/app/config/database.php';
+try {
+    require_once $root . '/backend/app/config/database.php';
+} catch (Throwable $exception) {
+    fwrite(STDERR, 'Orphan storage check: banco indisponivel: ' . $exception->getMessage() . "\n");
+    exit(2);
+}
+
 require_once $root . '/backend/app/services/StorageService.php';
 
 $storage = new StorageService();

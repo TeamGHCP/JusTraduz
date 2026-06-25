@@ -127,7 +127,12 @@ foreach ($activeCases as $case) {
       <section class="dash-section mt-16">
         <div class="dash-section-title">
           <h2>Documentos nos últimos 30 dias</h2>
-          <a class="btn btn-soft btn-sm" href="<?= e(app_url('/backend/public/index.php?rota=/api/v1/admin/reports/summary')) ?>">API v1</a>
+          <div class="inline-actions">
+            <a class="btn btn-soft btn-sm" href="<?= e(app_url('/backend/public/index.php?rota=/api/v1/admin/reports/summary')) ?>">API v1</a>
+            <a class="btn btn-soft btn-sm" href="<?= e(app_url('/backend/public/index.php?rota=/api/v1/admin/reports/export&type=cases')) ?>">CSV casos</a>
+            <a class="btn btn-soft btn-sm" href="<?= e(app_url('/backend/public/index.php?rota=/api/v1/admin/reports/export&type=users')) ?>">CSV usuários</a>
+            <a class="btn btn-soft btn-sm" href="<?= e(app_url('/backend/public/index.php?rota=/api/v1/admin/reports/export&type=documents')) ?>">CSV documentos</a>
+          </div>
         </div>
         <?php if (!$recentDocuments): ?>
           <?= empty_state('Nenhum documento enviado no período.') ?>

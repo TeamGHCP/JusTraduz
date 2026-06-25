@@ -3,9 +3,14 @@ require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 
 $type = current_user_type();
+$hasAccountDeletionSchedule = database_table_has_column($pdo, 'users', 'deletion_requested_at')
+    && database_table_has_column($pdo, 'users', 'deletion_scheduled_at');
+$accountDeletionSelect = $hasAccountDeletionSchedule
+    ? ', deletion_requested_at, deletion_scheduled_at'
+    : ', NULL AS deletion_requested_at, NULL AS deletion_scheduled_at';
 $user = fetch_one(
     $pdo,
-    'SELECT nome, email, tipo, telefone, cpf, foto_perfil, google_picture, oab, oab_uf, oab_status, oab_verificado, status_cna, cna_validado_em, cna_origem, cna_ultimo_erro
+    'SELECT nome, email, tipo, telefone, cpf, foto_perfil, google_picture, oab, oab_uf, oab_status, oab_verificado, status_cna, cna_validado_em, cna_origem, cna_ultimo_erro' . $accountDeletionSelect . '
      FROM users
      WHERE id = ?',
     [current_user_id()]
@@ -52,6 +57,9 @@ function profile_oab_status_meta(array $user): array
 
 $isProfessional = in_array($user['tipo'] ?? '', ['advogado', 'estagiario'], true);
 $oabStatus = $isProfessional ? profile_oab_status_meta($user) : null;
+$deletionScheduledAt = trim((string) ($user['deletion_scheduled_at'] ?? ''));
+$hasDeletionScheduled = $deletionScheduledAt !== '';
+$deletionScheduledLabel = $hasDeletionScheduled ? date('d/m/Y H:i', strtotime($deletionScheduledAt)) : '';
 $profileTourKey = match ($type) {
     'advogado' => 'dashboard_advogado',
     'estagiario' => 'dashboard_estagiario',
@@ -85,6 +93,13 @@ $profileTourKey = match ($type) {
     <main class="app-main">
       <?php render_topbar('Meu perfil', 'Dados cadastrados no sistema.', current_user_name()); ?>
 
+      <?php if ($hasDeletionScheduled): ?>
+        <section class="alert alert-warning is-visible">
+          <strong>Exclusão agendada.</strong>
+          Seus dados ficam preservados até <?= e($deletionScheduledLabel) ?>. Se você mudar de ideia antes dessa data, cancele a solicitação nesta página.
+        </section>
+      <?php endif; ?>
+
       <section class="profile-layout">
         <aside class="card text-center">
           <div class="profile-photo">
@@ -95,7 +110,7 @@ $profileTourKey = match ($type) {
           </div>
           <h3><?= e($user['nome'] ?? '') ?></h3>
           <p><?= e($user['email'] ?? '') ?></p>
-          <p class="mt-12"><span class="badge badge-success">Conta ativa</span></p>
+          <p class="mt-12"><span class="badge <?= $hasDeletionScheduled ? 'badge-warning' : 'badge-success' ?>"><?= $hasDeletionScheduled ? 'Exclusão agendada' : 'Conta ativa' ?></span></p>
           <?php if ($oabStatus): ?>
             <p class="mt-8"><span class="badge <?= e($oabStatus['badge']) ?>"><?= e($oabStatus['label']) ?></span></p>
           <?php endif; ?>
@@ -175,20 +190,35 @@ $profileTourKey = match ($type) {
                 <p class="text-muted">Exporte seus dados ou solicite o encerramento da conta.</p>
               </div>
             </div>
+            <?php if ($hasDeletionScheduled): ?>
+              <div class="alert alert-warning is-visible">
+                A exclusão definitiva está agendada para <?= e($deletionScheduledLabel) ?>. Até lá, seus dados permanecem guardados e a solicitação pode ser cancelada.
+              </div>
+              <form class="inline-form mt-12" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/cancel-delete-account')) ?>" method="post" data-confirm="Cancelar a exclusão da conta e manter seu cadastro ativo?">
+                <?= csrf_input() ?>
+                <button class="btn btn-primary" type="submit"><?= icon_svg('shield') ?> Cancelar exclusão</button>
+              </form>
+            <?php else: ?>
+              <div class="alert alert-info is-visible">
+                Ao solicitar a exclusão, a conta entra em um prazo de segurança de 30 dias. Nesse período os dados ficam preservados para arrependimento; depois disso, a remoção definitiva pode ser processada.
+              </div>
+            <?php endif; ?>
             <div class="form-actions">
               <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/export')) ?>" method="post">
                 <?= csrf_input() ?>
                 <button class="btn btn-outline" type="submit"><?= icon_svg('download') ?> Baixar meus dados</button>
               </form>
             </div>
-            <form class="auth-form mt-16" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/delete-account')) ?>" method="post" data-confirm="Encerrar a conta remove dados pessoais e não pode ser desfeito. Continuar?">
+            <?php if (!$hasDeletionScheduled): ?>
+            <form class="auth-form mt-16" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/delete-account')) ?>" method="post" data-confirm="Agendar exclusão da conta? Seus dados serão preservados por 30 dias para cancelamento antes da remoção definitiva.">
               <?= csrf_input() ?>
               <div class="field">
-                <label for="privacy_delete_confirm">Digite EXCLUIR para encerrar a conta</label>
+                <label for="privacy_delete_confirm">Digite EXCLUIR para agendar a exclusão</label>
                 <input class="input" id="privacy_delete_confirm" name="confirmacao" autocomplete="off" placeholder="EXCLUIR">
               </div>
-              <button class="btn btn-outline" type="submit"><?= icon_svg('trash') ?> Encerrar conta</button>
+              <button class="btn btn-outline" type="submit"><?= icon_svg('trash') ?> Agendar exclusão da conta</button>
             </form>
+            <?php endif; ?>
           </section>
 
           <section class="card">

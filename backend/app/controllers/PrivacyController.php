@@ -7,6 +7,8 @@ require_once dirname(__DIR__) . '/services/StorageService.php';
 
 class PrivacyController extends BaseController
 {
+    private const ACCOUNT_DELETION_RETENTION_DAYS = 30;
+
     private AuditService $audit;
     private StorageService $storage;
 
@@ -40,6 +42,7 @@ class PrivacyController extends BaseController
     public function deleteAccount(): void
     {
         $this->requireLoggedPrivacyAction();
+        $this->ensureAccountDeletionColumns();
 
         $confirmation = trim((string) $this->request->post('confirmacao', ''));
         if ($confirmation !== 'EXCLUIR') {
@@ -51,6 +54,28 @@ class PrivacyController extends BaseController
         if ($userType === 'admin' && $this->activeAdminCount() <= 1) {
             $this->response->redirect(app_url('/frontend/perfil.php?erro=' . urlencode('Não é possível encerrar o último administrador ativo.')));
         }
+
+        $user = $this->fetchOne('SELECT deletion_scheduled_at FROM users WHERE id = ?', [$userId]);
+        if (!empty($user['deletion_scheduled_at'])) {
+            $this->response->redirect(app_url('/frontend/perfil.php?sucesso=' . urlencode('A exclusao da conta ja esta agendada. Voce ainda pode cancelar antes do prazo final.')));
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $scheduledAt = date('Y-m-d H:i:s', strtotime('+' . self::ACCOUNT_DELETION_RETENTION_DAYS . ' days'));
+        $stmt = $this->pdo->prepare(
+            'UPDATE users
+             SET deletion_requested_at = ?,
+                 deletion_scheduled_at = ?,
+                 updated_at = ?
+             WHERE id = ?'
+        );
+        $stmt->execute([$now, $scheduledAt, $now, $userId]);
+        $this->audit->log('privacy.delete_account_scheduled', 'user', $userId, [
+            'tipo' => $userType,
+            'scheduled_at' => $scheduledAt,
+        ]);
+
+        $this->response->redirect(app_url('/frontend/perfil.php?sucesso=' . urlencode('Exclusao da conta agendada. Seus dados ficam preservados por 30 dias e voce pode cancelar antes do prazo final.')));
 
         $documents = $this->fetchAll('SELECT id, caminho FROM documents WHERE user_id = ?', [$userId]);
         $attachments = $this->fetchAll('SELECT id, attachment_path FROM messages WHERE sender_id = ? AND attachment_path IS NOT NULL', [$userId]);
@@ -83,6 +108,84 @@ class PrivacyController extends BaseController
 
         secure_session_destroy_current();
         $this->response->redirect(app_url('/frontend/login.html?sucesso=' . urlencode('Conta encerrada e dados pessoais removidos conforme politica LGPD.')));
+    }
+
+    public function cancelAccountDeletion(): void
+    {
+        $this->requireLoggedPrivacyAction();
+        $this->ensureAccountDeletionColumns();
+
+        $userId = $this->currentUserId();
+        $stmt = $this->pdo->prepare(
+            'UPDATE users
+             SET deletion_requested_at = NULL,
+                 deletion_scheduled_at = NULL,
+                 updated_at = ?
+             WHERE id = ? AND deletion_scheduled_at IS NOT NULL'
+        );
+        $stmt->execute([date('Y-m-d H:i:s'), $userId]);
+
+        if ($stmt->rowCount() < 1) {
+            $this->response->redirect(app_url('/frontend/perfil.php?erro=' . urlencode('Nao havia exclusao de conta agendada para cancelar.')));
+        }
+
+        $this->audit->log('privacy.delete_account_cancelled', 'user', $userId);
+        $this->response->redirect(app_url('/frontend/perfil.php?sucesso=' . urlencode('Exclusao cancelada. Sua conta permanece ativa.')));
+    }
+
+    public function finalizeExpiredDeletions(int $limit = 50): int
+    {
+        $this->ensureAccountDeletionColumns();
+        $limit = max(1, min(500, $limit));
+        $rows = $this->fetchAll(
+            "SELECT id, tipo
+             FROM users
+             WHERE deletion_scheduled_at IS NOT NULL
+               AND deletion_scheduled_at <= ?
+             ORDER BY deletion_scheduled_at ASC
+             LIMIT {$limit}",
+            [date('Y-m-d H:i:s')]
+        );
+
+        $finalized = 0;
+        foreach ($rows as $row) {
+            $this->finalizeAccountDeletionNow((int) $row['id'], (string) ($row['tipo'] ?? 'cliente'));
+            $finalized++;
+        }
+
+        return $finalized;
+    }
+
+    private function finalizeAccountDeletionNow(int $userId, string $userType): void
+    {
+        $documents = $this->fetchAll('SELECT id, caminho FROM documents WHERE user_id = ?', [$userId]);
+        $attachments = $this->fetchAll('SELECT id, attachment_path FROM messages WHERE sender_id = ? AND attachment_path IS NOT NULL', [$userId]);
+        $profilePhoto = (string) ($this->fetchOne('SELECT foto_perfil FROM users WHERE id = ?', [$userId])['foto_perfil'] ?? '');
+
+        $this->pdo->beginTransaction();
+        try {
+            $this->anonymizeUserContent($userId);
+            $this->deleteUserDocuments($userId);
+            $this->deleteUserAuxiliaryRows($userId);
+            $this->anonymizeUserRow($userId);
+            $this->audit->log('privacy.delete_account_finalized', 'user', $userId, ['tipo' => $userType]);
+            $this->pdo->commit();
+        } catch (Throwable $exception) {
+            $this->pdo->rollBack();
+            throw $exception;
+        }
+
+        foreach ($documents as $document) {
+            $this->deleteStoredDocument((string) ($document['caminho'] ?? ''));
+        }
+
+        foreach ($attachments as $attachment) {
+            $this->deleteStoredAttachment((string) ($attachment['attachment_path'] ?? ''));
+        }
+
+        if ($profilePhoto !== '') {
+            $this->deleteStoredProfilePhoto($profilePhoto);
+        }
     }
 
     private function requireLoggedPrivacyAction(): void
@@ -176,6 +279,8 @@ class PrivacyController extends BaseController
                  status_cna = NULL,
                  cna_payload_cache = NULL,
                  cna_ultimo_erro = NULL,
+                 deletion_requested_at = NULL,
+                 deletion_scheduled_at = NULL,
                  status = 'inativo',
                  updated_at = ?
              WHERE id = ?"
@@ -187,6 +292,19 @@ class PrivacyController extends BaseController
             date('Y-m-d H:i:s'),
             $userId,
         ]);
+    }
+
+    private function ensureAccountDeletionColumns(): void
+    {
+        foreach (['deletion_requested_at', 'deletion_scheduled_at'] as $column) {
+            if (database_table_has_column($this->pdo, 'users', $column)) {
+                continue;
+            }
+
+            $safeColumn = preg_replace('/[^A-Za-z0-9_]/', '', $column);
+            $type = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'sqlite' ? 'TEXT' : 'DATETIME NULL';
+            $this->pdo->exec("ALTER TABLE users ADD COLUMN {$safeColumn} {$type}");
+        }
     }
 
     private function activeAdminCount(): int

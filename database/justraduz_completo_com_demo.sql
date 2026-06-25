@@ -2,7 +2,7 @@
 -- Contem schema final, migrations incorporadas e dados de apresentacao.
 -- ATENCAO: este arquivo recria o banco justraduz do zero.
 -- Nao execute em uma base com dados reais sem backup.
--- Migration de onboarding/tour incorporada e registrada em schema_migrations.
+-- Migrations de onboarding, SLA e produto futuro incorporadas e registradas em schema_migrations.
 
 DROP DATABASE IF EXISTS justraduz;
 CREATE DATABASE IF NOT EXISTS justraduz
@@ -16,9 +16,22 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS organizations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(180) NOT NULL,
+    tipo ENUM('empresa', 'escritorio') NOT NULL DEFAULT 'empresa',
+    documento VARCHAR(32) NULL,
+    status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_organizations_status (status),
+    UNIQUE KEY uq_organizations_documento (documento)
+) DEFAULT CHARSET=utf8mb4;
+
 -- usuários
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL COLLATE utf8mb4_general_ci,
     senha VARCHAR(255) NOT NULL,
@@ -52,15 +65,45 @@ CREATE TABLE IF NOT EXISTS users (
     provider VARCHAR(30) NULL,
     profile_completed BOOLEAN DEFAULT TRUE,
     email_verified_at DATETIME NULL,
+    deletion_requested_at DATETIME NULL,
+    deletion_scheduled_at DATETIME NULL,
     status ENUM('ativo','inativo') DEFAULT 'ativo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_users_tipo_status (tipo, status),
     UNIQUE KEY uniq_users_cpf (cpf),
     INDEX idx_users_oab_status (oab_status),
+    INDEX idx_users_organization (organization_id),
     INDEX idx_users_provider (provider),
     INDEX idx_users_google_sub (google_sub),
+    INDEX idx_users_deletion_schedule (deletion_scheduled_at),
+    CONSTRAINT fk_users_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (oab_validated_by) REFERENCES users(id) ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_organizations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    organization_id INT NOT NULL,
+    papel ENUM('membro', 'gestor', 'suporte') NOT NULL DEFAULT 'membro',
+    is_primary TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_user_organization (user_id, organization_id),
+    INDEX idx_user_organizations_org (organization_id),
+    CONSTRAINT fk_user_organizations_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_organizations_org FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS role_permission_overrides (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(40) NOT NULL,
+    permission VARCHAR(100) NOT NULL,
+    effect ENUM('allow', 'deny') NOT NULL,
+    updated_by INT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_role_permission_override (role_name, permission),
+    INDEX idx_role_permission_role (role_name),
+    CONSTRAINT fk_role_permission_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS user_onboarding_progress (
@@ -87,12 +130,15 @@ CREATE TABLE IF NOT EXISTS user_onboarding_progress (
 CREATE TABLE IF NOT EXISTS documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
+    organization_id INT NULL,
     nome_arquivo VARCHAR(255),
     tipo_arquivo VARCHAR(20),
     caminho VARCHAR(255),
     texto_extraido LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_documents_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    INDEX idx_documents_organization (organization_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- resultados da ia
@@ -111,20 +157,43 @@ CREATE TABLE IF NOT EXISTS ai_results (
 -- casos (solicitações de ajuda)
 CREATE TABLE IF NOT EXISTS cases (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     cliente_id INT NOT NULL,
     advogado_id INT NULL,
     document_id INT NULL,
     titulo VARCHAR(255),
     descricao TEXT,
     status ENUM('aberto', 'em_andamento', 'finalizado') DEFAULT 'aberto',
-    prioridade ENUM('baixa', 'media', 'alta') DEFAULT 'media',
+    prioridade ENUM('baixa', 'media', 'normal', 'alta', 'urgente') DEFAULT 'media',
+    sla_deadline_at DATETIME NULL,
+    escalated_at DATETIME NULL,
+    assigned_to INT NULL,
+    escalation_status ENUM('none', 'due_soon', 'overdue', 'unassigned') NOT NULL DEFAULT 'none',
+    last_escalated_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cliente_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (advogado_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE SET NULL,
+    CONSTRAINT fk_cases_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    CONSTRAINT fk_cases_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_cases_cliente_status (cliente_id, status),
     INDEX idx_cases_advogado_status (advogado_id, status),
-    INDEX idx_cases_document (document_id)
+    INDEX idx_cases_document (document_id),
+    INDEX idx_cases_organization (organization_id),
+    INDEX idx_cases_sla_status_deadline (status, sla_deadline_at),
+    INDEX idx_cases_assigned_to (assigned_to),
+    INDEX idx_cases_escalation (status, escalation_status, last_escalated_at)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS case_escalations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT NOT NULL,
+    state ENUM('due_soon', 'overdue', 'unassigned') NOT NULL,
+    notified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    message VARCHAR(255) NOT NULL,
+    UNIQUE KEY uq_case_escalation_window (case_id, state, notified_at),
+    INDEX idx_case_escalations_case (case_id),
+    CONSTRAINT fk_case_escalations_case FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8mb4;
 
 -- mensagens
@@ -315,6 +384,19 @@ CREATE TABLE IF NOT EXISTS mail_logs (
     INDEX idx_mail_logs_status (status, created_at),
     INDEX idx_mail_logs_recipient (recipient, created_at)
 ) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS public_api_clients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(180) NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    scopes VARCHAR(255) NOT NULL DEFAULT 'health:read,reports:read',
+    status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+    last_used_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_public_api_client_name (nome),
+    INDEX idx_public_api_clients_status (status)
+) DEFAULT CHARSET=utf8mb4;
 -- Registro das migrations ja incorporadas neste schema consolidado.
 INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_telefone'),
@@ -329,7 +411,9 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_case_document'),
     ('migration_p1_operations'),
     ('2026_06_11_create_user_onboarding_progress'),
-    ('2026_06_13_google_oab_profile_fields');
+    ('2026_06_13_google_oab_profile_fields'),
+    ('2026_06_23_cases_sla'),
+    ('2026_06_25_product_future');
 
 -- Dados de apresentacao.
 USE justraduz;
@@ -349,6 +433,7 @@ INSERT INTO tmp_demo_users
 SELECT id FROM users
 WHERE email IN (
     'admin@justraduz.demo',
+    'pietro@tamanini.dev.br',
     'cliente@justraduz.demo',
     'cliente2@justraduz.demo',
     'advogado@justraduz.demo',
@@ -451,29 +536,43 @@ DELETE FROM notifications WHERE id IN (SELECT id FROM tmp_demo_notifications);
 DELETE FROM messages WHERE id IN (SELECT id FROM tmp_demo_messages);
 DELETE FROM tasks WHERE id IN (SELECT id FROM tmp_demo_tasks);
 DELETE FROM appointments WHERE id IN (SELECT id FROM tmp_demo_appointments);
+DELETE FROM case_escalations WHERE case_id IN (SELECT id FROM tmp_demo_cases);
 DELETE FROM ai_results WHERE id IN (SELECT id FROM tmp_demo_ai_results);
 DELETE FROM documents WHERE id IN (SELECT id FROM tmp_demo_documents);
 DELETE FROM schedule_slots WHERE id IN (SELECT id FROM tmp_demo_slots);
 DELETE FROM cases WHERE id IN (SELECT id FROM tmp_demo_cases);
+DELETE FROM user_organizations WHERE user_id IN (SELECT id FROM tmp_demo_users);
 DELETE FROM users WHERE id IN (SELECT id FROM tmp_demo_users);
+DELETE FROM organizations WHERE documento IN ('12345678000190', '12ABC34501DE35') OR nome = 'Escritorio Demo JusTraduz';
+
+INSERT INTO organizations (nome, tipo, documento, status, created_at)
+VALUES ('Escritorio Demo JusTraduz', 'escritorio', '12ABC34501DE35', 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY));
+SET @demo_org_id = LAST_INSERT_ID();
 
 INSERT INTO users
-    (nome, email, senha, tipo, telefone, cpf, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna, cna_validado_em, cna_origem, cna_tentativas, status, created_at)
+    (organization_id, nome, email, senha, tipo, telefone, cpf, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna, cna_validado_em, cna_origem, cna_tentativas, status, created_at)
 VALUES
-    ('Admin Demo', 'admin@justraduz.demo', @demo_password_hash, 'admin', '(11) 90000-0000', NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
-    ('Pietro Tamanini', 'pietro@tamanini.dev.br', @pietro_password_hash, 'admin', NULL, NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
-    ('Carla Cliente Demo', 'cliente@justraduz.demo', @demo_password_hash, 'cliente', '(11) 91111-1111', '52998224725', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 10 DAY)),
-    ('Bruno Cliente Demo', 'cliente2@justraduz.demo', @demo_password_hash, 'cliente', '(21) 92222-2222', '39053344705', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 9 DAY)),
-    ('Dra. Marina Costa', 'advogado@justraduz.demo', @demo_password_hash, 'advogado', '(31) 93333-3333', NULL, '123456', 'SP', 'Validado manualmente pela administracao.', 'demo-advogado-123456-sp', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 8 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 8 DAY)),
-    ('Lucas Estagiario Demo', 'estagiario@justraduz.demo', @demo_password_hash, 'estagiario', '(41) 94444-4444', NULL, '654321', 'RJ', 'Validado manualmente pela administracao.', 'demo-estagiario-654321-rj', TRUE, 'estagiario', 'verificado', DATE_SUB(NOW(), INTERVAL 7 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 7 DAY)),
-    ('Dr. Rafael Pendente', 'pendente@justraduz.demo', @demo_password_hash, 'advogado', '(51) 95555-5555', NULL, '778899', 'MG', 'Aguardando validacao administrativa.', NULL, FALSE, 'advogado', 'pendente', NULL, 'admin_manual', 0, 'ativo', DATE_SUB(NOW(), INTERVAL 2 DAY));
+    (NULL, 'Admin Demo', 'admin@justraduz.demo', @demo_password_hash, 'admin', '(11) 90000-0000', NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
+    (NULL, 'Pietro Tamanini', 'pietro@tamanini.dev.br', @pietro_password_hash, 'admin', NULL, NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
+    (NULL, 'Carla Cliente Demo', 'cliente@justraduz.demo', @demo_password_hash, 'cliente', '(11) 91111-1111', '52998224725', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 10 DAY)),
+    (NULL, 'Bruno Cliente Demo', 'cliente2@justraduz.demo', @demo_password_hash, 'cliente', '(21) 92222-2222', '39053344705', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 9 DAY)),
+    (@demo_org_id, 'Dra. Marina Costa', 'advogado@justraduz.demo', @demo_password_hash, 'advogado', '(31) 93333-3333', NULL, '123456', 'SP', 'Validado manualmente pela administracao.', 'demo-advogado-123456-sp', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 8 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 8 DAY)),
+    (@demo_org_id, 'Lucas Estagiario Demo', 'estagiario@justraduz.demo', @demo_password_hash, 'estagiario', '(41) 94444-4444', NULL, '654321', 'RJ', 'Validado manualmente pela administracao.', 'demo-estagiario-654321-rj', TRUE, 'estagiario', 'verificado', DATE_SUB(NOW(), INTERVAL 7 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 7 DAY)),
+    (@demo_org_id, 'Dr. Rafael Pendente', 'pendente@justraduz.demo', @demo_password_hash, 'advogado', '(51) 95555-5555', NULL, '778899', 'MG', 'Aguardando validacao administrativa.', NULL, FALSE, 'advogado', 'pendente', NULL, 'admin_manual', 0, 'ativo', DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 SELECT id INTO @admin_id FROM users WHERE email = 'admin@justraduz.demo';
+SELECT id INTO @pietro_id FROM users WHERE email = 'pietro@tamanini.dev.br';
 SELECT id INTO @cliente_id FROM users WHERE email = 'cliente@justraduz.demo';
 SELECT id INTO @cliente2_id FROM users WHERE email = 'cliente2@justraduz.demo';
 SELECT id INTO @advogado_id FROM users WHERE email = 'advogado@justraduz.demo';
 SELECT id INTO @estagiario_id FROM users WHERE email = 'estagiario@justraduz.demo';
 SELECT id INTO @pendente_id FROM users WHERE email = 'pendente@justraduz.demo';
+
+INSERT INTO user_organizations (user_id, organization_id, papel, is_primary)
+VALUES
+    (@advogado_id, @demo_org_id, 'gestor', 1),
+    (@estagiario_id, @demo_org_id, 'membro', 1),
+    (@pendente_id, @demo_org_id, 'membro', 1);
 
 INSERT INTO external_processes
     (user_id, owner_type, source, query_type, query_value, process_number, tribunal, uf, comarca, tipo_processo, classe_processual, assunto, status_inferido, status_normalizado, link, data_ultima_atualizacao, data_andamento_mais_recente, payload_json, last_synced_at)
@@ -486,17 +585,17 @@ VALUES
     (@estagiario_id, 'estagiario', 'datajud_demo', 'oab', 'RJ654321', '5043210-33.2024.8.19.0209', 'TJRJ', 'RJ', 'Barra da Tijuca', 'civil', 'Monitoria de Processo', 'Acompanhamento de prazo processual', 'Aguardando publicacao', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 8 DAY), DATE_SUB(CURDATE(), INTERVAL 3 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'estagiario', 'Lucas Estagiario Demo'), DATE_SUB(NOW(), INTERVAL 3 HOUR));
 
 INSERT INTO documents
-    (user_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
+    (user_id, organization_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
 VALUES
-    (@cliente_id, 'notificacao-extrajudicial-demo.png', 'png', 'backend/storage/documents/demo/notificacao-extrajudicial-demo.png',
+    (@cliente_id, NULL, 'notificacao-extrajudicial-demo.png', 'png', 'backend/storage/documents/demo/notificacao-extrajudicial-demo.png',
      'Notificacao extrajudicial cobrando multa contratual por atraso. O documento informa prazo de 5 dias para resposta e menciona possibilidade de medidas judiciais se nao houver contato.',
      DATE_SUB(NOW(), INTERVAL 4 DAY));
 SET @doc1_id = LAST_INSERT_ID();
 
 INSERT INTO documents
-    (user_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
+    (user_id, organization_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
 VALUES
-    (@cliente2_id, 'contrato-locacao-pendente-demo.png', 'png', 'backend/storage/documents/demo/contrato-locacao-pendente-demo.png',
+    (@cliente2_id, NULL, 'contrato-locacao-pendente-demo.png', 'png', 'backend/storage/documents/demo/contrato-locacao-pendente-demo.png',
      'Contrato de locacao residencial com clausula de multa, reajuste anual e vistoria de entrada. Documento aguardando analise automatica para a demonstracao.',
      DATE_SUB(NOW(), INTERVAL 2 DAY));
 SET @doc2_id = LAST_INSERT_ID();
@@ -530,21 +629,21 @@ VALUES
      DATE_SUB(NOW(), INTERVAL 4 DAY));
 
 INSERT INTO cases
-    (cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, created_at)
+    (organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, sla_deadline_at, escalation_status, created_at)
 VALUES
-    (@cliente_id, @advogado_id, @doc1_id, 'Revisar notificacao extrajudicial', 'Cliente recebeu cobranca com prazo de 5 dias e quer entender se deve responder imediatamente.', 'em_andamento', 'alta', DATE_SUB(NOW(), INTERVAL 3 DAY));
+    (@demo_org_id, @cliente_id, @advogado_id, @doc1_id, 'Revisar notificacao extrajudicial', 'Cliente recebeu cobranca com prazo de 5 dias e quer entender se deve responder imediatamente.', 'em_andamento', 'alta', DATE_SUB(DATE_ADD(NOW(), INTERVAL 24 HOUR), INTERVAL 3 DAY), 'overdue', DATE_SUB(NOW(), INTERVAL 3 DAY));
 SET @case1_id = LAST_INSERT_ID();
 
 INSERT INTO cases
-    (cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, created_at)
+    (organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, sla_deadline_at, escalation_status, created_at)
 VALUES
-    (@cliente2_id, NULL, @doc2_id, 'Duvida sobre contrato de locacao', 'Contrato tem multa e reajuste anual. Cliente quer saber quais clausulas exigem atencao.', 'aberto', 'alta', DATE_SUB(NOW(), INTERVAL 2 DAY));
+    (NULL, @cliente2_id, NULL, @doc2_id, 'Duvida sobre contrato de locacao', 'Contrato tem multa e reajuste anual. Cliente quer saber quais clausulas exigem atencao.', 'aberto', 'alta', DATE_SUB(DATE_ADD(NOW(), INTERVAL 24 HOUR), INTERVAL 2 DAY), 'unassigned', DATE_SUB(NOW(), INTERVAL 2 DAY));
 SET @case2_id = LAST_INSERT_ID();
 
 INSERT INTO cases
-    (cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, created_at)
+    (organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, sla_deadline_at, escalation_status, created_at)
 VALUES
-    (@cliente_id, @advogado_id, @doc1_id, 'Orientacao concluida sobre prazo de resposta', 'Atendimento usado para demonstrar historico finalizado.', 'finalizado', 'baixa', DATE_SUB(NOW(), INTERVAL 6 DAY));
+    (@demo_org_id, @cliente_id, @advogado_id, @doc1_id, 'Orientacao concluida sobre prazo de resposta', 'Atendimento usado para demonstrar historico finalizado.', 'finalizado', 'baixa', DATE_SUB(DATE_ADD(NOW(), INTERVAL 72 HOUR), INTERVAL 6 DAY), 'none', DATE_SUB(NOW(), INTERVAL 6 DAY));
 SET @case3_id = LAST_INSERT_ID();
 
 INSERT INTO messages (case_id, sender_id, mensagem, created_at)

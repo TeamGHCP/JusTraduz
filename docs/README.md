@@ -12,5 +12,7 @@ Esta pasta deve conter apenas pendências reais, checklists de validação e gui
 - `REGISTRO_REVISAO_JURIDICA.md`: registro de revisão jurídica externa ainda pendente.
 - `CONFIGURAR_CLAMAV.md`: guia para configurar ClamAV quando houver servidor real.
 - `OPERACAO_BACKUP_RESTORE.md`: validação operacional de backup, restore e healthcheck.
+- `MANUAL_OPERACIONAL_INTERNO.md`: rotina minima de admin/suporte.
+- `API_PUBLICA.md`: estado atual da superficie `/api/v1` e requisitos antes de abrir integracoes externas.
 
 Documentos de histórico, status antigo e funcionalidades já implementadas não devem ficar aqui.

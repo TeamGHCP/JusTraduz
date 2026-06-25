@@ -21,6 +21,7 @@ $routes = [
     ['POST', '/profile/password-reset', 'AuthController', 'profilePasswordReset'],
     ['POST', '/privacy/export', 'PrivacyController', 'export'],
     ['POST', '/privacy/delete-account', 'PrivacyController', 'deleteAccount'],
+    ['POST', '/privacy/cancel-delete-account', 'PrivacyController', 'cancelAccountDeletion'],
     ['POST', '/documents/upload', 'DocumentController', 'upload'],
     ['POST', '/documents/analyze', 'DocumentController', 'analyze'],
     ['POST', '/documents/delete', 'DocumentController', 'delete'],
@@ -57,7 +58,14 @@ $routes = [
     ['POST', '/admin/cases/update', 'AdminController', 'updateCase'],
     ['POST', '/admin/professionals/oab', 'AdminController', 'updateProfessionalOab'],
     ['GET', '/admin/reports/summary', 'AdminController', 'reportsSummary'],
+    ['GET', '/admin/reports/export', 'AdminController', 'reportsExport'],
     ['GET', '/admin/audit/export', 'AuditExportController', 'csv'],
+    ['POST', '/admin/permissions/update', 'AdminController', 'updatePermission'],
+    ['POST', '/admin/organizations/create', 'AdminController', 'createOrganization'],
+    ['POST', '/admin/organizations/assign', 'AdminController', 'assignOrganization'],
+    ['GET', '/openapi.json', 'PublicApiController', 'openApi'],
+    ['GET', '/integrations/health', 'IntegrationController', 'health'],
+    ['GET', '/integrations/reports/summary', 'IntegrationController', 'reportsSummary'],
 ];
 
 foreach ($routes as [$method, $path, $controller, $action]) {
