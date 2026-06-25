@@ -8,6 +8,10 @@ require_once dirname(__DIR__) . '/app/services/StorageService.php';
 require_once dirname(__DIR__) . '/app/services/UploadScannerService.php';
 require_once dirname(__DIR__) . '/app/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/app/services/DataJudService.php';
+require_once dirname(__DIR__) . '/app/services/EscalationService.php';
+require_once dirname(__DIR__) . '/app/services/PublicApiClientService.php';
+require_once dirname(__DIR__) . '/app/controllers/PublicApiController.php';
+require_once dirname(__DIR__) . '/app/controllers/IntegrationController.php';
 require_once dirname(__DIR__) . '/app/controllers/AuthController.php';
 require_once dirname(__DIR__) . '/app/controllers/CaseController.php';
 require_once dirname(__DIR__) . '/app/controllers/DocumentController.php';
@@ -55,9 +59,37 @@ foreach (['curl', 'gd', 'zip'] as $extension) {
 $routes = (string) file_get_contents(dirname(__DIR__) . '/routes/api.php');
 assertStringContains("'/api/v1' . \$path", $routes, 'Rotas devem registrar alias versionado /api/v1.');
 assertStringContains("'/admin/reports/summary'", $routes, 'Rotas devem expor resumo gerencial.');
+assertStringContains("'/admin/reports/export'", $routes, 'Rotas devem expor exportacao CSV gerencial.');
+assertStringContains("'/openapi.json'", $routes, 'Rotas devem expor contrato OpenAPI.');
 
 $wcagMatrix = (string) file_get_contents(dirname(__DIR__, 2) . '/docs/MATRIZ_WCAG_AA.md');
 assertStringContains('2.4.7 Foco visivel', $wcagMatrix, 'Matriz WCAG deve registrar foco visivel.');
+
+$manual = (string) file_get_contents(dirname(__DIR__, 2) . '/docs/MANUAL_OPERACIONAL_INTERNO.md');
+assertStringContains('operational-health-report.php', $manual, 'Manual operacional deve orientar relatorio de saude.');
+assertStringContains('cleanup-orphan-storage.php', $manual, 'Manual operacional deve orientar limpeza controlada de orfaos.');
+
+$apiPublica = (string) file_get_contents(dirname(__DIR__, 2) . '/docs/API_PUBLICA.md');
+assertStringContains('/api/v1/health', $apiPublica, 'Documentacao da API deve registrar rota versionada de health.');
+assertStringContains('OpenAPI', $apiPublica, 'Documentacao da API deve registrar requisito antes de abertura publica.');
+
+$readiness = (string) file_get_contents(dirname(__DIR__, 2) . '/scripts/check-production-readiness.php');
+assertStringContains('scripts/operational-health-report.php', $readiness, 'Readiness deve exigir relatorio operacional.');
+assertStringContains('scripts/cleanup-orphan-storage.php', $readiness, 'Readiness deve exigir limpeza controlada de storage.');
+
+foreach ([
+    'database/justraduz_completo_com_demo.sql',
+    'database/justraduz_completo_sem_demo.sql',
+    'frontend/pages/admin/organizacoes.php',
+    'frontend/pages/admin/permissoes.php',
+    'backend/app/services/EscalationService.php',
+    'backend/app/services/PublicApiClientService.php',
+    'backend/app/controllers/PublicApiController.php',
+    'backend/app/controllers/IntegrationController.php',
+    'scripts/create-api-client.php',
+] as $expectedFile) {
+    assertTrue(is_file(dirname(__DIR__, 2) . '/' . $expectedFile), 'Arquivo de produto futuro ausente: ' . $expectedFile);
+}
 
 $tmpFile = tempnam(sys_get_temp_dir(), 'scan_');
 file_put_contents($tmpFile, '<?php echo "malicioso";');
@@ -138,6 +170,31 @@ assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM mail_logs WHERE recipien
 $pdo->exec("INSERT INTO external_processes (user_id, owner_type, source, query_type, query_value, process_number, last_synced_at) VALUES (1, 'cliente', 'datajud', 'cnj', '12345678920248260100', '1234567-89.2024.8.26.0100', '" . date('Y-m-d H:i:s') . "')");
 $result = (new DataJudService($pdo))->syncProcessByCnj(1, '52998224725', '1234567-89.2024.8.26.0100', true);
 assertTrue(($result['cached'] ?? false) === true, 'DataJud deve reutilizar cache CNJ recente antes da API.');
+
+$pdo->exec("UPDATE cases SET created_at = '" . date('Y-m-d H:i:s', time() - 90000) . "', advogado_id = 3, prioridade = 'alta' WHERE id = 1");
+$pdo->exec("UPDATE cases SET status = 'finalizado' WHERE id = 2");
+$escalations = (new EscalationService($pdo))->run(10);
+assertEquals(1, $escalations, 'Escalonamento deve notificar caso vencido uma vez.');
+$escalationsAgain = (new EscalationService($pdo))->run(10);
+assertEquals(0, $escalationsAgain, 'Anti-spam deve evitar escalonamento repetido na janela.');
+assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM case_escalations WHERE case_id = 1 AND state = 'overdue'")->fetchColumn(), 'Escalonamento deve persistir historico.');
+
+ob_start();
+(new PublicApiController())->openApi();
+$openApiJson = ob_get_clean();
+$openApi = json_decode((string) $openApiJson, true);
+assertEquals('3.0.3', $openApi['openapi'] ?? '', 'OpenAPI deve declarar versao 3.0.3.');
+assertTrue(isset($openApi['paths']['/api/v1/admin/reports/export']), 'OpenAPI deve documentar exportacao CSV.');
+assertTrue(isset($openApi['paths']['/api/v1/integrations/reports/summary']), 'OpenAPI deve documentar endpoint externo com token.');
+
+$apiClient = (new PublicApiClientService($pdo))->create('Teste externo', ['health:read', 'reports:read']);
+$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $apiClient['token'];
+ob_start();
+(new IntegrationController())->reportsSummary();
+$integrationJson = ob_get_clean();
+$integrationPayload = json_decode((string) $integrationJson, true);
+assertTrue(isset($integrationPayload['cases_open']), 'API externa autenticada deve retornar resumo operacional.');
+$_SERVER['HTTP_AUTHORIZATION'] = '';
 
 putenv('DOCUMENT_STORAGE_PATH');
 putenv('USAGE_DAILY_DOCUMENT_AI');

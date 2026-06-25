@@ -108,6 +108,8 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                     'icon' => 'users',
                     'items' => [
                         ['href' => $adminPrefix . 'usuarios.php', 'label' => 'Usuários', 'icon' => 'users'],
+                        ['href' => $adminPrefix . 'organizacoes.php', 'label' => 'Organizações', 'icon' => 'folder'],
+                        ['href' => $adminPrefix . 'permissoes.php', 'label' => 'Permissões', 'icon' => 'shield'],
                         ['href' => $adminPrefix . 'validar-oab.php', 'label' => 'Validação OAB', 'icon' => 'shield'],
                         ['href' => $adminPrefix . 'solicitacoes.php', 'label' => 'Solicitações', 'icon' => 'case'],
                         ['href' => $adminPrefix . 'organizacoes.php', 'label' => 'Organizações', 'icon' => 'folder'],

@@ -56,4 +56,5 @@ Comandos:
 php scripts\check-local-readiness.php
 php scripts\check-orphan-storage.php
 php scripts\check-production-readiness.php --env=backend/.env
+php scripts\operational-health-report.php --output=storage-private\reports\saude-operacional.md
 ```

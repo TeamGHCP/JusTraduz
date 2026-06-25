@@ -4,6 +4,7 @@ require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/MailerService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
+require_once dirname(__DIR__) . '/services/OrganizationService.php';
 require_once dirname(__DIR__) . '/services/SlaService.php';
 
 class AdminController extends BaseController
@@ -273,13 +274,272 @@ class AdminController extends BaseController
             ],
         ];
 
+        if (OrganizationService::enabled($this->pdo)) {
+            $payload['organizations'] = [
+                'total' => $this->count('SELECT COUNT(*) FROM organizations'),
+                'active' => $this->count("SELECT COUNT(*) FROM organizations WHERE status = 'ativo'"),
+                'users_by_organization' => $this->keyValueRows(
+                    "SELECT COALESCE(o.nome, 'Sem empresa/escritorio') AS label, COUNT(u.id) AS total
+                     FROM users u
+                     LEFT JOIN organizations o ON o.id = u.organization_id
+                     GROUP BY COALESCE(o.nome, 'Sem empresa/escritorio')
+                     ORDER BY total DESC, label"
+                ),
+            ];
+        }
+
         $this->response->json($payload);
+    }
+
+    public function reportsExport(): void
+    {
+        $this->requirePermission('reports.export', app_url('/frontend/admin/login-admin.html'), 'Acesso a exportacao de relatorios obrigatorio.');
+
+        $type = (string) $this->request->get('type', 'cases');
+        [$filename, $headers, $rows] = match ($type) {
+            'users' => [
+                'usuarios.csv',
+                ['id', 'nome', 'email', 'tipo', 'status', 'organizacao'],
+                $this->reportUsersRows(),
+            ],
+            'documents' => [
+                'documentos.csv',
+                ['id', 'arquivo', 'tipo', 'usuario', 'organizacao', 'created_at'],
+                $this->reportDocumentsRows(),
+            ],
+            default => [
+                'solicitacoes.csv',
+                ['id', 'titulo', 'status', 'prioridade', 'sla_estado', 'responsavel', 'organizacao', 'created_at'],
+                $this->reportCasesRows(),
+            ],
+        };
+
+        header('Content-Type: text/csv; charset=UTF-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        $out = fopen('php://output', 'wb');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, $headers, ';');
+        foreach ($rows as $row) {
+            fputcsv($out, $row, ';');
+        }
+        fclose($out);
+    }
+
+    public function updatePermission(): void
+    {
+        $this->requirePermission('permissions.manage', app_url('/frontend/admin/login-admin.html'), 'Acesso administrativo obrigatorio.');
+
+        if (!OrganizationService::tableExists($this->pdo, 'role_permission_overrides')) {
+            $this->response->redirect(app_url('/frontend/admin/permissoes.php?erro=' . urlencode('A migration de permissoes dinamicas ainda nao foi aplicada.')));
+        }
+
+        $role = (string) $this->request->post('role', '');
+        $permission = (string) $this->request->post('permission', '');
+        $effect = (string) $this->request->post('effect', 'inherit');
+
+        try {
+            PermissionService::setOverride($this->pdo, $role, $permission, $effect, $this->currentUserId());
+            $this->audit->log('admin.permission_override', 'permission', null, compact('role', 'permission', 'effect'));
+            $this->response->redirect(app_url('/frontend/admin/permissoes.php?sucesso=' . urlencode('Permissao atualizada.')));
+        } catch (Throwable $exception) {
+            $this->response->redirect(app_url('/frontend/admin/permissoes.php?erro=' . urlencode('Nao foi possivel atualizar permissao.')));
+        }
+    }
+
+    public function createOrganization(): void
+    {
+        $this->requirePermission('organizations.manage', app_url('/frontend/admin/login-admin.html'), 'Acesso administrativo obrigatorio.');
+        $this->requireOrganizationsEnabled();
+
+        $name = trim((string) $this->request->post('nome', ''));
+        $type = (string) $this->request->post('tipo', 'empresa');
+        $documentInput = trim((string) $this->request->post('documento', ''));
+        $document = $this->normalizeOrganizationDocument($documentInput);
+
+        if ($name === '' || !in_array($type, ['empresa', 'escritorio'], true)) {
+            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Dados invalidos para organizacao.')));
+        }
+
+        if ($documentInput !== '' && $document === null) {
+            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Informe um CNPJ valido. O campo ja aceita o padrao alfanumerico da Receita Federal para julho de 2026.')));
+        }
+
+        $stmt = $this->pdo->prepare('INSERT INTO organizations (nome, tipo, documento, status) VALUES (?, ?, ?, "ativo")');
+        $stmt->execute([$name, $type, $document]);
+        $this->audit->log('admin.organization_create', 'organization', (int) $this->pdo->lastInsertId(), ['nome' => $name, 'tipo' => $type]);
+
+        $this->response->redirect(app_url('/frontend/admin/organizacoes.php?sucesso=' . urlencode('Organizacao criada.')));
+    }
+
+    public function assignOrganization(): void
+    {
+        $this->requirePermission('organizations.manage', app_url('/frontend/admin/login-admin.html'), 'Acesso administrativo obrigatorio.');
+        $this->requireOrganizationsEnabled();
+
+        $userId = (int) $this->request->post('user_id', 0);
+        $organizationId = (int) $this->request->post('organization_id', 0);
+
+        if ($userId <= 0) {
+            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Usuario invalido.')));
+        }
+
+        $stmt = $this->pdo->prepare("SELECT id, tipo FROM users WHERE id = ? AND tipo IN ('advogado', 'estagiario')");
+        $stmt->execute([$userId]);
+        $professional = $stmt->fetch();
+        if (!$professional) {
+            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Somente advogados e estagiarios podem ser vinculados a organizacoes.')));
+        }
+
+        $organizationId = $organizationId > 0 ? $organizationId : null;
+        $stmt = $this->pdo->prepare('UPDATE users SET organization_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
+        $stmt->execute([$organizationId, $userId]);
+
+        if ($organizationId !== null) {
+            $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+            $sql = $driver === 'sqlite'
+                ? 'INSERT INTO user_organizations (user_id, organization_id, papel, is_primary) VALUES (?, ?, "membro", 1) ON CONFLICT(user_id, organization_id) DO UPDATE SET is_primary = 1'
+                : 'INSERT INTO user_organizations (user_id, organization_id, papel, is_primary) VALUES (?, ?, "membro", 1) ON DUPLICATE KEY UPDATE is_primary = 1';
+            $this->pdo->prepare($sql)->execute([$userId, $organizationId]);
+        }
+
+        $this->audit->log('admin.organization_assign_user', 'user', $userId, ['organization_id' => $organizationId]);
+        $this->response->redirect(app_url('/frontend/admin/organizacoes.php?sucesso=' . urlencode('Vinculo atualizado.')));
+    }
+
+    private function normalizeOrganizationDocument(string $document): ?string
+    {
+        $normalized = strtoupper((string) preg_replace('/[^0-9A-Za-z]+/', '', $document));
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (!preg_match('/^[0-9A-Z]{12}[0-9]{2}$/', $normalized)) {
+            return null;
+        }
+
+        if (!$this->isValidOrganizationDocument($normalized)) {
+            return null;
+        }
+
+        return $normalized;
+    }
+
+    private function isValidOrganizationDocument(string $document): bool
+    {
+        if (strlen($document) !== 14 || !preg_match('/^[0-9A-Z]{12}[0-9]{2}$/', $document)) {
+            return false;
+        }
+
+        if (preg_match('/^(\d)\1{13}$/', $document)) {
+            return false;
+        }
+
+        $base = substr($document, 0, 12);
+        $firstDigit = $this->organizationDocumentDigit($base, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+        $secondDigit = $this->organizationDocumentDigit($base . (string) $firstDigit, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+
+        return substr($document, 12, 2) === ((string) $firstDigit . (string) $secondDigit);
+    }
+
+    private function organizationDocumentDigit(string $base, array $weights): int
+    {
+        $sum = 0;
+        foreach ($weights as $index => $weight) {
+            $sum += (ord($base[$index]) - 48) * $weight;
+        }
+
+        $remainder = $sum % 11;
+        return $remainder < 2 ? 0 : 11 - $remainder;
     }
 
     private function sendProfessionalApprovedEmail(string $email, string $name): void
     {
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $this->sendSystemEmail($email, 'Cadastro aprovado no JusTraduz', "<p>Ola, {$safeName}.</p><p>Seu acesso profissional no JusTraduz foi liberado.</p>");
+    }
+
+    private function requireOrganizationsEnabled(): void
+    {
+        if (!OrganizationService::enabled($this->pdo)) {
+            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('A migration de multiempresa ainda nao foi aplicada.')));
+        }
+    }
+
+    private function reportCasesRows(): array
+    {
+        $organizationJoin = OrganizationService::enabled($this->pdo)
+            ? 'LEFT JOIN organizations o ON o.id = c.organization_id'
+            : '';
+        $organizationSelect = OrganizationService::enabled($this->pdo) ? 'o.nome AS organizacao,' : "'' AS organizacao,";
+        $rows = $this->fetchAll(
+            "SELECT c.id, c.titulo, c.status, c.prioridade, c.created_at, u.nome AS responsavel, {$organizationSelect} c.advogado_id
+             FROM cases c
+             LEFT JOIN users u ON u.id = c.advogado_id
+             {$organizationJoin}
+             ORDER BY c.created_at DESC
+             LIMIT 1000"
+        );
+
+        return array_map(function (array $row): array {
+            $sla = SlaService::statusForCase($row);
+            return [
+                $row['id'] ?? '',
+                $row['titulo'] ?? '',
+                $row['status'] ?? '',
+                $row['prioridade'] ?? '',
+                $sla['state'] ?? '',
+                $row['responsavel'] ?? '',
+                $row['organizacao'] ?? '',
+                $row['created_at'] ?? '',
+            ];
+        }, $rows);
+    }
+
+    private function reportUsersRows(): array
+    {
+        $organizationJoin = OrganizationService::enabled($this->pdo)
+            ? 'LEFT JOIN organizations o ON o.id = u.organization_id'
+            : '';
+        $organizationSelect = OrganizationService::enabled($this->pdo) ? 'o.nome AS organizacao' : "'' AS organizacao";
+
+        return array_map(static fn (array $row): array => [
+            $row['id'] ?? '',
+            $row['nome'] ?? '',
+            $row['email'] ?? '',
+            $row['tipo'] ?? '',
+            $row['status'] ?? '',
+            $row['organizacao'] ?? '',
+        ], $this->fetchAll(
+            "SELECT u.id, u.nome, u.email, u.tipo, u.status, {$organizationSelect}
+             FROM users u
+             {$organizationJoin}
+             ORDER BY u.created_at DESC
+             LIMIT 1000"
+        ));
+    }
+
+    private function reportDocumentsRows(): array
+    {
+        $organizationJoin = OrganizationService::enabled($this->pdo)
+            ? 'LEFT JOIN organizations o ON o.id = d.organization_id'
+            : '';
+        $organizationSelect = OrganizationService::enabled($this->pdo) ? 'o.nome AS organizacao' : "'' AS organizacao";
+
+        return array_map(static fn (array $row): array => [
+            $row['id'] ?? '',
+            $row['nome_arquivo'] ?? '',
+            $row['tipo_arquivo'] ?? '',
+            $row['usuario'] ?? '',
+            $row['organizacao'] ?? '',
+            $row['created_at'] ?? '',
+        ], $this->fetchAll(
+            "SELECT d.id, d.nome_arquivo, d.tipo_arquivo, d.created_at, u.nome AS usuario, {$organizationSelect}
+             FROM documents d
+             LEFT JOIN users u ON u.id = d.user_id
+             {$organizationJoin}
+             ORDER BY d.created_at DESC
+             LIMIT 1000"
+        ));
     }
 
     private function sendProfessionalRejectedEmail(string $email, string $name, string $reason): void

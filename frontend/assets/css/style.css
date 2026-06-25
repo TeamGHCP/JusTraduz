@@ -1,8 +1,8 @@
 @import url("./base.css?v=scroll-polish-1");
 @import url("./layout.css?v=footer-component-1");
-@import url("./components.css?v=main-sync-2026-06-23");
+@import url("./components.css?v=client-polish-1");
 @import url("./auth.css");
-@import url("./dashboard.css?v=lawyer-plan-disclosure-1");
-@import url("./pages.css?v=pricing-current-client-flow-1");
-@import url("./responsive.css?v=flow-pill-timeline-smooth-1");
-@import url("./accessibility.css?v=main-sync-2026-06-23");
+@import url("./dashboard.css?v=lawyer-topic-labels-1");
+@import url("./pages.css?v=no-section-snap-1");
+@import url("./responsive.css?v=lawyer-topic-labels-1");
+@import url("./accessibility.css?v=2026.06.16-a11y-stack-7");

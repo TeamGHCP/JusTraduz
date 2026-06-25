@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/app/controllers/ScheduleController.php';
 require_once dirname(__DIR__) . '/app/controllers/ProcessController.php';
 require_once dirname(__DIR__) . '/app/controllers/AdminController.php';
 require_once dirname(__DIR__) . '/app/controllers/PrivacyController.php';
+require_once dirname(__DIR__) . '/app/services/OrganizationService.php';
 
 $pdo = test_pdo();
 build_test_schema($pdo);
@@ -56,6 +57,16 @@ assertEquals('admin', $_SESSION['tipo'] ?? '', 'Admin login deve manter perfil a
 assertTrue(PermissionService::roleHas('admin', 'reports.view') === true, 'Admin deve ter permissao para relatorios.');
 assertTrue(PermissionService::roleHas('cliente', 'reports.view') === false, 'Cliente nao deve ter permissao para relatorios.');
 assertTrue(PermissionService::roleHas('estagiario', 'cases.view_assigned') === true, 'Perfil estagiario deve permanecer com permissao assistiva.');
+assertTrue(in_array('permissions.manage', PermissionService::availablePermissions(), true), 'Permissoes dinamicas devem listar permissions.manage.');
+PermissionService::setOverride($pdo, 'cliente', 'reports.view', 'allow', 5);
+assertTrue(PermissionService::roleHas('cliente', 'reports.view') === true, 'Override allow deve conceder permissao ao perfil.');
+PermissionService::setOverride($pdo, 'cliente', 'reports.view', 'inherit', 5);
+assertTrue(PermissionService::roleHas('cliente', 'reports.view') === false, 'Override inherit deve voltar ao padrao do perfil.');
+assertTrue(OrganizationService::enabled($pdo) === true, 'Multiempresa deve estar habilitado no schema novo.');
+$adminController = new AdminController();
+assertEquals('12ABC34501DE35', callPrivate($adminController, 'normalizeOrganizationDocument', ['12.ABC.345/01DE-35']), 'CNPJ alfanumerico oficial deve ser aceito.');
+assertEquals('11222333000181', callPrivate($adminController, 'normalizeOrganizationDocument', ['11.222.333/0001-81']), 'CNPJ numerico valido deve continuar aceito.');
+assertTrue(callPrivate($adminController, 'normalizeOrganizationDocument', ['12.ABC.345/01DE-00']) === null, 'CNPJ alfanumerico com DV invalido deve ser recusado.');
 
 reset_test_state();
 secure_session_start();
@@ -156,6 +167,24 @@ assertEquals(0, $pendingQueueCount, 'Profissional aprovado nao deve continuar na
 reset_test_state();
 secure_session_start();
 $_SESSION = ['logado' => true, 'id' => 5, 'tipo' => 'admin'];
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = ['user_id' => '1', 'organization_id' => '1'];
+$redirect = expectRedirect(static fn () => (new AdminController())->assignOrganization());
+assertStringContains('Somente advogados e estagiarios', urldecode($redirect), 'Admin nao deve vincular cliente a organizacao.');
+assertTrue($pdo->query('SELECT organization_id FROM users WHERE id = 1')->fetchColumn() === null, 'Cliente deve continuar sem organizacao.');
+
+reset_test_state();
+secure_session_start();
+$_SESSION = ['logado' => true, 'id' => 5, 'tipo' => 'admin'];
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = ['user_id' => '3', 'organization_id' => '1'];
+$redirect = expectRedirect(static fn () => (new AdminController())->assignOrganization());
+assertStringContains('Vinculo atualizado', urldecode($redirect), 'Admin deve vincular advogado a organizacao.');
+assertEquals(1, (int) $pdo->query('SELECT organization_id FROM users WHERE id = 3')->fetchColumn(), 'Advogado deve ficar vinculado a organizacao.');
+
+reset_test_state();
+secure_session_start();
+$_SESSION = ['logado' => true, 'id' => 5, 'tipo' => 'admin'];
 $_SERVER['REQUEST_METHOD'] = 'GET';
 ob_start();
 (new AdminController())->reportsSummary();
@@ -163,6 +192,7 @@ $reportsJson = ob_get_clean();
 $reports = json_decode((string) $reportsJson, true);
 assertTrue(is_array($reports['users_by_role'] ?? null), 'Relatorio gerencial deve retornar usuarios por perfil.');
 assertTrue(isset($reports['sla']['overdue']), 'Relatorio gerencial deve retornar resumo de SLA.');
+assertTrue(isset($reports['organizations']['total']), 'Relatorio gerencial deve retornar resumo multiempresa quando habilitado.');
 
 $slaStatus = SlaService::statusForCase([
     'status' => 'aberto',
@@ -206,12 +236,33 @@ $_SESSION = ['logado' => true, 'id' => 2, 'tipo' => 'cliente', '_csrf_token' => 
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $_POST = ['_csrf' => 'token-delete', 'confirmacao' => 'EXCLUIR'];
 $redirect = expectRedirect(static fn () => (new PrivacyController())->deleteAccount());
-assertStringContains('/frontend/login.html', $redirect, 'Encerramento LGPD deve encerrar sessao e voltar ao login.');
-$deleted = $pdo->query('SELECT nome, email, status, cpf FROM users WHERE id = 2')->fetch();
-assertEquals('Usuário removido', $deleted['nome'] ?? '', 'Encerramento LGPD deve anonimizar nome.');
-assertEquals('deleted+2@justraduz.invalid', $deleted['email'] ?? '', 'Encerramento LGPD deve anonimizar e-mail.');
-assertEquals('inativo', $deleted['status'] ?? '', 'Encerramento LGPD deve inativar conta.');
-assertTrue(($deleted['cpf'] ?? null) === null, 'Encerramento LGPD deve remover CPF.');
-assertEquals(0, (int) $pdo->query('SELECT COUNT(*) FROM documents WHERE user_id = 2')->fetchColumn(), 'Encerramento LGPD deve excluir documentos do titular.');
+assertStringContains('/frontend/perfil.php', $redirect, 'Encerramento LGPD deve agendar exclusao e voltar ao perfil.');
+$scheduled = $pdo->query('SELECT nome, email, status, cpf, deletion_requested_at, deletion_scheduled_at FROM users WHERE id = 2')->fetch();
+assertEquals('Cliente Dois', $scheduled['nome'] ?? '', 'Agendamento de exclusao deve preservar nome durante arrependimento.');
+assertEquals('cliente2@teste.local', $scheduled['email'] ?? '', 'Agendamento de exclusao deve preservar e-mail durante arrependimento.');
+assertEquals('ativo', $scheduled['status'] ?? '', 'Agendamento de exclusao deve manter conta ativa durante arrependimento.');
+assertTrue(!empty($scheduled['deletion_requested_at']), 'Agendamento deve registrar quando a exclusao foi pedida.');
+assertTrue(!empty($scheduled['deletion_scheduled_at']), 'Agendamento deve registrar data final de exclusao.');
+assertEquals(1, (int) $pdo->query('SELECT COUNT(*) FROM documents WHERE user_id = 2')->fetchColumn(), 'Documentos devem ser preservados durante 30 dias.');
+
+reset_test_state();
+secure_session_start();
+$_SESSION = ['logado' => true, 'id' => 2, 'tipo' => 'cliente', '_csrf_token' => 'token-cancel-delete'];
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = ['_csrf' => 'token-cancel-delete'];
+$redirect = expectRedirect(static fn () => (new PrivacyController())->cancelAccountDeletion());
+assertStringContains('Exclusao cancelada', urldecode($redirect), 'Usuario deve conseguir cancelar exclusao agendada.');
+assertTrue($pdo->query('SELECT deletion_scheduled_at FROM users WHERE id = 2')->fetchColumn() === null, 'Cancelamento deve limpar data final de exclusao.');
+
+$pdo->exec("UPDATE users SET deletion_requested_at = datetime('now', '-31 days'), deletion_scheduled_at = datetime('now', '-1 day') WHERE id = 2");
+$finalized = (new PrivacyController())->finalizeExpiredDeletions(10);
+assertEquals(1, $finalized, 'Finalizacao deve processar exclusao vencida.');
+$deleted = $pdo->query('SELECT nome, email, status, cpf, deletion_scheduled_at FROM users WHERE id = 2')->fetch();
+assertEquals('Usuário removido', $deleted['nome'] ?? '', 'Finalizacao LGPD deve anonimizar nome.');
+assertEquals('deleted+2@justraduz.invalid', $deleted['email'] ?? '', 'Finalizacao LGPD deve anonimizar e-mail.');
+assertEquals('inativo', $deleted['status'] ?? '', 'Finalizacao LGPD deve inativar conta.');
+assertTrue(($deleted['cpf'] ?? null) === null, 'Finalizacao LGPD deve remover CPF.');
+assertTrue(($deleted['deletion_scheduled_at'] ?? null) === null, 'Finalizacao LGPD deve limpar agendamento.');
+assertEquals(0, (int) $pdo->query('SELECT COUNT(*) FROM documents WHERE user_id = 2')->fetchColumn(), 'Finalizacao LGPD deve excluir documentos do titular.');
 
 echo "PermissionAndCriticalFlowsTest: OK\n";

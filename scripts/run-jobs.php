@@ -3,7 +3,9 @@
 require_once dirname(__DIR__) . '/backend/app/config/database.php';
 require_once dirname(__DIR__) . '/backend/app/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/backend/app/controllers/DocumentController.php';
+require_once dirname(__DIR__) . '/backend/app/controllers/PrivacyController.php';
 require_once dirname(__DIR__) . '/backend/app/services/DataJudService.php';
+require_once dirname(__DIR__) . '/backend/app/services/EscalationService.php';
 
 $limit = 10;
 foreach ($argv as $argument) {
@@ -31,6 +33,7 @@ while ($processed < $limit) {
         $ok = match ((string) $job['type']) {
             'document_analysis' => (new DocumentController())->processQueuedAnalysis((int) ($payload['document_id'] ?? 0)),
             'datajud_cnj_sync' => process_datajud_job($pdo, $payload),
+            'operational_escalation' => (new EscalationService($pdo))->run((int) ($payload['limit'] ?? 50)) >= 0,
             default => throw new RuntimeException('Tipo de job desconhecido: ' . (string) $job['type']),
         };
 
@@ -47,6 +50,16 @@ while ($processed < $limit) {
 }
 
 echo "Jobs processados: {$processed}\n";
+
+if (in_array('--escalate', $argv, true)) {
+    $escalated = (new EscalationService($pdo))->run($limit);
+    echo "Escalonamentos gerados: {$escalated}\n";
+}
+
+if (in_array('--finalize-deletions', $argv, true)) {
+    $finalized = (new PrivacyController())->finalizeExpiredDeletions($limit);
+    echo "Exclusoes definitivas processadas: {$finalized}\n";
+}
 
 function process_datajud_job(PDO $pdo, array $payload): bool
 {

@@ -68,6 +68,7 @@ $routes = [
     ['POST', '/admin/p2/organizations/member', 'P2AdminController', 'addOrganizationMember'],
     ['POST', '/admin/p2/permissions/update', 'P2AdminController', 'updatePermission'],
     ['GET', '/admin/reports/summary', 'AdminController', 'reportsSummary'],
+    ['GET', '/admin/reports/export', 'AdminController', 'reportsExport'],
     ['GET', '/admin/audit/export', 'AuditExportController', 'csv'],
     ['GET', '/api/v1/me', 'ApiV1Controller', 'me'],
     ['GET', '/api/v1/cases', 'ApiV1Controller', 'cases'],
