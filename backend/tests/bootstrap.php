@@ -155,6 +155,11 @@ function reset_test_database(PDO $pdo): void
 
     $tables = [
         'mail_logs',
+        'public_api_clients',
+        'case_escalations',
+        'role_permission_overrides',
+        'user_organizations',
+        'organizations',
         'usage_events',
         'job_queue',
         'external_processes',
@@ -186,6 +191,7 @@ function build_test_schema(PDO $pdo): void
     $schema = [
         'CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER,
             nome TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             senha TEXT NOT NULL,
@@ -215,6 +221,8 @@ function build_test_schema(PDO $pdo): void
             provider TEXT,
             profile_completed INTEGER DEFAULT 1,
             email_verified_at TEXT,
+            deletion_requested_at TEXT,
+            deletion_scheduled_at TEXT,
             status TEXT DEFAULT "ativo",
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT
@@ -222,6 +230,7 @@ function build_test_schema(PDO $pdo): void
         'CREATE TABLE documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
+            organization_id INTEGER,
             nome_arquivo TEXT,
             tipo_arquivo TEXT,
             caminho TEXT,
@@ -240,6 +249,7 @@ function build_test_schema(PDO $pdo): void
         )',
         'CREATE TABLE cases (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER,
             cliente_id INTEGER NOT NULL,
             advogado_id INTEGER,
             document_id INTEGER,
@@ -247,7 +257,53 @@ function build_test_schema(PDO $pdo): void
             descricao TEXT,
             status TEXT DEFAULT "aberto",
             prioridade TEXT DEFAULT "media",
+            escalation_status TEXT DEFAULT "none",
+            last_escalated_at TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )',
+        'CREATE TABLE organizations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            tipo TEXT NOT NULL DEFAULT "empresa",
+            documento TEXT,
+            status TEXT NOT NULL DEFAULT "ativo",
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
+        )',
+        'CREATE TABLE user_organizations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            organization_id INTEGER NOT NULL,
+            papel TEXT NOT NULL DEFAULT "membro",
+            is_primary INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, organization_id)
+        )',
+        'CREATE TABLE role_permission_overrides (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role_name TEXT NOT NULL,
+            permission TEXT NOT NULL,
+            effect TEXT NOT NULL,
+            updated_by INTEGER,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(role_name, permission)
+        )',
+        'CREATE TABLE case_escalations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_id INTEGER NOT NULL,
+            state TEXT NOT NULL,
+            notified_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            message TEXT NOT NULL
+        )',
+        'CREATE TABLE public_api_clients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            token_hash TEXT NOT NULL,
+            scopes TEXT NOT NULL DEFAULT "health:read,reports:read",
+            status TEXT NOT NULL DEFAULT "ativo",
+            last_used_at TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
         )',
         'CREATE TABLE messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -410,6 +466,7 @@ function seed_test_data(PDO $pdo): void
     $stmt = $pdo->prepare(
         'INSERT INTO users (
             id,
+            organization_id,
             nome,
             email,
             senha,
@@ -420,12 +477,16 @@ function seed_test_data(PDO $pdo): void
             cpf,
             status,
             profile_completed
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "ativo", 1)'
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "ativo", 1)'
     );
 
+    $pdo->exec("INSERT INTO organizations (id, nome, tipo, documento, status) VALUES (1, 'Escritorio Demo', 'escritorio', '12ABC34501DE35', 'ativo')");
+
     foreach ($users as $user) {
+        $organizationId = in_array($user[3], ['advogado', 'estagiario'], true) ? 1 : null;
         $stmt->execute([
             $user[0],
+            $organizationId,
             $user[1],
             $user[2],
             $password,
@@ -437,16 +498,18 @@ function seed_test_data(PDO $pdo): void
         ]);
     }
 
+    $pdo->exec("INSERT INTO user_organizations (user_id, organization_id, papel, is_primary) SELECT id, 1, 'membro', 1 FROM users WHERE tipo IN ('advogado', 'estagiario')");
+
     $pdo->exec("
-        INSERT INTO documents (id, user_id, nome_arquivo, tipo_arquivo, caminho) VALUES
-        (1, 1, 'cliente-um.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-um.pdf'),
-        (2, 2, 'cliente-dois.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-dois.pdf')
+        INSERT INTO documents (id, user_id, organization_id, nome_arquivo, tipo_arquivo, caminho) VALUES
+        (1, 1, 1, 'cliente-um.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-um.pdf'),
+        (2, 2, 1, 'cliente-dois.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-dois.pdf')
     ");
 
     $pdo->exec("
-        INSERT INTO cases (id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade) VALUES
-        (1, 1, 3, 1, 'Caso atendido', 'Descricao', 'em_andamento', 'media'),
-        (2, 2, NULL, 2, 'Caso aberto', 'Descricao', 'aberto', 'media')
+        INSERT INTO cases (id, organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade) VALUES
+        (1, 1, 1, 3, 1, 'Caso atendido', 'Descricao', 'em_andamento', 'media'),
+        (2, 1, 2, NULL, 2, 'Caso aberto', 'Descricao', 'aberto', 'media')
     ");
 
     $pdo->exec("

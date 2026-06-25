@@ -1,6 +1,6 @@
 # O que falta agora
 
-Data da revisão: 23/06/2026
+Data da revisão: 25/06/2026
 
 Esta é a lista única de pendências reais do JusTraduz. Itens já implementados foram removidos.
 
@@ -29,19 +29,12 @@ Esta é a lista única de pendências reais do JusTraduz. Itens já implementado
 
 ## Banco de dados
 
-- Revisar antes de aplicar a migration `database/migrations/2026_06_23_cases_sla.sql`.
-- Decidir se SLA, escalonamento e responsável operacional serão persistidos no banco ou mantidos apenas calculados em tela.
-- Criar migration incremental específica para qualquer base real existente.
-- Testar rollback de migration em cópia do banco antes de produção.
+- Criar script incremental específico para qualquer base real existente a partir dos instaladores consolidados.
+- Testar rollback do script incremental em cópia do banco antes de produção.
 
 ## Produto ainda futuro
 
 - Planos e cobrança.
-- Multiempresa/escritórios.
-- Tela administrativa para editar permissões dinamicamente.
-- Relatórios gerenciais avançados e exportáveis.
-- Escalonamento operacional com notificações automáticas e regras anti-spam.
-- API pública documentada para integrações externas, caso o projeto vire produto real.
 
 ## Acessibilidade e revisão formal
 
@@ -54,6 +47,6 @@ Esta é a lista única de pendências reais do JusTraduz. Itens já implementado
 ## Polimento
 
 - Revisar empty/loading/error states em todas as telas.
-- Criar manual operacional interno para admin/suporte.
-- Automatizar limpeza de arquivos órfãos somente depois de revisar o relatório de `scripts/check-orphan-storage.php`.
-- Criar relatório periódico de saúde operacional.
+- Executar a rotina do manual operacional interno em `docs/MANUAL_OPERACIONAL_INTERNO.md` e registrar evidências reais.
+- Rodar periodicamente `scripts/operational-health-report.php`.
+- Quando houver órfãos confirmados, revisar o relatório de `scripts/check-orphan-storage.php` e limpar com `scripts/cleanup-orphan-storage.php`.

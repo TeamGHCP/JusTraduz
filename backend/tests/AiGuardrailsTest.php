@@ -67,7 +67,7 @@ assertTrue(
 
 $prompt = callPrivate(GeminiService::class, 'buildChatPrompt', ['Quero ajuda', []]);
 $normalizedPrompt = normalizeTextForAssertions($prompt);
-assertTrue(str_contains($normalizedPrompt, 'Nao calcule prazos processuais'), 'Prompt deve proibir cálculo de prazos.');
+assertTrue(str_contains($normalizedPrompt, 'nao calcule prazos processuais'), 'Prompt deve proibir cálculo de prazos.');
 assertTrue(str_contains($normalizedPrompt, 'dados nao confiaveis'), 'Prompt deve tratar entrada como não confiável.');
 assertTrue(str_contains($normalizedPrompt, 'criar conta'), 'Prompt deve orientar uso da plataforma.');
 
