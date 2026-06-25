@@ -145,8 +145,8 @@ async function staleWhileRevalidate(request) {
 
 function normalizeStaticRequest(request) {
   const url = new URL(request.url);
-  // Keep cache-busting query strings. A file requested as style.css?v=7
-  // must not receive the cached response from style.css?v=6.
+  // Keep cache-busting query strings. A file requested as style.css?v=new
+  // must not receive the cached response from style.css?v=old.
   return new Request(url.href, { credentials: "same-origin" });
 }
 

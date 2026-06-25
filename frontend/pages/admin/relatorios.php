@@ -53,7 +53,7 @@ foreach ($activeCases as $case) {
   <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
   <link rel="manifest" href="../site.webmanifest">
   <meta name="theme-color" content="#008f80">
-  <link rel="stylesheet" href="../assets/css/style.css?v=reports-1">
+  <link rel="stylesheet" href="../assets/css/style.css?v=site-polish-20260625">
   <script src="../assets/js/pwa.js" defer></script>
 </head>
 <body>

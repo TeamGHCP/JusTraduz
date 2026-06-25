@@ -83,7 +83,7 @@ $profileTourKey = match ($type) {
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=site-polish-20260625">
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
