@@ -23,7 +23,7 @@
     if (!window.location.hash || window.location.hash === "#top") window.scrollTo(0, 0);
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=phone-interactive-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=no-section-snap-1">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
   <style>
     @media (max-width: 980px) {
@@ -830,6 +830,39 @@
           <p>O JusTraduz não substitui advogado. Ele organiza a compreensão inicial, registra consentimentos e mantém trilha de auditoria.</p>
         </div>
 
+        <div class="home-security-panel" data-security-panel>
+          <div class="home-security-tabs" role="list" aria-label="Pontos de segurança">
+            <button class="home-security-tab is-active" type="button" data-security-tab="consentimento" aria-pressed="true">
+              <span>01</span>
+              <strong>Consentimento claro</strong>
+              <small>Dados e documentos entram com aceite registrado.</small>
+            </button>
+            <button class="home-security-tab" type="button" data-security-tab="auditoria" aria-pressed="false">
+              <span>02</span>
+              <strong>Trilha de auditoria</strong>
+              <small>Ações importantes ficam organizadas para consulta.</small>
+            </button>
+            <button class="home-security-tab" type="button" data-security-tab="limites" aria-pressed="false">
+              <span>03</span>
+              <strong>Limites da IA</strong>
+              <small>O sistema informa quando precisa de revisão humana.</small>
+            </button>
+          </div>
+
+          <div class="home-security-preview" aria-live="polite">
+            <div class="home-security-preview-top">
+              <span data-security-preview-kicker>Proteção ativa</span>
+              <strong data-security-preview-title>Consentimento antes do envio</strong>
+            </div>
+            <p data-security-preview-text>O usuário entende o uso da plataforma antes de enviar documentos, com regras visíveis e registro do aceite.</p>
+            <div class="home-security-checks" aria-label="Controles destacados">
+              <span data-security-preview-check-one>Maioridade confirmada</span>
+              <span data-security-preview-check-two>Termos aceitos</span>
+              <span data-security-preview-check-three>Dados tratados com finalidade</span>
+            </div>
+          </div>
+        </div>
+
         <div class="form-actions justify-center">
           <a class="home-flow-button" href="login.html?cadastro">
             <svg class="home-flow-button-arrow home-flow-button-arrow-left svg-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -967,7 +1000,7 @@
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=phone-interactive-3"></script>
+  <script src="assets/js/main.js?v=no-section-snap-1"></script>
   <script src="assets/js/chatbot.js?v=2026.06.18-02"></script>
   <div vw class="enabled">
     <div vw-access-button class="active"></div>
