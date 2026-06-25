@@ -7,7 +7,7 @@ $documentCount = count_query($pdo, 'SELECT COUNT(*) FROM documents WHERE user_id
 $analysisCount = count_query($pdo, 'SELECT COUNT(*) FROM ai_results ar INNER JOIN documents d ON d.id = ar.document_id WHERE d.user_id = ?', [$userId]);
 $pendingAnalysisCount = count_query($pdo, 'SELECT COUNT(*) FROM documents d LEFT JOIN ai_results ar ON ar.document_id = d.id WHERE d.user_id = ? AND ar.id IS NULL', [$userId]);
 $caseCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE cliente_id = ? AND status <> 'finalizado'", [$userId]);
-$messageCount = count_query($pdo, 'SELECT COUNT(*) FROM messages m INNER JOIN cases c ON c.id = m.case_id WHERE c.cliente_id = ?', [$userId]);
+
 $documents = fetch_all(
     $pdo,
     'SELECT d.id, d.nome_arquivo, d.tipo_arquivo, d.created_at, ar.id AS analysis_id
@@ -18,8 +18,19 @@ $documents = fetch_all(
      LIMIT 8',
     [$userId]
 );
+
 $lastDocument = $documents[0] ?? null;
-$lastCase = fetch_one($pdo, 'SELECT id, titulo, status, created_at FROM cases WHERE cliente_id = ? ORDER BY created_at DESC LIMIT 1', [$userId]);
+$activeCase = fetch_one(
+    $pdo,
+    "SELECT c.id, c.titulo, c.status, c.created_at,
+            (SELECT COUNT(*) FROM messages m WHERE m.case_id = c.id) AS message_count
+     FROM cases c
+     WHERE c.cliente_id = ? AND c.status <> 'finalizado'
+     ORDER BY COALESCE((SELECT MAX(m2.created_at) FROM messages m2 WHERE m2.case_id = c.id), c.created_at) DESC
+     LIMIT 1",
+    [$userId]
+);
+
 $quickLinks = [
     [
         'title' => 'Enviar documento',
@@ -64,6 +75,51 @@ $quickLinks = [
         'action' => 'Editar perfil',
     ],
 ];
+
+if ($documentCount === 0) {
+    $nextStep = [
+        'badge' => 'Comece aqui',
+        'title' => 'Envie seu primeiro documento',
+        'description' => 'Suba um PDF ou imagem para receber resumo, pontos de atenção e próximos passos em linguagem simples.',
+        'href' => 'visualizar-documento.php#novo-documento',
+        'action' => 'Enviar documento',
+        'icon' => 'upload',
+    ];
+} elseif ($pendingAnalysisCount > 0) {
+    $nextStep = [
+        'badge' => 'Aguardando análise',
+        'title' => $pendingAnalysisCount === 1 ? 'Há 1 documento sem análise' : 'Há ' . $pendingAnalysisCount . ' documentos sem análise',
+        'description' => 'Abra seus documentos e gere a análise por IA quando quiser transformar o conteúdo em explicação simples.',
+        'href' => 'visualizar-documento.php',
+        'action' => 'Ver documentos',
+        'icon' => 'chart',
+    ];
+} elseif ($activeCase) {
+    $nextStep = [
+        'badge' => 'Atendimento ativo',
+        'title' => 'Continue sua conversa',
+        'description' => 'Existe um atendimento em andamento. Abra o chat para acompanhar respostas e próximos passos.',
+        'href' => 'chat.php?case_id=' . (int) $activeCase['id'],
+        'action' => 'Abrir chat',
+        'icon' => 'chat',
+    ];
+} else {
+    $nextStep = [
+        'badge' => 'Próximo passo',
+        'title' => 'Peça ajuda quando precisar',
+        'description' => 'Com a análise em mãos, você pode abrir uma solicitação e levar contexto para um profissional.',
+        'href' => 'solicitar-ajuda.php',
+        'action' => 'Pedir ajuda',
+        'icon' => 'help',
+    ];
+}
+
+$metricCards = [
+    ['label' => 'Documentos', 'value' => $documentCount, 'icon' => 'file', 'href' => 'visualizar-documento.php'],
+    ['label' => 'Análises feitas', 'value' => $analysisCount, 'icon' => 'chart', 'href' => 'visualizar-documento.php'],
+    ['label' => 'Pendentes de IA', 'value' => $pendingAnalysisCount, 'icon' => 'help', 'href' => 'visualizar-documento.php'],
+    ['label' => 'Casos ativos', 'value' => $caseCount, 'icon' => 'case', 'href' => 'acompanhar-solicitacoes.php'],
+];
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -81,7 +137,7 @@ $quickLinks = [
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=sidebar-open-button-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=client-dashboard-next-step-1">
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body data-tour-page="dashboard_cliente">
@@ -94,7 +150,7 @@ $quickLinks = [
       <section class="client-command" data-tour-step="2" data-tour-title="Fluxo principal" data-tour-description="Envie documentos, acompanhe análises e peça ajuda jurídica quando precisar.">
         <article class="command-card command-card-primary" data-tour-step="3" data-tour-title="Enviar documento" data-tour-description="Comece por aqui para enviar contrato, notificação, imagem ou outro documento jurídico.">
           <span class="badge badge-info">Fluxo principal</span>
-          <h2>Envie um documento e transforme juridiquês em próximos passos.</h2>
+          <h2>Envie um documento e transforme termos jurídicos em próximos passos.</h2>
           <p>O JusTraduz organiza análise, solicitação, chat e agenda para você sair da dúvida com segurança.</p>
           <div class="form-actions">
             <a class="btn btn-primary" href="visualizar-documento.php#novo-documento"><?= icon_svg('upload') ?> Enviar documento</a>
@@ -118,11 +174,11 @@ $quickLinks = [
 
         <article class="command-card command-card-secondary">
           <span>Atendimento</span>
-          <?php if ($lastCase): ?>
-            <span class="badge badge-info"><?= e(status_label($lastCase['status'] ?? '')) ?></span>
-            <strong><?= e($lastCase['titulo']) ?></strong>
-            <p>Status: <?= e(status_label($lastCase['status'] ?? '')) ?></p>
-            <a class="btn btn-soft btn-sm" href="chat.php?case_id=<?= (int) $lastCase['id'] ?>">Abrir chat</a>
+          <?php if ($activeCase): ?>
+            <span class="badge badge-info"><?= e(status_label($activeCase['status'] ?? '')) ?></span>
+            <strong><?= e($activeCase['titulo']) ?></strong>
+            <p><?= e((string) (int) ($activeCase['message_count'] ?? 0)) ?> mensagem(ns) neste atendimento.</p>
+            <a class="btn btn-soft btn-sm" href="chat.php?case_id=<?= (int) $activeCase['id'] ?>">Abrir chat</a>
           <?php else: ?>
             <span class="badge badge-warning">Sem caso ativo</span>
             <strong>Sem solicitação</strong>
@@ -132,11 +188,23 @@ $quickLinks = [
         </article>
       </section>
 
+      <section class="client-next-step" data-tour-step="4" data-tour-title="Próximo passo sugerido" data-tour-description="Este bloco destaca a ação mais útil para o momento da sua conta.">
+        <div class="client-next-step-copy">
+          <span class="badge badge-info"><?= e($nextStep['badge']) ?></span>
+          <h2><?= e($nextStep['title']) ?></h2>
+          <p><?= e($nextStep['description']) ?></p>
+        </div>
+        <a class="btn btn-primary" href="<?= e($nextStep['href']) ?>"><?= icon_svg($nextStep['icon']) ?> <?= e($nextStep['action']) ?></a>
+      </section>
+
       <section class="grid grid-4 dashboard-metrics" data-tour-step="7" data-tour-title="Análises e pendências" data-tour-description="Estes indicadores mostram o que já foi analisado e o que ainda aguarda processamento.">
-        <?= stat_card('Documentos', $documentCount, 'file') ?>
-        <?= stat_card('Análises feitas', $analysisCount, 'chart') ?>
-        <?= stat_card('Pendentes de IA', $pendingAnalysisCount, 'help') ?>
-        <?= stat_card('Casos ativos', $caseCount, 'case') ?>
+        <?php foreach ($metricCards as $metric): ?>
+          <a class="stat-card dashboard-metric-link" href="<?= e($metric['href']) ?>">
+            <?= icon_svg($metric['icon']) ?>
+            <span><?= e($metric['label']) ?></span>
+            <strong><?= e((string) $metric['value']) ?></strong>
+          </a>
+        <?php endforeach; ?>
       </section>
 
       <section class="dash-section">

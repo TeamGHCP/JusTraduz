@@ -293,7 +293,7 @@ class CaseController extends BaseController
             'attachment_name' => $attachment['original_name'] ?? null,
         ]);
 
-        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&sucesso=' . urlencode('Mensagem enviada.')));
+        $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId));
     }
 
     public function downloadAttachment(): void
