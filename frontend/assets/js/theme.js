@@ -1,9 +1,19 @@
 (function () {
   const storageKey = 'justraduz-theme';
 
+  function canUsePreferences() {
+    return !!(window.JusTraduzCookieConsent && window.JusTraduzCookieConsent.allowed('preferences'));
+  }
+
   function preferredTheme() {
-    const stored = localStorage.getItem(storageKey);
-    if (stored === 'dark' || stored === 'light') return stored;
+    if (canUsePreferences()) {
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored === 'dark' || stored === 'light') return stored;
+      } catch (error) {
+        // Theme still follows the system preference when storage is unavailable.
+      }
+    }
     return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
@@ -18,7 +28,13 @@
   }
 
   function setTheme(theme) {
-    localStorage.setItem(storageKey, theme);
+    if (canUsePreferences()) {
+      try {
+        localStorage.setItem(storageKey, theme);
+      } catch (error) {
+        // Theme change remains active for the current page.
+      }
+    }
     applyTheme(theme);
   }
 
@@ -36,5 +52,9 @@
         setTheme(theme);
       });
     });
+  });
+
+  window.addEventListener('justraduz:cookie-consent-changed', () => {
+    applyTheme(preferredTheme());
   });
 })();

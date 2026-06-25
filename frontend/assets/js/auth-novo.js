@@ -2,6 +2,30 @@ const authPage = document.querySelector("#authPage");
 const showCadastro = document.querySelector("#showCadastro");
 const showLogin = document.querySelector("#showLogin");
 
+document.addEventListener("click", function (event) {
+  const link = event.target.closest("a[href]");
+
+  if (!link || link.target || link.hasAttribute("download") || event.defaultPrevented) {
+    return;
+  }
+
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return;
+  }
+
+  try {
+    const url = new URL(link.getAttribute("href"), window.location.href);
+    const isSameOrigin = url.origin === window.location.origin;
+    const isHomePage = /\/frontend\/(?:index\.html)?$/.test(url.pathname) || /\/frontend\/$/.test(url.pathname);
+
+    if (isSameOrigin && isHomePage && (!url.hash || url.hash === "#top")) {
+      window.sessionStorage.setItem("jtSkipOpeningLoader", "1");
+    }
+  } catch (e) {
+    // ignore invalid hrefs
+  }
+});
+
 if (authPage) {
   const replayAuthEntrance = function (panelSelector) {
     const sharedElements = Array.from(authPage.querySelectorAll(

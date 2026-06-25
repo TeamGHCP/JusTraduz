@@ -15,7 +15,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=theme-slow-6-eye">
-  <link rel="stylesheet" href="assets/css/auth-novo.css?v=auth-soft-motion-2">
+  <link rel="stylesheet" href="assets/css/auth-novo.css?v=custom-select-flow-8">
   <style>
     .auth-switch-page .auth-card .btn.btn-block {
       min-height: 48px !important;
@@ -42,6 +42,7 @@
       outline: 0 !important;
     }
   </style>
+  <script src="assets/js/cookie-consent.js?v=2026.06.25-1"></script>
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
@@ -315,21 +316,9 @@
 </main>
 
 <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
-<script src="assets/js/auth.js?v=cpf-validator-1"></script>
-<script src="assets/js/auth-novo.js?v=auth-transition-replay-2"></script>
+<script src="assets/js/auth.js?v=custom-select-flow-8"></script>
+<script src="assets/js/auth-novo.js?v=opening-skip-1"></script>
 <script src="assets/js/accessibility.js?v=2026.06.16-a11y-stack"></script>
-<div vw class="enabled">
-  <div vw-access-button class="active"></div>
-  <div vw-plugin-wrapper>
-    <div class="vw-plugin-top-wrapper"></div>
-  </div>
-</div>
-<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
-<script>
-  if (!window.JusTraduzVlibrasStarted && window.VLibras && window.VLibras.Widget) {
-    window.JusTraduzVlibrasStarted = true;
-    new window.VLibras.Widget('https://vlibras.gov.br/app');
-  }
-</script>
+  <script src="assets/js/vlibras-init.js?v=2026.06.25-1" defer></script>
 </body>
 </html>

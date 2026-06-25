@@ -14,15 +14,26 @@
   var activeUtterance = null;
   var speechRunId = 0;
 
-  try {
-    state = Object.assign(state, JSON.parse(localStorage.getItem(storageKey) || '{}'));
-  } catch (error) {}
+  function canUsePreferences() {
+    return !!(window.JusTraduzCookieConsent && window.JusTraduzCookieConsent.allowed('preferences'));
+  }
+
+  function canUseExternalAccessibility() {
+    return !!(window.JusTraduzCookieConsent && window.JusTraduzCookieConsent.allowed('accessibility'));
+  }
+
+  if (canUsePreferences()) {
+    try {
+      state = Object.assign(state, JSON.parse(localStorage.getItem(storageKey) || '{}'));
+    } catch (error) {}
+  }
 
   if ([0.65, 1, 1.6].indexOf(Number(state.speechRate)) === -1) {
     state.speechRate = Number(state.speechRate) < 1 ? 0.65 : (Number(state.speechRate) > 1 ? 1.6 : 1);
   }
 
   function save() {
+    if (!canUsePreferences()) return;
     try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch (error) {}
   }
 
@@ -86,6 +97,11 @@
   }
 
   function ensureVlibras() {
+    if (!canUseExternalAccessibility()) {
+      cleanupVlibras();
+      return;
+    }
+
     normalizeVlibrasWidgets();
     var existingWidget = document.querySelector('[vw]');
     var existingScript = document.querySelector('script[src*="vlibras-plugin.js"]');
@@ -124,10 +140,20 @@
       return;
     }
 
-    var script = document.createElement('script');
-    script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
-    script.onload = startWidget;
-    document.body.appendChild(script);
+    if (window.JusTraduzCookieConsent && window.JusTraduzCookieConsent.loadScript) {
+      window.JusTraduzCookieConsent.loadScript('accessibility', 'justraduz-vlibras-plugin', 'https://vlibras.gov.br/app/vlibras-plugin.js', startWidget);
+      return;
+    }
+  }
+
+  function cleanupVlibras() {
+    document.querySelectorAll('[vw], script[src*="vlibras.gov.br"]').forEach(function (node) {
+      node.remove();
+    });
+    document.querySelectorAll('iframe[src*="vlibras"], iframe[src*="dicionario2.vlibras"]').forEach(function (node) {
+      node.remove();
+    });
+    window.JusTraduzVlibrasStarted = false;
   }
 
   function normalizeVlibrasWidgets() {
@@ -584,6 +610,10 @@
     enhanceLinksAndNavigation();
     document.addEventListener('keydown', trapDialogFocus);
     window.addEventListener('pagehide', function () { stopPageSpeech(false); });
+    window.addEventListener('justraduz:cookie-consent-changed', function () {
+      if (canUseExternalAccessibility()) ensureVlibras();
+      else cleanupVlibras();
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

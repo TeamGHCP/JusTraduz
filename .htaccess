@@ -20,4 +20,8 @@ ErrorDocument 500 /JusTraduz/frontend/500.html
     RewriteRule ^storage-private(?:/|$) - [F,L]
     RewriteRule ^backend/(?:\.env|app|routes)(?:/|$) - [F,L]
     RewriteRule ^backend/storage/(?:documents|message-attachments)(?:/|$) - [F,L]
+    RewriteCond %{REQUEST_FILENAME}.html -f
+    RewriteRule ^(.+?)/?$ $1.html [L]
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^(.+?)/?$ $1.php [L]
 </IfModule>

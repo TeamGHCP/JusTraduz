@@ -44,24 +44,26 @@
     });
   }
 
-  function enhanceAccountTypeSelect() {
-    if (!typeSelect || typeSelect.dataset.customSelect === "true") return;
+  function enhanceCustomSelect(select) {
+    if (!select || select.dataset.customSelect === "true") return;
 
-    const field = typeSelect.closest(".jt-field");
+    const field = select.closest(".jt-field");
     if (!field) return;
 
-    typeSelect.dataset.customSelect = "true";
-    typeSelect.classList.add("jt-native-select-hidden");
-    typeSelect.tabIndex = -1;
-    typeSelect.setAttribute("aria-hidden", "true");
-    field.classList.add("has-custom-select", "has-value");
+    select.dataset.customSelect = "true";
+    select.classList.add("jt-native-select-hidden");
+    select.tabIndex = -1;
+    select.setAttribute("aria-hidden", "true");
+    field.classList.add("has-custom-select");
 
-    const options = Array.from(typeSelect.options);
+    const options = Array.from(select.options);
     const button = document.createElement("button");
     const list = document.createElement("div");
     const valueLabel = document.createElement("span");
-    const buttonId = `${typeSelect.id || "account-type"}-custom-button`;
-    const listId = `${typeSelect.id || "account-type"}-custom-list`;
+    const label = field.querySelector(".jt-label");
+    const buttonId = `${select.id || select.name || "select"}-custom-button`;
+    const listId = `${select.id || select.name || "select"}-custom-list`;
+    const labelText = label?.textContent?.trim() || select.getAttribute("aria-label") || "Selecionar";
 
     button.type = "button";
     button.id = buttonId;
@@ -69,7 +71,7 @@
     button.setAttribute("aria-haspopup", "listbox");
     button.setAttribute("aria-expanded", "false");
     button.setAttribute("aria-controls", listId);
-    button.setAttribute("aria-label", "Tipo de conta");
+    button.setAttribute("aria-label", labelText);
 
     valueLabel.className = "jt-select-value";
     button.appendChild(valueLabel);
@@ -81,23 +83,27 @@
     list.setAttribute("aria-labelledby", buttonId);
     list.hidden = true;
 
-    const optionNodes = options.map((option) => {
+    const visibleOptions = options.filter((option) => option.value !== "");
+
+    const optionNodes = visibleOptions.map((option) => {
       const item = document.createElement("button");
       item.type = "button";
       item.className = "jt-select-option";
       item.setAttribute("role", "option");
       item.dataset.value = option.value;
-      item.textContent = option.textContent;
+      item.textContent = option.textContent || labelText;
       list.appendChild(item);
       return item;
     });
 
     function syncSelected() {
-      const selectedOption = options.find((option) => option.value === typeSelect.value) || options[0];
+      const selectedOption = options.find((option) => option.value === select.value) || options[0];
       valueLabel.textContent = selectedOption?.textContent || "";
+      field.classList.toggle("has-value", select.value !== "");
+      button.toggleAttribute("aria-invalid", select.getAttribute("aria-invalid") === "true");
 
       optionNodes.forEach((item) => {
-        const isSelected = item.dataset.value === typeSelect.value;
+        const isSelected = item.dataset.value === select.value;
         item.classList.toggle("is-selected", isSelected);
         item.setAttribute("aria-selected", String(isSelected));
       });
@@ -105,6 +111,7 @@
 
     function closeSelect() {
       list.hidden = true;
+      field.style.marginBottom = "";
       field.classList.remove("is-custom-select-open", "is-focused");
       button.setAttribute("aria-expanded", "false");
     }
@@ -113,11 +120,14 @@
       list.hidden = false;
       field.classList.add("is-custom-select-open", "is-focused");
       button.setAttribute("aria-expanded", "true");
+      requestAnimationFrame(() => {
+        field.style.marginBottom = `${list.offsetHeight + 8}px`;
+      });
     }
 
     function chooseValue(value) {
-      typeSelect.value = value;
-      typeSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      select.value = value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
       syncSelected();
       closeSelect();
       button.focus();
@@ -177,26 +187,40 @@
       }
     });
 
-    typeSelect.addEventListener("change", syncSelected);
-    typeSelect.insertAdjacentElement("afterend", button);
+    select.addEventListener("change", syncSelected);
+    select.insertAdjacentElement("afterend", button);
     button.insertAdjacentElement("afterend", list);
     syncSelected();
+  }
+
+  function enhanceAuthSelects() {
+    document.querySelectorAll(".auth-switch-page select.jt-input").forEach(enhanceCustomSelect);
+  }
+
+  function isBrowserAutofilled(input) {
+    try {
+      return input.matches(":-webkit-autofill");
+    } catch (e) {
+      return false;
+    }
   }
 
   function syncAnimatedField(field) {
     const input = field.querySelector(".jt-input");
     if (!input) return;
-    const hasValue = input.value !== "";
+    const hasValue = input.value !== "" || isBrowserAutofilled(input);
     field.classList.toggle("has-value", hasValue);
     if (input.validity.valid || !input.dataset.touched) {
+      input.removeAttribute("aria-invalid");
       field.classList.remove("has-error");
+      field.querySelector(".jt-select-button")?.removeAttribute("aria-invalid");
       const error = field.querySelector(".jt-error");
       if (error) error.textContent = "";
     }
   }
 
   enhanceAnimatedLabels();
-  enhanceAccountTypeSelect();
+  enhanceAuthSelects();
 
   document.querySelectorAll(".jt-field").forEach((field) => {
     const input = field.querySelector(".jt-input");
@@ -215,8 +239,22 @@
     });
     input.addEventListener("input", () => syncAnimatedField(field));
     input.addEventListener("change", () => syncAnimatedField(field));
+    input.addEventListener("animationstart", (event) => {
+      if (event.animationName === "jtAutofillStart") {
+        syncAnimatedField(field);
+      }
+    });
     syncAnimatedField(field);
   });
+
+  function syncAllAnimatedFields() {
+    document.querySelectorAll(".jt-field").forEach(syncAnimatedField);
+  }
+
+  requestAnimationFrame(syncAllAnimatedFields);
+  setTimeout(syncAllAnimatedFields, 120);
+  setTimeout(syncAllAnimatedFields, 500);
+  window.addEventListener("pageshow", syncAllAnimatedFields);
 
   function formatOab(value) {
     return String(value || "").replace(/\D+/g, "").slice(0, 7);
@@ -321,6 +359,19 @@
     button.disabled = false;
   }
 
+  function focusFieldControl(field) {
+    if (!field) return;
+
+    const wrapper = field.closest(".jt-field");
+    const visibleSelectButton = wrapper?.querySelector(".jt-select-button");
+    const focusTarget = field.matches("select.jt-native-select-hidden") && visibleSelectButton
+      ? visibleSelectButton
+      : field;
+
+    focusTarget.focus({ preventScroll: true });
+    focusTarget.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
   function markInvalidField(field) {
     if (!field) return;
 
@@ -331,6 +382,7 @@
     const error = wrapper?.querySelector(".jt-error");
 
     wrapper?.classList.add("has-error");
+    wrapper?.querySelector(".jt-select-button")?.setAttribute("aria-invalid", "true");
     if (error) {
       error.textContent = field.validationMessage || "Preencha este campo.";
     }
@@ -348,6 +400,7 @@
 
       if (field.checkValidity()) {
         field.removeAttribute("aria-invalid");
+        wrapper?.querySelector(".jt-select-button")?.removeAttribute("aria-invalid");
         wrapper?.classList.remove("has-error");
         if (error) error.textContent = "";
         return;
@@ -361,8 +414,7 @@
     });
 
     if (firstInvalid) {
-      firstInvalid.focus({ preventScroll: true });
-      firstInvalid.scrollIntoView({ block: "center", behavior: "smooth" });
+      focusFieldControl(firstInvalid);
       return false;
     }
 
@@ -467,7 +519,7 @@
         if (!formOab?.value || countDigits(formOab.value) < 4 || !formUf?.value) {
           showFormMessage(form, "Informe numero da OAB e UF para o admin validar seu acesso.");
           (formOab?.value ? formUf : formOab)?.setAttribute("aria-invalid", "true");
-          (formOab?.value ? formUf : formOab)?.focus();
+          focusFieldControl(formOab?.value ? formUf : formOab);
           return;
         }
       }

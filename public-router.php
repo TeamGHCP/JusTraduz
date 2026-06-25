@@ -37,13 +37,33 @@ if (
     return false;
 }
 
+$decodedPath = rawurldecode($path);
+foreach (['.html', '.php'] as $extension) {
+    $extensionFile = realpath($documentRoot . $decodedPath . $extension);
+
+    if (
+        $extensionFile !== false
+        && str_starts_with($extensionFile, $rootPrefix)
+        && is_file($extensionFile)
+    ) {
+        if ($extension === '.php') {
+            $_SERVER['SCRIPT_FILENAME'] = $extensionFile;
+            require $extensionFile;
+            return true;
+        }
+
+        header('Content-Type: text/html; charset=UTF-8');
+        readfile($extensionFile);
+        return true;
+    }
+}
+
 $notFoundPage = $documentRoot . '/frontend/404.html';
 http_response_code(404);
 header('Content-Type: text/html; charset=UTF-8');
 
 if (is_file($notFoundPage)) {
-    $html = (string) file_get_contents($notFoundPage);
-    echo str_replace('<head>', '<head>' . PHP_EOL . '  <base href="/frontend/">', $html);
+    echo (string) file_get_contents($notFoundPage);
     return true;
 }
 

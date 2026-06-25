@@ -18,6 +18,8 @@ function render_query_alert(): void
 
 function render_sidebar(string $type, string $active, bool $isAdminPath = false): void
 {
+    render_cookie_consent_assets($isAdminPath);
+
     $logoPath = $isAdminPath ? '../assets/img/logo.png' : 'assets/img/logo.png';
     $logoutPath = app_url('/backend/public/index.php?rota=/auth/logout');
     $label = sidebar_profile_label($type);
@@ -138,6 +140,7 @@ function render_vlibras(): void
     $rendered = true;
     $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/');
     $assetPrefix = $isAdminPath ? '../' : '';
+    render_cookie_consent_assets($isAdminPath);
     ?>
     <div vw class="enabled">
       <div vw-access-button class="active"></div>
@@ -145,8 +148,23 @@ function render_vlibras(): void
         <div class="vw-plugin-top-wrapper"></div>
       </div>
     </div>
-    <script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
     <script src="<?= e($assetPrefix) ?>assets/js/vlibras-init.js?v=2026.06.18-1" defer></script>
+    <?php
+}
+
+function render_cookie_consent_assets(bool $isAdminPath = false): void
+{
+    static $rendered = [];
+    $key = $isAdminPath ? 'admin' : 'app';
+
+    if (!empty($rendered[$key])) {
+        return;
+    }
+
+    $rendered[$key] = true;
+    $assetPrefix = $isAdminPath ? '../' : '';
+    ?>
+    <script src="<?= e($assetPrefix) ?>assets/js/cookie-consent.js?v=2026.06.25-2"></script>
     <?php
 }
 
