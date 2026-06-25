@@ -3,7 +3,13 @@
   const modulesStorageKey = 'justraduz_sidebar_modules';
   const mobileQuery = window.matchMedia('(max-width: 980px)');
 
+  function canUsePreferences() {
+    return !!(window.JusTraduzCookieConsent && window.JusTraduzCookieConsent.allowed('preferences'));
+  }
+
   function readCollapsedState() {
+    if (!canUsePreferences()) return false;
+
     try {
       return localStorage.getItem(storageKey) === 'true';
     } catch (error) {
@@ -12,6 +18,8 @@
   }
 
   function saveCollapsedState(collapsed) {
+    if (!canUsePreferences()) return;
+
     try {
       localStorage.setItem(storageKey, collapsed ? 'true' : 'false');
     } catch (error) {
@@ -20,6 +28,8 @@
   }
 
   function readModuleStates() {
+    if (!canUsePreferences()) return {};
+
     try {
       const stored = JSON.parse(localStorage.getItem(modulesStorageKey) || '{}');
       return stored && typeof stored === 'object' ? stored : {};
@@ -29,6 +39,8 @@
   }
 
   function saveModuleStates(states) {
+    if (!canUsePreferences()) return;
+
     try {
       localStorage.setItem(modulesStorageKey, JSON.stringify(states));
     } catch (error) {

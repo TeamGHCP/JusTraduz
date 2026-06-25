@@ -146,7 +146,17 @@ body {
 }
 
 .jt-field.has-custom-select {
+  position: relative;
   z-index: 3;
+  transition: margin-bottom .18s ease;
+}
+
+.jt-field.has-custom-select.is-custom-select-open {
+  z-index: 120;
+}
+
+.jt-field.has-custom-select .jt-label {
+  z-index: 4;
 }
 
 .jt-field.has-custom-select .jt-native-select-hidden {
@@ -164,7 +174,7 @@ body {
 
 .jt-select-button {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -194,9 +204,11 @@ body {
 
 .jt-select-value {
   min-width: 0;
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 700;
 }
 
 .jt-select-chevron {
@@ -221,14 +233,18 @@ body {
   left: 0;
   right: 0;
   top: calc(100% + 6px);
-  z-index: 20;
+  z-index: 80;
   display: grid;
   gap: 4px;
+  max-height: min(260px, 42vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 6px;
   border: 1px solid rgba(17, 138, 126, .24);
   border-radius: 8px;
-  background: rgba(255, 255, 255, .98);
-  box-shadow: 0 18px 34px rgba(23, 32, 51, .14);
+  background: #ffffff;
+  box-shadow: 0 22px 46px rgba(23, 32, 51, .18);
+  isolation: isolate;
 }
 
 .jt-select-list[hidden] {
@@ -236,11 +252,12 @@ body {
 }
 
 .jt-select-option {
+  position: relative;
   display: flex;
   align-items: center;
   width: 100%;
   min-height: 38px;
-  padding: 9px 12px;
+  padding: 9px 13px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -277,6 +294,34 @@ body {
   box-shadow: 0 0 0 4px rgba(17, 138, 126, .12);
 }
 
+@keyframes jtAutofillStart {
+  from { opacity: 1; }
+  to { opacity: 1; }
+}
+
+.jt-field .jt-input:-webkit-autofill {
+  animation-name: jtAutofillStart;
+  animation-duration: .01s;
+  -webkit-text-fill-color: var(--text);
+  box-shadow:
+    0 0 0 1000px #eef5ff inset,
+    0 0 0 1px rgba(47, 95, 152, .08),
+    0 12px 28px rgba(23, 32, 51, .035);
+}
+
+.jt-field .jt-input:-webkit-autofill ~ .jt-label {
+  top: 8px;
+  background: transparent;
+  color: var(--teal);
+  font-size: 11px;
+  transform: translateY(0);
+}
+
+.jt-field .jt-input:-webkit-autofill ~ .jt-label .jt-label-char {
+  color: var(--teal);
+  transform: translateY(-30%);
+}
+
 .jt-field .jt-label {
   position: absolute;
   left: 47px;
@@ -310,7 +355,7 @@ body {
 .jt-field.is-focused .jt-label,
 .jt-field.has-value .jt-label {
   top: 8px;
-  background: #ffffff;
+  background: transparent;
   color: var(--teal);
   font-size: 11px;
   transform: translateY(0);
@@ -323,6 +368,11 @@ body {
 }
 
 .jt-field.has-error .jt-input {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(203, 57, 57, .12);
+}
+
+.jt-field.has-error .jt-select-button {
   border-color: var(--danger);
   box-shadow: 0 0 0 3px rgba(203, 57, 57, .12);
 }
@@ -1070,18 +1120,47 @@ body {
   gap: 12px;
 }
 
+.oab-fields {
+  align-items: start;
+}
+
+.oab-fields > .jt-field {
+  align-self: start;
+}
+
 .google-complete-card .google-oab-grid {
-  grid-template-columns: minmax(0, 1fr) 118px;
+  grid-template-columns: minmax(0, 1fr) 136px;
   align-items: start;
 }
 
 .jt-field-uf .jt-input {
-  padding-left: 12px;
+  padding-left: 44px;
   padding-right: 30px;
   font-weight: 800;
-  text-align: center;
-  text-align-last: center;
+  text-align: left;
+  text-align-last: left;
   letter-spacing: 0;
+}
+
+.jt-field-uf .jt-select-button {
+  justify-content: flex-start;
+  padding-left: 44px;
+  padding-right: 30px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.jt-field-uf .jt-select-value {
+  text-align: left;
+}
+
+.jt-field-uf .jt-select-chevron {
+  position: absolute;
+  right: 12px;
+}
+
+.jt-field-uf .jt-select-option {
+  justify-content: center;
 }
 
 .jt-field-uf select.jt-input {
@@ -1091,13 +1170,13 @@ body {
 }
 
 .jt-field-uf .jt-label {
-  left: 50%;
-  transform: translate(-50%, -50%);
+  left: 43px;
+  transform: translateY(-50%);
 }
 
 .jt-field-uf.is-focused .jt-label,
 .jt-field-uf.has-value .jt-label {
-  transform: translateX(-50%);
+  transform: translateY(0);
 }
 
 .google-complete-card .checkline {
@@ -1213,7 +1292,7 @@ body {
   }
 
   .jt-field-uf .jt-label {
-    left: 13px;
+    left: 43px;
     transform: translateY(-50%);
   }
 

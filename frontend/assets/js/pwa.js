@@ -4,6 +4,14 @@
   var installHiddenKey = "justraduz:pwa-install-hidden";
   var updateRegistration = null;
 
+  function canUsePreferences() {
+    return !!(window.JusTraduzCookieConsent && window.JusTraduzCookieConsent.allowed("preferences"));
+  }
+
+  function hasCookieDecision() {
+    return !!(window.JusTraduzCookieConsent && window.JusTraduzCookieConsent.hasDecision());
+  }
+
   function isStandalone() {
     return window.matchMedia("(display-mode: standalone)").matches
       || window.navigator.standalone === true;
@@ -43,6 +51,8 @@
   }
 
   function isInstallPromptHidden() {
+    if (!canUsePreferences()) return false;
+
     try {
       return window.localStorage.getItem(installHiddenKey) === "1";
     } catch (error) {
@@ -51,6 +61,8 @@
   }
 
   function hideInstallPromptPermanently() {
+    if (!canUsePreferences()) return;
+
     try {
       window.localStorage.setItem(installHiddenKey, "1");
     } catch (error) {}
@@ -103,7 +115,7 @@
   }
 
   function showInstallPrompt() {
-    if (!deferredInstallPrompt || isStandalone() || isInstallPromptHidden()) return;
+    if (!hasCookieDecision() || !deferredInstallPrompt || isStandalone() || isInstallPromptHidden()) return;
 
     showToast({
       id: "justraduz-pwa-install",
@@ -135,9 +147,16 @@
   }
 
   function maybeShowIosTip() {
-    if (!isIosSafari() || isStandalone()) return;
+    if (!hasCookieDecision() || !isIosSafari() || isStandalone()) return;
 
-    var dismissedAt = Number(window.localStorage.getItem(installTipKey) || 0);
+    var dismissedAt = 0;
+    if (canUsePreferences()) {
+      try {
+        dismissedAt = Number(window.localStorage.getItem(installTipKey) || 0);
+      } catch (error) {
+        dismissedAt = 0;
+      }
+    }
     var sevenDays = 7 * 24 * 60 * 60 * 1000;
     if (dismissedAt && Date.now() - dismissedAt < sevenDays) return;
 
@@ -150,7 +169,11 @@
           label: "Entendi",
           primary: true,
           onClick: function () {
-            window.localStorage.setItem(installTipKey, String(Date.now()));
+            if (canUsePreferences()) {
+              try {
+                window.localStorage.setItem(installTipKey, String(Date.now()));
+              } catch (error) {}
+            }
           }
         }
       ],
@@ -210,6 +233,13 @@
     deferredInstallPrompt = null;
     removeToast("justraduz-pwa-install");
     removeToast("justraduz-pwa-ios-tip");
+  });
+
+  window.addEventListener("justraduz:cookie-consent-changed", function () {
+    window.setTimeout(function () {
+      showInstallPrompt();
+      maybeShowIosTip();
+    }, 500);
   });
 
   window.addEventListener("offline", function () {
