@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 -- usuários
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL COLLATE utf8mb4_general_ci,
     senha VARCHAR(255) NOT NULL,
@@ -52,14 +53,18 @@ CREATE TABLE IF NOT EXISTS users (
     provider VARCHAR(30) NULL,
     profile_completed BOOLEAN DEFAULT TRUE,
     email_verified_at DATETIME NULL,
+    deletion_requested_at DATETIME NULL,
+    deletion_scheduled_at DATETIME NULL,
     status ENUM('ativo','inativo') DEFAULT 'ativo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_users_tipo_status (tipo, status),
     UNIQUE KEY uniq_users_cpf (cpf),
     INDEX idx_users_oab_status (oab_status),
+    INDEX idx_users_organization (organization_id),
     INDEX idx_users_provider (provider),
     INDEX idx_users_google_sub (google_sub),
+    INDEX idx_users_deletion_schedule (deletion_scheduled_at),
     FOREIGN KEY (oab_validated_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
@@ -85,14 +90,20 @@ CREATE TABLE IF NOT EXISTS user_onboarding_progress (
 
 CREATE TABLE IF NOT EXISTS organizations (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(160) NOT NULL,
-    slug VARCHAR(190) NOT NULL UNIQUE,
+    nome VARCHAR(180) NOT NULL,
+    tipo ENUM('empresa', 'escritorio') NOT NULL DEFAULT 'empresa',
+    documento VARCHAR(32) NULL,
+    name VARCHAR(160) NULL,
+    slug VARCHAR(190) NULL,
     owner_user_id INT NULL,
-    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_organizations_status (status, created_at)
+    INDEX idx_organizations_status (status),
+    UNIQUE KEY uq_organizations_documento (documento),
+    UNIQUE KEY uq_organizations_slug (slug),
+    INDEX idx_organizations_owner (owner_user_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS organization_members (
@@ -109,6 +120,31 @@ CREATE TABLE IF NOT EXISTS organization_members (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_organization_members_user (user_id, status)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_organizations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    organization_id INT NOT NULL,
+    papel ENUM('membro', 'gestor', 'suporte') NOT NULL DEFAULT 'membro',
+    is_primary TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_user_organization (user_id, organization_id),
+    INDEX idx_user_organizations_org (organization_id),
+    CONSTRAINT fk_user_organizations_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_organizations_org FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS role_permission_overrides (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(40) NOT NULL,
+    permission VARCHAR(100) NOT NULL,
+    effect ENUM('allow', 'deny') NOT NULL,
+    updated_by INT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_role_permission_override (role_name, permission),
+    INDEX idx_role_permission_role (role_name),
+    CONSTRAINT fk_role_permission_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS organization_invites (
@@ -247,6 +283,17 @@ CREATE TABLE IF NOT EXISTS cases (
     INDEX idx_cases_organization_status (organization_id, status),
     INDEX idx_cases_sla (sla_status, sla_due_at),
     INDEX idx_cases_document (document_id)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS case_escalations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT NOT NULL,
+    state ENUM('due_soon', 'overdue', 'unassigned') NOT NULL,
+    notified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    message VARCHAR(255) NOT NULL,
+    UNIQUE KEY uq_case_escalation_window (case_id, state, notified_at),
+    INDEX idx_case_escalations_case (case_id),
+    CONSTRAINT fk_case_escalations_case FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8mb4;
 
 -- mensagens
@@ -442,6 +489,19 @@ CREATE TABLE IF NOT EXISTS mail_logs (
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_mail_logs_status (status, created_at),
     INDEX idx_mail_logs_recipient (recipient, created_at)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS public_api_clients (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(180) NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    scopes VARCHAR(255) NOT NULL DEFAULT 'health:read,reports:read',
+    status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+    last_used_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_public_api_client_name (nome),
+    INDEX idx_public_api_clients_status (status)
 ) DEFAULT CHARSET=utf8mb4;
 -- Registro das migrations ja incorporadas neste schema consolidado.
 INSERT IGNORE INTO schema_migrations (version) VALUES
@@ -642,9 +702,9 @@ SELECT id INTO @advogado_id FROM users WHERE email = 'advogado@justraduz.demo';
 SELECT id INTO @advogado2_id FROM users WHERE email = 'advogado2@justraduz.demo';
 SELECT id INTO @pendente_id FROM users WHERE email = 'pendente@justraduz.demo';
 
-INSERT INTO organizations (name, slug, owner_user_id, status)
-VALUES ('Costa & Tamanini Demo', 'costa-tamanini-demo', @advogado_id, 'active')
-ON DUPLICATE KEY UPDATE owner_user_id = VALUES(owner_user_id), status = 'active';
+INSERT INTO organizations (nome, tipo, name, slug, owner_user_id, status)
+VALUES ('Costa & Tamanini Demo', 'escritorio', 'Costa & Tamanini Demo', 'costa-tamanini-demo', @advogado_id, 'ativo')
+ON DUPLICATE KEY UPDATE nome = VALUES(nome), name = VALUES(name), owner_user_id = VALUES(owner_user_id), status = 'ativo';
 SELECT id INTO @org_demo_id FROM organizations WHERE slug = 'costa-tamanini-demo';
 
 INSERT INTO organization_members (organization_id, user_id, role, status, invited_by) VALUES

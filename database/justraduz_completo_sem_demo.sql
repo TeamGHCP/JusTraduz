@@ -21,11 +21,16 @@ CREATE TABLE IF NOT EXISTS organizations (
     nome VARCHAR(180) NOT NULL,
     tipo ENUM('empresa', 'escritorio') NOT NULL DEFAULT 'empresa',
     documento VARCHAR(32) NULL,
+    name VARCHAR(160) NULL,
+    slug VARCHAR(190) NULL,
+    owner_user_id INT NULL,
     status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_organizations_status (status),
-    UNIQUE KEY uq_organizations_documento (documento)
+    UNIQUE KEY uq_organizations_documento (documento),
+    UNIQUE KEY uq_organizations_slug (slug),
+    INDEX idx_organizations_owner (owner_user_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- usuários
@@ -81,6 +86,10 @@ CREATE TABLE IF NOT EXISTS users (
     FOREIGN KEY (oab_validated_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
+ALTER TABLE organizations
+    ADD CONSTRAINT fk_organizations_owner_user
+    FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL;
+
 CREATE TABLE IF NOT EXISTS user_organizations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -124,18 +133,6 @@ CREATE TABLE IF NOT EXISTS user_onboarding_progress (
     INDEX idx_user_onboarding_user (user_id),
     INDEX idx_user_onboarding_status (status),
     CONSTRAINT fk_user_onboarding_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS organizations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(160) NOT NULL,
-    slug VARCHAR(190) NOT NULL UNIQUE,
-    owner_user_id INT NULL,
-    status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
-    INDEX idx_organizations_status (status, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS organization_members (

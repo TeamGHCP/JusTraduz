@@ -20,7 +20,7 @@ $pdo = report_database_connection($root);
 
 $report = [
     'generated_at' => date(DATE_ATOM),
-    'health' => capture_healthcheck(),
+    'health' => capture_healthcheck($root),
     'database' => [
         'connected' => $pdo instanceof PDO,
         'users' => count_rows($pdo, 'users'),
@@ -55,11 +55,22 @@ if ($outputPath !== null && trim($outputPath) !== '') {
 
 echo $content;
 
-function capture_healthcheck(): array
+function capture_healthcheck(string $root): array
 {
+    $env = report_env_values($root . '/backend/.env');
+    $originalToken = $_GET['token'] ?? null;
+    if (trim((string) ($env['HEALTHCHECK_TOKEN'] ?? '')) !== '') {
+        $_GET['token'] = (string) $env['HEALTHCHECK_TOKEN'];
+    }
+
     ob_start();
     (new HealthController())->show();
     $raw = ob_get_clean();
+    if ($originalToken === null) {
+        unset($_GET['token']);
+    } else {
+        $_GET['token'] = $originalToken;
+    }
     $decoded = json_decode((string) $raw, true);
 
     if (!is_array($decoded)) {
