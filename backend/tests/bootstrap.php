@@ -444,7 +444,6 @@ function seed_test_data(PDO $pdo): void
         [3, 'Advogado OK', 'advogado@teste.local', 'advogado', 1, 'approved', 'verificado', null],
         [4, 'Advogado Pendente', 'pendente@teste.local', 'advogado', 0, 'pending', 'pendente', null],
         [5, 'Admin', 'admin@teste.local', 'admin', 1, 'not_required', null, null],
-        [6, 'Estagiario OK', 'estagiario@teste.local', 'estagiario', 1, 'approved', 'verificado', null],
     ];
 
     $stmt = $pdo->prepare(

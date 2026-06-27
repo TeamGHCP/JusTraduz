@@ -4,7 +4,7 @@ require_role(['admin']);
 
 function admin_oab_label(array $user): string
 {
-    if (!in_array($user['tipo'], ['advogado', 'estagiario'], true)) {
+    if ($user['tipo'] !== 'advogado') {
         return 'Não se aplica';
     }
 
@@ -23,7 +23,7 @@ function admin_oab_label(array $user): string
 
 function admin_oab_badge_class(array $user): string
 {
-    if (!in_array($user['tipo'], ['advogado', 'estagiario'], true)) {
+    if ($user['tipo'] !== 'advogado') {
         return 'badge-info';
     }
 
@@ -42,10 +42,10 @@ $tipo = $_GET['tipo'] ?? '';
 $status = $_GET['status'] ?? '';
 $oabFilter = $_GET['oab'] ?? '';
 $q = trim((string) ($_GET['q'] ?? ''));
-$where = [];
+$where = ["tipo IN ('cliente', 'advogado', 'admin')"];
 $params = [];
 
-if (in_array($tipo, ['cliente', 'advogado', 'estagiario', 'admin'], true)) {
+if (in_array($tipo, ['cliente', 'advogado', 'admin'], true)) {
     $where[] = 'tipo = ?';
     $params[] = $tipo;
 }
@@ -62,13 +62,13 @@ if ($q !== '') {
 }
 
 if ($oabFilter === 'verificado') {
-    $where[] = "tipo IN ('advogado', 'estagiario') AND oab_verificado = TRUE";
+    $where[] = "tipo = 'advogado' AND oab_verificado = TRUE";
 } elseif ($oabFilter === 'pendente') {
-    $where[] = "tipo IN ('advogado', 'estagiario') AND oab_verificado = FALSE AND COALESCE(status_cna, 'pendente') = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> ''";
+    $where[] = "tipo = 'advogado' AND oab_verificado = FALSE AND COALESCE(status_cna, 'pendente') = 'pendente' AND COALESCE(oab, '') <> '' AND COALESCE(oab_uf, '') <> ''";
 } elseif ($oabFilter === 'invalido') {
-    $where[] = "tipo IN ('advogado', 'estagiario') AND COALESCE(status_cna, '') IN ('invalido', 'nao_encontrado')";
+    $where[] = "tipo = 'advogado' AND COALESCE(status_cna, '') IN ('invalido', 'nao_encontrado')";
 } elseif ($oabFilter === 'sem_oab') {
-    $where[] = "tipo IN ('advogado', 'estagiario') AND (COALESCE(oab, '') = '' OR COALESCE(oab_uf, '') = '')";
+    $where[] = "tipo = 'advogado' AND (COALESCE(oab, '') = '' OR COALESCE(oab_uf, '') = '')";
 }
 
 $sql = 'SELECT id, nome, email, tipo, telefone, oab, oab_uf, oab_status, oab_verificado, status_cna, cna_validado_em, cna_origem, cna_ultimo_erro, status, created_at FROM users';
@@ -79,13 +79,13 @@ $sql .= ' ORDER BY created_at DESC';
 
 $users = fetch_all($pdo, $sql, $params);
 
-$userTotal = count_query($pdo, 'SELECT COUNT(*) FROM users');
-$activeTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE status = 'ativo'");
-$verifiedProfessionalTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('advogado', 'estagiario') AND oab_verificado = TRUE");
+$userTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('cliente', 'advogado', 'admin')");
+$activeTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('cliente', 'advogado', 'admin') AND status = 'ativo'");
+$verifiedProfessionalTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo = 'advogado' AND oab_verificado = TRUE");
 $pendingProfessionalTotal = count_query(
     $pdo,
     "SELECT COUNT(*) FROM users
-     WHERE tipo IN ('advogado', 'estagiario')
+     WHERE tipo = 'advogado'
        AND oab_verificado = FALSE
        AND COALESCE(status_cna, 'pendente') = 'pendente'
        AND COALESCE(oab, '') <> ''
@@ -134,7 +134,7 @@ $pendingProfessionalTotal = count_query(
           <label for="tipo">Perfil</label>
           <select class="select" id="tipo" name="tipo">
             <option value="">Todos</option>
-            <?php foreach (['cliente' => 'Cliente', 'advogado' => 'Advogado', 'estagiario' => 'Estagiário', 'admin' => 'Admin'] as $value => $label): ?>
+            <?php foreach (['cliente' => 'Cliente', 'advogado' => 'Advogado', 'admin' => 'Admin'] as $value => $label): ?>
               <option value="<?= e($value) ?>" <?= $tipo === $value ? 'selected' : '' ?>><?= e($label) ?></option>
             <?php endforeach; ?>
           </select>
@@ -176,7 +176,7 @@ $pendingProfessionalTotal = count_query(
               <thead><tr><th>Usuário</th><th>Contato</th><th>Perfil</th><th>OAB</th><th>Status</th><th>Criado em</th><th>Ações</th></tr></thead>
               <tbody>
                 <?php foreach ($users as $user): ?>
-                  <?php $isProfessional = in_array($user['tipo'], ['advogado', 'estagiario'], true); ?>
+                  <?php $isProfessional = $user['tipo'] === 'advogado'; ?>
                   <tr>
                     <td><strong><?= e($user['nome']) ?></strong><span class="table-subtext">#<?= (int) $user['id'] ?></span></td>
                     <td><?= e($user['email']) ?><span class="table-subtext"><?= e($user['telefone'] ?: 'Sem telefone') ?></span></td>

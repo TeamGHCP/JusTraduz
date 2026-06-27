@@ -233,7 +233,7 @@
   function syncOabFields() {
     if (!typeSelect || !oabFields) return;
 
-    const needsOab = ["advogado", "estagiario"].includes(typeSelect.value);
+    const needsOab = typeSelect.value === "advogado";
     const needsCpf = typeSelect.value === "cliente";
     oabFields.classList.toggle("is-visible", needsOab);
 
@@ -463,7 +463,7 @@
         return;
       }
 
-      if (["advogado", "estagiario"].includes(formType)) {
+      if (formType === "advogado") {
         if (!formOab?.value || countDigits(formOab.value) < 4 || !formUf?.value) {
           showFormMessage(form, "Informe numero da OAB e UF para o admin validar seu acesso.");
           (formOab?.value ? formUf : formOab)?.setAttribute("aria-invalid", "true");

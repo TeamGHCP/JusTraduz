@@ -151,16 +151,6 @@ $hasTaskFilters = $q !== '' || $status !== '' || $caseFilter > 0;
     <main class="app-main tasks-page">
       <?php render_topbar('Tarefas', 'Acompanhe próximos passos por caso e prioridade.', current_user_name()); ?>
 
-      <?php if ($type === 'estagiario'): ?>
-        <section class="professional-alert professional-alert-locked">
-          <div>
-            <strong>Tarefas bloqueadas para este perfil.</strong>
-            <span>Sem atribuição formal, estagiario não cria, altera ou consulta tarefas de casos. Isso é regra de responsabilidade, não detalhe visual.</span>
-          </div>
-          <a class="btn btn-primary btn-sm" href="agenda.php">Minha agenda</a>
-        </section>
-      <?php endif; ?>
-
       <section class="task-summary-grid" aria-label="Resumo das tarefas">
         <article class="task-summary-card">
           <?= icon_svg('check') ?>
@@ -259,7 +249,7 @@ $hasTaskFilters = $q !== '' || $status !== '' || $caseFilter > 0;
         </div>
 
         <?php if (!$tasks): ?>
-          <?= empty_state($type === 'estagiario' ? 'Sem tarefas acessíveis para este perfil.' : 'Nenhuma tarefa encontrada para os filtros atuais.') ?>
+          <?= empty_state('Nenhuma tarefa encontrada para os filtros atuais.') ?>
         <?php else: ?>
           <div class="task-list">
             <?php foreach ($tasks as $task): ?>
@@ -294,9 +284,7 @@ $hasTaskFilters = $q !== '' || $status !== '' || $caseFilter > 0;
                         <button class="btn btn-soft btn-sm" type="submit">Salvar</button>
                       </form>
                     <?php endif; ?>
-                    <?php if ($type !== 'estagiario'): ?>
-                      <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $task['case_id'] ?>"><?= icon_svg('chat') ?> Chat</a>
-                    <?php endif; ?>
+                    <a class="btn btn-outline btn-sm" href="chat.php?case_id=<?= (int) $task['case_id'] ?>"><?= icon_svg('chat') ?> Chat</a>
                   </div>
                 </div>
               </article>

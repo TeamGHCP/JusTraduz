@@ -95,7 +95,7 @@ function profile_billing_renewal_message(?array $subscription): string
     return 'O período do plano terminou. Verifique o pagamento.';
 }
 
-$isProfessional = in_array($user['tipo'] ?? '', ['advogado', 'estagiario'], true);
+$isProfessional = ($user['tipo'] ?? '') === 'advogado';
 $oabStatus = $isProfessional ? profile_oab_status_meta($user) : null;
 $activeProfileTab = (string) ($_GET['tab'] ?? 'conta');
 $allowedProfileTabs = ['conta', 'faturamento', 'seguranca', 'privacidade'];
@@ -139,7 +139,6 @@ $deletionScheduledLabel = $hasDeletionScheduled ? date('d/m/Y H:i', strtotime($d
 $accountUsesGoogle = strtolower((string) ($user['provider'] ?? '')) === 'google';
 $profileTourKey = match ($type) {
     'advogado' => 'dashboard_advogado',
-    'estagiario' => 'dashboard_estagiario',
     'admin' => 'dashboard_admin',
     default => 'dashboard_cliente',
 };
@@ -216,7 +215,7 @@ $profileTourKey = match ($type) {
                 <?php endif; ?>
                 <div class="field"><label for="tipo">Tipo</label><input class="input" id="tipo" value="<?= e($user['tipo'] ?? '') ?>" disabled></div>
               </div>
-              <?php if (in_array($user['tipo'] ?? '', ['advogado', 'estagiario'], true)): ?>
+              <?php if (($user['tipo'] ?? '') === 'advogado'): ?>
                 <div class="form-grid">
                   <div class="field"><label>OAB</label><input class="input" value="<?= e($user['oab'] ?? '') ?>" disabled></div>
                   <div class="field"><label>UF</label><input class="input" value="<?= e($user['oab_uf'] ?? '') ?>" disabled></div>

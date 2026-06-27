@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL COLLATE utf8mb4_general_ci,
     senha VARCHAR(255) NOT NULL,
-    tipo ENUM('cliente', 'advogado', 'estagiario', 'admin') NOT NULL,
+    tipo ENUM('cliente', 'advogado', 'admin') NOT NULL,
     
     oab VARCHAR(20),
     oab_uf VARCHAR(10),
@@ -375,7 +375,7 @@ CREATE TABLE IF NOT EXISTS cna_validacao_logs (
 CREATE TABLE IF NOT EXISTS external_processes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    owner_type ENUM('cliente', 'advogado', 'estagiario') NOT NULL,
+    owner_type ENUM('cliente', 'advogado') NOT NULL,
     source VARCHAR(40) NOT NULL DEFAULT 'datajud',
     query_type ENUM('cpf', 'oab', 'cnj') NOT NULL,
     query_value VARCHAR(40) NOT NULL,
@@ -461,7 +461,8 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('2026_06_15_p2_saas'),
     ('2026_06_23_add_free_plan'),
     ('2026_06_24_plan_audience_professional'),
-    ('2026_06_26_max_plans');
+    ('2026_06_26_max_plans'),
+    ('2026_06_27_remove_intern_profile');
 
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -518,7 +519,6 @@ WHERE email IN (
     'cliente@justraduz.demo',
     'cliente2@justraduz.demo',
     'advogado@justraduz.demo',
-    'estagiario@justraduz.demo',
     'pendente@justraduz.demo'
 );
 
@@ -631,14 +631,12 @@ VALUES
     ('Carla Cliente Demo', 'cliente@justraduz.demo', @demo_password_hash, 'cliente', '(11) 91111-1111', '52998224725', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 10 DAY)),
     ('Bruno Cliente Demo', 'cliente2@justraduz.demo', @demo_password_hash, 'cliente', '(21) 92222-2222', '39053344705', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 9 DAY)),
     ('Dra. Marina Costa', 'advogado@justraduz.demo', @demo_password_hash, 'advogado', '(31) 93333-3333', NULL, '123456', 'SP', 'Validado manualmente pela administracao.', 'demo-advogado-123456-sp', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 8 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 8 DAY)),
-    ('Lucas Estagiario Demo', 'estagiario@justraduz.demo', @demo_password_hash, 'estagiario', '(41) 94444-4444', NULL, '654321', 'RJ', 'Validado manualmente pela administracao.', 'demo-estagiario-654321-rj', TRUE, 'estagiario', 'verificado', DATE_SUB(NOW(), INTERVAL 7 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 7 DAY)),
     ('Dr. Rafael Pendente', 'pendente@justraduz.demo', @demo_password_hash, 'advogado', '(51) 95555-5555', NULL, '778899', 'MG', 'Aguardando validacao administrativa.', NULL, FALSE, 'advogado', 'pendente', NULL, 'admin_manual', 0, 'ativo', DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 SELECT id INTO @admin_id FROM users WHERE email = 'admin@justraduz.demo';
 SELECT id INTO @cliente_id FROM users WHERE email = 'cliente@justraduz.demo';
 SELECT id INTO @cliente2_id FROM users WHERE email = 'cliente2@justraduz.demo';
 SELECT id INTO @advogado_id FROM users WHERE email = 'advogado@justraduz.demo';
-SELECT id INTO @estagiario_id FROM users WHERE email = 'estagiario@justraduz.demo';
 SELECT id INTO @pendente_id FROM users WHERE email = 'pendente@justraduz.demo';
 
 INSERT INTO organizations (name, slug, owner_user_id, status)
@@ -661,8 +659,7 @@ VALUES
     (@cliente_id, 'cliente', 'datajud_demo', 'cnj', '10098761220238260100', '1009876-12.2023.8.26.0100', 'TJSP', 'SP', '1 Vara Civel de Sao Paulo', 'G1', 'Cumprimento de Sentenca', 'Cobranca contratual arquivada', 'Arquivado definitivamente', 'encerrado', NULL, DATE_SUB(CURDATE(), INTERVAL 80 DAY), DATE_SUB(CURDATE(), INTERVAL 35 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'justraduz', JSON_OBJECT('resumo_linguagem_simples', 'O processo aparece como encerrado no cache de demonstracao. Em geral, isso indica que nao ha novos andamentos esperados, salvo recurso, reativacao ou outra medida registrada pelo tribunal.', 'ultimas_movimentacoes', JSON_ARRAY(JSON_OBJECT('dataHora', DATE_SUB(CURDATE(), INTERVAL 35 DAY), 'descricao', 'Arquivado definitivamente')))), DATE_SUB(NOW(), INTERVAL 6 HOUR)),
     (@cliente2_id, 'cliente', 'datajud_demo', 'cnj', '50123457820248190001', '5012345-78.2024.8.19.0001', 'TJRJ', 'RJ', 'Juizado Especial Civel do Rio de Janeiro', 'G1', 'Procedimento do Juizado Especial Civel', 'Revisao de clausula de locacao', 'Concluso para despacho', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 15 DAY), DATE_SUB(CURDATE(), INTERVAL 4 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'justraduz', JSON_OBJECT('resumo_linguagem_simples', 'O processo esta aguardando analise do juiz. A ultima movimentacao indica que os autos foram encaminhados para despacho ou verificacao interna.', 'ultimas_movimentacoes', JSON_ARRAY(JSON_OBJECT('dataHora', DATE_SUB(CURDATE(), INTERVAL 4 DAY), 'descricao', 'Concluso para despacho')))), DATE_SUB(NOW(), INTERVAL 5 HOUR)),
     (@advogado_id, 'advogado', 'datajud_demo', 'oab', 'SP123456', '1023456-44.2024.8.26.0002', 'TJSP', 'SP', 'Sao Paulo', 'civil', 'Acao de Obrigacao de Fazer', 'Direito do consumidor', 'Concluso para despacho', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 6 DAY), DATE_SUB(CURDATE(), INTERVAL 2 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
-    (@advogado_id, 'advogado', 'datajud_demo', 'oab', 'SP123456', '1034567-21.2022.8.26.0053', 'TJSP', 'SP', 'Santos', 'trabalhista', 'Reclamacao Trabalhista', 'Verbas rescisorias', 'Baixado', 'baixado', NULL, DATE_SUB(CURDATE(), INTERVAL 120 DAY), DATE_SUB(CURDATE(), INTERVAL 60 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
-    (@estagiario_id, 'estagiario', 'datajud_demo', 'oab', 'RJ654321', '5043210-33.2024.8.19.0209', 'TJRJ', 'RJ', 'Barra da Tijuca', 'civil', 'Monitoria de Processo', 'Acompanhamento de prazo processual', 'Aguardando publicacao', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 8 DAY), DATE_SUB(CURDATE(), INTERVAL 3 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'estagiario', 'Lucas Estagiario Demo'), DATE_SUB(NOW(), INTERVAL 3 HOUR));
+    (@advogado_id, 'advogado', 'datajud_demo', 'oab', 'SP123456', '1034567-21.2022.8.26.0053', 'TJSP', 'SP', 'Santos', 'trabalhista', 'Reclamacao Trabalhista', 'Verbas rescisorias', 'Baixado', 'baixado', NULL, DATE_SUB(CURDATE(), INTERVAL 120 DAY), DATE_SUB(CURDATE(), INTERVAL 60 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR));
 
 INSERT INTO documents
     (user_id, organization_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
@@ -751,10 +748,6 @@ INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at
 VALUES (@org_demo_id, @advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 13 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 14 HOUR), 'bloqueado', 'Bloqueio interno para revisao', DATE_SUB(NOW(), INTERVAL 1 DAY));
 SET @slot_blocked_id = LAST_INSERT_ID();
 
-INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at, status, titulo, created_at)
-VALUES (@org_demo_id, @estagiario_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 3 DAY), INTERVAL 9 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 3 DAY), INTERVAL 10 HOUR), 'livre', 'Triagem juridica', DATE_SUB(NOW(), INTERVAL 1 DAY));
-SET @slot_intern_id = LAST_INSERT_ID();
-
 INSERT INTO appointments (organization_id, slot_id, client_id, case_id, assunto, observacoes, status, created_at)
 VALUES (@org_demo_id, @slot_booked_id, @cliente_id, @case1_id, 'Consulta sobre notificacao extrajudicial', 'Demo: atendimento marcado para explicar prazo e resposta.', 'agendado', DATE_SUB(NOW(), INTERVAL 12 HOUR));
 SET @appointment_id = LAST_INSERT_ID();
@@ -770,7 +763,6 @@ INSERT INTO cna_validacao_logs
     (profissional_id, admin_id, acao, status_anterior, status_novo, origem, mensagem, justificativa, created_at)
 VALUES
     (@advogado_id, @admin_id, 'admin_approve', 'pendente', 'verificado', 'admin_manual', 'Validado manualmente pela administracao.', 'Seed demo para apresentacao.', DATE_SUB(NOW(), INTERVAL 8 DAY)),
-    (@estagiario_id, @admin_id, 'admin_approve', 'pendente', 'verificado', 'admin_manual', 'Validado manualmente pela administracao.', 'Seed demo para apresentacao.', DATE_SUB(NOW(), INTERVAL 7 DAY)),
     (@pendente_id, NULL, 'cadastro', NULL, 'pendente', 'admin_manual', 'Aguardando validacao administrativa.', NULL, DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 INSERT INTO audit_logs

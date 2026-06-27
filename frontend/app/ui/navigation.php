@@ -5,8 +5,6 @@ function dashboard_url(?string $type = null): string
     switch ($type ?? current_user_type()) {
         case 'advogado':
             return app_url('/frontend/dashboard-advogado.php');
-        case 'estagiario':
-            return app_url('/frontend/dashboard-estagiario.php');
         case 'admin':
             return app_url('/frontend/admin/dashboard-admin.php');
         default:
@@ -56,35 +54,6 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                     'items' => [
                         ['href' => 'perfil.php', 'label' => 'Perfil profissional', 'icon' => 'user'],
                         ['href' => 'subir-plano.php', 'label' => 'Planos profissionais', 'icon' => 'sparkles'],
-                    ],
-                ],
-            ];
-        case 'estagiario':
-            return [
-                [
-                    'id' => 'overview',
-                    'label' => 'Visão geral',
-                    'icon' => 'home',
-                    'items' => [
-                        ['href' => 'dashboard-estagiario.php', 'label' => 'Dashboard', 'icon' => 'chart'],
-                        ['href' => 'notificacoes.php', 'label' => 'Notificações', 'icon' => 'bell'],
-                    ],
-                ],
-                [
-                    'id' => 'work',
-                    'label' => 'Trabalho assistido',
-                    'icon' => 'case',
-                    'items' => [
-                        ['href' => 'processos.php', 'label' => 'Processos', 'icon' => 'file'],
-                        ['href' => 'agenda.php', 'label' => 'Agenda', 'icon' => 'calendar'],
-                    ],
-                ],
-                [
-                    'id' => 'account',
-                    'label' => 'Conta',
-                    'icon' => 'user',
-                    'items' => [
-                        ['href' => 'perfil.php', 'label' => 'Perfil', 'icon' => 'user'],
                     ],
                 ],
             ];

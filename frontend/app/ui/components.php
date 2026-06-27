@@ -222,13 +222,6 @@ function sidebar_tour_meta(string $type, string $label): ?array
             'Notificações' => [11, 'Notificações administrativas', 'Veja alertas relevantes para a operação e a segurança.'],
             'Meu perfil' => [12, 'LGPD e governança', 'Use privilégios administrativos com finalidade, rastreabilidade e acesso mínimo.'],
         ],
-        'estagiario' => [
-            'Perfil' => [6, 'Perfil', 'Mantenha seus dados profissionais corretos e atualizados.'],
-            'Notificações' => [7, 'Notificações', 'Consulte apenas avisos relacionados às funções permitidas ao seu perfil.'],
-            'Processos' => [8, 'Limites de acesso', 'O acesso é assistivo e não equivale às permissões de um advogado.'],
-            'Agenda' => [9, 'Segurança e responsabilidade', 'Use somente dados necessários e preserve o sigilo profissional.'],
-            'Dashboard' => [10, 'Encerramento', 'Use a área assistiva dentro dos limites definidos pela supervisão.'],
-        ],
     ];
 
     return $items[$type][$label] ?? null;
@@ -427,7 +420,6 @@ function sidebar_brand_href(string $type, bool $isAdminPath): string
     return match ($type) {
         'admin' => 'admin/dashboard-admin.php',
         'advogado' => 'dashboard-advogado.php',
-        'estagiario' => 'dashboard-estagiario.php',
         default => 'dashboard-cliente.php',
     };
 }
@@ -436,7 +428,6 @@ function sidebar_profile_label(string $type): string
 {
     return match ($type) {
         'advogado' => 'Advogado',
-        'estagiario' => 'Estagiário',
         'admin' => 'Administração',
         default => 'Cliente',
     };

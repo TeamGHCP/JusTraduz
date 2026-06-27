@@ -18,7 +18,6 @@ Use este checklist no dia da apresentação local.
 
 - [ ] Cliente demo entra.
 - [ ] Advogado demo entra.
-- [ ] Estagiário demo entra.
 - [ ] Admin demo entra pelo login administrativo.
 - [ ] Senha demo conferida: `Demo@2026!`.
 

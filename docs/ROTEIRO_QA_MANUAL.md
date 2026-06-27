@@ -34,7 +34,6 @@ Execute este roteiro antes da apresentação ou depois de mudança grande.
 - [ ] Ver documentos vinculados permitidos.
 - [ ] Usar chat, tarefas e agenda.
 - [ ] Confirmar que profissional pendente não acessa área liberada.
-- [ ] Entrar como Estagiário e conferir limites do perfil.
 
 ## Fluxo Admin
 
@@ -62,5 +61,5 @@ Execute este roteiro antes da apresentação ou depois de mudança grande.
 
 - [ ] Se Gemini/DataJud/SMTP falharem, demonstrar dados demo e explicar fallback.
 - [ ] Manter arquivo de exemplo local para upload.
-- [ ] Ter conta Cliente, Advogado, Estagiário e Admin já testadas.
+- [ ] Ter conta Cliente, Advogado e Admin já testadas.
 - [ ] Não depender de API externa para o roteiro principal.

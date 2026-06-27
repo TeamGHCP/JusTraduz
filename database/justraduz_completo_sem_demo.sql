@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS users (
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL COLLATE utf8mb4_general_ci,
     senha VARCHAR(255) NOT NULL,
-    tipo ENUM('cliente', 'advogado', 'estagiario', 'admin') NOT NULL,
+    tipo ENUM('cliente', 'advogado', 'admin') NOT NULL,
     
     oab VARCHAR(20),
     oab_uf VARCHAR(10),
@@ -244,7 +244,6 @@ CREATE TABLE IF NOT EXISTS documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     organization_id INT NULL,
-    organization_id INT NULL,
     nome_arquivo VARCHAR(255),
     tipo_arquivo VARCHAR(20),
     caminho VARCHAR(255),
@@ -253,9 +252,6 @@ CREATE TABLE IF NOT EXISTS documents (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     INDEX idx_documents_organization (organization_id, created_at)
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_documents_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
-    INDEX idx_documents_organization (organization_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- resultados da ia
@@ -275,7 +271,6 @@ CREATE TABLE IF NOT EXISTS ai_results (
 CREATE TABLE IF NOT EXISTS cases (
     id INT AUTO_INCREMENT PRIMARY KEY,
     organization_id INT NULL,
-    organization_id INT NULL,
     cliente_id INT NOT NULL,
     advogado_id INT NULL,
     document_id INT NULL,
@@ -285,29 +280,16 @@ CREATE TABLE IF NOT EXISTS cases (
     prioridade ENUM('baixa', 'media', 'alta') DEFAULT 'media',
     sla_due_at DATETIME NULL,
     sla_status ENUM('ok', 'em_risco', 'vencido', 'sem_sla') DEFAULT 'sem_sla',
-    prioridade ENUM('baixa', 'media', 'normal', 'alta', 'urgente') DEFAULT 'media',
-    sla_deadline_at DATETIME NULL,
-    escalated_at DATETIME NULL,
-    assigned_to INT NULL,
-    escalation_status ENUM('none', 'due_soon', 'overdue', 'unassigned') NOT NULL DEFAULT 'none',
-    last_escalated_at DATETIME NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (cliente_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (advogado_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE SET NULL,
-    CONSTRAINT fk_cases_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
-    CONSTRAINT fk_cases_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_cases_cliente_status (cliente_id, status),
     INDEX idx_cases_advogado_status (advogado_id, status),
     INDEX idx_cases_organization_status (organization_id, status),
     INDEX idx_cases_sla (sla_status, sla_due_at),
     INDEX idx_cases_document (document_id)
-    INDEX idx_cases_document (document_id),
-    INDEX idx_cases_organization (organization_id),
-    INDEX idx_cases_sla_status_deadline (status, sla_deadline_at),
-    INDEX idx_cases_assigned_to (assigned_to),
-    INDEX idx_cases_escalation (status, escalation_status, last_escalated_at)
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS case_escalations (
@@ -447,7 +429,7 @@ CREATE TABLE IF NOT EXISTS cna_validacao_logs (
 CREATE TABLE IF NOT EXISTS external_processes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    owner_type ENUM('cliente', 'advogado', 'estagiario') NOT NULL,
+    owner_type ENUM('cliente', 'advogado') NOT NULL,
     source VARCHAR(40) NOT NULL DEFAULT 'datajud',
     query_type ENUM('cpf', 'oab', 'cnj') NOT NULL,
     query_value VARCHAR(40) NOT NULL,
@@ -546,7 +528,8 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('2026_06_15_p2_saas'),
     ('2026_06_23_add_free_plan'),
     ('2026_06_24_plan_audience_professional'),
-    ('2026_06_26_max_plans');
+    ('2026_06_26_max_plans'),
+    ('2026_06_27_remove_intern_profile');
 
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -581,9 +564,4 @@ ON DUPLICATE KEY UPDATE
     limits_json = VALUES(limits_json),
     features_json = VALUES(features_json),
     sort_order = VALUES(sort_order);
-    ('2026_06_13_google_oab_profile_fields'),
-    ('2026_06_23_cases_sla'),
-    ('2026_06_25_product_future'),
-    ('2026_06_26_max_plans');
-
 SELECT 'Banco JusTraduz instalado sem dados demo.' AS resultado;

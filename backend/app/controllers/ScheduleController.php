@@ -159,7 +159,7 @@ class ScheduleController extends BaseController
             $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Este horário não está mais livre.')));
         }
 
-        if (!in_array((string) $slot['tipo'], ['advogado', 'estagiario'], true) || (int) ($slot['oab_verificado'] ?? 0) !== 1) {
+        if ((string) $slot['tipo'] !== 'advogado' || (int) ($slot['oab_verificado'] ?? 0) !== 1) {
             $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Profissional inválido para agenda.')));
         }
 
@@ -378,7 +378,7 @@ class ScheduleController extends BaseController
 
     private function requireProfessional(): void
     {
-        if (!in_array($_SESSION['tipo'] ?? '', ['advogado', 'estagiario'], true)) {
+        if (($_SESSION['tipo'] ?? '') !== 'advogado') {
             $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Apenas profissionais gerenciam horários.')));
         }
 
@@ -510,7 +510,7 @@ class ScheduleController extends BaseController
             return (int) $appointment['client_id'] === $userId && $newStatus === 'cancelado';
         }
 
-        if (in_array($type, ['advogado', 'estagiario'], true)) {
+        if ($type === 'advogado') {
             return (int) $appointment['professional_id'] === $userId;
         }
 
@@ -546,11 +546,11 @@ class ScheduleController extends BaseController
         if ($userType === 'cliente') {
             $where[] = "s.status = 'livre'";
             $where[] = "u.status = 'ativo'";
-            $where[] = "u.tipo IN ('advogado', 'estagiario')";
+            $where[] = "u.tipo = 'advogado'";
             $where[] = 'u.oab_verificado = TRUE';
         } elseif ($userType === 'admin') {
             // Admin keeps the base range filter.
-        } elseif (in_array($userType, ['advogado', 'estagiario'], true)) {
+        } elseif ($userType === 'advogado') {
             $where[] = 's.professional_id = ?';
             $params[] = $userId;
         } else {
@@ -562,7 +562,7 @@ class ScheduleController extends BaseController
             $params[] = $professionalId;
         }
 
-        if (in_array($userType, ['cliente', 'admin'], true) && in_array($roleFilter, ['advogado', 'estagiario'], true)) {
+        if (in_array($userType, ['cliente', 'admin'], true) && $roleFilter === 'advogado') {
             $where[] = 'u.tipo = ?';
             $params[] = $roleFilter;
         }
@@ -580,7 +580,7 @@ class ScheduleController extends BaseController
             $params[] = $userId;
         } elseif ($userType === 'admin') {
             // Admin keeps the base range filter.
-        } elseif (in_array($userType, ['advogado', 'estagiario'], true)) {
+        } elseif ($userType === 'advogado') {
             $where[] = 's.professional_id = ?';
             $params[] = $userId;
         } else {
@@ -592,7 +592,7 @@ class ScheduleController extends BaseController
             $params[] = $professionalId;
         }
 
-        if (in_array($userType, ['cliente', 'admin'], true) && in_array($roleFilter, ['advogado', 'estagiario'], true)) {
+        if (in_array($userType, ['cliente', 'admin'], true) && $roleFilter === 'advogado') {
             $where[] = 'pro.tipo = ?';
             $params[] = $roleFilter;
         }

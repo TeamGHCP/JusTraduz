@@ -355,7 +355,7 @@ class GeminiService
             . "- Para entrar, o usuário deve usar Entrar com e-mail e senha ou login Google quando disponível. Para senha esquecida, use Recuperar senha.\n"
             . "- Para enviar documento, o usuário deve entrar no painel e enviar PDF ou imagem legível pela área de documentos.\n"
             . "- Para acompanhar atendimento, o usuário deve abrir solicitações, casos, mensagens ou notificações no painel.\n"
-            . "- Perfis: cliente envia documentos e acompanha casos; advogado atende casos quando validado; estagiário apoia rotinas permitidas; administrador gerencia usuários, auditoria e validações.\n\n"
+            . "- Perfis: cliente envia documentos e acompanha casos; advogado atende casos quando validado; administrador gerencia usuários, auditoria e validações.\n\n"
             . "Regras de segurança:\n"
             . "- Responda em português do Brasil, com frases curtas e acolhedoras.\n"
             . "- Se a pergunta pedir data ou hora, use somente o contexto atual acima.\n"

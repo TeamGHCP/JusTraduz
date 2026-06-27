@@ -137,10 +137,6 @@ class CaseController extends BaseController
             $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Status inválido.')));
         }
 
-        if (($_SESSION['tipo'] ?? '') === 'estagiario') {
-            $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Estagiários não podem alterar status de solicitações.')));
-        }
-
         $case = $this->caseById($caseId);
         if (!$case || !$this->canManageCase($case)) {
             $this->response->redirect(app_url('/frontend/acompanhar-solicitacoes.php?erro=' . urlencode('Você não tem acesso a este caso.')));

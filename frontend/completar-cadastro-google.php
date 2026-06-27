@@ -51,7 +51,6 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
             <select class="select jt-input" id="tipo" name="tipo" data-account-type required>
               <option value="cliente">Cliente</option>
               <option value="advogado">Advogado</option>
-              <option value="estagiario">Estagiário</option>
             </select>
             <label class="jt-label" for="tipo">Tipo de conta</label>
             <small class="jt-error"></small>

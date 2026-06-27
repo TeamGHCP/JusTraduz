@@ -15,9 +15,6 @@ class RbacService
             'cases.message', 'tasks.manage_assigned', 'agenda.manage_own', 'reports.view_own',
             'profile.manage',
         ],
-        'estagiario' => [
-            'cases.view_assigned', 'tasks.manage_assigned', 'agenda.manage_own', 'profile.manage',
-        ],
         'admin' => ['*'],
     ];
 
