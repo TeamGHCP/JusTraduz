@@ -18,7 +18,7 @@ function require_login(): void
 function require_validated_professional_access(): void
 {
     $type = $_SESSION['tipo'] ?? '';
-    if (!in_array($type, ['advogado', 'estagiario'], true)) {
+    if ($type !== 'advogado') {
         return;
     }
 

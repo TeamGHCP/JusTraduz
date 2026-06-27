@@ -16,7 +16,7 @@
   const agendaUserContext = readAgendaUserContext();
   const currentUserType = String(agendaUserContext.type || window.CURRENT_USER_TYPE || "");
   const currentUserId = Number(agendaUserContext.id || window.CURRENT_USER_ID || 0);
-  const isProfessional = currentUserType === "advogado" || currentUserType === "estagiario";
+  const isProfessional = currentUserType === "advogado";
   const frontendIndex = window.location.pathname.indexOf("/frontend/");
   const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";
   const params = new URLSearchParams(window.location.search);

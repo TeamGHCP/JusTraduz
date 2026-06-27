@@ -342,7 +342,6 @@ class BillingController extends BaseController
     {
         return match ($type) {
             'advogado' => app_url('/frontend/dashboard-advogado.php'),
-            'estagiario' => app_url('/frontend/dashboard-estagiario.php'),
             'admin' => app_url('/frontend/admin/dashboard-admin.php'),
             default => app_url('/frontend/dashboard-cliente.php'),
         };

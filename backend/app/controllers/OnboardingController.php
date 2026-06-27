@@ -110,7 +110,7 @@ class OnboardingController extends BaseController
     private function profile(): string
     {
         $profile = $this->clean((string) $this->request->post('dashboard_profile', $this->currentUserType()), 30, '/^[a-z_]+$/');
-        $allowed = ['cliente', 'advogado', 'admin', 'estagiario'];
+        $allowed = ['cliente', 'advogado', 'admin'];
         if (!in_array($profile, $allowed, true) || $profile !== $this->currentUserType()) {
             throw new RuntimeException('Perfil inválido.', 422);
         }

@@ -26,7 +26,7 @@ $report = [
         'documents' => count_rows($pdo, 'documents'),
         'cases_open' => count_where($pdo, 'cases', "status <> 'finalizado'"),
         'cases_unassigned' => count_where($pdo, 'cases', "status <> 'finalizado' AND advogado_id IS NULL"),
-        'oab_pending' => count_where($pdo, 'users', "tipo IN ('advogado', 'estagiario') AND status = 'ativo' AND oab_verificado = 0 AND COALESCE(status_cna, 'pendente') = 'pendente'"),
+        'oab_pending' => count_where($pdo, 'users', "tipo = 'advogado' AND status = 'ativo' AND oab_verificado = 0 AND COALESCE(status_cna, 'pendente') = 'pendente'"),
         'job_queue_pending' => count_where($pdo, 'job_queue', "status = 'pending'"),
         'job_queue_failed' => count_where($pdo, 'job_queue', "status = 'failed'"),
         'mail_failed' => count_where($pdo, 'mail_logs', "status = 'failed'"),

@@ -66,8 +66,8 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'Informe um telefone válido com DDD.');
         }
 
-        if (!in_array($tipo, ['cliente', 'advogado', 'estagiario'], true)) {
-            $tipo = 'cliente';
+        if (!in_array($tipo, ['cliente', 'advogado'], true)) {
+            $this->response->redirectWithError($frontUrl, 'Escolha Cliente ou Advogado para continuar.');
         }
 
         if ($senha !== $senha2) {
@@ -79,7 +79,7 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, $passwordError);
         }
 
-        $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
+        $isProfessional = $tipo === 'advogado';
         if ($tipo === 'cliente') {
             if (!$this->isValidCpf($cpf)) {
                 $this->response->redirectWithError($frontUrl, 'Informe um CPF valido para consultar seus processos.');
@@ -148,7 +148,7 @@ class AuthController extends BaseController
                 'tipo' => $tipo,
                 'oab_verificado' => $oab_verificado,
             ]);
-            if (in_array($tipo, ['advogado', 'estagiario'], true)) {
+            if ($tipo === 'advogado') {
                 $this->logOabValidation($userId, 'cadastro', null, 'pendente', 'admin_manual', $oab_status);
                 $this->sendProfessionalPendingEmail($email, $nome, $tipo);
             }
@@ -249,7 +249,6 @@ class AuthController extends BaseController
         // Redireciona por tipo
         $destinos = [
             'advogado'   => '/frontend/dashboard-advogado.php',
-            'estagiario' => '/frontend/dashboard-estagiario.php',
             'admin'      => '/frontend/admin/dashboard-admin.php',
             'cliente'    => '/frontend/dashboard-cliente.php',
         ];
@@ -387,7 +386,7 @@ class AuthController extends BaseController
         $oab = preg_replace('/\D+/', '', (string) $this->request->post('inscricao', '')) ?? '';
         $oabUf = strtoupper(trim((string) $this->request->post('oab_uf', '')));
 
-        if (!in_array($tipo, ['cliente', 'advogado', 'estagiario'], true)) {
+        if (!in_array($tipo, ['cliente', 'advogado'], true)) {
             $this->response->redirectWithError($frontUrl, 'Escolha o tipo de conta.');
         }
 
@@ -401,7 +400,7 @@ class AuthController extends BaseController
         }
 
         $validUfs = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
-        $isProfessional = in_array($tipo, ['advogado', 'estagiario'], true);
+        $isProfessional = $tipo === 'advogado';
 
         if ($tipo === 'cliente') {
             if (!$this->isValidCpf($cpf)) {
@@ -1488,7 +1487,6 @@ HTML;
     {
         $destinos = [
             'advogado' => '/frontend/dashboard-advogado.php',
-            'estagiario' => '/frontend/dashboard-estagiario.php',
             'admin' => '/frontend/admin/dashboard-admin.php',
             'cliente' => '/frontend/dashboard-cliente.php',
         ];
@@ -1499,7 +1497,7 @@ HTML;
     private function professionalBlockMessage(array $usuario): ?string
     {
         $tipo = (string) ($usuario['tipo'] ?? '');
-        if (!in_array($tipo, ['advogado', 'estagiario'], true)) {
+        if ($tipo !== 'advogado') {
             return null;
         }
 
@@ -1520,7 +1518,7 @@ HTML;
     {
         $subject = 'Cadastro recebido - aguardando validacao da OAB';
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-        $safeType = $type === 'estagiario' ? 'estagiario' : 'advogado';
+        $safeType = 'advogado';
         $message = "<p>Olá, {$safeName}.</p><p>Recebemos seu cadastro como {$safeType}. O acesso profissional ao JusTraduz depende da aprovação do administrador interno após validação da OAB/registro informado.</p><p>Você receberá um e-mail quando a revisão for concluída.</p>";
         $this->sendSystemEmail($email, $subject, $message);
     }

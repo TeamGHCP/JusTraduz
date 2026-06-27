@@ -3,7 +3,7 @@ require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 
 $type = current_user_type();
-if (!in_array($type, ['cliente', 'advogado', 'estagiario'], true)) {
+if (!in_array($type, ['cliente', 'advogado'], true)) {
     header('Location: ' . dashboard_url($type));
     exit;
 }

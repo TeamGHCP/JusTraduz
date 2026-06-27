@@ -25,7 +25,7 @@ function agenda_time_range(array $row): string
 
 function agenda_role_label(?string $role): string
 {
-    return $role === 'advogado' ? 'Advogado' : ($role === 'estagiario' ? 'Estagiário' : 'Profissional');
+    return $role === 'advogado' ? 'Advogado' : 'Profissional';
 }
 
 function agenda_status_badge_class(string $status): string
@@ -56,10 +56,10 @@ $professionals = fetch_all(
     $pdo,
     "SELECT id, nome, tipo, oab, oab_uf
      FROM users
-     WHERE tipo IN ('advogado', 'estagiario')
+     WHERE tipo = 'advogado'
        AND status = 'ativo'
        AND oab_verificado = TRUE
-     ORDER BY FIELD(tipo, 'advogado', 'estagiario'), nome"
+     ORDER BY nome"
 );
 
 $clientsCases = $type === 'cliente'
@@ -82,7 +82,7 @@ if ($type === 'cliente') {
         "s.status = 'livre'",
         's.starts_at >= NOW()',
         "u.status = 'ativo'",
-        "u.tipo IN ('advogado', 'estagiario')",
+        "u.tipo = 'advogado'",
         'u.oab_verificado = TRUE',
     ];
     $params = [];
@@ -92,7 +92,7 @@ if ($type === 'cliente') {
         $params[] = $professionalFilter;
     }
 
-    if (in_array($roleFilter, ['advogado', 'estagiario'], true)) {
+    if ($roleFilter === 'advogado') {
         $where[] = 'u.tipo = ?';
         $params[] = $roleFilter;
     }
@@ -120,7 +120,7 @@ if ($type === 'cliente') {
          LIMIT 80',
         [$userId]
     );
-} elseif (in_array($type, ['advogado', 'estagiario'], true)) {
+} elseif ($type === 'advogado') {
     $slots = fetch_all(
         $pdo,
         'SELECT s.id, s.starts_at, s.ends_at, s.status, s.titulo,
@@ -146,7 +146,7 @@ if ($type === 'cliente') {
         $params[] = $professionalFilter;
     }
 
-    if (in_array($roleFilter, ['advogado', 'estagiario'], true)) {
+    if ($roleFilter === 'advogado') {
         $where[] = 'pro.tipo = ?';
         $params[] = $roleFilter;
     }
@@ -175,7 +175,7 @@ $activeAppointments = count(array_filter($appointments, static function (array $
     $status = $appointment['appointment_status'] ?? $appointment['status'] ?? '';
     return $status === 'agendado';
 }));
-$canManageSlots = in_array($type, ['advogado', 'estagiario'], true);
+$canManageSlots = $type === 'advogado';
 $hasAgendaFilters = $professionalFilter > 0 || $roleFilter !== '';
 $calendarSubtitle = $type === 'cliente'
     ? 'Encontre horário livre, vincule a um caso e confirme atendimento.'
@@ -281,7 +281,6 @@ $calendarSubtitle = $type === 'cliente'
               <select class="select" id="perfil" name="perfil">
                 <option value="">Todos</option>
                 <option value="advogado" <?= $roleFilter === 'advogado' ? 'selected' : '' ?>>Advogado</option>
-                <option value="estagiario" <?= $roleFilter === 'estagiario' ? 'selected' : '' ?>>Estagiário</option>
               </select>
             </div>
             <div class="form-actions">

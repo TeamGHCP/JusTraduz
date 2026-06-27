@@ -8,7 +8,7 @@ Esta é a lista única de pendências reais do JusTraduz. Itens já implementado
 
 - Rodar o roteiro completo de QA manual em `docs/ROTEIRO_QA_MANUAL.md`.
 - Testar visualmente em desktop, notebook, celular e projetor.
-- Conferir login e fluxo dos quatro perfis: Cliente, Advogado, Estagiário e Admin.
+- Conferir login e fluxo de Cliente, Advogado e Admin.
 - Ensaiar fluxo principal: upload, análise/explicação, solicitação, chat, agenda, admin e LGPD.
 - Preparar plano B para falha de internet, Gemini, DataJud ou SMTP.
 
