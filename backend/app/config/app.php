@@ -1,6 +1,23 @@
 <?php
 
-$appTimezone = getenv('APP_TIMEZONE') ?: 'America/Sao_Paulo';
+$appTimezone = getenv('APP_TIMEZONE');
+if ($appTimezone === false || trim((string) $appTimezone) === '') {
+    $envPath = dirname(__DIR__, 2) . '/.env';
+    foreach (is_file($envPath) ? (file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: []) : [] as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+            continue;
+        }
+
+        [$key, $value] = array_map('trim', explode('=', $line, 2));
+        if ($key === 'APP_TIMEZONE') {
+            $appTimezone = trim($value, "\"'");
+            break;
+        }
+    }
+}
+
+$appTimezone = $appTimezone ?: 'America/Sao_Paulo';
 if (is_string($appTimezone) && $appTimezone !== '') {
     date_default_timezone_set($appTimezone);
 }

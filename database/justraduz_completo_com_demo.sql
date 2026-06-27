@@ -519,6 +519,7 @@ WHERE email IN (
     'cliente@justraduz.demo',
     'cliente2@justraduz.demo',
     'advogado@justraduz.demo',
+    'advogado2@justraduz.demo',
     'pendente@justraduz.demo'
 );
 
@@ -631,12 +632,14 @@ VALUES
     ('Carla Cliente Demo', 'cliente@justraduz.demo', @demo_password_hash, 'cliente', '(11) 91111-1111', '52998224725', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 10 DAY)),
     ('Bruno Cliente Demo', 'cliente2@justraduz.demo', @demo_password_hash, 'cliente', '(21) 92222-2222', '39053344705', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 9 DAY)),
     ('Dra. Marina Costa', 'advogado@justraduz.demo', @demo_password_hash, 'advogado', '(31) 93333-3333', NULL, '123456', 'SP', 'Validado manualmente pela administracao.', 'demo-advogado-123456-sp', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 8 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 8 DAY)),
+    ('Dr. André Martins', 'advogado2@justraduz.demo', @demo_password_hash, 'advogado', '(31) 94444-4444', NULL, '234567', 'MG', 'Validado manualmente pela administracao.', 'demo-advogado-234567-mg', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 7 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 7 DAY)),
     ('Dr. Rafael Pendente', 'pendente@justraduz.demo', @demo_password_hash, 'advogado', '(51) 95555-5555', NULL, '778899', 'MG', 'Aguardando validacao administrativa.', NULL, FALSE, 'advogado', 'pendente', NULL, 'admin_manual', 0, 'ativo', DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 SELECT id INTO @admin_id FROM users WHERE email = 'admin@justraduz.demo';
 SELECT id INTO @cliente_id FROM users WHERE email = 'cliente@justraduz.demo';
 SELECT id INTO @cliente2_id FROM users WHERE email = 'cliente2@justraduz.demo';
 SELECT id INTO @advogado_id FROM users WHERE email = 'advogado@justraduz.demo';
+SELECT id INTO @advogado2_id FROM users WHERE email = 'advogado2@justraduz.demo';
 SELECT id INTO @pendente_id FROM users WHERE email = 'pendente@justraduz.demo';
 
 INSERT INTO organizations (name, slug, owner_user_id, status)
@@ -645,12 +648,17 @@ ON DUPLICATE KEY UPDATE owner_user_id = VALUES(owner_user_id), status = 'active'
 SELECT id INTO @org_demo_id FROM organizations WHERE slug = 'costa-tamanini-demo';
 
 INSERT INTO organization_members (organization_id, user_id, role, status, invited_by) VALUES
-    (@org_demo_id, @advogado_id, 'owner', 'active', @admin_id)
+    (@org_demo_id, @advogado_id, 'owner', 'active', @admin_id),
+    (@org_demo_id, @advogado2_id, 'member', 'active', @advogado_id)
 ON DUPLICATE KEY UPDATE role = VALUES(role), status = 'active';
 
-SELECT id INTO @plan_pro_id FROM plans WHERE slug = 'pro';
-INSERT INTO subscriptions (user_id, organization_id, plan_id, billing_cycle, status, provider, current_period_start, current_period_end)
-VALUES (@cliente_id, NULL, @plan_pro_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH));
+SELECT id INTO @plan_max_client_id FROM plans WHERE slug = 'max_cliente';
+SELECT id INTO @plan_max_lawyer_id FROM plans WHERE slug = 'max_advogado';
+SELECT id INTO @plan_office_id FROM plans WHERE slug = 'escritorio';
+INSERT INTO subscriptions (user_id, organization_id, plan_id, billing_cycle, status, provider, current_period_start, current_period_end) VALUES
+    (@cliente_id, NULL, @plan_max_client_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH)),
+    (@advogado2_id, @org_demo_id, @plan_max_lawyer_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH)),
+    (@advogado_id, @org_demo_id, @plan_office_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH));
 
 INSERT INTO external_processes
     (user_id, owner_type, source, query_type, query_value, process_number, tribunal, uf, comarca, tipo_processo, classe_processual, assunto, status_inferido, status_normalizado, link, data_ultima_atualizacao, data_andamento_mais_recente, payload_json, last_synced_at)
