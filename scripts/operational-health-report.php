@@ -12,6 +12,7 @@ foreach ($argv as $argument) {
     }
 }
 
+require_once $root . '/backend/app/config/app.php';
 require_once $root . '/backend/app/controllers/HealthController.php';
 require_once $root . '/backend/app/services/SlaService.php';
 
@@ -129,11 +130,12 @@ function summarize_sla(?PDO $pdo): array
             'overdue' => 0,
             'due_soon' => 0,
             'on_track' => 0,
+            'without_sla' => 0,
         ];
     }
 
     try {
-        $stmt = $pdo->query("SELECT id, titulo, status, prioridade, created_at, advogado_id FROM cases WHERE status <> 'finalizado'");
+        $stmt = $pdo->query("SELECT id, titulo, status, prioridade, created_at, advogado_id, sla_due_at FROM cases WHERE status <> 'finalizado'");
         $cases = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
     } catch (Throwable) {
         $cases = [];
@@ -143,13 +145,18 @@ function summarize_sla(?PDO $pdo): array
         'overdue' => 0,
         'due_soon' => 0,
         'on_track' => 0,
+        'without_sla' => 0,
     ];
 
     foreach ($cases as $case) {
-        $state = SlaService::statusForCase($case)['state'] ?? 'on_track';
-        if (isset($summary[$state])) {
-            $summary[$state]++;
-        }
+        $state = SlaService::status($case['sla_due_at'] ?? null, (string) ($case['status'] ?? ''));
+        $reportState = match ($state) {
+            'vencido' => 'overdue',
+            'em_risco' => 'due_soon',
+            'sem_sla' => 'without_sla',
+            default => 'on_track',
+        };
+        $summary[$reportState]++;
     }
 
     return $summary;

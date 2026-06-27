@@ -1,5 +1,6 @@
 <?php
 
+require_once dirname(__DIR__) . '/app/config/app.php';
 require_once dirname(__DIR__) . '/app/support/security.php';
 security_headers(false);
 

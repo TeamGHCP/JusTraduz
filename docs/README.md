@@ -7,6 +7,7 @@ Esta pasta deve conter apenas pendências reais, checklists de validação e gui
 - `O_QUE_FALTA_AGORA.md`: lista única do que ainda falta.
 - `ROTEIRO_QA_MANUAL.md`: roteiro manual ainda não executado por completo.
 - `CHECKLIST_APRESENTACAO_SA.md`: preparação para a apresentação escolar.
+- `ROTEIRO_APRESENTACAO.md`: sequência curta, contas demo e plano B para a apresentação.
 - `CHECKLIST_RELEASE.md`: validações antes de deploy/homologação.
 - `MATRIZ_WCAG_AA.md`: matriz de acessibilidade ainda pendente de evidências formais.
 - `REGISTRO_REVISAO_JURIDICA.md`: registro de revisão jurídica externa ainda pendente.

@@ -23,8 +23,10 @@ build_test_schema($pdo);
 seed_test_data($pdo);
 
 $originalDsn = getenv('DB_DSN');
+$originalHealthcheckToken = getenv('HEALTHCHECK_TOKEN');
 $missingSqliteDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-missing-' . bin2hex(random_bytes(4));
 putenv('DB_DSN=sqlite:' . $missingSqliteDir . DIRECTORY_SEPARATOR . 'health.sqlite');
+putenv('HEALTHCHECK_TOKEN=');
 ob_start();
 (new HealthController())->show();
 $healthOutput = ob_get_clean();
@@ -32,6 +34,9 @@ $health = json_decode($healthOutput, true);
 assertEquals('degraded', $health['status'] ?? '', 'Healthcheck deve responder degradado quando o banco esta indisponivel.');
 assertTrue(($health['checks']['database'] ?? true) === false, 'Healthcheck deve marcar database como falso sem fatal error.');
 putenv('DB_DSN=' . $originalDsn);
+$originalHealthcheckToken === false
+    ? putenv('HEALTHCHECK_TOKEN')
+    : putenv('HEALTHCHECK_TOKEN=' . $originalHealthcheckToken);
 
 $processResult = ProcessRunnerService::run([PHP_BINARY, '-r', 'sleep(2);'], 1);
 assertEquals(124, (int) $processResult['exit_code'], 'ProcessRunner deve retornar codigo 124 em timeout.');

@@ -2,6 +2,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$BackupPath,
     [string]$EnvFile = "backend\.env",
+    [string]$TargetDatabase = "",
     [string]$Mysql = "C:\xampp\mysql\bin\mysql.exe"
 )
 
@@ -23,7 +24,24 @@ $hostName = Read-EnvValue $EnvFile "DB_HOST" "localhost"
 $port = Read-EnvValue $EnvFile "DB_PORT" "3306"
 $dbUser = Read-EnvValue $EnvFile "DB_USER" "root"
 $dbPass = Read-EnvValue $EnvFile "DB_PASS" ""
+$dbName = Read-EnvValue $EnvFile "DB_NAME" "justraduz"
 $encryptPass = Read-EnvValue $EnvFile "BACKUP_ENCRYPTION_PASSWORD" ""
+
+if ($TargetDatabase -eq "") { $TargetDatabase = $dbName }
+if ($TargetDatabase -notmatch '^[A-Za-z0-9_]+$') {
+    throw "TargetDatabase invalido. Use apenas letras, numeros e underscore."
+}
+
+function Resolve-OpenSsl {
+    $command = Get-Command openssl -ErrorAction SilentlyContinue
+    if ($command) { return $command.Source }
+
+    foreach ($candidate in @("C:\xampp\apache\bin\openssl.exe", "C:\xampp\php\extras\openssl\openssl.exe")) {
+        if (Test-Path -LiteralPath $candidate) { return $candidate }
+    }
+
+    throw "OpenSSL nao encontrado. Instale-o ou adicione o executavel ao PATH."
+}
 
 $restorePath = $BackupPath
 if ($BackupPath.EndsWith(".enc")) {
@@ -31,11 +49,12 @@ if ($BackupPath.EndsWith(".enc")) {
         throw "BACKUP_ENCRYPTION_PASSWORD e obrigatorio para restaurar backup criptografado."
     }
     try {
+        $openSsl = Resolve-OpenSsl
         $previousBackupPass = [Environment]::GetEnvironmentVariable("JTD_BACKUP_PASSWORD", "Process")
         [Environment]::SetEnvironmentVariable("JTD_BACKUP_PASSWORD", $encryptPass, "Process")
 
         $restorePath = [System.IO.Path]::GetTempFileName() + ".sql"
-        & openssl enc -d -aes-256-cbc -pbkdf2 -in $BackupPath -out $restorePath -pass "env:JTD_BACKUP_PASSWORD"
+        & $openSsl enc -d -aes-256-cbc -pbkdf2 -in $BackupPath -out $restorePath -pass "env:JTD_BACKUP_PASSWORD"
         if ($LASTEXITCODE -ne 0) {
             throw "openssl falhou ao descriptografar o backup"
         }
@@ -50,8 +69,14 @@ try {
         [Environment]::SetEnvironmentVariable("MYSQL_PWD", $dbPass, "Process")
     }
 
-    $args = @("--host=$hostName", "--port=$port", "--user=$dbUser")
-    Get-Content -LiteralPath $restorePath -Raw | & $Mysql @args
+    $connectionArgs = @("--host=$hostName", "--port=$port", "--user=$dbUser")
+    & $Mysql @connectionArgs --execute="CREATE DATABASE IF NOT EXISTS ``$TargetDatabase`` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    if ($LASTEXITCODE -ne 0) {
+        throw "mysql falhou ao preparar o banco de destino"
+    }
+
+    $restoreArgs = $connectionArgs + @("--database=$TargetDatabase")
+    Get-Content -LiteralPath $restorePath -Raw | & $Mysql @restoreArgs
     if ($LASTEXITCODE -ne 0) {
         throw "mysql falhou ao restaurar o backup"
     }
@@ -63,4 +88,4 @@ if ($restorePath -ne $BackupPath) {
     Remove-Item -LiteralPath $restorePath -Force
 }
 
-Write-Output "Restore concluido a partir de: $BackupPath"
+Write-Output "Restore concluido em '$TargetDatabase' a partir de: $BackupPath"
