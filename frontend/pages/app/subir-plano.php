@@ -51,7 +51,8 @@ function pricing_included_prefix(array $plan): string
 
     return match ((string) ($plan['slug'] ?? '')) {
         'pro' => 'Tudo do Essencial +',
-        'escritorio' => 'Tudo do Pro +',
+        'max_cliente', 'max_advogado' => 'Tudo do Pro +',
+        'escritorio' => 'Tudo do Max +',
         default => '',
     };
 }
@@ -62,6 +63,8 @@ function pricing_benefit(array $plan): string
         'gratuito', 'free' => 'Comece sem custo e suba de plano quando precisar de mais volume.',
         'essencial' => 'Entenda documentos jurídicos sem complicação.',
         'pro' => 'Automatize tarefas jurídicas e economize horas de trabalho.',
+        'max_cliente' => 'Analise documentos e acompanhe processos em alto volume.',
+        'max_advogado' => 'Amplie sua operação individual com alto volume jurídico.',
         'escritorio' => 'Centralize documentos e aumente a produtividade da equipe.',
         default => '',
     };

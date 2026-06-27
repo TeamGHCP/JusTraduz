@@ -6,6 +6,10 @@ $router = new Router();
 
 $routes = [
     ['GET', '/health', 'HealthController', 'show'],
+    ['GET', '/openapi.json', 'PublicApiController', 'openApi'],
+    ['GET', '/integrations/health', 'IntegrationController', 'health'],
+    ['GET', '/integrations/reports/summary', 'IntegrationController', 'reportsSummary'],
+    ['GET', '/organization/invite', 'OrganizationInviteController', 'accept'],
     ['POST', '/auth/registrar', 'AuthController', 'registrar'],
     ['POST', '/auth/login', 'AuthController', 'login'],
     ['GET', '/auth/google', 'AuthController', 'googleRedirect'],
@@ -21,6 +25,7 @@ $routes = [
     ['POST', '/profile/password-reset', 'AuthController', 'profilePasswordReset'],
     ['POST', '/privacy/export', 'PrivacyController', 'export'],
     ['POST', '/privacy/delete-account', 'PrivacyController', 'deleteAccount'],
+    ['POST', '/privacy/cancel-delete-account', 'PrivacyController', 'cancelAccountDeletion'],
     ['POST', '/billing/subscribe', 'BillingController', 'subscribe'],
     ['POST', '/billing/checkout', 'BillingController', 'checkout'],
     ['POST', '/billing/checkout/cancel', 'BillingController', 'cancelCheckout'],

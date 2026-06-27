@@ -5,6 +5,7 @@ require_once dirname(__DIR__) . '/config/database.php';
 class MailerService
 {
     private array $env;
+    private ?string $lastSmtpResponse = null;
 
     public function __construct()
     {
@@ -23,8 +24,9 @@ class MailerService
         $transport = $host !== '' ? 'smtp' : 'mail';
 
         if ($host !== '') {
+            $this->lastSmtpResponse = null;
             $sent = $this->sendSmtp($to, $subject, $message, $isHtml, $inlineImages);
-            $this->logMail($to, $subject, $transport, $sent, $sent ? null : 'Falha no envio SMTP. Consulte error_log.');
+            $this->logMail($to, $subject, $transport, $sent, $sent ? $this->lastSmtpResponse : 'Falha no envio SMTP. Consulte error_log.');
             return $sent;
         }
 
@@ -37,6 +39,9 @@ class MailerService
         $headers = [
             'From: ' . $this->formatAddress($this->fromAddress(), $this->fromName()),
             'Reply-To: ' . $this->fromAddress(),
+            'Date: ' . date(DATE_RFC2822),
+            'Message-ID: ' . $this->messageId(),
+            'X-Mailer: JusTraduz',
             'MIME-Version: 1.0',
             'Content-Type: ' . $contentType,
         ];
@@ -108,13 +113,16 @@ class MailerService
                 'From: ' . $this->formatAddress($from, $this->fromName()),
                 'To: ' . $to,
                 'Subject: ' . $this->encodedHeader($subject),
+                'Date: ' . date(DATE_RFC2822),
+                'Message-ID: ' . $this->messageId(),
+                'X-Mailer: JusTraduz',
                 'MIME-Version: 1.0',
                 'Content-Type: ' . $contentType,
                 'Content-Transfer-Encoding: 8bit',
             ];
 
             fwrite($socket, implode("\r\n", $headers) . "\r\n\r\n" . $this->escapeMessage($body) . "\r\n.\r\n");
-            $this->expect($socket, [250]);
+            $this->lastSmtpResponse = $this->expect($socket, [250]);
             $this->command($socket, 'QUIT', [221]);
             fclose($socket);
             return true;
@@ -234,6 +242,12 @@ class MailerService
     private function formatAddress(string $email, string $name): string
     {
         return $this->encodedHeader($name) . ' <' . $email . '>';
+    }
+
+    private function messageId(): string
+    {
+        $domain = substr(strrchr($this->fromAddress(), '@') ?: '@justraduz.local', 1) ?: 'justraduz.local';
+        return '<' . bin2hex(random_bytes(16)) . '@' . preg_replace('/[^A-Za-z0-9.-]/', '', $domain) . '>';
     }
 
     private function fromAddress(): string

@@ -4,6 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
 require_once dirname(__DIR__) . '/app/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/app/services/MailerService.php';
 require_once dirname(__DIR__) . '/app/services/ProcessRunnerService.php';
+require_once dirname(__DIR__) . '/app/services/PdfTextExtractor.php';
 require_once dirname(__DIR__) . '/app/services/StorageService.php';
 require_once dirname(__DIR__) . '/app/services/UploadScannerService.php';
 require_once dirname(__DIR__) . '/app/services/UsageLimiter.php';
@@ -195,6 +196,19 @@ $integrationJson = ob_get_clean();
 $integrationPayload = json_decode((string) $integrationJson, true);
 assertTrue(isset($integrationPayload['cases_open']), 'API externa autenticada deve retornar resumo operacional.');
 $_SERVER['HTTP_AUTHORIZATION'] = '';
+
+$pdfFixture = tempnam(sys_get_temp_dir(), 'justraduz-pdf-');
+file_put_contents($pdfFixture, "%PDF-1.4\nstream\nconteudo-incompativel (Texto recuperado) Tj\nendstream\n%%EOF");
+set_error_handler(static function (int $level, string $message, string $file, int $line): never {
+    throw new ErrorException($message, 0, $level, $file, $line);
+});
+try {
+    $pdfText = PdfTextExtractor::extract($pdfFixture);
+} finally {
+    restore_error_handler();
+    @unlink($pdfFixture);
+}
+assertTrue(str_contains($pdfText, 'Texto recuperado'), 'Stream PDF incompativel nao deve causar erro 500.');
 
 putenv('DOCUMENT_STORAGE_PATH');
 putenv('USAGE_DAILY_DOCUMENT_AI');

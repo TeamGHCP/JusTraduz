@@ -4,6 +4,7 @@ require_once __DIR__ . '/PaymentProviderInterface.php';
 require_once dirname(__DIR__, 2) . '/config/app.php';
 require_once dirname(__DIR__) . '/BillingEmailService.php';
 require_once dirname(__DIR__) . '/NotificationService.php';
+require_once dirname(__DIR__) . '/OrganizationInviteService.php';
 require_once dirname(__DIR__) . '/SubscriptionService.php';
 
 class AsaasPaymentProvider implements PaymentProviderInterface
@@ -57,6 +58,10 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $amount = $billingCycle === 'yearly'
             ? (int) $plan['yearly_price_cents']
             : (int) $plan['monthly_price_cents'];
+        $teamInvites = (new OrganizationInviteService($this->pdo))->validateOfficeInviteRequest(
+            $plan,
+            is_array($paymentData['team_invites'] ?? null) ? $paymentData['team_invites'] : []
+        );
 
         $paymentMethod = $this->normalizePaymentMethod((string) ($paymentData['method'] ?? ''));
         $billingType = $this->billingTypeForMethod($paymentMethod);
@@ -90,6 +95,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'provider_customer_id' => $customerId,
             'plan_id' => $planId,
             'billing_cycle' => $billingCycle,
+            'team_invites' => $teamInvites,
             'external_reference' => $externalReference,
             'asaas_response' => $subscription,
             'asaas_first_payment' => $firstPayment,
@@ -107,7 +113,8 @@ class AsaasPaymentProvider implements PaymentProviderInterface
                 $userId,
                 $amount,
                 $firstPayment,
-                $providerPaymentId
+                $providerPaymentId,
+                $teamInvites
             );
         }
 
@@ -151,6 +158,8 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'previous_plan_id' => (int) ($activatedSubscription['previous_plan_id'] ?? 0),
             'previous_plan_name' => (string) ($activatedSubscription['previous_plan_name'] ?? ''),
             'previous_remote_cancel_error' => (string) ($activatedSubscription['previous_remote_cancel_error'] ?? ''),
+            'team_invites' => $teamInvites,
+            'team_invites_sent' => (array) ($activatedSubscription['team_invites_sent'] ?? []),
             'pix_qr_code' => $pixQrCode,
         ]);
     }
@@ -189,6 +198,13 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
         $subscriptionId = $subscription ? (int) $subscription['id'] : null;
         $userId = $subscription ? (int) $subscription['user_id'] : null;
+        $teamInvitesSent = [];
+        if ($subscriptionId && $userId && $paymentStatus === 'paid') {
+            $teamInvitesSent = is_array($subscription['team_invites_sent'] ?? null)
+                ? $subscription['team_invites_sent']
+                : $this->issuePendingTeamInvites($providerSubscriptionId, (int) $userId, (int) $subscriptionId, $subscription);
+            $payload['team_invites_sent'] = $teamInvitesSent;
+        }
 
         $this->recordPaymentEvent($subscriptionId, $userId, $event, $amount, $paymentStatus, $payload, $providerEventId ?: null);
 
@@ -217,6 +233,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'previous_plan_id' => (int) ($subscription['previous_plan_id'] ?? 0) ?: null,
             'previous_plan_name' => (string) ($subscription['previous_plan_name'] ?? '') ?: null,
             'previous_remote_cancel_error' => (string) ($subscription['previous_remote_cancel_error'] ?? '') ?: null,
+            'team_invites_sent' => $teamInvitesSent,
         ];
     }
 
@@ -231,6 +248,15 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
         $local = $this->findLocalSubscription($providerSubscriptionId);
         if ($local && (int) ($local['user_id'] ?? 0) === $userId && (string) ($local['status'] ?? '') === 'active') {
+            $alreadySent = $this->teamInvitesAlreadySent($providerSubscriptionId);
+            $teamInvitesSent = $this->issuePendingTeamInvites($providerSubscriptionId, $userId, (int) $local['id'], $local);
+            if ($alreadySent === [] && $teamInvitesSent !== []) {
+                $this->recordPaymentEvent((int) $local['id'], $userId, 'team_invites.sent', 0, 'paid', [
+                    'provider_subscription_id' => $providerSubscriptionId,
+                    'source' => 'billing.sync.already_active',
+                    'team_invites_sent' => $teamInvitesSent,
+                ]);
+            }
             return [
                 'ok' => true,
                 'provider' => $this->name(),
@@ -238,6 +264,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
                 'subscription_id' => (int) $local['id'],
                 'provider_subscription_id' => $providerSubscriptionId,
                 'already_active' => true,
+                'team_invites_sent' => $teamInvitesSent,
             ];
         }
 
@@ -271,10 +298,17 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         }
 
         $subscriptionId = $subscription ? (int) $subscription['id'] : null;
+        $teamInvitesSent = [];
+        if ($subscriptionId && $paymentStatus === 'paid') {
+            $teamInvitesSent = is_array($subscription['team_invites_sent'] ?? null)
+                ? $subscription['team_invites_sent']
+                : $this->issuePendingTeamInvites($providerSubscriptionId, $userId, $subscriptionId, $subscription);
+        }
         $this->recordPaymentEvent($subscriptionId, $userId, 'payment.sync_' . $paymentStatus, $amount, $paymentStatus, [
             'provider_subscription_id' => $providerSubscriptionId,
             'asaas_payment' => $payment,
             'source' => 'billing.sync',
+            'team_invites_sent' => $teamInvitesSent,
         ], $providerPaymentId !== '' ? $providerPaymentId : null);
 
         if ($subscriptionId && $paymentStatus === 'paid') {
@@ -297,6 +331,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'previous_plan_id' => (int) ($subscription['previous_plan_id'] ?? 0) ?: null,
             'previous_plan_name' => (string) ($subscription['previous_plan_name'] ?? '') ?: null,
             'previous_remote_cancel_error' => (string) ($subscription['previous_remote_cancel_error'] ?? '') ?: null,
+            'team_invites_sent' => $teamInvitesSent,
         ];
     }
 
@@ -696,7 +731,8 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         int $userId,
         int $amount,
         array $payment,
-        string $providerPaymentId
+        string $providerPaymentId,
+        array $teamInvites = []
     ): ?array {
         $subscription = $this->findLocalSubscription($providerSubscriptionId);
         if (!$subscription) {
@@ -720,6 +756,9 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
         $stmt = $this->pdo->prepare('UPDATE subscriptions SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         $stmt->execute(['active', $subscriptionId]);
+        $sentInvites = is_array($subscription['team_invites_sent'] ?? null)
+            ? $subscription['team_invites_sent']
+            : (new OrganizationInviteService($this->pdo))->issueForOfficeSubscription($userId, $this->subscriptionWithPlan($subscriptionId) ?: $subscription, $teamInvites);
         $this->notifyPlanPaid($userId, $subscriptionId, $amount);
 
         $withPlan = $this->subscriptionWithPlan($subscriptionId) ?: $subscription;
@@ -728,6 +767,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
                 $withPlan[$key] = $subscription[$key];
             }
         }
+        $withPlan['team_invites_sent'] = $sentInvites;
 
         return $withPlan;
     }
@@ -747,6 +787,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $userId = (int) ($pending['user_id'] ?? 0);
         $planId = (int) ($payload['plan_id'] ?? 0);
         $cycle = (string) ($payload['billing_cycle'] ?? 'monthly');
+        $teamInvites = is_array($payload['team_invites'] ?? null) ? $payload['team_invites'] : [];
         $previousSubscription = $this->subscriptions->currentForUser($userId);
         $isReplacement = $previousSubscription
             && in_array((string) ($previousSubscription['status'] ?? ''), ['trialing', 'active', 'past_due'], true)
@@ -776,8 +817,71 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             $activated['previous_plan_name'] = (string) ($previousSubscription['plan_name'] ?? '');
             $activated['previous_remote_cancel_error'] = $remoteCancelError;
         }
+        if ($activated) {
+            $activated['team_invites_sent'] = (new OrganizationInviteService($this->pdo))->issueForOfficeSubscription($userId, $activated, $teamInvites);
+        }
 
         return $activated;
+    }
+
+    private function issuePendingTeamInvites(string $providerSubscriptionId, int $userId, int $subscriptionId, ?array $subscription = null): array
+    {
+        $alreadySent = $this->teamInvitesAlreadySent($providerSubscriptionId);
+        if ($alreadySent !== []) {
+            return $alreadySent;
+        }
+
+        $teamInvites = $this->pendingTeamInvites($providerSubscriptionId);
+        if ($teamInvites === []) {
+            return [];
+        }
+
+        $subscriptionWithPlan = $this->subscriptionWithPlan($subscriptionId) ?: ($subscription ?: []);
+        return (new OrganizationInviteService($this->pdo))->issueForOfficeSubscription($userId, $subscriptionWithPlan, $teamInvites);
+    }
+
+    private function pendingTeamInvites(string $providerSubscriptionId): array
+    {
+        $pending = $this->pendingEventForProviderSubscription($providerSubscriptionId);
+        if (!$pending) {
+            return [];
+        }
+
+        $payload = json_decode((string) ($pending['payload_json'] ?? ''), true);
+        if (!is_array($payload) || !is_array($payload['team_invites'] ?? null)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('strval', $payload['team_invites'])));
+    }
+
+    private function teamInvitesAlreadySent(string $providerSubscriptionId): array
+    {
+        if (!database_table_exists($this->pdo, 'payment_events')) {
+            return [];
+        }
+
+        $stmt = $this->pdo->prepare(
+            "SELECT payload_json
+             FROM payment_events
+             WHERE provider = ?
+               AND payload_json LIKE ?
+             ORDER BY id DESC
+             LIMIT 20"
+        );
+        $stmt->execute([$this->name(), '%' . $providerSubscriptionId . '%']);
+
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $json) {
+            $payload = json_decode((string) $json, true);
+            $sent = is_array($payload) && is_array($payload['team_invites_sent'] ?? null)
+                ? array_values(array_filter(array_map('strval', $payload['team_invites_sent'])))
+                : [];
+            if ($sent !== []) {
+                return $sent;
+            }
+        }
+
+        return [];
     }
 
     private function finalizePlanReplacement(int $userId, array $previousSubscription, array $newSubscription, string $newProviderSubscriptionId): string
@@ -955,7 +1059,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
     private function subscriptionWithPlan(int $subscriptionId): ?array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT s.*, p.name AS plan_name
+            'SELECT s.*, p.name AS plan_name, p.slug AS plan_slug
              FROM subscriptions s
              LEFT JOIN plans p ON p.id = s.plan_id
              WHERE s.id = ?

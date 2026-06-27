@@ -4,6 +4,7 @@ require_once __DIR__ . '/PaymentProviderInterface.php';
 require_once dirname(__DIR__, 2) . '/config/app.php';
 require_once dirname(__DIR__) . '/BillingEmailService.php';
 require_once dirname(__DIR__) . '/NotificationService.php';
+require_once dirname(__DIR__) . '/OrganizationInviteService.php';
 require_once dirname(__DIR__) . '/SubscriptionService.php';
 
 class ManualPaymentProvider implements PaymentProviderInterface
@@ -38,6 +39,8 @@ class ManualPaymentProvider implements PaymentProviderInterface
         }
 
         $amount = $this->amountForPlan($planId, $billingCycle);
+        $teamInvites = is_array($paymentData['team_invites'] ?? null) ? $paymentData['team_invites'] : [];
+        $sentInvites = (new OrganizationInviteService($this->pdo))->issueForOfficeSubscription($userId, $subscription, $teamInvites);
         $this->recordPaymentEvent(
             (int) $subscription['id'],
             $userId,
@@ -48,6 +51,8 @@ class ManualPaymentProvider implements PaymentProviderInterface
                 'billing_cycle' => $billingCycle,
                 'source' => 'frontend/subir-plano.php',
                 'mode' => 'manual_immediate',
+                'team_invites' => $teamInvites,
+                'team_invites_sent' => $sentInvites,
             ]
         );
         if ($this->notify(
@@ -63,7 +68,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
         return PaymentCheckoutResult::success(
             app_url('/frontend/subir-plano.php?sucesso=' . urlencode('Plano atualizado com sucesso.')),
             (int) $subscription['id'],
-            ['amount_cents' => $amount]
+            ['amount_cents' => $amount, 'team_invites_sent' => $sentInvites]
         );
     }
 

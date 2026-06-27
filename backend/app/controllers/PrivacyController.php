@@ -4,6 +4,8 @@ require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/StorageService.php';
+require_once dirname(__DIR__) . '/services/SubscriptionService.php';
+require_once dirname(__DIR__) . '/services/payments/PaymentProviderFactory.php';
 
 class PrivacyController extends BaseController
 {
@@ -45,6 +47,7 @@ class PrivacyController extends BaseController
         $this->ensureAccountDeletionColumns();
 
         $confirmation = trim((string) $this->request->post('confirmacao', ''));
+        $currentPassword = (string) $this->request->post('senha_atual', '');
         if ($confirmation !== 'EXCLUIR') {
             $this->response->redirect(app_url('/frontend/perfil.php?erro=' . urlencode('Digite EXCLUIR para confirmar o encerramento da conta.')));
         }
@@ -55,59 +58,51 @@ class PrivacyController extends BaseController
             $this->response->redirect(app_url('/frontend/perfil.php?erro=' . urlencode('Não é possível encerrar o último administrador ativo.')));
         }
 
-        $user = $this->fetchOne('SELECT deletion_scheduled_at FROM users WHERE id = ?', [$userId]);
+        $user = $this->fetchOne('SELECT senha, provider, deletion_scheduled_at FROM users WHERE id = ?', [$userId]);
+        $requiresPassword = strtolower((string) ($user['provider'] ?? '')) !== 'google';
+        if (!$user || ($requiresPassword && !password_verify($currentPassword, (string) ($user['senha'] ?? '')))) {
+            $this->response->redirect(app_url('/frontend/perfil.php?tab=privacidade&erro=' . urlencode('Senha atual incorreta.')));
+        }
         if (!empty($user['deletion_scheduled_at'])) {
             $this->response->redirect(app_url('/frontend/perfil.php?sucesso=' . urlencode('A exclusao da conta ja esta agendada. Voce ainda pode cancelar antes do prazo final.')));
         }
 
+        try {
+            $subscriptions = new SubscriptionService($this->pdo);
+            $billingResult = PaymentProviderFactory::make($this->pdo, $subscriptions)->cancelSubscription($userId);
+        } catch (Throwable $exception) {
+            error_log('Account deletion billing cancellation failed: ' . $exception->getMessage());
+            $this->response->redirect(app_url('/frontend/perfil.php?tab=privacidade&erro=' . urlencode('Não foi possível cancelar sua cobrança. A exclusão não foi agendada; tente novamente.')));
+        }
+
         $now = date('Y-m-d H:i:s');
         $scheduledAt = date('Y-m-d H:i:s', strtotime('+' . self::ACCOUNT_DELETION_RETENTION_DAYS . ' days'));
-        $stmt = $this->pdo->prepare(
-            'UPDATE users
-             SET deletion_requested_at = ?,
-                 deletion_scheduled_at = ?,
-                 updated_at = ?
-             WHERE id = ?'
-        );
-        $stmt->execute([$now, $scheduledAt, $now, $userId]);
-        $this->audit->log('privacy.delete_account_scheduled', 'user', $userId, [
-            'tipo' => $userType,
-            'scheduled_at' => $scheduledAt,
-        ]);
-
-        $this->response->redirect(app_url('/frontend/perfil.php?sucesso=' . urlencode('Exclusao da conta agendada. Seus dados ficam preservados por 30 dias e voce pode cancelar antes do prazo final.')));
-
-        $documents = $this->fetchAll('SELECT id, caminho FROM documents WHERE user_id = ?', [$userId]);
-        $attachments = $this->fetchAll('SELECT id, attachment_path FROM messages WHERE sender_id = ? AND attachment_path IS NOT NULL', [$userId]);
-        $profilePhoto = (string) ($this->fetchOne('SELECT foto_perfil FROM users WHERE id = ?', [$userId])['foto_perfil'] ?? '');
-
         $this->pdo->beginTransaction();
         try {
-            $this->anonymizeUserContent($userId);
-            $this->deleteUserDocuments($userId);
-            $this->deleteUserAuxiliaryRows($userId);
-            $this->anonymizeUserRow($userId);
-            $this->audit->log('privacy.delete_account', 'user', $userId, ['tipo' => $userType]);
+            $organizationResult = $this->prepareOrganizationsForAccountClosure($userId);
+            $stmt = $this->pdo->prepare(
+                "UPDATE users
+                 SET deletion_requested_at = ?, deletion_scheduled_at = ?, status = 'inativo', updated_at = ?
+                 WHERE id = ?"
+            );
+            $stmt->execute([$now, $scheduledAt, $now, $userId]);
+            $this->audit->log('privacy.delete_account_scheduled', 'user', $userId, [
+                'tipo' => $userType,
+                'scheduled_at' => $scheduledAt,
+                'billing' => $billingResult,
+                'organizations' => $organizationResult,
+            ]);
             $this->pdo->commit();
         } catch (Throwable $exception) {
-            $this->pdo->rollBack();
-            throw $exception;
-        }
-
-        foreach ($documents as $document) {
-            $this->deleteStoredDocument((string) ($document['caminho'] ?? ''));
-        }
-
-        foreach ($attachments as $attachment) {
-            $this->deleteStoredAttachment((string) ($attachment['attachment_path'] ?? ''));
-        }
-
-        if ($profilePhoto !== '') {
-            $this->deleteStoredProfilePhoto($profilePhoto);
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('Account deletion scheduling failed: ' . $exception->getMessage());
+            $this->response->redirect(app_url('/frontend/perfil.php?tab=privacidade&erro=' . urlencode('A cobrança foi cancelada, mas não foi possível agendar a exclusão. Entre em contato com o suporte.')));
         }
 
         secure_session_destroy_current();
-        $this->response->redirect(app_url('/frontend/login.html?sucesso=' . urlencode('Conta encerrada e dados pessoais removidos conforme politica LGPD.')));
+        $this->response->redirect(app_url('/frontend/login.html?sucesso=' . urlencode('Conta bloqueada e exclusão agendada para 30 dias. Entre novamente antes do prazo para recuperar a conta.')));
     }
 
     public function cancelAccountDeletion(): void
@@ -117,11 +112,12 @@ class PrivacyController extends BaseController
 
         $userId = $this->currentUserId();
         $stmt = $this->pdo->prepare(
-            'UPDATE users
+            "UPDATE users
              SET deletion_requested_at = NULL,
                  deletion_scheduled_at = NULL,
+                 status = 'ativo',
                  updated_at = ?
-             WHERE id = ? AND deletion_scheduled_at IS NOT NULL'
+             WHERE id = ? AND deletion_scheduled_at IS NOT NULL"
         );
         $stmt->execute([date('Y-m-d H:i:s'), $userId]);
 
@@ -188,6 +184,54 @@ class PrivacyController extends BaseController
         }
     }
 
+    private function prepareOrganizationsForAccountClosure(int $userId): array
+    {
+        if (!database_table_exists($this->pdo, 'organizations') || !database_table_exists($this->pdo, 'organization_members')) {
+            return ['transferred' => [], 'suspended' => []];
+        }
+
+        $transferred = [];
+        $suspended = [];
+        if (database_table_has_column($this->pdo, 'organizations', 'owner_user_id')) {
+            $stmt = $this->pdo->prepare('SELECT id FROM organizations WHERE owner_user_id = ?');
+            $stmt->execute([$userId]);
+            foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $organizationIdValue) {
+                $organizationId = (int) $organizationIdValue;
+                $candidate = $this->fetchOne(
+                    "SELECT om.user_id
+                     FROM organization_members om
+                     INNER JOIN users u ON u.id = om.user_id
+                     WHERE om.organization_id = ? AND om.user_id <> ?
+                       AND om.status = 'active' AND u.status = 'ativo' AND u.tipo = 'advogado'
+                     ORDER BY CASE om.role WHEN 'admin' THEN 1 WHEN 'member' THEN 2 ELSE 3 END, om.created_at ASC
+                     LIMIT 1",
+                    [$organizationId, $userId]
+                );
+
+                if ($candidate) {
+                    $newOwnerId = (int) $candidate['user_id'];
+                    $this->pdo->prepare('UPDATE organizations SET owner_user_id = ? WHERE id = ?')->execute([$newOwnerId, $organizationId]);
+                    $this->pdo->prepare("UPDATE organization_members SET role = 'member' WHERE organization_id = ? AND user_id = ?")->execute([$organizationId, $userId]);
+                    $this->pdo->prepare("UPDATE organization_members SET role = 'owner', status = 'active' WHERE organization_id = ? AND user_id = ?")->execute([$organizationId, $newOwnerId]);
+                    $transferred[] = ['organization_id' => $organizationId, 'new_owner_user_id' => $newOwnerId];
+                    continue;
+                }
+
+                if (database_table_has_column($this->pdo, 'organizations', 'status')) {
+                    $this->pdo->prepare("UPDATE organizations SET status = 'inativo' WHERE id = ?")->execute([$organizationId]);
+                }
+                $this->pdo->prepare("UPDATE organization_members SET status = 'suspended' WHERE organization_id = ?")->execute([$organizationId]);
+                $suspended[] = $organizationId;
+            }
+        }
+
+        if (database_table_exists($this->pdo, 'organization_invites')) {
+            $this->pdo->prepare("UPDATE organization_invites SET status = 'revoked' WHERE invited_by = ? AND status = 'pending'")->execute([$userId]);
+        }
+
+        return ['transferred' => $transferred, 'suspended' => $suspended];
+    }
+
     private function requireLoggedPrivacyAction(): void
     {
         $this->startSession();
@@ -243,6 +287,20 @@ class PrivacyController extends BaseController
 
     private function deleteUserAuxiliaryRows(int $userId): void
     {
+        if ($this->tableExists('organization_members')) {
+            $this->pdo->prepare("UPDATE organization_members SET status = 'suspended' WHERE user_id = ?")->execute([$userId]);
+        }
+        if ($this->tableExists('organization_invites')) {
+            $this->pdo->prepare("UPDATE organization_invites SET status = 'revoked' WHERE invited_by = ? AND status = 'pending'")->execute([$userId]);
+        }
+        if ($this->tableExists('user_organizations')) {
+            $this->pdo->prepare('DELETE FROM user_organizations WHERE user_id = ?')->execute([$userId]);
+        }
+        if ($this->tableExists('subscriptions')) {
+            $this->pdo->prepare("UPDATE subscriptions SET status = 'canceled', canceled_at = COALESCE(canceled_at, ?) WHERE user_id = ? AND status IN ('trialing', 'active', 'past_due')")
+                ->execute([date('Y-m-d H:i:s'), $userId]);
+        }
+
         foreach ([
             'notifications',
             'password_reset_codes',

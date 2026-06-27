@@ -42,6 +42,10 @@ class ErrorHandler
 
     public static function handleError(int $errno, string $errstr, string $errfile, int $errline): bool
     {
+        if ((error_reporting() & $errno) === 0) {
+            return true;
+        }
+
         throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
     }
 

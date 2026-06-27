@@ -42,6 +42,7 @@ $providerPaymentId = trim((string) ($confirmation['provider_payment_id'] ?? ''))
 $providerSubscriptionId = trim((string) ($confirmation['provider_subscription_id'] ?? $subscription['provider_subscription_id'] ?? ''));
 $subscriptionId = (int) ($confirmation['subscription_id'] ?? $subscription['id'] ?? 0);
 $previousPlanName = trim((string) ($confirmation['previous_plan_name'] ?? ''));
+$teamInvitesSent = array_values(array_filter(array_map('strval', (array) ($confirmation['team_invites_sent'] ?? []))));
 $hasPlanReplacement = $previousPlanName !== '';
 $replacementWarning = trim((string) ($confirmation['previous_remote_cancel_error'] ?? ''));
 $protocolSeed = $providerPaymentId !== '' ? $providerPaymentId : ($providerSubscriptionId !== '' ? $providerSubscriptionId : (string) $subscriptionId);
@@ -191,6 +192,13 @@ $receiptText = implode(' | ', [
                 <strong>Limites liberados</strong>
                 <p>Recursos disponíveis para uso.</p>
               </div>
+              <?php if ($teamInvitesSent): ?>
+                <div>
+                  <span><?= icon_svg('users') ?></span>
+                  <strong>Convites enviados</strong>
+                  <p><?= e(implode(', ', $teamInvitesSent)) ?></p>
+                </div>
+              <?php endif; ?>
             </div>
           </article>
         </div>

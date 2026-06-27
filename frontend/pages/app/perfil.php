@@ -12,7 +12,7 @@ $accountDeletionSelect = $hasAccountDeletionSchedule
     : ', NULL AS deletion_requested_at, NULL AS deletion_scheduled_at';
 $user = fetch_one(
     $pdo,
-    'SELECT nome, email, tipo, telefone, cpf, foto_perfil, google_picture, oab, oab_uf, oab_status, oab_verificado, status_cna, cna_validado_em, cna_origem, cna_ultimo_erro' . $accountDeletionSelect . '
+    'SELECT nome, email, tipo, provider, telefone, cpf, foto_perfil, google_picture, oab, oab_uf, oab_status, oab_verificado, status_cna, cna_validado_em, cna_origem, cna_ultimo_erro' . $accountDeletionSelect . '
      FROM users
      WHERE id = ?',
     [current_user_id()]
@@ -136,6 +136,7 @@ if ($currentSubscription) {
 $deletionScheduledAt = trim((string) ($user['deletion_scheduled_at'] ?? ''));
 $hasDeletionScheduled = $deletionScheduledAt !== '';
 $deletionScheduledLabel = $hasDeletionScheduled ? date('d/m/Y H:i', strtotime($deletionScheduledAt)) : '';
+$accountUsesGoogle = strtolower((string) ($user['provider'] ?? '')) === 'google';
 $profileTourKey = match ($type) {
     'advogado' => 'dashboard_advogado',
     'estagiario' => 'dashboard_estagiario',
@@ -363,88 +364,44 @@ $profileTourKey = match ($type) {
                   <p class="text-muted">Exporte seus dados ou solicite o encerramento da conta.</p>
                 </div>
               </div>
+              <?php if ($hasDeletionScheduled): ?>
+                <div class="alert alert-warning is-visible">
+                  A exclusão definitiva está agendada para <?= e($deletionScheduledLabel) ?>. Até lá, seus dados permanecem guardados e a solicitação pode ser cancelada.
+                </div>
+                <form class="inline-form mt-12" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/cancel-delete-account')) ?>" method="post" data-confirm="Cancelar a exclusão da conta e manter seu cadastro ativo?">
+                  <?= csrf_input() ?>
+                  <button class="btn btn-primary" type="submit"><?= icon_svg('shield') ?> Cancelar exclusão</button>
+                </form>
+              <?php else: ?>
+                <div class="alert alert-info is-visible">
+                  A conta será bloqueada imediatamente, cobranças serão canceladas e os dados ficarão preservados por 30 dias. Entrar novamente nesse prazo recupera a conta, mas não restaura o plano pago.
+                </div>
+              <?php endif; ?>
               <div class="form-actions">
                 <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/export')) ?>" method="post">
                   <?= csrf_input() ?>
                   <button class="btn btn-outline" type="submit"><?= icon_svg('download') ?> Baixar meus dados</button>
                 </form>
               </div>
-              <form class="auth-form mt-16" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/delete-account')) ?>" method="post" onsubmit="return confirm('Encerrar a conta remove dados pessoais e nao pode ser desfeito. Continuar?');">
-                <?= csrf_input() ?>
-                <div class="field">
-                  <label for="privacy_delete_confirm">Digite EXCLUIR para encerrar a conta</label>
-                  <input class="input" id="privacy_delete_confirm" name="confirmacao" autocomplete="off" placeholder="EXCLUIR">
-                </div>
-                <button class="btn btn-outline" type="submit"><?= icon_svg('trash') ?> Encerrar conta</button>
-              </form>
-            </section>
-              <?php if (!empty($user['oab_status'])): ?>
-                <p class="text-muted mt-12"><?= e($user['oab_status']) ?></p>
-              <?php endif; ?>
-              <?php if (!empty($user['cna_ultimo_erro'])): ?>
-                <p class="text-muted mt-12"><?= e($user['cna_ultimo_erro']) ?></p>
+              <?php if (!$hasDeletionScheduled): ?>
+                <form class="auth-form mt-16" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/delete-account')) ?>" method="post" data-confirm="Bloquear a conta agora, cancelar cobranças e agendar a anonimização definitiva para 30 dias?">
+                  <?= csrf_input() ?>
+                  <?php if (!$accountUsesGoogle): ?>
+                    <div class="field">
+                      <label for="privacy_delete_password">Senha atual</label>
+                      <input class="input" type="password" id="privacy_delete_password" name="senha_atual" autocomplete="current-password" required>
+                    </div>
+                  <?php endif; ?>
+                  <div class="field">
+                    <label for="privacy_delete_confirm">Digite EXCLUIR para confirmar</label>
+                    <input class="input" id="privacy_delete_confirm" name="confirmacao" autocomplete="off" placeholder="EXCLUIR">
+                  </div>
+                  <button class="btn btn-outline" type="submit"><?= icon_svg('trash') ?> Agendar exclusão da conta</button>
+                </form>
               <?php endif; ?>
             </section>
           <?php endif; ?>
 
-          <section class="card">
-            <div class="dash-section-title"><h2>Segurança</h2></div>
-            <div class="form-actions">
-              <button class="btn btn-outline" type="button" data-password-modal-open><?= icon_svg('lock') ?> Redefinir senha</button>
-            </div>
-          </section>
-
-          <section class="card">
-            <div class="dash-section-title">
-              <div>
-                <h2>Privacidade e LGPD</h2>
-                <p class="text-muted">Exporte seus dados ou solicite o encerramento da conta.</p>
-              </div>
-            </div>
-            <?php if ($hasDeletionScheduled): ?>
-              <div class="alert alert-warning is-visible">
-                A exclusão definitiva está agendada para <?= e($deletionScheduledLabel) ?>. Até lá, seus dados permanecem guardados e a solicitação pode ser cancelada.
-              </div>
-              <form class="inline-form mt-12" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/cancel-delete-account')) ?>" method="post" data-confirm="Cancelar a exclusão da conta e manter seu cadastro ativo?">
-                <?= csrf_input() ?>
-                <button class="btn btn-primary" type="submit"><?= icon_svg('shield') ?> Cancelar exclusão</button>
-              </form>
-            <?php else: ?>
-              <div class="alert alert-info is-visible">
-                Ao solicitar a exclusão, a conta entra em um prazo de segurança de 30 dias. Nesse período os dados ficam preservados para arrependimento; depois disso, a remoção definitiva pode ser processada.
-              </div>
-            <?php endif; ?>
-            <div class="form-actions">
-              <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/export')) ?>" method="post">
-                <?= csrf_input() ?>
-                <button class="btn btn-outline" type="submit"><?= icon_svg('download') ?> Baixar meus dados</button>
-              </form>
-            </div>
-            <?php if (!$hasDeletionScheduled): ?>
-            <form class="auth-form mt-16" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/delete-account')) ?>" method="post" data-confirm="Agendar exclusão da conta? Seus dados serão preservados por 30 dias para cancelamento antes da remoção definitiva.">
-              <?= csrf_input() ?>
-              <div class="field">
-                <label for="privacy_delete_confirm">Digite EXCLUIR para agendar a exclusão</label>
-                <input class="input" id="privacy_delete_confirm" name="confirmacao" autocomplete="off" placeholder="EXCLUIR">
-              </div>
-              <button class="btn btn-outline" type="submit"><?= icon_svg('trash') ?> Agendar exclusão da conta</button>
-            </form>
-            <?php endif; ?>
-          </section>
-
-            <section class="card">
-              <div class="dash-section-title">
-                <div>
-                  <h2>Tour do sistema</h2>
-                  <p class="text-muted">Redefina o onboarding para vê-lo novamente no próximo acesso à dashboard.</p>
-                </div>
-              </div>
-              <div class="form-actions">
-                <button class="btn btn-outline" type="button" data-tour-reset><?= icon_svg('help') ?> Resetar tour</button>
-              </div>
-              <p class="alert alert-success mt-12" data-tour-reset-message hidden></p>
-            </section>
-          <?php endif; ?>
         </div>
       </section>
 

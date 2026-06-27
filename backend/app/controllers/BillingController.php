@@ -2,6 +2,7 @@
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
+require_once dirname(__DIR__) . '/services/OrganizationInviteService.php';
 require_once dirname(__DIR__) . '/services/SubscriptionService.php';
 require_once dirname(__DIR__) . '/services/payments/PaymentProviderFactory.php';
 
@@ -90,7 +91,16 @@ class BillingController extends BaseController
         }
 
         try {
+            $plan = $this->fetchPlan($planId);
+            if (!$plan) {
+                $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano invalido.')));
+            }
+
             $paymentData = $this->checkoutPaymentData();
+            $paymentData['team_invites'] = (new OrganizationInviteService($this->pdo))->validateOfficeInviteRequest(
+                $plan,
+                $this->request->post('team_invites', [])
+            );
             $checkout = $this->payments->createCheckout($userId, $planId, $cycle, $paymentData);
         } catch (Throwable $exception) {
             $this->response->redirect(app_url('/frontend/pagamento-plano.php?erro=' . urlencode($exception->getMessage())));
@@ -127,6 +137,7 @@ class BillingController extends BaseController
                 'previous_plan_id' => (int) ($checkout->metadata['previous_plan_id'] ?? 0),
                 'previous_plan_name' => (string) ($checkout->metadata['previous_plan_name'] ?? ''),
                 'previous_remote_cancel_error' => (string) ($checkout->metadata['previous_remote_cancel_error'] ?? ''),
+                'team_invites_sent' => (array) ($checkout->metadata['team_invites_sent'] ?? []),
             ];
             unset($_SESSION['billing_checkout']);
             $this->response->redirect(app_url('/frontend/pagamento-confirmado.php'));
@@ -143,6 +154,7 @@ class BillingController extends BaseController
                 'created_at' => time(),
                 'status' => 'created',
                 'payment_method' => (string) ($paymentData['method'] ?? 'pix'),
+                'team_invites' => (array) ($paymentData['team_invites'] ?? []),
             ];
 
             $this->response->redirect(app_url('/frontend/pagamento-plano.php'));
@@ -292,6 +304,7 @@ class BillingController extends BaseController
                     'previous_plan_id' => (int) ($result['previous_plan_id'] ?? 0),
                     'previous_plan_name' => (string) ($result['previous_plan_name'] ?? ''),
                     'previous_remote_cancel_error' => (string) ($result['previous_remote_cancel_error'] ?? ''),
+                    'team_invites_sent' => (array) ($result['team_invites_sent'] ?? []),
                 ];
                 unset($_SESSION['billing_checkout']);
                 $this->response->redirect(app_url('/frontend/pagamento-confirmado.php'));
@@ -342,6 +355,19 @@ class BillingController extends BaseController
         }
 
         return $this->subscriptions->planAvailableForUser((int) ($_SESSION['id'] ?? 0), $planId);
+    }
+
+    private function fetchPlan(int $planId): ?array
+    {
+        if ($planId <= 0 || !database_table_exists($this->pdo, 'plans')) {
+            return null;
+        }
+
+        $stmt = $this->pdo->prepare('SELECT * FROM plans WHERE id = ? AND active = 1 LIMIT 1');
+        $stmt->execute([$planId]);
+        $plan = $stmt->fetch();
+
+        return $plan ?: null;
     }
 
     private function canCurrentUserSubscribe(): bool

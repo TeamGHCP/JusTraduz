@@ -2,6 +2,7 @@
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
 require_once PROJECT_ROOT_PATH . '/backend/app/services/SubscriptionService.php';
+require_once PROJECT_ROOT_PATH . '/backend/app/services/OrganizationInviteService.php';
 
 function payment_redirect(string $url): void
 {
@@ -82,6 +83,7 @@ if ($isPlanActive) {
         'provider' => (string) ($currentSubscription['provider'] ?? 'asaas'),
         'provider_subscription_id' => (string) ($currentSubscription['provider_subscription_id'] ?? $providerSubscriptionId),
         'provider_payment_id' => (string) ($metadata['provider_payment_id'] ?? ''),
+        'team_invites_sent' => (array) ($metadata['team_invites_sent'] ?? []),
     ];
     unset($_SESSION['billing_checkout']);
     payment_redirect(app_url('/frontend/pagamento-confirmado.php'));
@@ -144,6 +146,11 @@ $holderCpf = preg_replace('/\D+/', '', (string) ($checkoutUser['cpf'] ?? '')) ?:
 $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? '')) ?: '';
 $currentPlanName = (string) ($currentSubscription['plan_name'] ?? '');
 $asaasEnvironmentLabel = payment_asaas_environment_label();
+$isOfficePlan = (string) ($plan['slug'] ?? '') === 'escritorio';
+$officeInviteMin = 0;
+$officeInviteLimit = OrganizationInviteService::OFFICE_INVITE_LIMIT;
+$officeInviteEmails = array_values(array_filter(array_map('strval', (array) ($checkout['team_invites'] ?? $metadata['team_invites'] ?? []))));
+$officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($officeInviteEmails)));
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -273,6 +280,54 @@ $asaasEnvironmentLabel = payment_asaas_environment_label();
                 <?= icon_svg('check') ?> Ver faturamento
               </a>
             <?php else: ?>
+              <?php if ($isOfficePlan && !$isCheckoutCreated): ?>
+                <section class="office-invite-card" data-office-invite-panel data-office-invite-min="<?= (int) $officeInviteMin ?>" data-office-invite-limit="<?= (int) $officeInviteLimit ?>">
+                  <div class="office-invite-head">
+                    <span><?= icon_svg('users') ?></span>
+                    <div>
+                      <strong>Participantes do escritório</strong>
+                      <small>Escolha quantas pessoas deseja chamar. Os e-mails serão enviados depois da confirmação do pagamento.</small>
+                    </div>
+                  </div>
+
+                  <div class="office-invite-stepper">
+                    <div>
+                      <span>Vagas</span>
+                      <strong data-office-invite-count><?= (int) $officeInviteCount ?></strong>
+                    </div>
+                    <div class="office-invite-stepper-actions" aria-label="Quantidade de convites">
+                      <button type="button" data-office-invite-decrease aria-label="Diminuir vagas">−</button>
+                      <button type="button" data-office-invite-increase aria-label="Aumentar vagas">+</button>
+                    </div>
+                    <input type="hidden" data-office-invite-count-input value="<?= (int) $officeInviteCount ?>">
+                  </div>
+
+                  <div class="office-invite-list" data-office-invite-list>
+                    <?php for ($inviteIndex = 0; $inviteIndex < $officeInviteLimit; $inviteIndex++): ?>
+                      <label class="office-invite-field" data-office-invite-field data-office-invite-index="<?= (int) $inviteIndex ?>">
+                        <span>Convite <?= $inviteIndex + 1 ?></span>
+                        <input type="email" data-office-invite-input value="<?= e($officeInviteEmails[$inviteIndex] ?? '') ?>" placeholder="email<?= $inviteIndex + 1 ?>@exemplo.com">
+                      </label>
+                    <?php endfor; ?>
+                  </div>
+                </section>
+              <?php elseif ($isOfficePlan && $isCheckoutCreated && $officeInviteEmails): ?>
+                <section class="office-invite-card">
+                  <div class="office-invite-head">
+                    <span><?= icon_svg('users') ?></span>
+                    <div>
+                      <strong>Convites preparados</strong>
+                      <small>Serão enviados após a confirmação do pagamento.</small>
+                    </div>
+                  </div>
+                  <ul class="office-invite-summary">
+                    <?php foreach ($officeInviteEmails as $email): ?>
+                      <li><?= e($email) ?></li>
+                    <?php endforeach; ?>
+                  </ul>
+                </section>
+              <?php endif; ?>
+
               <div class="payment-method-list">
                 <section class="payment-method payment-method-pix <?= (!$isCheckoutCreated || $createdPaymentMethod === 'pix') ? 'is-open' : '' ?>" data-payment-method="pix">
                   <button type="button" class="payment-method-title" data-payment-method-toggle>
@@ -304,6 +359,7 @@ $asaasEnvironmentLabel = payment_asaas_environment_label();
                       <form action="<?= e($checkoutAction) ?>" method="post">
                         <?= csrf_input() ?>
                         <input type="hidden" name="payment_method" value="pix">
+                        <div data-office-invite-hidden></div>
                         <button class="payment-method-action" type="submit"><?= icon_svg('sparkles') ?> Gerar QR Code Pix</button>
                       </form>
                     <?php endif; ?>
@@ -335,6 +391,7 @@ $asaasEnvironmentLabel = payment_asaas_environment_label();
                       <form class="payment-card-form" action="<?= e($checkoutAction) ?>" method="post" autocomplete="off">
                         <?= csrf_input() ?>
                         <input type="hidden" name="payment_method" value="credit_card">
+                        <div data-office-invite-hidden></div>
                         <div class="payment-form-field payment-form-field-full">
                           <label for="card_holder_name">Nome impresso no cartão</label>
                           <input id="card_holder_name" name="card_holder_name" type="text" value="<?= e($holderName) ?>" required autocomplete="cc-name">

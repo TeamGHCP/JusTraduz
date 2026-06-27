@@ -35,6 +35,17 @@ class OrganizationService
         return $left !== null && $left === $right;
     }
 
+    public static function enabled(PDO $pdo): bool
+    {
+        return self::tableExists($pdo, 'organizations')
+            && self::tableExists($pdo, 'organization_members');
+    }
+
+    public static function tableExists(PDO $pdo, string $table): bool
+    {
+        return database_table_exists($pdo, $table);
+    }
+
     public function create(string $name, int $ownerId): int
     {
         if (!database_table_exists($this->pdo, 'organizations')) {
@@ -44,8 +55,43 @@ class OrganizationService
         $slug = $this->slug($name);
         $this->pdo->beginTransaction();
         try {
-            $stmt = $this->pdo->prepare('INSERT INTO organizations (name, slug, owner_user_id) VALUES (?, ?, ?)');
-            $stmt->execute([$name, $slug, $ownerId]);
+            $columns = [];
+            $values = [];
+
+            $hasNome = database_table_has_column($this->pdo, 'organizations', 'nome');
+            if ($hasNome) {
+                $columns[] = 'nome';
+                $values[] = $name;
+            }
+            if (database_table_has_column($this->pdo, 'organizations', 'name')) {
+                $columns[] = 'name';
+                $values[] = $name;
+            }
+            if (database_table_has_column($this->pdo, 'organizations', 'slug')) {
+                $columns[] = 'slug';
+                $values[] = $slug;
+            }
+            if (database_table_has_column($this->pdo, 'organizations', 'owner_user_id')) {
+                $columns[] = 'owner_user_id';
+                $values[] = $ownerId;
+            }
+            if (database_table_has_column($this->pdo, 'organizations', 'tipo')) {
+                $columns[] = 'tipo';
+                $values[] = 'escritorio';
+            }
+            if (database_table_has_column($this->pdo, 'organizations', 'status')) {
+                $columns[] = 'status';
+                $values[] = $hasNome ? 'ativo' : 'active';
+            }
+
+            if ($columns === []) {
+                $this->pdo->rollBack();
+                return 0;
+            }
+
+            $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+            $stmt = $this->pdo->prepare('INSERT INTO organizations (' . implode(', ', $columns) . ') VALUES (' . $placeholders . ')');
+            $stmt->execute($values);
             $organizationId = (int) $this->pdo->lastInsertId();
 
             $stmt = $this->pdo->prepare("INSERT INTO organization_members (organization_id, user_id, role, status) VALUES (?, ?, 'owner', 'active')");

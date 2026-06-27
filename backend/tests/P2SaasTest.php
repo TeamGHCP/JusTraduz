@@ -2,6 +2,7 @@
 
 require __DIR__ . '/bootstrap.php';
 require_once dirname(__DIR__) . '/app/services/OrganizationService.php';
+require_once dirname(__DIR__) . '/app/services/OrganizationInviteService.php';
 require_once dirname(__DIR__) . '/app/services/RbacService.php';
 require_once dirname(__DIR__) . '/app/services/SlaService.php';
 require_once dirname(__DIR__) . '/app/services/SubscriptionService.php';
@@ -45,6 +46,14 @@ $quota = $usage->allow(1, 'document_upload', 500);
 assertTrue($quota['allowed'] === true, 'Plano Pro deve permitir ate 500 uploads mensais.');
 
 assertTrue($subscriptions->changePlan(1, 3, 'monthly', 'active') === false, 'Cliente nao deve assinar plano Escritorio profissional.');
+assertTrue($subscriptions->changePlan(1, 7, 'monthly', 'active') === false, 'Cliente nao deve assinar Max Advogado.');
+assertTrue($subscriptions->changePlan(3, 6, 'monthly', 'active') === false, 'Advogado nao deve assinar Max Cliente.');
+assertTrue($subscriptions->changePlan(1, 6, 'monthly', 'active') === true, 'Cliente deve assinar Max Cliente.');
+assertEquals(2000, $subscriptions->featureLimit(1, 'document_upload'), 'Max Cliente deve aplicar 2.000 documentos.');
+assertEquals(20000, $subscriptions->featureLimit(1, 'ai_chat'), 'Max Cliente deve aplicar 20.000 mensagens de IA.');
+assertTrue($subscriptions->changePlan(3, 7, 'monthly', 'active') === true, 'Advogado deve assinar Max Advogado.');
+assertEquals(3000, $subscriptions->featureLimit(3, 'document_upload'), 'Max Advogado deve aplicar 3.000 documentos.');
+assertEquals(30000, $subscriptions->featureLimit(3, 'ai_chat'), 'Max Advogado deve aplicar 30.000 mensagens de IA.');
 assertTrue($subscriptions->changePlan(3, 3, 'monthly', 'active') === true, 'Advogado validado deve assinar plano Escritorio.');
 assertTrue($usage->allow(3, 'document_upload', 5000)['allowed'] === true, 'Plano Escritorio deve permitir documentos ilimitados.');
 assertTrue($usage->allow(3, 'ocr', 5000)['allowed'] === true, 'Plano Escritorio deve permitir OCR ilimitado.');
@@ -53,6 +62,33 @@ assertTrue($subscriptions->changePlan(1, 2, 'monthly', 'active') === true, 'Reto
 
 $payments = new ManualPaymentProvider($pdo, $subscriptions);
 putenv('MAIL_LOG_ONLY=true');
+$pdo->prepare(
+    'INSERT INTO users (id, nome, email, senha, tipo, oab_verificado, oab_status, status_cna, status, profile_completed)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, "ativo", 1)'
+)->execute([7, 'Advogado Dois', 'advogado2@teste.local', password_hash('Teste@12345', PASSWORD_DEFAULT), 'advogado', 1, 'approved', 'verificado']);
+
+$clientInviteRejected = false;
+try {
+    (new OrganizationInviteService($pdo))->validateOfficeInviteRequest(
+        ['slug' => 'escritorio'],
+        ['cliente2@teste.local']
+    );
+} catch (InvalidArgumentException) {
+    $clientInviteRejected = true;
+}
+assertTrue($clientInviteRejected, 'Plano Escritorio deve rejeitar convite para conta de cliente.');
+assertEquals(
+    [],
+    (new OrganizationInviteService($pdo))->issueForOfficeSubscription(1, ['plan_slug' => 'escritorio'], ['novo.advogado@teste.local']),
+    'Conta cliente nao deve emitir convite do plano Escritorio.'
+);
+
+$legacyClientToken = 'legacy-client-token';
+$pdo->prepare("INSERT INTO organization_invites (organization_id, email, role, token_hash, status, invited_by, expires_at) VALUES (?, ?, 'member', ?, 'pending', ?, ?)")
+    ->execute([1, 'cliente2@teste.local', password_hash($legacyClientToken, PASSWORD_DEFAULT), 3, (new DateTimeImmutable('+2 days'))->format('Y-m-d H:i:s')]);
+$legacyClientResult = (new OrganizationInviteService($pdo))->acceptToken($legacyClientToken, 2);
+assertEquals('lawyer_required', $legacyClientResult['reason'] ?? '', 'Cliente nao deve aceitar nem mesmo convite legado do Escritorio.');
+
 $checkout = $payments->createCheckout(1, 2, 'yearly');
 assertTrue($checkout->ok === true, 'Checkout manual deve concluir com sucesso.');
 assertTrue($checkout->subscriptionId !== null, 'Checkout manual deve retornar assinatura.');
@@ -61,6 +97,19 @@ assertEquals(47900, (int) $pdo->query('SELECT COALESCE(SUM(amount_cents), 0) FRO
 $latestNotification = (string) $pdo->query('SELECT mensagem FROM notifications WHERE user_id = 1 ORDER BY id DESC LIMIT 1')->fetchColumn();
 assertStringContains('Pagamento confirmado', $latestNotification, 'Checkout pago deve notificar o cliente.');
 assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM mail_logs WHERE recipient = 'cliente1@teste.local' AND subject LIKE 'Plano Pro confirmado%' AND status = 'sent'")->fetchColumn(), 'Checkout pago deve enviar e-mail ao cliente.');
+
+$officeCheckout = $payments->createCheckout(3, 3, 'monthly', ['team_invites' => ['advogado2@teste.local']]);
+assertTrue($officeCheckout->ok === true, 'Checkout manual do plano Escritorio deve concluir com sucesso.');
+assertEquals(['advogado2@teste.local'], $officeCheckout->metadata['team_invites_sent'] ?? [], 'Checkout do Escritorio deve emitir convites apos ativar o plano.');
+assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM organization_invites WHERE email = 'advogado2@teste.local' AND status = 'pending'")->fetchColumn(), 'Convite do Escritorio deve ficar pendente.');
+assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM mail_logs WHERE recipient = 'advogado2@teste.local' AND subject LIKE 'Convite para equipe no JusTraduz%' AND status = 'sent'")->fetchColumn(), 'Convite do Escritorio deve enviar e-mail.');
+
+$knownInviteToken = 'office-known-token';
+$pdo->prepare("INSERT INTO organization_invites (organization_id, email, role, token_hash, status, invited_by, expires_at) VALUES (?, ?, 'member', ?, 'pending', ?, ?)")
+    ->execute([1, 'advogado2@teste.local', password_hash($knownInviteToken, PASSWORD_DEFAULT), 3, (new DateTimeImmutable('+2 days'))->format('Y-m-d H:i:s')]);
+$acceptResult = (new OrganizationInviteService($pdo))->acceptToken($knownInviteToken, 7);
+assertTrue(($acceptResult['ok'] ?? false) === true, 'Advogado convidado deve aceitar o convite do Escritorio.');
+assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM organization_members WHERE organization_id = 1 AND user_id = 7 AND status = 'active'")->fetchColumn(), 'Advogado convidado deve entrar na organizacao.');
 
 $webhook = $payments->handleWebhook(json_encode([
     'subscription_id' => $checkout->subscriptionId,
@@ -139,6 +188,36 @@ $asaas->handleWebhook(json_encode([
 ]), ['asaas-access-token' => 'test-webhook-token']);
 $asaasSubscription = $subscriptions->currentForUser(2);
 assertEquals('past_due', $asaasSubscription['status'], 'Webhook de cartao recusado deve marcar assinatura Asaas como inadimplente.');
+
+$inviteProviderSubscriptionId = 'sub_test_convite_escritorio_001';
+$lawyerOfficeSubscription = $subscriptions->currentForUser(3);
+$pdo->prepare('UPDATE subscriptions SET provider = ?, provider_subscription_id = ? WHERE id = ?')
+    ->execute(['asaas', $inviteProviderSubscriptionId, (int) $lawyerOfficeSubscription['id']]);
+$pdo->prepare(
+    "INSERT INTO payment_events (subscription_id, user_id, provider, provider_event_id, event_type, amount_cents, status, payload_json, processed_at)
+     VALUES (?, ?, 'asaas', ?, 'subscription.created', 9990, 'pending', ?, ?)"
+)->execute([
+    (int) $lawyerOfficeSubscription['id'],
+    3,
+    $inviteProviderSubscriptionId,
+    json_encode([
+        'provider_subscription_id' => $inviteProviderSubscriptionId,
+        'plan_id' => 3,
+        'billing_cycle' => 'monthly',
+        'team_invites' => ['pendente@teste.local'],
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    date('Y-m-d H:i:s'),
+]);
+$asaasInviteWebhook = $asaas->handleWebhook(json_encode([
+    'event' => 'PAYMENT_RECEIVED',
+    'payment' => [
+        'id' => 'pay_test_convite_escritorio_001',
+        'subscription' => $inviteProviderSubscriptionId,
+        'value' => 99.90,
+    ],
+]), ['asaas-access-token' => 'test-webhook-token']);
+assertEquals(['pendente@teste.local'], $asaasInviteWebhook['team_invites_sent'] ?? [], 'Webhook pago deve enviar convites pendentes do Escritorio.');
+assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM organization_invites WHERE email = 'pendente@teste.local' AND status = 'pending'")->fetchColumn(), 'Webhook deve registrar convite pendente do Escritorio.');
 putenv('ASAAS_WEBHOOK_TOKEN');
 
 $cancel = $payments->cancelSubscription(1);
@@ -158,7 +237,7 @@ putenv('MAIL_LOG_ONLY');
 
 $organizations = new OrganizationService($pdo);
 assertEquals(1, $organizations->currentOrganizationId(3), 'Advogado deve estar no escritorio demo.');
-assertTrue($organizations->sameOrganization(1, 3), 'Cliente e advogado demo devem estar na mesma organizacao.');
+assertTrue(!$organizations->sameOrganization(1, 3), 'Cliente nao deve participar do escritorio de advogados.');
 
 $rbac = new RbacService($pdo);
 assertTrue($rbac->can(1, 'documents.create', 'cliente'), 'Cliente deve criar documento por permissao default.');
@@ -168,5 +247,14 @@ assertTrue($rbac->can(5, 'qualquer.permissao', 'admin'), 'Admin deve ter wildcar
 $due = SlaService::deadlineForPriority('alta');
 assertTrue(new DateTimeImmutable($due) > new DateTimeImmutable(), 'SLA de prioridade alta deve ficar no futuro.');
 assertEquals('vencido', SlaService::status('2020-01-01 00:00:00', 'aberto'), 'SLA antigo deve ficar vencido.');
+
+putenv('MAIL_LOG_ONLY=true');
+$maxClientCheckout = $payments->createCheckout(1, 6, 'monthly');
+assertTrue($maxClientCheckout->ok === true, 'Checkout do Max Cliente deve concluir com sucesso.');
+assertEquals(7990, (int) ($maxClientCheckout->metadata['amount_cents'] ?? 0), 'Max Cliente deve cobrar R$ 79,90 no ciclo mensal.');
+$maxLawyerCheckout = $payments->createCheckout(3, 7, 'monthly');
+assertTrue($maxLawyerCheckout->ok === true, 'Checkout do Max Advogado deve concluir com sucesso.');
+assertEquals(8990, (int) ($maxLawyerCheckout->metadata['amount_cents'] ?? 0), 'Max Advogado deve cobrar R$ 89,90 no ciclo mensal.');
+putenv('MAIL_LOG_ONLY');
 
 echo "P2SaasTest: OK\n";

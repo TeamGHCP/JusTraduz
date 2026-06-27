@@ -83,4 +83,125 @@
       });
     });
   });
+
+  var invitePanel = document.querySelector("[data-office-invite-panel]");
+  if (invitePanel) {
+    var inviteMin = parseInt(invitePanel.dataset.officeInviteMin || "0", 10);
+    var inviteLimit = parseInt(invitePanel.dataset.officeInviteLimit || "5", 10);
+    var inviteCountTarget = invitePanel.querySelector("[data-office-invite-count]");
+    var inviteCountInput = invitePanel.querySelector("[data-office-invite-count-input]");
+    var decreaseInvite = invitePanel.querySelector("[data-office-invite-decrease]");
+    var increaseInvite = invitePanel.querySelector("[data-office-invite-increase]");
+    var inviteFields = Array.prototype.slice.call(invitePanel.querySelectorAll("[data-office-invite-field]"));
+    var inviteInputs = Array.prototype.slice.call(invitePanel.querySelectorAll("[data-office-invite-input]"));
+    var inviteCount = parseInt((inviteCountInput && inviteCountInput.value) || "0", 10);
+
+    inviteCount = Math.max(inviteMin, Math.min(inviteLimit, isNaN(inviteCount) ? inviteMin : inviteCount));
+
+    var activeInviteInputs = function () {
+      return inviteInputs.slice(0, inviteCount);
+    };
+
+    var renderInviteFields = function () {
+      inviteFields.forEach(function (field, index) {
+        var input = field.querySelector("[data-office-invite-input]");
+        var active = index < inviteCount;
+        field.hidden = !active;
+        if (input) {
+          input.disabled = !active;
+          input.required = active;
+        }
+      });
+
+      if (inviteCountTarget) {
+        inviteCountTarget.textContent = String(inviteCount);
+      }
+      if (inviteCountInput) {
+        inviteCountInput.value = String(inviteCount);
+      }
+      if (decreaseInvite) {
+        decreaseInvite.disabled = inviteCount <= inviteMin;
+      }
+      if (increaseInvite) {
+        increaseInvite.disabled = inviteCount >= inviteLimit;
+      }
+    };
+
+    var syncInviteFields = function () {
+      var emails = [];
+      activeInviteInputs().forEach(function (input) {
+        var email = input.value.trim().toLowerCase();
+        if (email && emails.indexOf(email) === -1) {
+          emails.push(email);
+        }
+      });
+
+      document.querySelectorAll("[data-office-invite-hidden]").forEach(function (target) {
+        target.innerHTML = "";
+        emails.forEach(function (email) {
+          var hidden = document.createElement("input");
+          hidden.type = "hidden";
+          hidden.name = "team_invites[]";
+          hidden.value = email;
+          target.appendChild(hidden);
+        });
+      });
+    };
+
+    var setInviteCount = function (nextCount) {
+      inviteCount = Math.max(inviteMin, Math.min(inviteLimit, nextCount));
+      renderInviteFields();
+      syncInviteFields();
+      if (inviteCount > 0 && activeInviteInputs()[inviteCount - 1]) {
+        activeInviteInputs()[inviteCount - 1].focus();
+      }
+    };
+
+    var validateInviteFields = function () {
+      var seen = [];
+      return activeInviteInputs().every(function (input) {
+        input.value = input.value.trim().toLowerCase();
+        if (!input.value || !input.checkValidity() || seen.indexOf(input.value) !== -1) {
+          input.setCustomValidity(seen.indexOf(input.value) !== -1 ? "Este e-mail ja foi informado." : "");
+          input.reportValidity();
+          return false;
+        }
+        input.setCustomValidity("");
+        seen.push(input.value);
+        return true;
+      });
+    };
+
+    if (decreaseInvite) {
+      decreaseInvite.addEventListener("click", function () {
+        setInviteCount(inviteCount - 1);
+      });
+    }
+    if (increaseInvite) {
+      increaseInvite.addEventListener("click", function () {
+        setInviteCount(inviteCount + 1);
+      });
+    }
+    inviteInputs.forEach(function (input) {
+      input.addEventListener("input", function () {
+        input.setCustomValidity("");
+        syncInviteFields();
+      });
+      input.addEventListener("blur", function () {
+        input.value = input.value.trim().toLowerCase();
+        syncInviteFields();
+      });
+    });
+    document.querySelectorAll("form").forEach(function (form) {
+      form.addEventListener("submit", function (event) {
+        if (!validateInviteFields()) {
+          event.preventDefault();
+          return;
+        }
+        syncInviteFields();
+      });
+    });
+    renderInviteFields();
+    syncInviteFields();
+  }
 })();

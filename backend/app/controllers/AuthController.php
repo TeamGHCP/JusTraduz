@@ -4,6 +4,7 @@ require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/GoogleOAuthService.php';
 require_once dirname(__DIR__) . '/services/MailerService.php';
+require_once dirname(__DIR__) . '/services/OrganizationInviteService.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
 
 class AuthController extends BaseController
@@ -23,6 +24,7 @@ class AuthController extends BaseController
     // -------------------------------------------------------
     public function registrar(): void
     {
+        $this->startSession();
         $nome   = trim((string) $this->request->post('nome', ''));
         $email  = $this->normalizeEmail((string) $this->request->post('email', ''));
         $telefone = trim((string) $this->request->post('telefone', ''));
@@ -39,6 +41,16 @@ class AuthController extends BaseController
         $status_cna = null;
 
         $frontUrl = APP_URL . '/frontend/login.html?cadastro';
+        $pendingOfficeInvite = $this->pendingOfficeInviteRequirement();
+
+        if ($pendingOfficeInvite !== null) {
+            if ($email !== $this->normalizeEmail((string) $pendingOfficeInvite['email'])) {
+                $this->response->redirectWithError($frontUrl, 'Use o e-mail que recebeu o convite do escritório.');
+            }
+            if ($tipo !== 'advogado') {
+                $this->response->redirectWithError($frontUrl, 'Convites do plano Escritório são exclusivos para cadastro de advogado.');
+            }
+        }
 
         // Validações
         if (!$nome || !$email || !$senha) {
@@ -182,10 +194,12 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'Muitas tentativas recentes. Aguarde alguns minutos e tente novamente.');
         }
 
+        $deletionSelect = $this->accountDeletionSelectSql();
         $stmt = $this->pdo->prepare(
-            "SELECT id, nome, email, senha, tipo, oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason, profile_completed
+            "SELECT id, nome, email, senha, tipo, status{$deletionSelect},
+                    oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason, profile_completed
              FROM users
-             WHERE email = ? AND status = 'ativo'"
+             WHERE email = ?"
         );
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
@@ -198,6 +212,10 @@ class AuthController extends BaseController
         if (!password_verify($senha, $usuario['senha'])) {
             $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'wrong_password']);
             $this->response->redirectWithError($frontUrl, 'Email ou senha incorretos.');
+        }
+        if (!$this->recoverScheduledAccountDeletion($usuario)) {
+            $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'inactive']);
+            $this->response->redirectWithError($frontUrl, 'Esta conta está inativa.');
         }
         if ((string) ($usuario['tipo'] ?? '') === 'admin') {
             $this->audit->log('auth.login_failed', 'user', (int) $usuario['id'], ['email' => $email, 'reason' => 'admin_used_common_login']);
@@ -226,6 +244,7 @@ class AuthController extends BaseController
         $_SESSION['logado'] = true;
         CsrfMiddleware::generateToken();
         $this->audit->log('auth.login', 'user', (int) $usuario['id'], ['tipo' => $usuario['tipo']]);
+        $inviteResult = $this->acceptPendingOrganizationInvite((int) $usuario['id']);
 
         // Redireciona por tipo
         $destinos = [
@@ -236,6 +255,9 @@ class AuthController extends BaseController
         ];
 
         $destino = $destinos[$usuario['tipo']] ?? '/frontend/dashboard-cliente.php';
+        if (($inviteResult['ok'] ?? false) === true) {
+            $this->response->redirect(APP_URL . $destino . '?sucesso=' . urlencode('Convite aceito. Você agora faz parte do plano Escritório.'));
+        }
         $this->response->redirect(APP_URL . $destino);
     }
 
@@ -307,6 +329,9 @@ class AuthController extends BaseController
                 ], static fn ($value) => $value !== null && $value !== ''));
             }
             $usuario = $this->findOrCreateGoogleUser($claims);
+            if (!$this->recoverScheduledAccountDeletion($usuario)) {
+                $this->response->redirectWithError($frontUrl, 'Esta conta está inativa.');
+            }
 
             if ((string) ($usuario['tipo'] ?? '') === 'admin') {
                 $this->audit->log('auth.google_login_blocked', 'user', (int) $usuario['id'], ['email' => $usuario['email'] ?? null, 'reason' => 'admin_used_common_google_login']);
@@ -364,6 +389,11 @@ class AuthController extends BaseController
 
         if (!in_array($tipo, ['cliente', 'advogado', 'estagiario'], true)) {
             $this->response->redirectWithError($frontUrl, 'Escolha o tipo de conta.');
+        }
+
+        $pendingOfficeInvite = $this->pendingOfficeInviteRequirement();
+        if ($pendingOfficeInvite !== null && $tipo !== 'advogado') {
+            $this->response->redirectWithError($frontUrl, 'Convites do plano Escritório são exclusivos para cadastro de advogado.');
         }
 
         if ($telefone === '' || strlen(preg_replace('/\D+/', '', $telefone) ?? '') < 10) {
@@ -518,8 +548,10 @@ class AuthController extends BaseController
             $this->response->redirectWithError($frontUrl, 'Muitas tentativas recentes. Aguarde alguns minutos e tente novamente.');
         }
 
+        $deletionSelect = $this->accountDeletionSelectSql();
         $stmt = $this->pdo->prepare(
-            "SELECT id, nome, senha, tipo FROM users WHERE email = ? AND status = 'ativo' AND tipo = 'admin'"
+            "SELECT id, nome, email, senha, tipo, status{$deletionSelect}
+             FROM users WHERE email = ? AND tipo = 'admin'"
         );
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
@@ -527,6 +559,9 @@ class AuthController extends BaseController
         if (!$usuario || !password_verify($senha, $usuario['senha'])) {
             $this->audit->log('auth.admin_login_failed', 'user', $usuario ? (int) $usuario['id'] : null, ['email' => $email]);
             $this->response->redirectWithError($frontUrl, 'Credenciais administrativas inválidas.');
+        }
+        if (!$this->recoverScheduledAccountDeletion($usuario)) {
+            $this->response->redirectWithError($frontUrl, 'Conta administrativa inativa.');
         }
 
         $_SESSION['id']     = $usuario['id'];
@@ -1292,7 +1327,8 @@ HTML;
             $nome = explode('@', $email)[0] ?: 'Usuário Google';
         }
 
-        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo, oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason, profile_completed FROM users WHERE google_sub = ? AND status = 'ativo' LIMIT 1");
+        $deletionSelect = $this->accountDeletionSelectSql();
+        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo, status{$deletionSelect}, oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason, profile_completed FROM users WHERE google_sub = ? LIMIT 1");
         $stmt->execute([$googleSub]);
         $usuario = $stmt->fetch();
 
@@ -1301,7 +1337,7 @@ HTML;
             return $usuario;
         }
 
-        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo, oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason, profile_completed FROM users WHERE email = ? AND status = 'ativo' LIMIT 1");
+        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo, status{$deletionSelect}, oab_verificado, oab_status, status_cna, cna_ultimo_erro, oab_rejection_reason, profile_completed FROM users WHERE email = ? LIMIT 1");
         $stmt->execute([$email]);
         $usuario = $stmt->fetch();
 
@@ -1373,6 +1409,79 @@ HTML;
         $_SESSION['tipo'] = $usuario['tipo'];
         $_SESSION['logado'] = true;
         CsrfMiddleware::generateToken();
+        $this->acceptPendingOrganizationInvite((int) $usuario['id']);
+    }
+
+    private function acceptPendingOrganizationInvite(int $userId): ?array
+    {
+        if ($userId <= 0 || empty($_SESSION['pending_org_invite_token'])) {
+            return null;
+        }
+
+        if (
+            $pendingOfficeInvite !== null
+            && $this->normalizeEmail((string) ($usuario['email'] ?? '')) !== $this->normalizeEmail((string) $pendingOfficeInvite['email'])
+        ) {
+            $this->response->redirectWithError($frontUrl, 'Use a conta Google que recebeu o convite do escritório.');
+        }
+
+        try {
+            return (new OrganizationInviteService($this->pdo))->acceptPendingForUser($userId);
+        } catch (Throwable $exception) {
+            error_log('Organization invite accept failed: ' . $exception->getMessage());
+            unset($_SESSION['pending_org_invite_token']);
+            return ['ok' => false, 'reason' => 'error'];
+        }
+    }
+
+    private function recoverScheduledAccountDeletion(array &$user): bool
+    {
+        if ((string) ($user['status'] ?? 'ativo') === 'ativo') {
+            return true;
+        }
+
+        $scheduledAt = trim((string) ($user['deletion_scheduled_at'] ?? ''));
+        if ($scheduledAt === '' || strtotime($scheduledAt) <= time()) {
+            return false;
+        }
+
+        $stmt = $this->pdo->prepare(
+            "UPDATE users
+             SET status = 'ativo', deletion_requested_at = NULL, deletion_scheduled_at = NULL, updated_at = ?
+             WHERE id = ? AND deletion_scheduled_at > ?"
+        );
+        $now = date('Y-m-d H:i:s');
+        $stmt->execute([$now, (int) $user['id'], $now]);
+        if ($stmt->rowCount() < 1) {
+            return false;
+        }
+
+        $user['status'] = 'ativo';
+        $user['deletion_requested_at'] = null;
+        $user['deletion_scheduled_at'] = null;
+        $this->audit->log('privacy.delete_account_recovered', 'user', (int) $user['id']);
+        return true;
+    }
+
+    private function accountDeletionSelectSql(): string
+    {
+        $hasColumns = database_table_has_column($this->pdo, 'users', 'deletion_requested_at')
+            && database_table_has_column($this->pdo, 'users', 'deletion_scheduled_at');
+
+        return $hasColumns
+            ? ', deletion_requested_at, deletion_scheduled_at'
+            : ', NULL AS deletion_requested_at, NULL AS deletion_scheduled_at';
+    }
+
+    private function pendingOfficeInviteRequirement(): ?array
+    {
+        $token = trim((string) ($_SESSION['pending_org_invite_token'] ?? ''));
+        if ($token === '') {
+            return null;
+        }
+
+        $result = (new OrganizationInviteService($this->pdo))->acceptToken($token, null);
+        return (string) ($result['reason'] ?? '') === 'auth_required' ? $result : null;
     }
 
     private function dashboardPathFor(string $tipo): string

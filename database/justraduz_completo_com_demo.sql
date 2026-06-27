@@ -460,7 +460,8 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('2026_06_13_google_oab_profile_fields'),
     ('2026_06_15_p2_saas'),
     ('2026_06_23_add_free_plan'),
-    ('2026_06_24_plan_audience_professional');
+    ('2026_06_24_plan_audience_professional'),
+    ('2026_06_26_max_plans');
 
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -477,6 +478,12 @@ INSERT INTO plans (slug, audience, name, description, monthly_price_cents, yearl
     ('pro', 'ambos', 'Pro', 'Ideal para advogados autônomos e profissionais jurídicos.', 4990, 47900,
      JSON_OBJECT('document_upload', 500, 'document_ai', 500, 'ai_chat', 5000, 'datajud_cnj', 500, 'ocr', 500),
      JSON_ARRAY('Até 500 documentos por mês', 'Até 500 análises com IA documental', 'Até 5.000 mensagens com IA Jurídica', 'Até 500 consultas CNJ por mês', 'Até 500 processamentos OCR por mês', 'Histórico de documentos e faturas'), 20),
+    ('max_cliente', 'cliente', 'Max', 'Mais volume para clientes que analisam e acompanham uma grande quantidade de documentos e processos.', 7990, 76700,
+     JSON_OBJECT('document_upload', 2000, 'document_ai', 2000, 'ai_chat', 20000, 'datajud_cnj', 2000, 'ocr', 2000),
+     JSON_ARRAY('Até 2.000 documentos por mês', 'Até 2.000 análises com IA documental', 'Até 20.000 mensagens com IA Jurídica', 'Até 2.000 consultas CNJ por mês', 'Até 2.000 processamentos OCR por mês', 'Histórico de documentos e faturas'), 25),
+    ('max_advogado', 'advogado', 'Max', 'Alto volume individual para advogados que operam documentos, consultas e análises jurídicas em escala.', 8990, 86300,
+     JSON_OBJECT('document_upload', 3000, 'document_ai', 3000, 'ai_chat', 30000, 'datajud_cnj', 3000, 'ocr', 3000),
+     JSON_ARRAY('Até 3.000 documentos por mês', 'Até 3.000 análises com IA documental', 'Até 30.000 mensagens com IA Jurídica', 'Até 3.000 consultas CNJ por mês', 'Até 3.000 processamentos OCR por mês', 'Casos, tarefas e agenda profissional', 'Histórico de documentos e faturas'), 25),
     ('escritorio', 'advogado', 'Escritório', 'Ideal para escritórios e equipes jurídicas.', 9990, 95900,
      JSON_OBJECT('document_upload', 0, 'document_ai', 0, 'ai_chat', 10000, 'datajud_cnj', 1000, 'ocr', 0),
      JSON_ARRAY('Documentos, OCR e IA documental ilimitados', 'Até 10.000 mensagens com IA Jurídica', 'Até 1.000 consultas CNJ por mês', 'Compartilhamento por organização', 'Agenda, casos e tarefas por equipe', 'Histórico de documentos e faturas'), 30)
@@ -640,14 +647,12 @@ ON DUPLICATE KEY UPDATE owner_user_id = VALUES(owner_user_id), status = 'active'
 SELECT id INTO @org_demo_id FROM organizations WHERE slug = 'costa-tamanini-demo';
 
 INSERT INTO organization_members (organization_id, user_id, role, status, invited_by) VALUES
-    (@org_demo_id, @advogado_id, 'owner', 'active', @admin_id),
-    (@org_demo_id, @estagiario_id, 'member', 'active', @admin_id),
-    (@org_demo_id, @cliente_id, 'member', 'active', @admin_id)
+    (@org_demo_id, @advogado_id, 'owner', 'active', @admin_id)
 ON DUPLICATE KEY UPDATE role = VALUES(role), status = 'active';
 
 SELECT id INTO @plan_pro_id FROM plans WHERE slug = 'pro';
 INSERT INTO subscriptions (user_id, organization_id, plan_id, billing_cycle, status, provider, current_period_start, current_period_end)
-VALUES (@cliente_id, @org_demo_id, @plan_pro_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH));
+VALUES (@cliente_id, NULL, @plan_pro_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH));
 
 INSERT INTO external_processes
     (user_id, owner_type, source, query_type, query_value, process_number, tribunal, uf, comarca, tipo_processo, classe_processual, assunto, status_inferido, status_normalizado, link, data_ultima_atualizacao, data_andamento_mais_recente, payload_json, last_synced_at)

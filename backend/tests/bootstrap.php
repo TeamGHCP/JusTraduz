@@ -98,6 +98,7 @@ function build_test_schema(PDO $pdo): void
     $schema = [
         'CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER,
             nome TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             senha TEXT NOT NULL,
@@ -133,10 +134,12 @@ function build_test_schema(PDO $pdo): void
         )',
         'CREATE TABLE organizations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
+            nome TEXT NOT NULL,
+            tipo TEXT DEFAULT "empresa",
+            documento TEXT,
             slug TEXT NOT NULL UNIQUE,
             owner_user_id INTEGER,
-            status TEXT DEFAULT "active",
+            status TEXT DEFAULT "ativo",
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT
         )',
@@ -151,6 +154,15 @@ function build_test_schema(PDO $pdo): void
             updated_at TEXT,
             UNIQUE (organization_id, user_id)
         )',
+        'CREATE TABLE user_organizations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            organization_id INTEGER NOT NULL,
+            papel TEXT DEFAULT "membro",
+            is_primary INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (user_id, organization_id)
+        )',
         'CREATE TABLE organization_invites (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             organization_id INTEGER NOT NULL,
@@ -162,6 +174,15 @@ function build_test_schema(PDO $pdo): void
             expires_at TEXT NOT NULL,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             accepted_at TEXT
+        )',
+        'CREATE TABLE role_permission_overrides (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role_name TEXT NOT NULL,
+            permission TEXT NOT NULL,
+            effect TEXT NOT NULL,
+            updated_by INTEGER,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (role_name, permission)
         )',
         'CREATE TABLE plans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -249,6 +270,23 @@ function build_test_schema(PDO $pdo): void
             sla_due_at TEXT,
             sla_status TEXT DEFAULT "sem_sla",
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )',
+        'CREATE TABLE case_escalations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_id INTEGER NOT NULL,
+            state TEXT NOT NULL,
+            notified_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            message TEXT NOT NULL
+        )',
+        'CREATE TABLE public_api_clients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL UNIQUE,
+            token_hash TEXT NOT NULL,
+            scopes TEXT NOT NULL DEFAULT "health:read,reports:read",
+            status TEXT NOT NULL DEFAULT "ativo",
+            last_used_at TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
         )',
         'CREATE TABLE messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -423,12 +461,12 @@ function seed_test_data(PDO $pdo): void
         (2, 'pro', 'ambos', 'Pro', 'Ideal para advogados autônomos e profissionais jurídicos.', 4990, 47900, '{\"document_upload\":500,\"document_ai\":500,\"ai_chat\":5000,\"datajud_cnj\":500,\"ocr\":500}', '[\"Até 500 documentos por mês\",\"Até 500 análises com IA documental\",\"Até 5.000 mensagens com IA Jurídica\",\"Até 500 consultas CNJ por mês\",\"Até 500 processamentos OCR por mês\",\"Histórico de documentos e faturas\"]', 1, 20),
         (3, 'escritorio', 'advogado', 'Escritório', 'Ideal para escritórios e equipes jurídicas.', 9990, 95900, '{\"document_upload\":0,\"document_ai\":0,\"ai_chat\":10000,\"datajud_cnj\":1000,\"ocr\":0}', '[\"Documentos, OCR e IA documental ilimitados\",\"Até 10.000 mensagens com IA Jurídica\",\"Até 1.000 consultas CNJ por mês\",\"Compartilhamento por organização\",\"Agenda, casos e tarefas por equipe\",\"Histórico de documentos e faturas\"]', 1, 30),
         (4, 'gratuito', 'cliente', 'Gratuito', 'Plano inicial liberado automaticamente apos o onboarding.', 0, 0, '{\"document_upload\":5,\"document_ai\":5,\"ai_chat\":50,\"datajud_cnj\":1,\"ocr\":5}', '[\"5 documentos por mes\",\"5 analises com IA\",\"50 mensagens com IA Juridica\",\"1 consulta CNJ por mes\"]', 1, 1),
-        (5, 'profissional_basico', 'advogado', 'Profissional básico', 'Plano inicial para advogados com OAB validada.', 0, 0, '{\"document_upload\":5,\"document_ai\":5,\"ai_chat\":50,\"datajud_cnj\":1,\"ocr\":5}', '[\"5 documentos por mes\",\"5 analises com IA documental\",\"50 mensagens com IA Juridica\",\"1 consulta CNJ por mes\",\"OCR basico para ate 5 arquivos\"]', 1, 5)");
-    $pdo->exec("INSERT INTO organizations (id, name, slug, owner_user_id, status) VALUES (1, 'Escritorio Teste', 'escritorio-teste', 3, 'active')");
+        (5, 'profissional_basico', 'advogado', 'Profissional básico', 'Plano inicial para advogados com OAB validada.', 0, 0, '{\"document_upload\":5,\"document_ai\":5,\"ai_chat\":50,\"datajud_cnj\":1,\"ocr\":5}', '[\"5 documentos por mes\",\"5 analises com IA documental\",\"50 mensagens com IA Juridica\",\"1 consulta CNJ por mes\",\"OCR basico para ate 5 arquivos\"]', 1, 5),
+        (6, 'max_cliente', 'cliente', 'Max', 'Alto volume para clientes.', 7990, 76700, '{\"document_upload\":2000,\"document_ai\":2000,\"ai_chat\":20000,\"datajud_cnj\":2000,\"ocr\":2000}', '[\"Até 2.000 documentos por mês\"]', 1, 25),
+        (7, 'max_advogado', 'advogado', 'Max', 'Alto volume para advogados.', 8990, 86300, '{\"document_upload\":3000,\"document_ai\":3000,\"ai_chat\":30000,\"datajud_cnj\":3000,\"ocr\":3000}', '[\"Até 3.000 documentos por mês\"]', 1, 25)");
+    $pdo->exec("INSERT INTO organizations (id, nome, tipo, slug, owner_user_id, status) VALUES (1, 'Escritorio Teste', 'escritorio', 'escritorio-teste', 3, 'ativo')");
     $pdo->exec("INSERT INTO organization_members (organization_id, user_id, role, status) VALUES
-        (1, 1, 'member', 'active'),
-        (1, 3, 'owner', 'active'),
-        (1, 6, 'member', 'active')");
+        (1, 3, 'owner', 'active')");
 
     $pdo->exec("INSERT INTO documents (id, user_id, nome_arquivo, tipo_arquivo, caminho) VALUES
         (1, 1, 'cliente-um.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-um.pdf'),

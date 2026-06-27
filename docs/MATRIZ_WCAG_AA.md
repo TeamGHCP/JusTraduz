@@ -12,7 +12,7 @@ Esta matriz ainda precisa ser validada manualmente. O sistema já possui recurso
 | 2.1.1 Teclado | Menu, formulários, chat e admin | Pendente | Roteiro executado sem mouse. | Navegar pelos fluxos principais usando Tab/Enter/Esc. |
 | 2.4.1 Ignorar blocos | Páginas com menu lateral | Pendente | Confirmação de skip link funcional. | Validar em todas as telas autenticadas. |
 | 2.4.3 Ordem do foco | Dashboards e formulários | Pendente | Sequência documentada por tela. | Registrar problemas encontrados e corrigir. |
-| 2.4.7 Foco visível | Botões, links e campos | Pendente | Capturas do foco em componentes críticos. | Conferir foco em tema claro, escuro e alto contraste. |
+| 2.4.7 Foco visivel | Botões, links e campos | Pendente | Capturas do foco em componentes críticos. | Conferir foco em tema claro, escuro e alto contraste. |
 | 3.3.1 Identificação de erro | Login, uploads e admin | Pendente | Erros associados a campos e regiões de alerta. | Testar entradas inválidas em cada fluxo. |
 | 3.3.2 Labels ou instruções | Campos obrigatórios | Pendente | Lista de campos sem instrução suficiente. | Ajustar labels e textos auxiliares quando necessário. |
 | 4.1.2 Nome, função e valor | Sidebar, modais, widgets e VLibras | Pendente | Teste com leitor de tela. | Validar nomes acessíveis e estados ARIA. |
