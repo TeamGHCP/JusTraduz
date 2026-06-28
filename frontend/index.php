@@ -253,28 +253,12 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     }
 
     /* Otimizacoes globais de responsividade mobile */
-    html, body {
+    .home-page {
       max-width: 100% !important;
       overflow-x: hidden !important;
     }
 
-    @keyframes menuFadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
     @media (max-width: 980px) {
-      .site-header.is-open .nav-links,
-      .site-header.is-open .nav-actions {
-        animation: menuFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-      }
-      
       .mobile-toggle {
         touch-action: manipulation !important;
         cursor: pointer !important;
