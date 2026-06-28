@@ -31,6 +31,27 @@ As contas demo usam:
 Demo@2026!
 ```
 
+## Como Rodar com Docker
+
+Para facilitar a inicialização e evitar erros de configuração de dependências locais (como PHP ou MySQL):
+
+1. Certifique-se de que o **Docker** e o **Docker Compose** estejam instalados e em execução.
+2. Copie o arquivo de ambiente, se ainda não existir:
+   ```powershell
+   Copy-Item backend\.env.example backend\.env
+   ```
+3. Suba os contêineres:
+   ```bash
+   docker compose up -d --build
+   ```
+4. O banco de dados (`justraduz`) será inicializado e carregado automaticamente com o schema e dados de demonstração (`justraduz_completo_com_demo.sql`).
+5. Acesse no navegador:
+   ```text
+   http://localhost:8080/JusTraduz/frontend/index.html
+   ```
+
+*Nota: As credenciais e portas de banco de dados para o Docker são injetadas de forma automática pelo `docker-compose.yml`, permitindo rodar em paralelo com qualquer banco MySQL local na porta 3306 (a porta externa do banco do Docker mapeia para 3307).*
+
 ## Checks Obrigatorios
 
 ```powershell
