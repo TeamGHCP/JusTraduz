@@ -1,29 +1,29 @@
-const CACHE_VERSION = "justraduz-pwa-2026-06-28-responsive-01";
+const CACHE_VERSION = "justraduz-pwa-2026-06-28-php-migration-v1";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "offline.html";
 const PUBLIC_PAGE_FALLBACKS = new Set([
-  "/index.html",
+  "/index.php",
   "/login.html",
   "/cadastro.html",
   "/recuperar-senha.html",
-  "/contato.html",
-  "/termos.html",
-  "/privacidade.html",
-  "/404.html",
-  "/500.html"
+  "/contato.php",
+  "/termos.php",
+  "/privacidade.php",
+  "/404.php",
+  "/500.php"
 ]);
 
 const STATIC_ASSETS = [
   "offline.html",
-  "index.html",
+  "index.php",
   "login.html",
   "cadastro.html",
   "recuperar-senha.html",
-  "contato.html",
-  "termos.html",
-  "privacidade.html",
-  "404.html",
-  "500.html",
+  "contato.php",
+  "termos.php",
+  "privacidade.php",
+  "404.php",
+  "500.php",
   "assets/css/style.css",
   "assets/css/base.css",
   "assets/css/layout.css",
@@ -169,7 +169,12 @@ async function publicPageFallback(request, cache) {
   let path = url.pathname.replace(self.registration.scope ? new URL(self.registration.scope).pathname : "", "/");
 
   if (path === "/" || path === "") {
-    path = "/index.html";
+    path = "/index.php";
+  }
+
+  // Normalize extension-less routing (e.g. /contato -> /contato.php)
+  if (!path.includes(".") && path !== "/") {
+    path += ".php";
   }
 
   if (!PUBLIC_PAGE_FALLBACKS.has(path)) {
