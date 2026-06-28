@@ -700,3 +700,613 @@
     line-height: 1.55 !important;
   }
 }
+
+/* Responsividade global: camada final para evitar overflow em todas as telas */
+html,
+body {
+  max-width: 100%;
+}
+
+body {
+  overflow-x: clip;
+}
+
+.app-shell,
+.app-main,
+.container,
+.card,
+.table-wrap,
+.topbar,
+.dash-section,
+.admin-hero,
+.analysis-hero,
+.lawyer-directory-hero,
+.client-next-step,
+.command-card,
+.case-card-rich,
+.professional-case-card,
+.lawyer-directory-card,
+.task-row,
+.chat-layout,
+.payment-panel,
+.pricing-page {
+  min-width: 0;
+}
+
+.card,
+.command-card,
+.case-card,
+.case-card-rich,
+.professional-case-card,
+.lawyer-directory-card,
+.task-row,
+.notification-item,
+.review-item,
+.audit-feed-item,
+.admin-hero,
+.analysis-hero,
+.lawyer-directory-hero,
+.process-detail-hero,
+.payment-method,
+.pricing-card {
+  overflow-wrap: anywhere;
+}
+
+.table-wrap {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.table th,
+.table td {
+  overflow-wrap: anywhere;
+}
+
+.btn,
+.badge,
+.select,
+.input,
+.textarea {
+  max-width: 100%;
+}
+
+.inline-actions,
+.inline-form,
+.action-form,
+.form-actions,
+.topbar-actions,
+.admin-hero-actions,
+.analysis-hero-actions,
+.lawyer-focus-actions,
+.case-actions,
+.task-row-actions,
+.review-actions,
+.stacked-actions,
+.chat-context-actions {
+  min-width: 0;
+}
+
+@media (max-width: 1180px) {
+  .client-command,
+  .lawyer-command,
+  .payment-panel,
+  .pricing-hero,
+  .payment-confirmed-grid,
+  .office-invite-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .client-command > .command-card-primary,
+  .lawyer-command > .command-card-primary,
+  .pricing-hero > :first-child,
+  .payment-panel > :last-child {
+    grid-column: 1 / -1;
+  }
+
+  .admin-filter-documents,
+  .admin-filter-requests,
+  .admin-filter-wide,
+  .audit-filter-wide,
+  .case-filter,
+  .case-filter-compact,
+  .task-filter-grid,
+  .lawyer-directory-filter,
+  .process-filter,
+  .agenda-filter {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    width: 100%;
+  }
+
+  .app-main {
+    max-width: 100%;
+  }
+
+  .grid,
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .client-command,
+  .lawyer-command,
+  .dashboard-metrics,
+  .quick-actions-grid,
+  .lawyer-summary-grid,
+  .task-summary-grid,
+  .permission-grid,
+  .professional-card-grid,
+  .lawyer-directory-grid,
+  .admin-alert-strip,
+  .admin-risk-board,
+  .admin-policy-strip,
+  .admin-dashboard-grid,
+  .health-grid,
+  .professional-work-grid,
+  .admin-work-grid,
+  .admin-panels,
+  .payment-panel,
+  .pricing-hero,
+  .pricing-grid,
+  .payment-confirmed-grid,
+  .office-invite-grid,
+  .doc-view,
+  .doc-view-wide,
+  .analysis-section-grid,
+  .profile-layout,
+  .process-detail-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .client-command > *,
+  .lawyer-command > *,
+  .pricing-hero > *,
+  .payment-panel > * {
+    grid-column: auto;
+  }
+
+  .topbar-account-copy strong,
+  .topbar-account-copy small {
+    max-width: min(220px, calc(100vw - 130px));
+  }
+
+  .dash-section-title,
+  .admin-hero,
+  .analysis-hero,
+  .lawyer-focus-panel,
+  .lawyer-directory-hero,
+  .client-next-step,
+  .professional-alert,
+  .process-detail-hero {
+    align-items: flex-start;
+  }
+
+  .chat-main {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .chat-main .chat-layout {
+    min-height: calc(100vh - 118px);
+  }
+
+  .chat-layout {
+    overflow: visible;
+  }
+
+  .chat-panel {
+    min-height: 520px;
+  }
+
+  .chat-messages {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 720px) {
+  .container {
+    width: min(100% - 28px, 1120px);
+  }
+
+  .app-main {
+    padding: 72px 16px 34px;
+  }
+
+  .topbar,
+  .dash-section-title,
+  .admin-hero,
+  .analysis-hero,
+  .lawyer-directory-hero,
+  .process-detail-hero,
+  .preview-topline,
+  .case-card,
+  .case-card-head,
+  .case-card-foot,
+  .task-row-head,
+  .task-row-footer,
+  .review-item,
+  .notification-item,
+  .professional-alert,
+  .professional-list-item,
+  .client-next-step,
+  .chat-context-head,
+  .chat-case-bar,
+  .chat-compose,
+  .attachment-dialog-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dash-section-title,
+  .task-row-footer,
+  .audit-feed-item,
+  .lawyer-work-item summary,
+  .lawyer-work-details,
+  .donut-wrap,
+  .payment-method-title,
+  .payment-pix-code,
+  .payment-confirmed-copy {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-filter,
+  .admin-filter-wide,
+  .admin-filter-documents,
+  .admin-filter-requests,
+  .audit-filter,
+  .audit-filter-wide,
+  .case-filter,
+  .case-filter-compact,
+  .task-filter-grid,
+  .lawyer-directory-filter,
+  .process-filter,
+  .agenda-filter,
+  .form-grid,
+  .profile-oab-grid,
+  .payment-card-form,
+  .payment-card-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-filter .btn,
+  .admin-filter-wide .btn,
+  .admin-filter-documents .btn,
+  .admin-filter-requests .btn,
+  .audit-filter .btn,
+  .audit-filter-wide .btn,
+  .case-filter .btn,
+  .task-filter-grid .btn,
+  .lawyer-directory-filter .btn,
+  .process-filter .btn,
+  .agenda-filter .btn,
+  .form-actions .btn,
+  .topbar-actions .btn,
+  .admin-hero-actions .btn,
+  .analysis-hero-actions .btn,
+  .lawyer-focus-actions .btn,
+  .case-actions .btn,
+  .task-row-actions .btn,
+  .review-actions .btn,
+  .stacked-actions .btn,
+  .inline-form .btn,
+  .action-form .btn,
+  .chat-context-actions .btn,
+  .pricing-card .btn,
+  .payment-actions .btn,
+  .payment-method-action {
+    width: 100%;
+  }
+
+  .topbar-actions,
+  .admin-hero-actions,
+  .analysis-hero-actions,
+  .lawyer-focus-actions,
+  .form-actions,
+  .inline-actions,
+  .inline-form,
+  .action-form,
+  .case-actions,
+  .task-row-actions,
+  .review-actions,
+  .stacked-actions,
+  .chat-context-actions,
+  .payment-actions {
+    width: 100%;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .select-sm,
+  .admin-reason-input,
+  .task-row-actions .select,
+  .inline-form .select,
+  .action-form .select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .card,
+  .command-card,
+  .admin-hero,
+  .analysis-hero,
+  .lawyer-directory-hero,
+  .process-detail-hero,
+  .process-detail-card,
+  .process-detail-summary,
+  .process-detail-latest,
+  .pricing-hero,
+  .pricing-card,
+  .payment-customer-card,
+  .payment-order-card,
+  .payment-methods-card,
+  .payment-status-card {
+    padding: 16px;
+  }
+
+  .table {
+    min-width: 620px;
+  }
+
+  .compact-table {
+    min-width: 520px;
+  }
+
+  .message {
+    max-width: 92%;
+  }
+
+  .message-meta {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .message-attachment {
+    align-items: flex-start;
+  }
+
+  .attachment-download span {
+    display: none;
+  }
+
+  .attachment-dialog-head h2 {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .bar-chart {
+    min-width: 520px;
+  }
+
+  .bar-chart,
+  .calendar-table,
+  .home-flow-pill-timeline {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 560px) {
+  .container {
+    width: min(100% - 24px, 1120px);
+  }
+
+  .app-main {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .sidebar {
+    width: min(312px, 88vw);
+  }
+
+  .sidebar-mobile-toggle {
+    top: 10px;
+    left: 10px;
+  }
+
+  .topbar h1,
+  .admin-hero h2,
+  .analysis-hero h2,
+  .process-detail-hero h2,
+  .lawyer-focus-panel h2,
+  .lawyer-directory-hero h2 {
+    font-size: 24px;
+    line-height: 1.15;
+  }
+
+  .hero-copy h1,
+  .hero-copy-centered h1,
+  .home-hero h1,
+  .privacy-hero h1,
+  .terms-hero h1 {
+    font-size: 36px !important;
+    line-height: 1.05 !important;
+  }
+
+  .hero-copy p,
+  .hero-copy-centered p,
+  .home-hero-copy > p,
+  .section-head p,
+  .privacy-hero p,
+  .terms-hero p {
+    font-size: 16px !important;
+  }
+
+  .btn {
+    min-height: 42px;
+    padding-inline: 12px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .badge {
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  .topbar-account {
+    width: 100%;
+    border-radius: var(--radius);
+  }
+
+  .topbar-account-copy strong,
+  .topbar-account-copy small {
+    max-width: calc(100vw - 118px);
+  }
+
+  .user-chip {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .stat-card,
+  .lawyer-summary-card,
+  .task-summary-card,
+  .lawyer-plan-card {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    text-align: left;
+  }
+
+  .stat-card .svg-icon,
+  .lawyer-summary-card .svg-icon,
+  .task-summary-card .svg-icon {
+    grid-row: auto;
+  }
+
+  .case-meta-grid,
+  .chat-context-grid,
+  .task-row-meta,
+  .lawyer-work-meta,
+  .lawyer-directory-meta {
+    grid-template-columns: 1fr !important;
+  }
+
+  .lawyer-directory-head {
+    flex-direction: column;
+  }
+
+  .lawyer-plan-toggle {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .lawyer-plan-summary-arrow {
+    grid-column: auto;
+    grid-row: auto;
+    justify-self: start;
+  }
+
+  .chat-compose .btn,
+  .chat-attach-btn {
+    width: 100%;
+  }
+
+  .chat-attach-btn {
+    justify-content: center;
+  }
+
+  .chat-layout {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    margin-right: -12px;
+    margin-left: -12px;
+  }
+
+  .chat-panel {
+    min-height: 560px;
+  }
+
+  .doc-frame,
+  .doc-image-wrap {
+    min-height: 360px;
+    height: 360px;
+  }
+
+  .table {
+    min-width: 560px;
+  }
+
+  .table th,
+  .table td {
+    padding: 11px 12px;
+  }
+
+  .admin-metric-list div,
+  .hbar-row div,
+  .payment-customer-list div,
+  .payment-order-lines div,
+  .payment-total {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .donut-chart {
+    width: 118px;
+    height: 118px;
+  }
+
+  .donut-chart::after {
+    width: 70px;
+    height: 70px;
+  }
+
+  .privacy-section,
+  .terms-section {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .container {
+    width: min(100% - 18px, 1120px);
+  }
+
+  .app-main {
+    padding-right: 9px;
+    padding-left: 9px;
+  }
+
+  .card,
+  .command-card,
+  .admin-hero,
+  .analysis-hero,
+  .lawyer-directory-hero,
+  .process-detail-hero,
+  .pricing-card,
+  .payment-customer-card,
+  .payment-order-card,
+  .payment-methods-card,
+  .payment-status-card,
+  .task-row,
+  .case-card-rich {
+    padding: 14px;
+  }
+
+  .sidebar {
+    width: min(300px, 92vw);
+  }
+
+  .hero-copy h1,
+  .hero-copy-centered h1,
+  .home-hero h1,
+  .privacy-hero h1,
+  .terms-hero h1 {
+    font-size: 32px !important;
+  }
+
+  .table {
+    min-width: 520px;
+  }
+}
