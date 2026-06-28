@@ -241,12 +241,14 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       }
 
       .home-page .home-hero-visual {
-        min-height: 680px !important;
-        height: 680px !important;
+        min-height: 480px !important;
+        height: 480px !important;
       }
 
       .home-page .iphone-mockup {
         transform: scale(.54) !important;
+        transform-origin: top center !important;
+        margin-top: -20px !important;
       }
     }
   </style>
