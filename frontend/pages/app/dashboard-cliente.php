@@ -138,7 +138,7 @@ $metricCards = [
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628">
+  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628-2">
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body data-tour-page="dashboard_cliente">
@@ -198,7 +198,7 @@ $metricCards = [
         <a class="btn btn-primary" href="<?= e($nextStep['href']) ?>"><?= icon_svg($nextStep['icon']) ?> <?= e($nextStep['action']) ?></a>
       </section>
 
-      <section class="grid grid-4 dashboard-metrics" data-tour-step="7" data-tour-title="Análises e pendências" data-tour-description="Estes indicadores mostram o que já foi analisado e o que ainda aguarda processamento.">
+      <section class="grid grid-4 dashboard-metrics" data-tour-step="5" data-tour-title="Análises e pendências" data-tour-description="Estes indicadores mostram o que já foi analisado e o que ainda aguarda processamento.">
         <?php foreach ($metricCards as $metric): ?>
           <a class="stat-card dashboard-metric-link" href="<?= e($metric['href']) ?>">
             <?= icon_svg($metric['icon']) ?>
@@ -208,7 +208,7 @@ $metricCards = [
         <?php endforeach; ?>
       </section>
 
-      <section class="dash-section">
+      <section class="dash-section" data-tour-step="6" data-tour-title="Atalhos da rotina" data-tour-description="Use estes cartões para ir direto a documentos, atendimento, conversas, agenda e perfil sem depender do menu.">
         <div class="dash-section-title">
           <div>
             <h2>Atalhos importantes <?= help_icon('Atalhos da dashboard', 'Use estes acessos para chegar rapidamente às principais áreas do JusTraduz.') ?></h2>
@@ -230,7 +230,7 @@ $metricCards = [
 
     </main>
   </div>
-  <?php render_onboarding_assets('dashboard_cliente', '2026.06.11', 'cliente'); ?>
+  <?php render_onboarding_assets('dashboard_cliente', '2026.06.28', 'cliente'); ?>
   <?php render_vlibras(); ?>
 </body>
 </html>

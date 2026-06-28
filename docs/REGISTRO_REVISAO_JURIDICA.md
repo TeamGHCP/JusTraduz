@@ -4,8 +4,8 @@ Este arquivo ainda precisa ser preenchido por profissional habilitado antes de v
 
 ## Escopo a revisar
 
-- `frontend/termos.html`
-- `frontend/privacidade.html`
+- `frontend/termos.php`
+- `frontend/privacidade.php`
 - Consentimento de IA no chat público.
 - Consentimento de análise de documentos por IA.
 - Consentimento DataJud por número CNJ.

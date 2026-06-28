@@ -22,7 +22,7 @@ Get-Content database\justraduz_completo_com_demo.sql -Raw | & C:\xampp\mysql\bin
 4. Acesse:
 
 ```text
-http://localhost/JusTraduz/frontend/index.html
+frontend/index.php
 ```
 
 As contas demo usam:
@@ -47,7 +47,7 @@ Para facilitar a inicialização e evitar erros de configuração de dependênci
 4. O banco de dados (`justraduz`) será inicializado e carregado automaticamente com o schema e dados de demonstração (`justraduz_completo_com_demo.sql`).
 5. Acesse no navegador:
    ```text
-   http://localhost:8080/JusTraduz/frontend/index.html
+   http://localhost:8080/JusTraduz/frontend/index.php
    ```
 
 *Nota: As credenciais e portas de banco de dados para o Docker são injetadas de forma automática pelo `docker-compose.yml`, permitindo rodar em paralelo com qualquer banco MySQL local na porta 3306 (a porta externa do banco do Docker mapeia para 3307).*

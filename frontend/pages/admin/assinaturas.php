@@ -41,7 +41,7 @@ function billing_status_badge(string $status): string
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Assinaturas | Admin JusTraduz</title>
   <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="../assets/css/style.css?v=global-responsive-20260628">
+  <link rel="stylesheet" href="../assets/css/style.css?v=global-responsive-20260628-2">
 </head>
 <body>
   <div class="app-shell admin-shell">

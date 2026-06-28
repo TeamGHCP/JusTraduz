@@ -193,7 +193,7 @@ $appointments = fetch_all(
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628">
+  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628-2">
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body data-tour-page="dashboard_advogado">
@@ -216,7 +216,7 @@ $appointments = fetch_all(
         </div>
       </section>
 
-      <section class="lawyer-summary-grid" data-tour-step="6" data-tour-title="Prioridade e status" data-tour-description="Use os indicadores para identificar urgências, pendências e volume de trabalho.">
+      <section class="lawyer-summary-grid" data-tour-step="3" data-tour-title="Prioridade e status" data-tour-description="Use os indicadores para identificar urgências, pendências e volume de trabalho.">
         <article class="lawyer-summary-card">
           <?= icon_svg('case') ?>
           <span>Casos ativos</span>
@@ -239,7 +239,7 @@ $appointments = fetch_all(
         </article>
       </section>
 
-      <section class="dash-section" data-tour-step="3" data-tour-title="Fila de solicitações" data-tour-description="Aqui aparecem solicitações abertas, ordenadas por urgência e ainda sem responsável.">
+      <section class="dash-section" data-tour-step="4" data-tour-title="Fila de solicitações" data-tour-description="Aqui aparecem solicitações abertas, ordenadas por urgência e ainda sem responsável.">
         <div class="dash-section-title">
           <h2>Fila para aceitar <?= help_icon('Fila para aceitar', 'Mostra solicitações sem responsável. Aceite apenas casos que você pode conduzir com segurança e disponibilidade.') ?></h2>
           <span class="badge badge-warning">Ordenada por urgencia</span>
@@ -272,7 +272,7 @@ $appointments = fetch_all(
                 <?php endif; ?>
                 <div class="case-card-foot">
                   <div class="case-actions">
-                    <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/accept')) ?>" method="post" data-tour-step="4" data-tour-title="Aceitar caso" data-tour-description="Aceite somente casos que você consegue conduzir com atenção, prazo e responsabilidade.">
+                    <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/cases/accept')) ?>" method="post" data-tour-step="5" data-tour-title="Aceitar caso" data-tour-description="Aceite somente casos que você consegue conduzir com atenção, prazo e responsabilidade.">
                       <?= csrf_input() ?>
                       <input type="hidden" name="case_id" value="<?= (int) $case['id'] ?>">
                       <button class="btn btn-primary btn-sm" type="submit">Aceitar caso</button>
@@ -286,7 +286,7 @@ $appointments = fetch_all(
         <?php endif; ?>
       </section>
 
-      <section class="dash-section">
+      <section class="dash-section" data-tour-step="6" data-tour-title="Meus casos ativos" data-tour-description="Depois de aceitar um caso, acompanhe chat, tarefas, agenda e documentos ligados ao cliente.">
         <div class="dash-section-title">
           <h2>Meus casos ativos <?= help_icon('Casos ativos', 'Acompanhe status, prioridade, tarefas, documentos e mensagens dos casos sob sua responsabilidade.') ?></h2>
           <a class="btn btn-soft btn-sm" href="acompanhar-solicitacoes.php?scope=meus">Ver todos</a>
@@ -333,7 +333,7 @@ $appointments = fetch_all(
         <?php endif; ?>
       </section>
 
-      <section class="grid grid-2 professional-work-grid" data-tour-step="7" data-tour-title="Tarefas" data-tour-description="Organize os próximos passos dos casos e acompanhe o que ainda está pendente.">
+      <section class="grid grid-2 professional-work-grid" data-tour-step="7" data-tour-title="Tarefas e agenda" data-tour-description="Organize os próximos passos dos casos e acompanhe compromissos futuros sem perder prazo.">
         <article class="dash-section">
           <div class="dash-section-title">
             <h2>Proximas tarefas <?= help_icon('Tarefas', 'Registre próximos passos objetivos e evite incluir dados sensíveis desnecessários na descrição.') ?></h2>
@@ -406,7 +406,7 @@ $appointments = fetch_all(
         </article>
       </section>
 
-      <section class="dash-section" data-tour-step="5" data-tour-title="Documentos vinculados" data-tour-description="Revise apenas documentos associados aos seus casos e preserve o sigilo do cliente.">
+      <section class="dash-section" data-tour-step="8" data-tour-title="Documentos vinculados" data-tour-description="Revise apenas documentos associados aos seus casos e preserve o sigilo do cliente.">
         <div class="dash-section-title">
           <h2>Documentos para revisar <?= help_icon('Documentos vinculados', 'Acesse somente documentos dos seus casos. O conteúdo é sensível e deve permanecer protegido.') ?></h2>
           <a class="btn btn-soft btn-sm" href="visualizar-documento.php">Ver documentos</a>
@@ -434,7 +434,7 @@ $appointments = fetch_all(
       </section>
     </main>
   </div>
-  <?php render_onboarding_assets('dashboard_advogado', '2026.06.11', 'advogado'); ?>
+  <?php render_onboarding_assets('dashboard_advogado', '2026.06.28', 'advogado'); ?>
   <?php render_vlibras(); ?>
 </body>
 </html>

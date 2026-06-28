@@ -21,6 +21,7 @@
   var popover;
   var previousFocus;
   var scrollTimer;
+  var mobileQuery = window.matchMedia ? window.matchMedia('(max-width: 720px)') : null;
 
   function request(url, data, method) {
     var options = { method: method || 'POST', credentials: 'same-origin', headers: { Accept: 'application/json' } };
@@ -104,6 +105,33 @@
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
+  function isMobileTour() {
+    return mobileQuery ? mobileQuery.matches : window.innerWidth <= 720;
+  }
+
+  function profileLabel() {
+    var labels = { cliente: 'Cliente', advogado: 'Advogado', admin: 'Admin' };
+    return labels[config.profile] || 'JusTraduz';
+  }
+
+  function setSidebarOpen(shell, isOpen) {
+    if (!shell) return;
+    shell.classList.toggle('is-sidebar-mobile-open', isOpen);
+    document.body.classList.toggle('sidebar-mobile-open', isOpen);
+    var button = shell.querySelector('[data-sidebar-mobile-toggle]');
+    if (button) button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  }
+
+  function syncSidebarForStep(element) {
+    var shell = element.closest('.app-shell') || document.querySelector('.app-shell');
+    var isSidebarStep = !!element.closest('[data-sidebar]');
+    if (!isMobileTour()) {
+      setSidebarOpen(shell, false);
+      return;
+    }
+    setSidebarOpen(shell, isSidebarStep);
+  }
+
   function isMostlyVisible(element) {
     var rect = element.getBoundingClientRect();
     var margin = 28;
@@ -117,7 +145,7 @@
     if (state.index === 0 || isMostlyVisible(element)) return;
     element.scrollIntoView({
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-      block: 'center',
+      block: isMobileTour() ? 'nearest' : 'center',
       inline: 'nearest'
     });
   }
@@ -130,6 +158,7 @@
 
   function show() {
     var element = state.steps[state.index];
+    syncSidebarForStep(element);
     var sidebarModule = element.closest('[data-sidebar-module]');
     if (sidebarModule) {
       var shell = element.closest('.app-shell');
@@ -155,9 +184,40 @@
       (state.index ? '<button class="btn btn-soft btn-sm" type="button" data-tour-back>Voltar</button>' : '') +
       '<button class="btn btn-primary btn-sm" type="button" data-tour-next>' +
       (state.index === state.steps.length - 1 ? 'Finalizar' : 'Próximo') + '</button></div>';
+    enhancePopover();
     bindPopover();
     schedulePosition();
     popover.querySelector('[data-tour-next]').focus();
+  }
+
+  function enhancePopover() {
+    var title = popover.querySelector('#onboarding-step-title');
+    var progress = popover.querySelector('.onboarding-progress');
+
+    if (title && !popover.querySelector('.onboarding-popover-head')) {
+      title.insertAdjacentHTML('beforebegin',
+        '<div class="onboarding-popover-head">' +
+        '<span class="onboarding-step-kicker">' + escapeHtml(profileLabel()) + ' tour</span>' +
+        '<span class="onboarding-count">Passo ' + (state.index + 1) + ' de ' + state.steps.length + '</span>' +
+        '</div>'
+      );
+    }
+
+    Array.prototype.slice.call(popover.children).forEach(function (node) {
+      if (node.classList && node.classList.contains('onboarding-count')) node.remove();
+    });
+
+    if (progress) {
+      progress.setAttribute('aria-label', 'Progresso do tour');
+      progress.insertAdjacentHTML('afterend', '<div class="onboarding-step-dots" aria-hidden="true">' + progressDots() + '</div>');
+    }
+  }
+
+  function progressDots() {
+    return state.steps.map(function (_, index) {
+      var className = index === state.index ? ' is-active' : index < state.index ? ' is-complete' : '';
+      return '<span class="' + className + '"></span>';
+    }).join('');
   }
 
   function bindPopover() {
@@ -179,11 +239,19 @@
     if (!state.active) return;
     var rect = state.steps[state.index].getBoundingClientRect();
     var padding = 6;
+    var hiddenTarget = rect.width <= 0 || rect.height <= 0 ||
+      rect.bottom < 0 || rect.top > window.innerHeight ||
+      rect.right < 0 || rect.left > window.innerWidth;
+
+    spotlight.classList.toggle('is-hidden', hiddenTarget);
     spotlight.style.top = Math.max(4, rect.top - padding) + 'px';
     spotlight.style.left = Math.max(4, rect.left - padding) + 'px';
     spotlight.style.width = Math.max(1, Math.min(window.innerWidth - 8, rect.width + (padding * 2))) + 'px';
     spotlight.style.height = Math.max(1, Math.min(window.innerHeight - 8, rect.height + (padding * 2))) + 'px';
-    if (window.innerWidth <= 720) {
+    popover.classList.toggle('is-mobile', isMobileTour());
+    if (isMobileTour()) {
+      popover.style.top = '';
+      popover.style.left = '';
       popover.style.visibility = 'visible';
       return;
     }
@@ -272,6 +340,7 @@
     if (overlay) overlay.remove();
     if (spotlight) spotlight.remove();
     if (popover) popover.remove();
+    setSidebarOpen(document.querySelector('.app-shell'), false);
     window.clearTimeout(scrollTimer);
     if (previousFocus && previousFocus.focus) previousFocus.focus();
   }

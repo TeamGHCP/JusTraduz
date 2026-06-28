@@ -258,7 +258,7 @@ $healthChecks = [
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="../assets/css/style.css?v=global-responsive-20260628">
+  <link rel="stylesheet" href="../assets/css/style.css?v=global-responsive-20260628-2">
   <script src="../assets/js/pwa.js" defer></script>
 </head>
 <body data-tour-page="dashboard_admin">
@@ -307,7 +307,7 @@ $healthChecks = [
         </a>
       </section>
 
-      <section class="admin-risk-board" data-tour-step="7" data-tour-title="Riscos operacionais" data-tour-description="Priorize gargalos que afetam atendimento, segurança e qualidade da operação.">
+      <section class="admin-risk-board" data-tour-step="5" data-tour-title="Riscos operacionais" data-tour-description="Priorize gargalos que afetam atendimento, segurança e qualidade da operação.">
         <?php foreach ($operationalRisks as $risk): ?>
           <a class="admin-risk-card is-<?= e($risk['level']) ?>" href="<?= e($risk['href']) ?>">
             <div>
@@ -319,7 +319,7 @@ $healthChecks = [
         <?php endforeach; ?>
       </section>
 
-      <section class="admin-dashboard-grid" data-tour-step="8" data-tour-title="Relatórios e tendências" data-tour-description="Use os gráficos para acompanhar volume, perfis, casos e utilização de IA.">
+      <section class="admin-dashboard-grid" data-tour-step="6" data-tour-title="Relatórios e tendências" data-tour-description="Use os gráficos para acompanhar volume, perfis, casos e utilização de IA.">
         <article class="card admin-chart-card admin-chart-card-wide">
           <div class="dash-section-title">
             <h2>Documentos enviados por dia</h2>
@@ -403,7 +403,7 @@ $healthChecks = [
         </article>
       </section>
 
-      <section class="grid grid-3 admin-work-grid" data-tour-step="5" data-tour-title="Documentos e IA" data-tour-description="Acompanhe documentos pendentes sem expor conteúdo jurídico ou dados pessoais.">
+      <section class="grid grid-3 admin-work-grid" data-tour-step="7" data-tour-title="Filas operacionais" data-tour-description="Revise OAB, solicitações críticas e documentos sem IA sem expor conteúdo jurídico ou dados pessoais.">
         <article class="dash-section">
           <div class="dash-section-title">
             <h2>Fila OAB</h2>
@@ -489,7 +489,7 @@ $healthChecks = [
         </article>
       </section>
 
-      <section class="grid grid-2 admin-panels" data-tour-step="6" data-tour-title="Auditoria" data-tour-description="Consulte eventos relevantes com rastreabilidade e acesso administrativo responsável.">
+      <section class="grid grid-2 admin-panels" data-tour-step="8" data-tour-title="Auditoria e integrações" data-tour-description="Consulte eventos relevantes, monitore integrações e mantenha acesso administrativo responsável.">
         <article class="dash-section">
           <div class="dash-section-title">
             <h2>Auditoria recente <?= help_icon('Auditoria', 'Consulte eventos operacionais e de segurança sem copiar dados pessoais ou conteúdo de documentos.') ?></h2>
@@ -535,7 +535,7 @@ $healthChecks = [
     </main>
   </div>
   <script src="../assets/js/confirm-actions.js"></script>
-  <?php render_onboarding_assets('dashboard_admin', '2026.06.11', 'admin'); ?>
+  <?php render_onboarding_assets('dashboard_admin', '2026.06.28', 'admin'); ?>
   <?php render_vlibras(); ?>
 </body>
 </html>

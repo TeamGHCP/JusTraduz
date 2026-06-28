@@ -5,7 +5,7 @@
   "description": "Plataforma para entender documentos jur\u00eddicos em linguagem simples e acompanhar atendimento.",
   "lang": "pt-BR",
   "dir": "ltr",
-  "start_url": "./index.html?source=pwa",
+  "start_url": "./index.php?source=pwa",
   "scope": "./",
   "display": "standalone",
   "display_override": [

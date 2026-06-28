@@ -25,7 +25,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628">
+  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628-2">
   <link rel="stylesheet" href="assets/css/auth-novo.css?v=custom-select-flow-8">
   <style>
     .auth-switch-page .auth-card .btn.btn-block {
@@ -235,7 +235,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
         <label class="checkline">
           <input type="checkbox" required>
-          <span>Li e aceito os <a href="termos.html">Termos de Uso</a> e a <a href="privacidade.html">Política de Privacidade</a>.</span>
+          <span>Li e aceito os <a href="termos.php">Termos de Uso</a> e a <a href="privacidade.php">Política de Privacidade</a>.</span>
         </label>
 
         <button class="btn btn-primary btn-block" type="submit" data-loading-text="Concluindo...">Concluir cadastro</button>
@@ -290,7 +290,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
       <path class="auth-line auth-line-thin" d="M-60 816 C146 790 326 846 492 928 C642 1002 780 1004 960 910" stroke="#04dcca" stroke-opacity=".34" stroke-width="1.4"/>
     </svg>
     <div class="auth-art-inner">
-      <a href="index.html" class="slider-logo-link">
+      <a href="index.php" class="slider-logo-link">
         <img class="slider-logo" src="assets/img/logo-modo-escuro-normalizado.png" alt="JusTraduz">
       </a>
     </div>

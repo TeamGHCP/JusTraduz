@@ -85,10 +85,27 @@ function any_reference_exists(array $candidates): bool
 {
     foreach ($candidates as $candidate) {
         $candidate = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $candidate);
-        if (file_exists($candidate)) {
-            return true;
+        foreach (expand_reference_candidates($candidate) as $expandedCandidate) {
+            if (file_exists($expandedCandidate)) {
+                return true;
+            }
         }
     }
 
     return false;
+}
+
+function expand_reference_candidates(string $candidate): array
+{
+    $candidates = [$candidate];
+    $extension = pathinfo($candidate, PATHINFO_EXTENSION);
+
+    if ($extension === '') {
+        $candidates[] = $candidate . '.php';
+        $candidates[] = $candidate . '.html';
+        $candidates[] = $candidate . DIRECTORY_SEPARATOR . 'index.php';
+        $candidates[] = $candidate . DIRECTORY_SEPARATOR . 'index.html';
+    }
+
+    return array_values(array_unique($candidates));
 }

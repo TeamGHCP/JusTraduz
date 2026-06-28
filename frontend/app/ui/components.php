@@ -226,11 +226,11 @@ function sidebar_tour_meta(string $type, string $label): ?array
             'Perfil' => [12, 'Perfil e segurança', 'Atualize seus dados, proteja sua senha e redefina o tour quando precisar.'],
         ],
         'advogado' => [
-            'Chat por caso' => [8, 'Chat por caso', 'Centralize a comunicação no caso e preserve o sigilo dos dados do cliente.'],
-            'Agenda' => [9, 'Agenda', 'Organize atendimentos e compromissos vinculados ao trabalho jurídico.'],
-            'Perfil profissional' => [10, 'Perfil profissional', 'Mantenha seus dados profissionais e sua situação cadastral atualizados.'],
-            'Notificações' => [11, 'Notificações', 'Acompanhe novos casos, mensagens e atualizações importantes.'],
-            'Documentos' => [12, 'Sigilo e LGPD', 'Documentos de clientes são sensíveis. Acesse somente o necessário e não os exponha.'],
+            'Chat por caso' => [9, 'Chat por caso', 'Centralize a comunicação no caso e preserve o sigilo dos dados do cliente.'],
+            'Agenda' => [10, 'Agenda', 'Organize atendimentos e compromissos vinculados ao trabalho jurídico.'],
+            'Perfil profissional' => [11, 'Perfil profissional', 'Mantenha seus dados profissionais e sua situação cadastral atualizados.'],
+            'Notificações' => [12, 'Notificações', 'Acompanhe novos casos, mensagens e atualizações importantes.'],
+            'Documentos' => [13, 'Sigilo e LGPD', 'Documentos de clientes são sensíveis. Acesse somente o necessário e não os exponha.'],
         ],
         'admin' => [
             'Auditoria' => [9, 'Segurança e auditoria', 'Investigue eventos críticos e tentativas de acesso sem expor dados sensíveis.'],
@@ -266,12 +266,12 @@ function render_onboarding_assets(
         'csrfToken' => csrf_token(),
     ];
     ?>
-    <link rel="stylesheet" href="<?= e($assetPrefix) ?>assets/css/onboarding.css?v=2026.06.11-8">
+    <link rel="stylesheet" href="<?= e($assetPrefix) ?>assets/css/onboarding.css?v=2026.06.28-1">
     <script type="application/json" id="justraduz-onboarding-config"><?= json_encode(
         $config,
         JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
     ) ?></script>
-    <script src="<?= e($assetPrefix) ?>assets/js/onboarding-tour.js?v=2026.06.11-8" defer></script>
+    <script src="<?= e($assetPrefix) ?>assets/js/onboarding-tour.js?v=2026.06.28-1" defer></script>
     <?php
 }
 

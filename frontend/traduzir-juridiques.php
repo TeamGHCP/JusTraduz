@@ -22,7 +22,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=site-polish-20260625">
+  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628-2">
   <script src="assets/js/cookie-consent.js?v=2026.06.25-1"></script>
 </head>
 <body class="seo-translate-page terms-page-enhanced">
@@ -132,7 +132,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="assets/js/main.js"></script>
+  <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
   <script src="assets/js/accessibility.js?v=2026.06.14-06"></script>
   <script src="assets/js/vlibras-init.js?v=2026.06.25-1" defer></script>
 </body>

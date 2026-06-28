@@ -17,17 +17,24 @@ Esta e a lista unica de pendencias reais do JusTraduz. Itens ja implementados ou
 ## Producao ou homologacao real
 
 - Configurar `backend/.env` real com `APP_DEBUG=false`, URLs HTTPS reais e sem placeholders.
+- Usar HTTPS real em `APP_URL`, `APP_PUBLIC_URL` e `HEALTHCHECK_URL`.
 - Instalar certificado TLS e aplicar o modelo `docs/apache-justraduz-production.conf`.
 - Configurar SMTP real e validar entregabilidade.
 - Configurar Gemini, DataJud, Google OAuth, Asaas e demais integracoes externas somente quando forem usadas.
 - Configurar monitoramento externo para `/backend/public/index.php?rota=/health`.
-- Definir `BACKUP_ENCRYPTION_PASSWORD`.
+- Definir `BACKUP_ENCRYPTION_PASSWORD`; ele e obrigatorio para backups criptografados.
 - Executar backup e restore em ambiente limpo, incluindo banco e storage.
 - Definir storage privado fora do webroot para documentos e anexos.
-- Instalar/configurar ClamAV se houver uploads reais de usuarios.
+- Instalar/configurar `CLAMAV_BINARY` se houver uploads reais de usuarios.
 - Instalar/configurar Tesseract se `OCR_ENABLED=true`.
 - Agendar `scripts/run-jobs.php` se `ASYNC_JOBS_ENABLED=true`.
 - Validar PWA em HTTPS real, incluindo instalacao em Android/iPhone.
+
+## Pendencias operacionais encontradas
+
+O `scripts/operational-health-report.php` mostrou 1 SLA vencido, 1 caso sem responsavel e 1 OAB pendente. Resolver os casos em `frontend/admin/solicitacoes.php` ou nas telas de acompanhamento administrativo; resolver a OAB pendente em `frontend/admin/validar-oab.php`.
+
+Se as chaves reais do `backend/.env` local ja foram compartilhadas fora do ambiente seguro, rotacione essas credenciais nos provedores correspondentes.
 
 ## Banco de dados
 

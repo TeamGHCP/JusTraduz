@@ -82,6 +82,12 @@ if ($downloadMode) {
       box-sizing: border-box;
     }
 
+    html,
+    body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
     body {
       margin: 0;
       background: #f4f6f9;
@@ -93,6 +99,7 @@ if ($downloadMode) {
       top: 0;
       z-index: 2;
       display: flex;
+      flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
       padding: 14px;
@@ -112,6 +119,7 @@ if ($downloadMode) {
       font-weight: 800;
       text-decoration: none;
       cursor: pointer;
+      text-align: center;
     }
 
     .doc-actions a {
@@ -171,6 +179,7 @@ if ($downloadMode) {
     .doc-party,
     .doc-summary {
       line-height: 1.55;
+      overflow-wrap: anywhere;
     }
 
     .doc-meta strong,
@@ -252,6 +261,18 @@ if ($downloadMode) {
     }
 
     @media (max-width: 720px) {
+      .doc-actions {
+        align-items: stretch;
+        padding: 10px;
+      }
+
+      .doc-actions a,
+      .doc-actions button {
+        flex: 1 1 170px;
+        justify-content: center;
+        min-height: 44px;
+      }
+
       .document {
         width: 100%;
         min-height: auto;
@@ -262,12 +283,45 @@ if ($downloadMode) {
       }
 
       .doc-head,
-      .doc-two-col {
+      .doc-two-col,
+      .doc-row,
+      .doc-total-row {
         flex-direction: column;
+        gap: 10px;
       }
 
       .doc-party {
         width: 100%;
+      }
+
+      .brand {
+        font-size: 28px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .doc-summary {
+        font-size: 18px;
+      }
+
+      .doc-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+      }
+
+      .doc-table th,
+      .doc-table td {
+        min-width: 120px;
+      }
+
+      .doc-table th:first-child,
+      .doc-table td:first-child {
+        min-width: 240px;
+        white-space: normal;
       }
     }
 

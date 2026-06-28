@@ -6,7 +6,8 @@
 require_once __DIR__ . '/includes/seo.php';
 
 // Impedir acesso não autorizado se necessário, mas como é sitemap, deixamos público com opção de rodar
-$baseUrl = get_seo_base_url();
+$configuredBaseUrl = trim((string) (getenv('APP_PUBLIC_URL') ?: getenv('APP_URL') ?: get_seo_base_url()));
+$baseUrl = normalize_sitemap_base_url($configuredBaseUrl);
 
 $pages = [
     '', // Home
@@ -62,4 +63,14 @@ if ($successRoot && $successFrontend) {
 } else {
     http_response_code(500);
     echo "Erro ao gravar os arquivos sitemap.xml nas pastas de destino.\n";
+}
+
+function normalize_sitemap_base_url(string $baseUrl): string
+{
+    $baseUrl = rtrim($baseUrl, '/');
+    if ($baseUrl !== '' && str_starts_with($baseUrl, 'https://') && !str_contains($baseUrl, 'localhost')) {
+        return $baseUrl;
+    }
+
+    return 'https://justraduz.com.br';
 }
