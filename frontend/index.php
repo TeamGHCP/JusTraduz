@@ -251,6 +251,35 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         margin-top: -20px !important;
       }
     }
+
+    /* Otimizacoes globais de responsividade mobile */
+    html, body {
+      max-width: 100% !important;
+      overflow-x: hidden !important;
+    }
+
+    @keyframes menuFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 980px) {
+      .site-header.is-open .nav-links,
+      .site-header.is-open .nav-actions {
+        animation: menuFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+      }
+      
+      .mobile-toggle {
+        touch-action: manipulation !important;
+        cursor: pointer !important;
+      }
+    }
   </style>
   <script src="assets/js/cookie-consent.js?v=2026.06.25-1"></script>
   <script src="assets/js/pwa.js?v=2026.06.20-01" defer></script>

@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
   const openingLoader = document.querySelector("[data-opening-loader]");
 
   if (openingLoader) {
@@ -477,9 +477,9 @@
 
     typewriter.classList.add("is-ready");
 
-    const typeSpeed = 68;
-    const deleteSpeed = 36;
-    const waitTime = 1900;
+    const typeSpeed = 100;
+    const deleteSpeed = 50;
+    const waitTime = 2500;
     const fadeTime = 180;
     let wordIndex = 0;
     let charIndex = words[0].length;
