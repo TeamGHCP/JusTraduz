@@ -203,6 +203,7 @@ $topbarSubtitle = (string) (($process['process_number'] ?? '') ?: 'Processo arma
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <meta name="robots" content="noindex, nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Detalhes do processo | JusTraduz</title>

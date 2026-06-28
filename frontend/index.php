@@ -1,11 +1,21 @@
+<?php
+$pathPrefix = '';
+$activePage = 'home';
+require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
+?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>JusTraduz | Direito em linguagem simples</title>
+  <?php
+    renderSeo([
+      'title' => 'JusTraduz | Direito em linguagem simples',
+      'description' => 'Simplifique contratos, notificações e termos jurídicos. Entenda os seus direitos com explicações simples geradas por IA jurídica e conecte-se a profissionais.',
+      'canonical' => 'https://justraduz.com.br/',
+      'robots' => 'index, follow'
+    ]);
+  ?>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+  <link class="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <meta name="theme-color" content="#008f80">
   <meta name="application-name" content="JusTraduz">
@@ -14,6 +24,55 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
+  
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://justraduz.com.br/#organization",
+        "name": "JusTraduz",
+        "url": "https://justraduz.com.br",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://justraduz.com.br/frontend/assets/img/logo.png",
+          "width": 512,
+          "height": 512
+        },
+        "sameAs": [
+          "https://www.instagram.com/justraduz/"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://justraduz.com.br/#website",
+        "url": "https://justraduz.com.br",
+        "name": "JusTraduz",
+        "description": "Direito em linguagem simples",
+        "publisher": {
+          "@id": "https://justraduz.com.br/#organization"
+        }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://justraduz.com.br/#softwareapplication",
+        "name": "JusTraduz",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "All",
+        "url": "https://justraduz.com.br",
+        "description": "Plataforma SaaS para simplificar e traduzir documentos jurídicos complexos em linguagem simples e acessível usando inteligência artificial.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL"
+        }
+      }
+    ]
+  }
+  </script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="assets/img/app-mark.png" as="image" type="image/png">
@@ -45,7 +104,7 @@
     })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628">
+  <link rel="stylesheet" href="assets/css/style.css?v=site-polish-20260625">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
   <style>
     @media (max-width: 980px) {
@@ -201,35 +260,10 @@
       <span class="jt-cinematic-loader__logo jt-cinematic-loader__logo--lit jt-cinematic-loader__logo--lit-fill"></span>
     </div>
   </div>
-  <header class="site-header home-header" data-site-header>
-    <div class="container nav-bar">
-      <a class="brand" href="#top" aria-label="Voltar ao início">
-        <img src="assets/img/logo.png" alt="JusTraduz">
-      </a>
-
-      <nav class="nav-links" aria-label="Menu principal">
-        <a href="#recursos">Recursos</a>
-        <a href="#fluxo">Fluxo</a>
-        <a href="#seguranca">Segurança</a>
-      </nav>
-
-      <div class="nav-actions">
-        <a class="btn btn-outline btn-sm" href="login.html">Entrar</a>
-        <a class="btn btn-primary btn-sm" href="login.html?cadastro">Cadastrar</a>
-      </div>
-
-      <button class="mobile-toggle" type="button" data-nav-toggle aria-label="Abrir menu">
-        <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 7h16"/>
-          <path d="M4 12h16"/>
-          <path d="M4 17h16"/>
-        </svg>
-      </button>
-    </div>
-  </header>
+  <?php require __DIR__ . '/' . $pathPrefix . 'includes/header.php'; ?>
 
   <main>
-    <section class="home-hero">
+    <section id="recursos" class="home-hero">
       <div class="home-hero-lines" aria-hidden="true"></div>
       <div class="home-hero-backdrop" aria-hidden="true">
         <span class="hero-legal-sheet hero-legal-sheet-main" data-hero-depth="0.18"></span>
@@ -407,7 +441,7 @@
       </div>
     </section>
 
-    <section id="recursos" class="page-section home-flow-section">
+    <section id="fluxo" class="page-section home-flow-section">
       <div class="home-flow-scroll" data-home-feature-flow>
         <div class="home-flow-sticky">
           <div class="container home-flow-pin-inner">
@@ -661,53 +695,6 @@
       </div>
     </section>
 
-    <section class="page-section section-white home-detail-section" hidden aria-hidden="true">
-      <div class="container home-detail-grid">
-        <div>
-          <span class="home-eyebrow">Fluxo guiado</span>
-          <h2>Da dúvida ao atendimento, sem perder o contexto.</h2>
-          <p>O JusTraduz organiza o primeiro entendimento do documento, transforma dúvidas em solicitações e mantém o histórico pronto para o profissional acompanhar.</p>
-        </div>
-
-        <div class="home-steps" data-flow-steps>
-          <div class="flow-preview" aria-live="polite">
-            <article class="flow-preview-card is-active" data-flow-panel="cliente">
-              <span>Cliente</span>
-              <h3>Envia o documento</h3>
-              <p>PDF ou imagem entram com consentimento claro e contexto inicial do problema.</p>
-            </article>
-
-            <article class="flow-preview-card" data-flow-panel="ia">
-              <span>IA Jurídica</span>
-              <h3>Traduz o juridiquês</h3>
-              <p>Resumo, pontos de atenção e explicação simples aparecem em segundos.</p>
-            </article>
-
-            <article class="flow-preview-card" data-flow-panel="caso">
-              <span>Caso</span>
-              <h3>Vira solicitação</h3>
-              <p>O atendimento segue organizado por status, histórico e próximo passo.</p>
-            </article>
-          </div>
-
-          <button class="flow-step is-active" type="button" data-flow-step="cliente" aria-pressed="true">
-            <strong>01</strong>
-            <span>O cliente envia PDF ou imagem com consentimento claro.</span>
-          </button>
-
-          <button class="flow-step" type="button" data-flow-step="ia" aria-pressed="false">
-            <strong>02</strong>
-            <span>A IA gera resumo, pontos de atenção e explicação simples.</span>
-          </button>
-
-          <button class="flow-step" type="button" data-flow-step="caso" aria-pressed="false">
-            <strong>03</strong>
-            <span>O caso vira uma solicitação acompanhada por status.</span>
-          </button>
-        </div>
-      </div>
-    </section>
-
     <section id="feedbacks" class="page-section home-feedback-section" aria-labelledby="feedback-title">
       <div class="container home-feedback-grid">
         <div class="home-feedback-copy">
@@ -728,8 +715,8 @@
                       <span>Curitiba, PR</span>
                     </div>
                   </div>
-                  <p>"Enviei uma notifica&ccedil;&atilde;o que eu n&atilde;o entendia e consegui separar os pontos importantes antes de pedir ajuda."</p>
-                  <div class="feedback-stars" aria-label="Avalia&ccedil;&atilde;o 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                  <p>"Enviei uma notificação que eu não entendia e consegui separar os pontos importantes antes de pedir ajuda."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
                 </article>
 
                 <article class="feedback-card">
@@ -740,8 +727,8 @@
                       <span>Belo Horizonte, MG</span>
                     </div>
                   </div>
-                  <p>"A linguagem ficou bem mais simples. Algumas partes ainda precisei reler, mas j&aacute; cheguei mais preparado."</p>
-                  <div class="feedback-stars" aria-label="Avalia&ccedil;&atilde;o 4 de 5">&#9733;&#9733;&#9733;&#9733;<span class="feedback-star-empty">&#9734;</span></div>
+                  <p>"A linguagem ficou bem mais simples. Algumas partes ainda precisei reler, mas já cheguei mais preparado."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 4 de 5">&#9733;&#9733;&#9733;&#9733;<span class="feedback-star-empty">&#9734;</span></div>
                 </article>
 
                 <article class="feedback-card">
@@ -752,8 +739,8 @@
                       <span>São Paulo, SP</span>
                     </div>
                   </div>
-                  <p>"Gostei do passo a passo. Ele me ajudou a organizar documentos e perguntas sem ficar perdida no jur&iacute;dico."</p>
-                  <div class="feedback-stars" aria-label="Avalia&ccedil;&atilde;o 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                  <p>"Gostei do passo a passo. Ele me ajudou a organizar documentos e perguntas sem ficar perdida no jurídico."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
                 </article>
               </div>
             </div>
@@ -770,8 +757,8 @@
                       <span>Recife, PE</span>
                     </div>
                   </div>
-                  <p>"Antes eu travava com qualquer termo jur&iacute;dico. O resumo n&atilde;o resolveu tudo, mas deixou o essencial claro."</p>
-                  <div class="feedback-stars" aria-label="Avalia&ccedil;&atilde;o 4 de 5">&#9733;&#9733;&#9733;&#9733;<span class="feedback-star-empty">&#9734;</span></div>
+                  <p>"Antes eu travava com qualquer termo jurídico. O resumo não resolveu tudo, mas deixou o essencial claro."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 4 de 5">&#9733;&#9733;&#9733;&#9733;<span class="feedback-star-empty">&#9734;</span></div>
                 </article>
 
                 <article class="feedback-card">
@@ -782,8 +769,8 @@
                       <span>Florianópolis, SC</span>
                     </div>
                   </div>
-                  <p>"A parte do hist&oacute;rico foi a que mais gostei. Ficou f&aacute;cil lembrar o que j&aacute; tinha sido enviado e respondido."</p>
-                  <div class="feedback-stars" aria-label="Avalia&ccedil;&atilde;o 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                  <p>"A parte do histórico foi a que mais gostei. Ficou fácil lembrar o que já tinha sido enviado e respondido."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
                 </article>
 
                 <article class="feedback-card">
@@ -794,8 +781,8 @@
                       <span>Goiânia, GO</span>
                     </div>
                   </div>
-                  <p>"Achei &uacute;til para ter uma primeira no&ccedil;&atilde;o. Para meu caso faltou mais detalhe, mas ajudou a come&ccedil;ar."</p>
-                  <div class="feedback-stars" aria-label="Avalia&ccedil;&atilde;o 3 de 5">&#9733;&#9733;&#9733;<span class="feedback-star-empty">&#9734;&#9734;</span></div>
+                  <p>"Achei útil para ter uma primeira noção. Para meu caso faltou mais detalhe, mas ajudou a começar."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 3 de 5">&#9733;&#9733;&#9733;<span class="feedback-star-empty">&#9734;&#9734;</span></div>
                 </article>
               </div>
             </div>
@@ -812,8 +799,8 @@
                       <span>Salvador, BA</span>
                     </div>
                   </div>
-                  <p>"Usei para entender um contrato. O resumo destacou prazos, multa e pontos que eu n&atilde;o tinha percebido."</p>
-                  <div class="feedback-stars" aria-label="Avalia&ccedil;&atilde;o 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                  <p>"Usei para entender um contrato. O resumo destacou prazos, multa e pontos que eu não percebido."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
                 </article>
 
                 <article class="feedback-card">
@@ -824,8 +811,8 @@
                       <span>Campinas, SP</span>
                     </div>
                   </div>
-                  <p>"A experi&ecirc;ncia ficou bonita e objetiva. O que mais ajudou foi ver os pr&oacute;ximos passos em linguagem clara."</p>
-                  <div class="feedback-stars" aria-label="Avalia&ccedil;&atilde;o 4 de 5">&#9733;&#9733;&#9733;&#9733;<span class="feedback-star-empty">&#9734;</span></div>
+                  <p>"A experiência ficou bonita e objetiva. O que mais ajudou foi ver os próximos passos em linguagem clara."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 4 de 5">&#9733;&#9733;&#9733;&#9733;<span class="feedback-star-empty">&#9734;</span></div>
                 </article>
 
                 <article class="feedback-card">
@@ -836,8 +823,8 @@
                       <span>Porto Alegre, RS</span>
                     </div>
                   </div>
-                  <p>"O atendimento ficou mais objetivo. Consegui explicar meu problema com menos inseguran&ccedil;a na conversa."</p>
-                  <div class="feedback-stars" aria-label="Avalia&ccedil;&atilde;o 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                  <p>"O atendimento ficou mais objetivo. Consegui explicar meu problema com menos insegurança na conversa."</p>
+                  <div class="feedback-stars" aria-label="Avaliação 5 de 5">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
                 </article>
               </div>
             </div>
@@ -874,7 +861,7 @@
 
           <div class="home-security-preview" aria-live="polite">
             <div class="home-security-preview-top">
-              <span data-security-preview-kicker>Proteção ativa</span>
+              <span data-security-preview-kicker>Proteção active</span>
               <strong data-security-preview-title>Consentimento antes do envio</strong>
             </div>
             <p data-security-preview-text>O usuário entende o uso da plataforma antes de enviar documentos, com regras visíveis e registro do aceite.</p>
@@ -904,69 +891,11 @@
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container footer-shell">
-      <div class="footer-grid">
-        <div class="footer-brand">
-          <a class="footer-logo-text" href="#top">Jus<span>Traduz</span></a>
-          <p>Direito em linguagem simples para entender documentos, agir com seguran&ccedil;a e resolver pr&oacute;ximos passos.</p>
-
-          <p class="footer-social-links">
-            <a class="footer-social-link footer-social-instagram" href="https://www.instagram.com/justraduz/" target="_blank" rel="noopener" aria-label="Instagram">
-              <svg class="footer-social-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="2" y="2" width="20" height="20" rx="5"/>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-                <path d="M17.5 6.5h.01"/>
-              </svg>
-            </a>
-            <a class="footer-social-link footer-social-github" href="https://github.com/TeamGHCP/justraduz" target="_blank" rel="noopener" aria-label="GitHub">
-              <svg class="footer-social-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 19c-5 1.5-5-2.5-7-3"/>
-                <path d="M15 22v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 19 4.77 5.07 5.07 0 0 0 18.91 1S17.73.65 15 2.48a13.38 13.38 0 0 0-6 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
-              </svg>
-            </a>
-          </p>
-        </div>
-
-        <nav class="footer-columns" aria-label="Links do rodap&eacute;">
-          <div class="footer-col">
-            <h4>Produto</h4>
-            <ul>
-              <li><a href="#recursos"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5Z"/><path d="M8 6h8"/><path d="M8 10h8"/></svg>Recursos</a></li>
-              <li><a href="#fluxo"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h11"/><path d="M17 19h3v3"/></svg>Fluxo</a></li>
-              <li><a href="#seguranca"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>Seguran&ccedil;a</a></li>
-            </ul>
-          </div>
-
-          <div class="footer-col">
-            <h4>Plataforma</h4>
-            <ul>
-              <li><a href="login.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>Entrar</a></li>
-              <li><a href="login.html?cadastro"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Criar conta</a></li>
-              <li><a href="contato.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Contato</a></li>
-            </ul>
-          </div>
-
-          <div class="footer-col">
-            <h4>Legal</h4>
-            <ul>
-              <li><a href="termos.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>Termos de Uso</a></li>
-              <li><a href="privacidade.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Privacidade</a></li>
-              <li><a href="#seguranca"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Seguran&ccedil;a</a></li>
-            </ul>
-          </div>
-        </nav>
-      </div>
-
-      <div class="footer-bottom">
-        <p>&copy; <span data-current-year></span> JusTraduz. Todos os direitos reservados.</p>
-      </div>
-    </div>
-  </footer>
+  <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
   <aside class="ai-chatbot" data-ai-chatbot aria-label="Assistente virtual JusTraduz">
     <button class="ai-chatbot-callout" type="button" data-ai-chatbot-toggle aria-label="Abrir chat com IA" aria-expanded="false">
-      <img class="ai-chatbot-callout-robot" src="assets/img/chat-bot-logo.png" alt="">
+      <img class="ai-chatbot-callout-robot" src="assets/img/chat-bot-logo.png" alt="Avatar da JusTraduz IA">
       <span class="ai-chatbot-callout-bubble">Consulte o JusIA</span>
     </button>
 
@@ -974,7 +903,7 @@
       <header class="ai-chatbot-header">
         <div class="ai-chatbot-identity">
           <span class="ai-chatbot-avatar" aria-hidden="true">
-            <img src="assets/img/chat-bot-logo.png" alt="">
+            <img src="assets/img/chat-bot-logo.png" alt="Avatar da JusTraduz IA">
           </span>
           <div>
             <span id="ai-chatbot-title">JusTraduz IA</span>
@@ -1002,7 +931,7 @@
         </label>
         <label>
           <input type="checkbox" data-ai-chatbot-terms>
-          <span>Li e aceito os <a href="termos.html" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade.html" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
+          <span>Li e aceito os <a href="termos" target="_blank" rel="noopener">Termos de Uso</a> e a <a href="privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.</span>
         </label>
         <button type="button" data-ai-chatbot-consent-button disabled>Continuar</button>
         <small>O Jus IA não substitui advogado e não calcula prazos processuais.</small>

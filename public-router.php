@@ -58,12 +58,12 @@ foreach (['.html', '.php'] as $extension) {
     }
 }
 
-$notFoundPage = $documentRoot . '/frontend/404.html';
+$notFoundPage = $documentRoot . '/frontend/404.php';
 http_response_code(404);
-header('Content-Type: text/html; charset=UTF-8');
 
 if (is_file($notFoundPage)) {
-    echo (string) file_get_contents($notFoundPage);
+    $_SERVER['SCRIPT_FILENAME'] = $notFoundPage;
+    require $notFoundPage;
     return true;
 }
 

@@ -1,0 +1,110 @@
+User-agent: *
+Allow: /
+
+# Bloqueio de pastas de sistema e backend
+Disallow: /backend/
+Disallow: /database/
+Disallow: /storage-private/
+Disallow: /scripts/
+Disallow: /docs/
+Disallow: /.git/
+
+# Bloqueio de áreas administrativas e internas do frontend
+Disallow: /frontend/pages/app/
+Disallow: /frontend/admin/
+Disallow: /frontend/app/
+Disallow: /admin/
+
+# Bloqueio de páginas privadas e dashboards (com e sem prefixo /frontend)
+Disallow: /frontend/dashboard-cliente.php
+Disallow: /frontend/dashboard-cliente
+Disallow: /dashboard-cliente.php
+Disallow: /dashboard-cliente
+
+Disallow: /frontend/dashboard-advogado.php
+Disallow: /frontend/dashboard-advogado
+Disallow: /dashboard-advogado.php
+Disallow: /dashboard-advogado
+
+Disallow: /frontend/solicitar-ajuda.php
+Disallow: /frontend/solicitar-ajuda
+Disallow: /solicitar-ajuda.php
+Disallow: /solicitar-ajuda
+
+Disallow: /frontend/agenda.php
+Disallow: /frontend/agenda
+Disallow: /agenda.php
+Disallow: /agenda
+
+Disallow: /frontend/chat.php
+Disallow: /frontend/chat
+Disallow: /chat.php
+Disallow: /chat
+
+Disallow: /frontend/perfil.php
+Disallow: /frontend/perfil
+Disallow: /perfil.php
+Disallow: /perfil
+
+Disallow: /frontend/processos.php
+Disallow: /frontend/processos
+Disallow: /processos.php
+Disallow: /processos
+
+Disallow: /frontend/processo-detalhes.php
+Disallow: /frontend/processo-detalhes
+Disallow: /processo-detalhes.php
+Disallow: /processo-detalhes
+
+Disallow: /frontend/tarefas.php
+Disallow: /frontend/tarefas
+Disallow: /tarefas.php
+Disallow: /tarefas
+
+Disallow: /frontend/notificacoes.php
+Disallow: /frontend/notificacoes
+Disallow: /notificacoes.php
+Disallow: /notificacoes
+
+Disallow: /frontend/visualizar-documento.php
+Disallow: /frontend/visualizar-documento
+Disallow: /visualizar-documento.php
+Disallow: /visualizar-documento
+
+Disallow: /frontend/subir-plano.php
+Disallow: /frontend/subir-plano
+Disallow: /subir-plano.php
+Disallow: /subir-plano
+
+Disallow: /frontend/pagamento-plano.php
+Disallow: /frontend/pagamento-plano
+Disallow: /pagamento-plano.php
+Disallow: /pagamento-plano
+
+Disallow: /frontend/pagamento-confirmado.php
+Disallow: /frontend/pagamento-confirmado
+Disallow: /pagamento-confirmado.php
+Disallow: /pagamento-confirmado
+
+Disallow: /frontend/completar-cadastro-google.php
+Disallow: /frontend/completar-cadastro-google
+Disallow: /completar-cadastro-google.php
+Disallow: /completar-cadastro-google
+
+# Bloqueio de autenticação
+Disallow: /frontend/login.html
+Disallow: /frontend/login
+Disallow: /login.html
+Disallow: /login
+
+Disallow: /frontend/cadastro.html
+Disallow: /frontend/cadastro
+Disallow: /cadastro.html
+Disallow: /cadastro
+
+Disallow: /frontend/recuperar-senha.html
+Disallow: /frontend/recuperar-senha
+Disallow: /recuperar-senha.html
+Disallow: /recuperar-senha
+
+Sitemap: https://justraduz.com.br/sitemap.xml

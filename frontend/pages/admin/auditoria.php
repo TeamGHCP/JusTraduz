@@ -104,6 +104,7 @@ $infoCount = max(0, count($logs) - $criticalCount - $warningCount);
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <meta name="robots" content="noindex, nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Auditoria | Admin JusTraduz</title>

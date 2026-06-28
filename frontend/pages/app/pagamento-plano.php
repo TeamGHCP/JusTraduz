@@ -155,6 +155,7 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+  <meta name="robots" content="noindex, nofollow">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagamento do plano | JusTraduz</title>
