@@ -31,7 +31,7 @@ $professionals = $enabled
         "SELECT u.id, u.nome, u.email, u.tipo, u.oab, u.oab_uf, u.oab_verificado, o.nome AS organizacao
          FROM users u
          LEFT JOIN organizations o ON o.id = u.organization_id
-         WHERE u.tipo IN ('advogado', 'estagiario')
+         WHERE u.tipo = 'advogado'
          ORDER BY u.tipo, u.nome"
     )
     : [];
@@ -75,7 +75,7 @@ foreach ($professionals as $professional) {
             <div class="dash-section-title">
               <h2>Como usar</h2>
             </div>
-            <p class="text-muted">Organizações representam escritórios ou empresas internas de atendimento. Elas servem para agrupar somente profissionais: advogados e estagiários. Clientes continuam independentes, porque o vínculo do cliente acontece pelo caso, documento e atendimento.</p>
+            <p class="text-muted">Organizações representam escritórios ou empresas internas de atendimento. Elas servem para agrupar profissionais verificados. Clientes continuam independentes, porque o vínculo do cliente acontece pelo caso, documento e atendimento.</p>
           </article>
 
           <?php if (current_user_can('organizations.manage')): ?>
@@ -135,7 +135,7 @@ foreach ($professionals as $professional) {
           <div class="dash-section-title">
             <h2>Vínculos profissionais</h2>
           </div>
-          <p class="text-muted">Somente advogados e estagiários aparecem aqui. Clientes não podem ser vinculados a uma organização.</p>
+          <p class="text-muted">Somente advogados aparecem aqui. Clientes não podem ser vinculados a uma organização.</p>
           <div class="table-wrap mt-12">
             <table class="table">
               <thead><tr><th>Profissional</th><th>Perfil</th><th>OAB</th><th>Organização atual</th><th>Alterar vínculo</th></tr></thead>

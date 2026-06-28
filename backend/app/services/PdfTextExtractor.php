@@ -54,7 +54,7 @@ class PdfTextExtractor
                     return $decoded;
                 }
             } catch (Throwable) {
-                // Tenta o proximo formato e preserva o stream original como fallback.
+                // Tenta o próximo formato e preserva o stream original como fallback.
             }
         }
 

@@ -20,7 +20,7 @@ class HealthController
         if (!$this->authorized()) {
             $this->response->json([
                 'status' => 'error',
-                'message' => 'Healthcheck token invalido.',
+                'message' => 'Healthcheck token inválido.',
                 'timestamp' => date(DATE_ATOM),
             ], 403);
             return;

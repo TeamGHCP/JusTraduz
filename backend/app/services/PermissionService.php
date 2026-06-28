@@ -105,7 +105,7 @@ class PermissionService
     public static function setOverride(PDO $pdo, string $role, string $permission, string $effect, int $adminId): void
     {
         if (!in_array($role, self::roles(), true) || !in_array($permission, self::availablePermissions(), true)) {
-            throw new InvalidArgumentException('Permissao ou perfil invalido.');
+            throw new InvalidArgumentException('Permissão ou perfil inválido.');
         }
 
         if ($effect === 'inherit') {
@@ -116,7 +116,7 @@ class PermissionService
         }
 
         if (!in_array($effect, ['allow', 'deny'], true)) {
-            throw new InvalidArgumentException('Efeito de permissao invalido.');
+            throw new InvalidArgumentException('Efeito de permissão inválido.');
         }
 
         $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);

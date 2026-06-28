@@ -6,8 +6,6 @@ $type = current_user_type();
 $userId = current_user_id();
 $professionalFilter = (int) ($_GET['professional_id'] ?? 0);
 $roleFilter = trim((string) ($_GET['perfil'] ?? ''));
-$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
-$errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
 function agenda_datetime_label(?string $value): string
 {
@@ -207,13 +205,6 @@ $calendarSubtitle = $type === 'cliente'
 
     <main class="app-main agenda-page">
       <?php render_topbar('Agenda', $calendarSubtitle, current_user_name()); ?>
-
-      <?php if ($successMessage !== ''): ?>
-        <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
-      <?php endif; ?>
-      <?php if ($errorMessage !== ''): ?>
-        <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
-      <?php endif; ?>
 
       <section class="agenda-summary-strip" aria-label="Resumo da agenda">
         <?php if ($type === 'cliente'): ?>

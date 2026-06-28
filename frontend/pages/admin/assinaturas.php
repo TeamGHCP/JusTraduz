@@ -2,8 +2,6 @@
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_role(['admin']);
 
-$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
-$errorMessage = trim((string) ($_GET['erro'] ?? ''));
 $plans = database_table_exists($pdo, 'plans') ? fetch_all($pdo, 'SELECT * FROM plans WHERE active = 1 ORDER BY sort_order ASC') : [];
 $users = fetch_all(
     $pdo,
@@ -42,16 +40,13 @@ function billing_status_badge(string $status): string
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Assinaturas | Admin JusTraduz</title>
   <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="../assets/css/style.css?v=pricing-front-1">
+  <link rel="stylesheet" href="../assets/css/style.css?v=paid-plans-justraduz-3">
 </head>
 <body>
   <div class="app-shell admin-shell">
     <?php render_sidebar('admin', 'assinaturas.php', true); ?>
     <main class="app-main">
       <?php render_topbar('Assinaturas', 'Planos, ciclos, status e cobrança operacional para clientes e advogados verificados.', current_user_name()); ?>
-
-      <?php if ($successMessage !== ''): ?><div class="alert is-visible alert-success"><?= e($successMessage) ?></div><?php endif; ?>
-      <?php if ($errorMessage !== ''): ?><div class="alert is-visible alert-error"><?= e($errorMessage) ?></div><?php endif; ?>
 
       <section class="grid grid-4">
         <?= stat_card('Planos ativos', count($plans), 'sparkles') ?>

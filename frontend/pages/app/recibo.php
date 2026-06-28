@@ -74,9 +74,9 @@ if ($downloadMode) {
   <title>Recibo <?= e($documentNumber) ?> | JusTraduz</title>
   <style>
     :root {
-      color: #111827;
-      background: #eef2f7;
-      font-family: Arial, Helvetica, sans-serif;
+      color: #172033;
+      background: #f4f6f9;
+      font-family: Manrope, "Segoe UI", Roboto, Arial, sans-serif;
     }
 
     * {
@@ -85,8 +85,8 @@ if ($downloadMode) {
 
     body {
       margin: 0;
-      background: #eef2f7;
-      color: #111827;
+      background: #f4f6f9;
+      color: #172033;
     }
 
     .doc-actions {
@@ -97,20 +97,20 @@ if ($downloadMode) {
       justify-content: center;
       gap: 10px;
       padding: 14px;
-      background: rgba(238, 242, 247, .92);
+      background: rgba(244, 246, 249, .92);
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid #d6dee9;
+      border-bottom: 1px solid #d9e1ea;
     }
 
     .doc-actions a,
     .doc-actions button {
       min-height: 40px;
       padding: 0 16px;
-      border: 1px solid #111827;
+      border: 1px solid #118a7e;
       border-radius: 8px;
-      background: #111827;
+      background: #118a7e;
       color: #fff;
-      font-weight: 700;
+      font-weight: 800;
       text-decoration: none;
       cursor: pointer;
     }
@@ -119,7 +119,7 @@ if ($downloadMode) {
       display: inline-flex;
       align-items: center;
       background: #fff;
-      color: #111827;
+      color: #0f766d;
     }
 
     .document {
@@ -128,8 +128,9 @@ if ($downloadMode) {
       margin: 24px auto;
       padding: 56px;
       background: #fff;
-      border: 1px solid #d1d5db;
-      box-shadow: 0 18px 60px rgba(15, 23, 42, .12);
+      border: 1px solid #d9e1ea;
+      border-radius: 8px;
+      box-shadow: 0 18px 52px rgba(23, 32, 51, .10);
     }
 
     .doc-head,
@@ -144,22 +145,27 @@ if ($downloadMode) {
     .doc-head {
       align-items: flex-start;
       margin-bottom: 48px;
+      padding-bottom: 24px;
+      border-bottom: 3px solid #118a7e;
     }
 
     h1 {
       margin: 0;
       font-size: 30px;
+      color: #172033;
     }
 
     h2 {
       margin: 0 0 12px;
       font-size: 16px;
+      color: #172033;
     }
 
     .brand {
       font-size: 34px;
       font-weight: 900;
       letter-spacing: 0;
+      color: #118a7e;
     }
 
     .doc-meta,
@@ -180,10 +186,19 @@ if ($downloadMode) {
 
     .doc-party {
       width: 48%;
+      padding: 18px;
+      border: 1px solid #d9e1ea;
+      border-radius: 8px;
+      background: #f8fafc;
     }
 
     .doc-summary {
       margin: 0 0 34px;
+      padding: 18px;
+      border: 1px solid rgba(17, 138, 126, .22);
+      border-radius: 8px;
+      background: #e8f6f4;
+      color: #0f766d;
       font-size: 22px;
       font-weight: 800;
     }
@@ -195,14 +210,17 @@ if ($downloadMode) {
     }
 
     .doc-table th {
-      border-bottom: 1px solid #111827;
+      border-bottom: 1px solid #172033;
       padding: 10px 0;
       font-size: 12px;
       text-align: left;
+      color: #657286;
+      text-transform: uppercase;
     }
 
     .doc-table td {
       padding: 14px 0;
+      border-bottom: 1px solid #edf1f5;
       vertical-align: top;
     }
 
@@ -213,11 +231,13 @@ if ($downloadMode) {
 
     .payment-history {
       margin-top: 54px;
+      padding-top: 18px;
+      border-top: 1px solid #d9e1ea;
     }
 
     .doc-foot {
       margin-top: 72px;
-      color: #4b5563;
+      color: #657286;
       font-size: 12px;
       line-height: 1.6;
     }
@@ -229,6 +249,7 @@ if ($downloadMode) {
         margin: 0;
         padding: 28px 18px;
         border: 0;
+        border-radius: 0;
       }
 
       .doc-head,

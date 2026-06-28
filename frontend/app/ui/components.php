@@ -12,11 +12,9 @@ function render_query_alert(): void
         return;
     }
 
-    $isError = str_contains(query_message_kind(), 'error');
-    echo '<div class="alert alert-query is-visible ' . query_message_kind() . ' mt-16" role="' . ($isError ? 'alert' : 'status') . '" aria-live="' . ($isError ? 'assertive' : 'polite') . '"' . (!$isError ? ' data-alert-auto-dismiss="3000"' : '') . '>' . e($message) . '</div>';
-    if (!$isError) {
-        echo '<script>(function(){var alert=document.querySelector("[data-alert-auto-dismiss]");if(!alert)return;var delay=parseInt(alert.getAttribute("data-alert-auto-dismiss")||"3000",10);window.setTimeout(function(){alert.classList.add("is-dismissing");window.setTimeout(function(){alert.remove();},260);},delay);})();</script>';
-    }
+    $kind = query_message_kind();
+    $isError = str_contains($kind, 'error');
+    echo '<div class="alert alert-query is-visible ' . $kind . ' mt-16" role="' . ($isError ? 'alert' : 'status') . '" aria-live="' . ($isError ? 'assertive' : 'polite') . '" data-alert-auto-dismiss="10000">' . e($message) . '</div>';
 }
 
 function render_sidebar(string $type, string $active, bool $isAdminPath = false): void
@@ -416,7 +414,7 @@ function context_help_asset_path(bool $isAdminPath, string $type): string
 function accessibility_asset_path(bool $isAdminPath): string
 {
     $path = $isAdminPath ? '../assets/js/accessibility.js' : 'assets/js/accessibility.js';
-    return $path . '?v=2026.06.15-02';
+    return $path . '?v=alert-dismiss-10s-1';
 }
 
 function stat_card(string $label, $value, string $icon): string

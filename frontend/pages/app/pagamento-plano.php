@@ -159,7 +159,7 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagamento do plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=plan-alert-dark-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=paid-plans-justraduz-3">
 </head>
 <body>
   <div class="app-shell">
@@ -169,9 +169,6 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
       <?php render_topbar('Pagamento do plano', 'Finalize sua assinatura com a cobrança criada pelo Asaas.', current_user_name()); ?>
 
       <section class="payment-page">
-        <?php if (!empty($_GET['erro'])): ?>
-          <div class="payment-alert payment-alert-error"><?= e((string) $_GET['erro']) ?></div>
-        <?php endif; ?>
         <?php if ($isPlanChange): ?>
           <div class="payment-alert payment-alert-info">
             <?= icon_svg('shield') ?>

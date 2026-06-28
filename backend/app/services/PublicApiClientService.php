@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/OrganizationService.php';
+require_once __DIR__ . '/AuditService.php';
 
 class PublicApiClientService
 {
@@ -60,6 +61,54 @@ class PublicApiClientService
         ];
     }
 
+    public function consumeRateLimit(array $client, string $scope): array
+    {
+        $limit = max(1, (int) (getenv('PUBLIC_API_RATE_LIMIT_PER_MINUTE') ?: 60));
+        $window = time() - (time() % 60);
+        $key = hash('sha256', implode('|', [
+            (string) ($client['id'] ?? 'unknown'),
+            $scope,
+            (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
+            (string) $window,
+        ]));
+        $path = $this->rateLimitDirectory() . DIRECTORY_SEPARATOR . 'public-api-' . $key . '.json';
+        $data = ['window' => $window, 'count' => 0];
+        if (is_file($path)) {
+            $decoded = json_decode((string) file_get_contents($path), true);
+            if (is_array($decoded) && (int) ($decoded['window'] ?? 0) === $window) {
+                $data = $decoded;
+            }
+        }
+
+        $data['count'] = (int) ($data['count'] ?? 0) + 1;
+        file_put_contents($path, json_encode($data, JSON_UNESCAPED_SLASHES), LOCK_EX);
+
+        return [
+            'allowed' => (int) $data['count'] <= $limit,
+            'limit' => $limit,
+            'remaining' => max(0, $limit - (int) $data['count']),
+            'retry_after' => max(1, 60 - (time() - $window)),
+        ];
+    }
+
+    public function auditRequest(array $client, string $scope, string $endpoint, int $statusCode): void
+    {
+        if (!OrganizationService::tableExists($this->pdo, 'audit_logs')) {
+            return;
+        }
+
+        try {
+            (new AuditService($this->pdo))->log('public_api.request', 'public_api_client', (int) ($client['id'] ?? 0), [
+                'client_name' => (string) ($client['nome'] ?? ''),
+                'scope' => $scope,
+                'endpoint' => $endpoint,
+                'status_code' => $statusCode,
+            ]);
+        } catch (Throwable $exception) {
+            error_log('Public API audit failed: ' . $exception->getMessage());
+        }
+    }
+
     private function bearerToken(): string
     {
         $header = (string) ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
@@ -68,5 +117,15 @@ class PublicApiClientService
         }
 
         return '';
+    }
+
+    private function rateLimitDirectory(): string
+    {
+        $directory = (string) (getenv('RATE_LIMIT_STORAGE_PATH') ?: dirname(__DIR__, 2) . '/storage/rate-limits');
+        if (!is_dir($directory)) {
+            mkdir($directory, 0775, true);
+        }
+
+        return $directory;
     }
 }

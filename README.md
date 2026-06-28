@@ -1,19 +1,19 @@
 # JusTraduz
 
-Projeto PHP/MySQL para apresentação escolar da SA.
+Projeto PHP/MySQL para apresentacao escolar da SA.
 
-Este README aponta apenas para pendências reais, validações manuais e comandos necessários para manter o projeto testável. Documentos de histórico e entregas já concluídas foram removidos para evitar várias versões da verdade.
+Este README aponta apenas para os comandos e documentos que continuam uteis para rodar, validar, apresentar e operar o projeto. Historico antigo, especificacoes ja implementadas e arquivos de status duplicados nao devem ficar versionados.
 
-## Como rodar localmente
+## Como Rodar Localmente
 
 1. Inicie Apache e MySQL pelo XAMPP.
-2. Copie o ambiente, se ainda não existir:
+2. Copie o ambiente, se ainda nao existir:
 
 ```powershell
 Copy-Item backend\.env.example backend\.env
 ```
 
-3. Importe o banco com demo, quando precisar resetar a apresentação:
+3. Importe o banco com demo quando precisar resetar a apresentacao:
 
 ```powershell
 Get-Content database\justraduz_completo_com_demo.sql -Raw | & C:\xampp\mysql\bin\mysql.exe -h localhost -u root
@@ -31,7 +31,7 @@ As contas demo usam:
 Demo@2026!
 ```
 
-## Checks obrigatórios
+## Checks Obrigatorios
 
 ```powershell
 php scripts\check-local-readiness.php
@@ -40,7 +40,7 @@ php backend\tests\run.php
 php scripts\check-references.php
 ```
 
-Para gerar um resumo operacional periodico:
+Para gerar um resumo operacional local:
 
 ```powershell
 php scripts\operational-health-report.php --output=storage-private\reports\saude-operacional.md
@@ -52,25 +52,27 @@ Para validar apenas o template versionado:
 php scripts\check-production-readiness.php --env=backend/.env.example --allow-placeholders
 ```
 
-Para produção/homologação real:
+Para producao/homologacao real:
 
 ```powershell
 php scripts\check-production-readiness.php --env=backend/.env
 ```
 
-## Documentação de pendências
+## Documentacao Ativa
 
-- `docs/O_QUE_FALTA_AGORA.md`: lista única do que ainda falta.
-- `docs/ROTEIRO_QA_MANUAL.md`: QA manual ainda necessário.
-- `docs/CHECKLIST_APRESENTACAO_SA.md`: preparação pendente para o dia da apresentação.
-- `docs/CHECKLIST_RELEASE.md`: validações pendentes antes de deploy.
-- `docs/MATRIZ_WCAG_AA.md`: acessibilidade ainda pendente de evidências formais.
-- `docs/REGISTRO_REVISAO_JURIDICA.md`: revisão jurídica externa ainda pendente.
-- `docs/CONFIGURAR_CLAMAV.md`: configuração pendente quando houver servidor real.
-- `docs/OPERACAO_BACKUP_RESTORE.md`: backup, restore e operação ainda precisam ser validados fora do ambiente local.
-- `docs/MANUAL_OPERACIONAL_INTERNO.md`: rotina de admin/suporte.
-- `docs/API_PUBLICA.md`: estado atual da superficie `/api/v1`.
+- `docs/O_QUE_FALTA_AGORA.md`: lista unica do que ainda falta.
+- `docs/ROTEIRO_QA_MANUAL.md`: roteiro manual ainda nao executado por completo.
+- `docs/CHECKLIST_APRESENTACAO_SA.md`: preparacao para a apresentacao escolar.
+- `docs/ROTEIRO_APRESENTACAO.md`: sequencia curta, contas demo e plano B da apresentacao.
+- `docs/CHECKLIST_RELEASE.md`: validacoes antes de deploy/homologacao.
+- `docs/MATRIZ_WCAG_AA.md`: matriz de acessibilidade ainda pendente de evidencias formais.
+- `docs/REGISTRO_REVISAO_JURIDICA.md`: registro de revisao juridica externa ainda pendente.
+- `docs/CONFIGURAR_CLAMAV.md`: guia para configurar ClamAV quando houver servidor real.
+- `docs/OPERACAO_BACKUP_RESTORE.md`: validacao operacional de backup, restore e healthcheck.
+- `docs/MANUAL_OPERACIONAL_INTERNO.md`: rotina minima de admin/suporte.
+- `docs/API_PUBLICA.md`: estado atual da superficie `/api/v1`, credenciais externas, rate limit e auditoria.
+- `database/README.md`: instaladores SQL oficiais do banco.
 
-## Pendências principais
+## Pendencias Principais
 
 Veja `docs/O_QUE_FALTA_AGORA.md`.

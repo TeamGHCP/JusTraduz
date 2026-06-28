@@ -19,7 +19,7 @@ class OrganizationInviteController extends BaseController
 
         $token = trim((string) $this->request->get('token', ''));
         if ($token === '') {
-            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Convite invalido.')));
+            $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Convite inválido.')));
         }
 
         if (empty($_SESSION['logado']) || (int) ($_SESSION['id'] ?? 0) <= 0) {

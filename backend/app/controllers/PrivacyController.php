@@ -64,7 +64,7 @@ class PrivacyController extends BaseController
             $this->response->redirect(app_url('/frontend/perfil.php?tab=privacidade&erro=' . urlencode('Senha atual incorreta.')));
         }
         if (!empty($user['deletion_scheduled_at'])) {
-            $this->response->redirect(app_url('/frontend/perfil.php?sucesso=' . urlencode('A exclusao da conta ja esta agendada. Voce ainda pode cancelar antes do prazo final.')));
+            $this->response->redirect(app_url('/frontend/perfil.php?sucesso=' . urlencode('A exclusão da conta já está agendada. Você ainda pode cancelar antes do prazo final.')));
         }
 
         try {

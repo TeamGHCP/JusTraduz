@@ -5,7 +5,6 @@ require_login();
 $type = current_user_type();
 $userId = current_user_id();
 $caseId = (int) ($_GET['case_id'] ?? 0);
-$errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
 function chat_cases_has_document_id(PDO $pdo): bool
 {
@@ -164,10 +163,6 @@ $canCompose = $selectedCase && (($selectedCase['status'] ?? '') !== 'finalizado'
 
     <main class="app-main chat-main">
       <?php render_topbar('Chat por caso', 'Conversa vinculada ao atendimento selecionado.', current_user_name()); ?>
-
-      <?php if ($errorMessage !== ''): ?>
-        <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
-      <?php endif; ?>
 
       <?php if (!$cases): ?>
         <?= empty_state($type === 'cliente' ? 'Nenhum chat disponível. Abra uma solicitação para iniciar o atendimento.' : 'Nenhum caso aceito para conversar no momento.') ?>

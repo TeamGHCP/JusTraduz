@@ -14,8 +14,6 @@ $currentSubscription = $type === 'advogado'
     ? $billing->ensureDefaultProfessionalSubscription(current_user_id())
     : null;
 $currentSubscription = $currentSubscription ?: $billing->currentForUser(current_user_id());
-$errorMessage = trim((string) ($_GET['erro'] ?? ''));
-$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
 
 function pricing_money(int $cents): string
 {
@@ -114,7 +112,7 @@ $heroCopy = $isProfessionalPricing
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e($pageTitle) ?> | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=pricing-current-button-align-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=paid-plans-justraduz-3">
 </head>
 <body>
   <div class="app-shell">
@@ -124,13 +122,6 @@ $heroCopy = $isProfessionalPricing
       <?php render_topbar($pageTitle, $pageSubtitle, current_user_name()); ?>
 
       <section class="pricing-page">
-        <?php if ($errorMessage !== ''): ?>
-          <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
-        <?php endif; ?>
-        <?php if ($successMessage !== ''): ?>
-          <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
-        <?php endif; ?>
-
         <div class="pricing-hero card">
           <span class="pricing-kicker"><?= icon_svg('sparkles') ?> Planos mensais e anuais</span>
           <h2><?= e($heroTitle) ?></h2>

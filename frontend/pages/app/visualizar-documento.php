@@ -134,8 +134,6 @@ $hasAnalysis = $document && ((string) ($document['resumo'] ?? '') !== '' || (str
 $confidence = $document && $document['confianca'] !== null ? max(0, min(100, (float) $document['confianca'])) : null;
 $analysisSections = $hasAnalysis ? document_analysis_sections((string) ($document['explicacao'] ?? '')) : [];
 $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'] : 'solicitar-ajuda.php';
-$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
-$errorMessage = trim((string) ($_GET['erro'] ?? ''));
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -166,13 +164,6 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
           $document ? 'Resumo, explicacao simples, riscos e próximos passos.' : 'Envie documentos e consulte seu histórico em um só lugar.',
           current_user_name()
       ); ?>
-
-      <?php if ($successMessage !== ''): ?>
-        <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
-      <?php endif; ?>
-      <?php if ($errorMessage !== ''): ?>
-        <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
-      <?php endif; ?>
 
       <?php if (!$documentId): ?>
         <?php if ($type === 'cliente'): ?>

@@ -52,6 +52,8 @@ $requiredFiles = [
     'backend/tests/run.php',
     'scripts/backup-database.ps1',
     'scripts/restore-database.ps1',
+    'scripts/backup-storage.ps1',
+    'scripts/restore-storage.ps1',
     'scripts/check-local-readiness.php',
     'scripts/check-orphan-storage.php',
     'scripts/cleanup-orphan-storage.php',

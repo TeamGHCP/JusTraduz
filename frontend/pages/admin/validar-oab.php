@@ -36,8 +36,6 @@ function admin_oab_status_label(string $status): string
     };
 }
 
-$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
-$errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
 $pendingProfessionals = fetch_all(
     $pdo,
@@ -113,13 +111,6 @@ $recentReviews = fetch_all(
 
     <main class="app-main">
       <?php render_topbar('Validar OAB', 'Aprove profissionais reais e rejeite cadastros inconsistentes com motivo registrado.', current_user_name()); ?>
-
-      <?php if ($successMessage !== ''): ?>
-        <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
-      <?php endif; ?>
-      <?php if ($errorMessage !== ''): ?>
-        <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
-      <?php endif; ?>
 
       <section class="grid grid-3">
         <?= stat_card('Pendentes', $pendingTotal, 'help') ?>

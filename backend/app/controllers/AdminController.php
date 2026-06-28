@@ -342,7 +342,7 @@ class AdminController extends BaseController
             $this->audit->log('admin.permission_override', 'permission', null, compact('role', 'permission', 'effect'));
             $this->response->redirect(app_url('/frontend/admin/permissoes.php?sucesso=' . urlencode('Permissao atualizada.')));
         } catch (Throwable $exception) {
-            $this->response->redirect(app_url('/frontend/admin/permissoes.php?erro=' . urlencode('Nao foi possivel atualizar permissao.')));
+            $this->response->redirect(app_url('/frontend/admin/permissoes.php?erro=' . urlencode('Não foi possível atualizar permissão.')));
         }
     }
 
@@ -357,7 +357,7 @@ class AdminController extends BaseController
         $document = $this->normalizeOrganizationDocument($documentInput);
 
         if ($name === '' || !in_array($type, ['empresa', 'escritorio'], true)) {
-            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Dados invalidos para organizacao.')));
+            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Dados inválidos para organização.')));
         }
 
         if ($documentInput !== '' && $document === null) {
@@ -380,7 +380,7 @@ class AdminController extends BaseController
         $organizationId = (int) $this->request->post('organization_id', 0);
 
         if ($userId <= 0) {
-            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Usuario invalido.')));
+            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Usuário inválido.')));
         }
 
         $stmt = $this->pdo->prepare("SELECT id, tipo FROM users WHERE id = ? AND tipo = 'advogado'");

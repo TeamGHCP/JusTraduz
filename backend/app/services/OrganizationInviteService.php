@@ -150,7 +150,7 @@ class OrganizationInviteService
         $this->addMember((int) $invite['organization_id'], $currentUserId, $role, (int) ($invite['invited_by'] ?? 0));
         $this->markInvite((int) $invite['id'], 'accepted');
         if (database_table_exists($this->pdo, 'notifications')) {
-            (new NotificationService($this->pdo))->notify($currentUserId, 'Voce agora faz parte do plano Escritorio no JusTraduz.');
+            (new NotificationService($this->pdo))->notify($currentUserId, 'Você agora faz parte do plano Escritório no JusTraduz.');
         }
 
         return ['ok' => true, 'organization_id' => (int) $invite['organization_id']];
@@ -277,7 +277,7 @@ class OrganizationInviteService
 
         (new NotificationService($this->pdo))->notify(
             $userId,
-            'Voce recebeu um convite para participar do plano Escritorio de ' . (string) ($owner['nome'] ?? 'um advogado') . '.'
+            'Você recebeu um convite para participar do plano Escritório de ' . (string) ($owner['nome'] ?? 'um advogado') . '.'
         );
     }
 

@@ -1,8 +1,8 @@
-# Operação de backup, restore e healthcheck
+# Operacao de backup, restore e healthcheck
 
-Execute estes passos primeiro em uma base temporária e registre a evidência antes de usar em produção.
+Execute estes passos primeiro em uma base temporaria e registre a evidencia antes de usar em producao.
 
-## Backup
+## Backup do banco
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\backup-database.ps1 -EnvFile backend\.env -OutputDir backups
@@ -14,17 +14,24 @@ Validar o arquivo gerado:
 php scripts\check-backup-file.php backups\arquivo.sql
 ```
 
-Também falta definir rotina de cópia para:
+Para backup criptografado (`.enc`), configure `BACKUP_ENCRYPTION_PASSWORD` e valide apos descriptografar em ambiente controlado.
+
+## Backup do storage
+
+O projeto ja possui rotina para copiar documentos e anexos configurados em:
 
 - `DOCUMENT_STORAGE_PATH`
 - `ATTACHMENT_STORAGE_PATH`
-- logs operacionais relevantes
 
-Em produção, esses caminhos devem ficar fora do webroot sempre que possível.
+Comando:
 
-Para backup criptografado (`.enc`), configure `BACKUP_ENCRYPTION_PASSWORD` e valide após descriptografar em ambiente controlado.
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\backup-storage.ps1 -EnvFile backend\.env -OutputDir backups
+```
 
-## Restore
+Em producao, esses caminhos devem ficar fora do webroot sempre que possivel.
+
+## Restore do banco
 
 Testar primeiro em ambiente limpo:
 
@@ -32,21 +39,27 @@ Testar primeiro em ambiente limpo:
 powershell -ExecutionPolicy Bypass -File scripts\restore-database.ps1 -EnvFile backend\.env -BackupPath backups\arquivo.sql.enc -TargetDatabase justraduz_restore_test
 ```
 
-Depois restaurar documentos e anexos para os caminhos configurados no `.env`.
-
 Nunca use o nome da base principal no primeiro teste de restore.
 
-## Validação após restore
+## Restore do storage
+
+Por padrao o restore mescla arquivos no destino. Use `-ClearTarget` somente em ambiente controlado quando quiser substituir o conteudo anterior.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\restore-storage.ps1 -EnvFile backend\.env -BackupPath backups\justraduz-storage-arquivo.zip
+```
+
+## Validacao apos restore
 
 - [ ] Login funciona.
-- [ ] Usuários e perfis existem.
+- [ ] Usuarios e perfis existem.
 - [ ] Documentos aparecem.
-- [ ] Download exige autenticação.
-- [ ] Solicitações e mensagens aparecem.
-- [ ] Auditoria está preservada.
+- [ ] Download exige autenticacao.
+- [ ] Solicitacoes e mensagens aparecem.
+- [ ] Auditoria esta preservada.
 - [ ] Healthcheck responde.
 
-## Healthcheck pendente em ambiente real
+## Healthcheck em ambiente real
 
 Rota:
 

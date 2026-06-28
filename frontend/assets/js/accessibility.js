@@ -541,6 +541,35 @@
     });
   }
 
+  function bindAutoDismissAlert(alert) {
+    if (!alert || alert.dataset.dismissBound === '1') return;
+    alert.dataset.dismissBound = '1';
+    var delay = parseInt(alert.getAttribute('data-alert-auto-dismiss') || '10000', 10);
+    if (!Number.isFinite(delay) || delay <= 0) delay = 10000;
+    window.setTimeout(function () {
+      alert.classList.add('is-dismissing');
+      window.setTimeout(function () {
+        if (alert.parentNode) alert.parentNode.removeChild(alert);
+      }, 280);
+    }, delay);
+  }
+
+  function enhanceAutoDismissAlerts() {
+    document.querySelectorAll('[data-alert-auto-dismiss]').forEach(bindAutoDismissAlert);
+
+    if (!('MutationObserver' in window) || document.body.dataset.alertDismissObserver === '1') return;
+    document.body.dataset.alertDismissObserver = '1';
+    new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
+        mutation.addedNodes.forEach(function (node) {
+          if (!(node instanceof Element)) return;
+          if (node.matches('[data-alert-auto-dismiss]')) bindAutoDismissAlert(node);
+          node.querySelectorAll?.('[data-alert-auto-dismiss]').forEach(bindAutoDismissAlert);
+        });
+      });
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+
   function accessibleName(field) {
     var label = field.id && document.querySelector('label[for="' + CSS.escape(field.id) + '"]');
     return label ? label.textContent.trim() : (field.getAttribute('aria-label') || field.name || 'obrigatório');
@@ -598,6 +627,7 @@
     enhanceTables();
     enhancePasswords();
     enhanceForms();
+    enhanceAutoDismissAlerts();
     enhanceLinksAndNavigation();
     document.addEventListener('keydown', trapDialogFocus);
     window.addEventListener('pagehide', function () { stopPageSpeech(false); });

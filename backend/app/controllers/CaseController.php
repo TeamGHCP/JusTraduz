@@ -167,7 +167,7 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] === 'cliente') {
-            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Perfil sem permissao para criar tarefas.')));
+            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Perfil sem permissão para criar tarefas.')));
         }
 
         $caseId = (int) $this->request->post('case_id', 0);
@@ -201,7 +201,7 @@ class CaseController extends BaseController
         $this->startSession();
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] === 'cliente') {
-            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Perfil sem permissao para atualizar tarefas.')));
+            $this->response->redirect(app_url('/frontend/tarefas.php?erro=' . urlencode('Perfil sem permissão para atualizar tarefas.')));
         }
 
         $taskId = (int) $this->request->post('task_id', 0);

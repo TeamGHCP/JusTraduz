@@ -30,12 +30,12 @@ class ManualPaymentProvider implements PaymentProviderInterface
     public function createCheckout(int $userId, int $planId, string $billingCycle, array $paymentData = []): PaymentCheckoutResult
     {
         if (!$this->subscriptions->changePlan($userId, $planId, $billingCycle, 'active')) {
-            return PaymentCheckoutResult::error('Plano invalido.');
+            return PaymentCheckoutResult::error('Plano inválido.');
         }
 
         $subscription = $this->subscriptions->currentForUser($userId);
         if (!$subscription) {
-            return PaymentCheckoutResult::error('Nao foi possivel localizar a assinatura criada.');
+            return PaymentCheckoutResult::error('Não foi possível localizar a assinatura criada.');
         }
 
         $amount = $this->amountForPlan($planId, $billingCycle);
@@ -89,7 +89,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
         }
 
         if (!$this->subscriptions->cancelCurrentForUser($userId)) {
-            throw new RuntimeException('Nao foi possivel cancelar a assinatura.');
+            throw new RuntimeException('Não foi possível cancelar a assinatura.');
         }
 
         $freeSubscription = $this->subscriptions->ensureDefaultForUser($userId);
@@ -165,7 +165,7 @@ class ManualPaymentProvider implements PaymentProviderInterface
             && $this->hasProcessedPaidEvent($providerEventId);
 
         if ($subscriptionId <= 0 && $userId <= 0) {
-            throw new InvalidArgumentException('Webhook sem usuario ou assinatura.');
+            throw new InvalidArgumentException('Webhook sem usuário ou assinatura.');
         }
 
         $this->recordPaymentEvent(

@@ -868,7 +868,7 @@ class AuthController extends BaseController
 
         $relativeDir = trim(str_replace(DIRECTORY_SEPARATOR, '/', substr($targetComparable, strlen((string) $projectReal))), '/');
         if ($relativeDir === '') {
-            throw new RuntimeException('PROFILE_PHOTO_STORAGE_PATH invalido para fotos de perfil.');
+            throw new RuntimeException('PROFILE_PHOTO_STORAGE_PATH inválido para fotos de perfil.');
         }
 
         return [

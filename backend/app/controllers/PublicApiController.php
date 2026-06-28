@@ -66,7 +66,8 @@ class PublicApiController
                         'security' => [['bearerAuth' => []]],
                         'responses' => [
                             '200' => ['description' => 'Token valido e API disponivel'],
-                            '401' => ['description' => 'Token invalido'],
+                            '401' => ['description' => 'Token inválido'],
+                            '429' => ['description' => 'Limite de chamadas excedido'],
                         ],
                     ],
                 ],
@@ -76,7 +77,8 @@ class PublicApiController
                         'security' => [['bearerAuth' => []]],
                         'responses' => [
                             '200' => ['description' => 'Resumo operacional'],
-                            '401' => ['description' => 'Token invalido'],
+                            '401' => ['description' => 'Token inválido'],
+                            '429' => ['description' => 'Limite de chamadas excedido'],
                         ],
                     ],
                 ],

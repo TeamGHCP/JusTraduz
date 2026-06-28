@@ -81,7 +81,6 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                         ['href' => $adminPrefix . 'permissoes.php', 'label' => 'Permissões', 'icon' => 'shield'],
                         ['href' => $adminPrefix . 'validar-oab.php', 'label' => 'Validação OAB', 'icon' => 'shield'],
                         ['href' => $adminPrefix . 'solicitacoes.php', 'label' => 'Solicitações', 'icon' => 'case'],
-                        ['href' => $adminPrefix . 'organizacoes.php', 'label' => 'Organizações', 'icon' => 'folder'],
                     ],
                 ],
                 [
@@ -90,7 +89,6 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                     'icon' => 'sparkles',
                     'items' => [
                         ['href' => $adminPrefix . 'assinaturas.php', 'label' => 'Assinaturas', 'icon' => 'sparkles'],
-                        ['href' => $adminPrefix . 'permissoes.php', 'label' => 'Permissões', 'icon' => 'shield'],
                         ['href' => $adminPrefix . 'relatorios.php', 'label' => 'Relatórios', 'icon' => 'chart'],
                     ],
                 ],

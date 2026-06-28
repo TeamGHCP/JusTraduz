@@ -85,7 +85,7 @@ $receiptText = implode(' | ', [
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagamento confirmado | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=plan-alert-dark-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=paid-plans-justraduz-3">
 </head>
 <body>
   <div class="app-shell">

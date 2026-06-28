@@ -9922,6 +9922,453 @@ body.has-modal-open {
   transform: scale(1.08) !important;
 }
 
+/* Planos pagos - acabamento visual JusTraduz */
+.pricing-page,
+.payment-page,
+.payment-confirmed-page {
+  --billing-accent-soft: color-mix(in srgb, var(--mint) 72%, var(--surface));
+  --billing-panel: color-mix(in srgb, var(--surface) 94%, var(--surface-2));
+  --billing-border: color-mix(in srgb, var(--line) 84%, var(--teal));
+}
+
+.pricing-page {
+  gap: 18px;
+}
+
+.pricing-hero.card,
+.pricing-note.card,
+.pricing-current-alert.card {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.pricing-hero {
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 280px);
+  padding: 22px;
+  border: 1px solid var(--billing-border);
+  background:
+    linear-gradient(180deg, var(--billing-panel), var(--surface)),
+    var(--surface);
+}
+
+.pricing-kicker {
+  min-height: 28px;
+  padding: 5px 9px;
+  border-color: rgba(17, 138, 126, .24);
+  border-radius: var(--radius-sm);
+  background: var(--billing-accent-soft);
+  letter-spacing: 0;
+}
+
+.pricing-hero h2 {
+  font-size: 26px;
+}
+
+.pricing-cycle-toggle {
+  width: 100%;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.pricing-cycle-thumb {
+  border-radius: calc(var(--radius-sm) - 2px);
+  box-shadow: none;
+}
+
+.pricing-grid {
+  gap: 14px;
+}
+
+.pricing-card {
+  gap: 14px;
+  padding: 18px;
+  cursor: default;
+  transform: none;
+}
+
+.pricing-card::before {
+  display: none;
+}
+
+.pricing-card:hover,
+.pricing-card:focus-visible,
+.pricing-card.is-card-active,
+.pricing-card.is-card-pressed {
+  border-color: rgba(17, 138, 126, .30);
+  box-shadow: var(--shadow-sm);
+  transform: none;
+}
+
+.pricing-card-featured {
+  border-color: rgba(17, 138, 126, .42);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 88%, var(--mint)), var(--surface)),
+    var(--surface);
+}
+
+.pricing-card-current {
+  border-color: rgba(17, 138, 126, .32);
+}
+
+.pricing-popular {
+  top: 12px;
+  right: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--navy);
+}
+
+.pricing-card-head,
+.pricing-card-current .pricing-card-head {
+  min-height: 42px;
+  padding-right: 104px;
+}
+
+.pricing-card:not(.pricing-card-featured):not(.pricing-card-current) .pricing-card-head {
+  padding-right: 0;
+}
+
+.pricing-card-head h3 {
+  font-size: 20px;
+}
+
+.pricing-price-row {
+  min-height: 78px;
+  padding: 14px;
+  border-radius: var(--radius-sm);
+}
+
+.pricing-card:hover .pricing-price-row,
+.pricing-card:focus-visible .pricing-price-row,
+.pricing-card.is-card-active .pricing-price-row {
+  background: var(--surface-2);
+  transform: none;
+}
+
+.pricing-price {
+  font-size: 30px;
+}
+
+.pricing-features li {
+  gap: 9px;
+  font-size: 14px;
+}
+
+.pricing-benefit {
+  min-height: 76px;
+  border-color: rgba(17, 138, 126, .18);
+  background: var(--surface-2);
+}
+
+.pricing-card .btn,
+.pricing-card:hover .btn,
+.pricing-card:focus-visible .btn,
+.pricing-card.is-card-active .btn {
+  box-shadow: none;
+  transform: none;
+}
+
+.pricing-note {
+  padding: 18px 20px;
+  border: 1px solid var(--billing-border);
+  background: var(--surface);
+}
+
+.pricing-current-alert {
+  padding: 16px 18px;
+  background: var(--billing-accent-soft);
+}
+
+.payment-panel {
+  grid-template-columns: minmax(240px, .86fr) minmax(280px, 1fr) minmax(340px, 1.05fr);
+  gap: 14px;
+}
+
+.payment-alert,
+.payment-customer-card,
+.payment-order-card,
+.payment-methods-card,
+.payment-status-card,
+.payment-method,
+.office-invite-card {
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.payment-customer-card,
+.payment-order-card,
+.payment-methods-card {
+  padding: 18px;
+}
+
+.payment-card-header {
+  margin-bottom: 16px;
+}
+
+.payment-step {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--teal);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18);
+}
+
+.payment-card-header h2 {
+  margin-top: 3px;
+  font-size: 20px;
+}
+
+.payment-customer-list div,
+.payment-order-lines div {
+  border-bottom-color: color-mix(in srgb, var(--line) 82%, transparent);
+}
+
+.payment-order-item,
+.payment-total,
+.payment-pix-box,
+.payment-complete,
+.payment-confirmed-list div,
+.payment-confirmed-steps div {
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.payment-total {
+  border-color: rgba(17, 138, 126, .24);
+  background: var(--billing-accent-soft);
+}
+
+.payment-total strong {
+  font-size: 24px;
+}
+
+.payment-method {
+  padding: 14px;
+}
+
+.payment-method-title > .svg-icon {
+  color: var(--teal);
+}
+
+.payment-method-title strong {
+  font-size: 15px;
+}
+
+.payment-method-title span,
+.payment-method-note {
+  font-size: 13px;
+}
+
+.payment-method-body {
+  transition: max-height .28s ease, opacity .2s ease, transform .2s ease, margin-top .2s ease;
+}
+
+.payment-method.is-open {
+  border-color: rgba(17, 138, 126, .30);
+}
+
+.payment-method-action,
+.payment-copy-button,
+.payment-confirmed-copy-button {
+  border-radius: var(--radius-sm);
+  background: var(--teal);
+  color: #fff;
+}
+
+.payment-method-action:hover,
+.payment-copy-button:hover,
+.payment-copy-button.is-copied,
+.payment-actions .btn.is-copied,
+.payment-confirmed-copy-button:hover,
+.payment-confirmed-copy-button.is-copied {
+  border-color: var(--teal-2);
+  background: var(--teal-2);
+}
+
+.payment-card-form {
+  gap: 11px;
+}
+
+.payment-form-field input {
+  min-height: 40px;
+  background: var(--surface);
+}
+
+.payment-card-flags img {
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+
+.payment-confirmed-page {
+  gap: 16px;
+}
+
+.payment-confetti-layer,
+.payment-confetti-piece {
+  display: none;
+}
+
+.payment-confirmed-hero {
+  grid-template-columns: minmax(0, 1fr) 132px;
+  min-height: 0;
+  padding: 24px;
+  border-color: rgba(17, 138, 126, .24);
+  background: linear-gradient(180deg, var(--billing-panel), var(--surface));
+}
+
+.payment-confirmed-hero::before {
+  display: none;
+}
+
+.payment-confirmed-copy {
+  gap: 12px;
+}
+
+.payment-confirmed-copy h2 {
+  font-size: clamp(26px, 3vw, 34px);
+  line-height: 1.12;
+}
+
+.payment-confirmed-copy p {
+  font-size: 15px;
+}
+
+.payment-confirmed-seal {
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius);
+  background: var(--billing-accent-soft);
+  box-shadow: none;
+}
+
+.payment-confirmed-seal span {
+  width: 64px;
+  height: 64px;
+  animation: none;
+}
+
+.payment-confirmed-seal .svg-icon {
+  width: 34px;
+  height: 34px;
+}
+
+.payment-confirmed-card {
+  gap: 14px;
+  padding: 18px;
+}
+
+.payment-confirmed-card::before {
+  display: none;
+}
+
+.payment-confirmed-card:hover,
+.payment-confirmed-card.is-active {
+  border-color: rgba(17, 138, 126, .26);
+  box-shadow: var(--shadow-sm);
+  transform: none;
+}
+
+.payment-confirmed-card-head > span,
+.payment-confirmed-steps span,
+.billing-cancel-icon,
+.billing-detail-icon {
+  border-radius: var(--radius-sm);
+  background: var(--billing-accent-soft);
+}
+
+.payment-confirmed-list div {
+  min-height: 42px;
+}
+
+.payment-confirmed-steps div,
+.payment-confirmed-page.is-ready .payment-confirmed-steps div {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+.profile-billing-card,
+.profile-billing-plan,
+.profile-billing-row {
+  border-color: var(--billing-border);
+}
+
+.profile-billing-plan,
+.profile-billing-row {
+  background: var(--surface);
+}
+
+.profile-billing-row {
+  grid-template-columns: 92px minmax(220px, 1fr) 104px auto 88px;
+}
+
+.billing-cancel-modal,
+.billing-detail-modal {
+  background: rgba(15, 23, 36, .58);
+}
+
+.billing-cancel-dialog,
+.billing-detail-dialog {
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, .28);
+}
+
+.billing-cancel-dialog::before,
+.billing-detail-dialog::before {
+  display: none;
+}
+
+.billing-cancel-close {
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 1240px) {
+  .payment-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, .9fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .pricing-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-confirmed-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-confirmed-seal {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 680px) {
+  .pricing-hero,
+  .payment-confirmed-hero,
+  .payment-confirmed-card,
+  .payment-customer-card,
+  .payment-order-card,
+  .payment-methods-card {
+    padding: 16px;
+  }
+
+  .pricing-card-head,
+  .pricing-card-current .pricing-card-head {
+    padding-right: 0;
+  }
+
+  .pricing-popular {
+    position: static;
+    width: fit-content;
+  }
+
+  .payment-confirmed-actions .btn {
+    width: 100%;
+  }
+}
+
 /* Abertura JusTraduz */
 .jt-opening-loader {
   position: fixed;
@@ -11642,5 +12089,722 @@ body.has-modal-open {
 
   .error-checklist {
     padding: 0 12px 12px;
+  }
+}
+
+/* Planos pagos - guarda final do cascade */
+.payment-page .payment-panel {
+  gap: 14px;
+}
+
+.payment-page .payment-alert,
+.payment-page .payment-customer-card,
+.payment-page .payment-order-card,
+.payment-page .payment-methods-card,
+.payment-page .payment-status-card,
+.payment-page .payment-method,
+.payment-page .office-invite-card,
+.payment-confirmed-page .payment-confirmed-hero,
+.payment-confirmed-page .payment-confirmed-card {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.payment-page .payment-step,
+.payment-confirmed-page .payment-confirmed-seal,
+.payment-confirmed-page .payment-confirmed-card-head > span,
+.payment-confirmed-page .payment-confirmed-steps span {
+  border-radius: var(--radius-sm);
+}
+
+.payment-page .payment-method-action,
+.payment-page .payment-copy-button,
+.payment-confirmed-page .payment-confirmed-copy-button {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #fff;
+}
+
+.payment-page .payment-method-action:hover,
+.payment-page .payment-copy-button:hover,
+.payment-page .payment-copy-button.is-copied,
+.payment-confirmed-page .payment-confirmed-copy-button:hover,
+.payment-confirmed-page .payment-confirmed-copy-button.is-copied {
+  border-color: var(--teal-2);
+  background: var(--teal-2);
+}
+
+.payment-confirmed-page .payment-confetti-layer,
+.payment-confirmed-page .payment-confetti-piece,
+.payment-confirmed-page .payment-confirmed-hero::before,
+.payment-confirmed-page .payment-confirmed-card::before {
+  display: none;
+}
+
+.payment-confirmed-page .payment-confirmed-hero {
+  min-height: 0;
+  border-color: rgba(17, 138, 126, .24);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, var(--surface-2)), var(--surface));
+}
+
+.payment-confirmed-page .payment-confirmed-card:hover,
+.payment-confirmed-page .payment-confirmed-card.is-active {
+  border-color: rgba(17, 138, 126, .26);
+  box-shadow: var(--shadow-sm);
+  transform: none;
+}
+
+.payment-confirmed-page .payment-confirmed-seal span,
+.payment-confirmed-page.is-ready .payment-confirmed-steps div {
+  animation: none;
+}
+
+.payment-confirmed-page .payment-confirmed-steps div,
+.payment-confirmed-page.is-ready .payment-confirmed-steps div {
+  opacity: 1;
+  transform: none;
+}
+
+/* Planos pagos - polimento visual adicional */
+.pricing-page {
+  --billing-stripe: linear-gradient(90deg, var(--teal), color-mix(in srgb, var(--teal) 42%, transparent));
+}
+
+.pricing-page .pricing-hero.card {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--line) 70%, var(--teal));
+}
+
+.pricing-page .pricing-hero.card::before,
+.pricing-page .pricing-card::after,
+.payment-page .payment-customer-card::before,
+.payment-page .payment-order-card::before,
+.payment-page .payment-methods-card::before,
+.payment-confirmed-page .payment-confirmed-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  background: var(--billing-stripe, linear-gradient(90deg, var(--teal), transparent));
+  pointer-events: none;
+}
+
+.pricing-page .pricing-hero.card > *,
+.pricing-page .pricing-card > *,
+.payment-page .payment-customer-card > *,
+.payment-page .payment-order-card > *,
+.payment-page .payment-methods-card > *,
+.payment-confirmed-page .payment-confirmed-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-page .pricing-card,
+.payment-page .payment-customer-card,
+.payment-page .payment-order-card,
+.payment-page .payment-methods-card,
+.payment-confirmed-page .payment-confirmed-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.pricing-page .pricing-card {
+  border-color: color-mix(in srgb, var(--line) 88%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, var(--surface-2)), var(--surface)),
+    var(--surface);
+}
+
+.pricing-page .pricing-card-featured {
+  border-color: color-mix(in srgb, var(--teal) 46%, var(--line));
+  box-shadow: 0 14px 30px rgba(17, 138, 126, .11);
+}
+
+.pricing-page .pricing-card-current {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mint) 42%, var(--surface)), var(--surface)),
+    var(--surface);
+}
+
+.pricing-page .pricing-card-head p,
+.pricing-page .pricing-description,
+.pricing-page .pricing-price-row small {
+  line-height: 1.45;
+}
+
+.pricing-page .pricing-price-row {
+  border-color: color-mix(in srgb, var(--line) 76%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 88%, var(--mint)), var(--surface-2));
+}
+
+.pricing-page .pricing-price {
+  letter-spacing: 0;
+}
+
+.pricing-page .pricing-period {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pricing-page .pricing-features li {
+  min-height: 28px;
+}
+
+.pricing-page .pricing-features .svg-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 3px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--mint) 86%, var(--surface));
+  color: var(--teal);
+}
+
+.pricing-page .pricing-benefit {
+  border-left: 3px solid var(--teal);
+}
+
+.pricing-page .pricing-card .btn {
+  min-height: 44px;
+  font-weight: 900;
+}
+
+.pricing-page .pricing-note.card {
+  align-items: center;
+  border-color: color-mix(in srgb, var(--line) 76%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--mint)), var(--surface));
+}
+
+.payment-page .payment-panel {
+  align-items: stretch;
+}
+
+.payment-page .payment-customer-card,
+.payment-page .payment-order-card,
+.payment-page .payment-methods-card {
+  min-height: 100%;
+}
+
+.payment-page .payment-card-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+}
+
+.payment-page .payment-step {
+  background: var(--navy);
+}
+
+.payment-page .payment-order-item {
+  align-items: flex-start;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 90%, var(--mint)), var(--surface-2));
+}
+
+.payment-page .payment-total {
+  margin-top: 14px;
+  border-left: 3px solid var(--teal);
+}
+
+.payment-page .payment-method {
+  transition: border-color .18s ease, background-color .18s ease;
+}
+
+.payment-page .payment-method.is-open {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, var(--mint)), var(--surface));
+}
+
+.payment-page .payment-method-title > .svg-icon,
+.payment-page .office-invite-head > span {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--mint) 86%, var(--surface));
+  color: var(--teal);
+  flex: 0 0 34px;
+}
+
+.payment-page .office-invite-card {
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, var(--mint)), var(--surface));
+}
+
+.payment-page .office-invite-stepper {
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.payment-page .office-invite-field input,
+.payment-page .payment-form-field input {
+  border-color: color-mix(in srgb, var(--line) 88%, var(--teal));
+}
+
+.payment-page .payment-pix-box {
+  border-style: solid;
+  background:
+    linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface-2) 86%, var(--mint)));
+}
+
+.payment-page .payment-card-flags img {
+  padding: 5px;
+  background: var(--surface);
+}
+
+.payment-confirmed-page .payment-confirmed-hero {
+  border-left: 4px solid var(--teal);
+}
+
+.payment-confirmed-page .payment-confirmed-seal {
+  border: 1px solid color-mix(in srgb, var(--line) 70%, var(--teal));
+}
+
+.payment-confirmed-page .payment-confirmed-list div,
+.payment-confirmed-page .payment-confirmed-steps div {
+  border-color: color-mix(in srgb, var(--line) 86%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 94%, var(--mint)), var(--surface-2));
+}
+
+.profile-billing-card {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, var(--mint)), var(--surface));
+}
+
+.profile-billing-plan {
+  border-left: 3px solid var(--teal);
+}
+
+.profile-billing-row {
+  transition: border-color .16s ease, background-color .16s ease;
+}
+
+.profile-billing-row:hover {
+  border-color: color-mix(in srgb, var(--line) 54%, var(--teal));
+  background: color-mix(in srgb, var(--surface) 92%, var(--mint));
+}
+
+.billing-detail-receipt,
+.billing-detail-grid div,
+.billing-cancel-plan {
+  border-color: color-mix(in srgb, var(--line) 78%, var(--teal));
+}
+
+/* Planos pagos - v3 visual premium */
+.app-main .pricing-page,
+.app-main .payment-page,
+.app-main .payment-confirmed-page {
+  --jt-billing-ink: var(--navy);
+  --jt-billing-soft: color-mix(in srgb, var(--surface-2) 74%, var(--mint));
+  --jt-billing-line: color-mix(in srgb, var(--line) 72%, var(--teal));
+  --jt-billing-shadow: 0 18px 42px rgba(23, 32, 51, .10);
+}
+
+.app-main .pricing-page {
+  gap: 22px;
+}
+
+.app-main .pricing-hero.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 20px 28px;
+  align-items: center;
+  padding: 28px;
+  border: 1px solid var(--jt-billing-line);
+  border-left: 5px solid var(--teal);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 88%, var(--mint)) 0%, var(--surface) 48%, var(--surface-2) 100%);
+  box-shadow: var(--jt-billing-shadow);
+}
+
+.app-main .pricing-hero.card::before {
+  height: 0;
+}
+
+.app-main .pricing-kicker {
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid color-mix(in srgb, var(--teal) 28%, var(--line));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--mint) 84%, var(--surface));
+  color: var(--teal-2);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 62%, transparent);
+}
+
+.app-main .pricing-hero h2 {
+  max-width: 780px;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.06;
+}
+
+.app-main .pricing-hero p {
+  max-width: 760px;
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+  font-size: 15px;
+}
+
+.app-main .pricing-cycle-toggle {
+  justify-self: end;
+  width: min(100%, 310px);
+  min-height: 52px;
+  padding: 5px;
+  border-color: color-mix(in srgb, var(--line) 68%, var(--teal));
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 72%, transparent), 0 10px 24px rgba(23, 32, 51, .08);
+}
+
+.app-main .pricing-cycle-thumb {
+  inset: 5px auto 5px 5px;
+  width: calc(50% - 5px);
+  background: linear-gradient(180deg, var(--teal), var(--teal-2));
+}
+
+.app-main .pricing-cycle-option {
+  min-height: 42px;
+  font-size: 13px;
+}
+
+.app-main .pricing-grid {
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 18px;
+}
+
+.app-main .pricing-card {
+  min-height: 100%;
+  padding: 22px;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, var(--teal));
+  background:
+    linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface-2) 58%, var(--surface)));
+  box-shadow: 0 12px 30px rgba(23, 32, 51, .07);
+}
+
+.app-main .pricing-card:hover,
+.app-main .pricing-card:focus-visible,
+.app-main .pricing-card.is-card-active {
+  border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+  box-shadow: 0 18px 38px rgba(23, 32, 51, .11);
+}
+
+.app-main .pricing-card-featured {
+  border-color: color-mix(in srgb, var(--teal) 62%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mint) 54%, var(--surface)), var(--surface) 44%, var(--surface-2));
+  box-shadow: 0 18px 42px rgba(17, 138, 126, .14);
+}
+
+.app-main .pricing-card::after {
+  height: 4px;
+  background: linear-gradient(90deg, var(--teal), color-mix(in srgb, var(--teal) 18%, transparent));
+}
+
+.app-main .pricing-card-featured::after {
+  background: linear-gradient(90deg, var(--teal), var(--navy));
+}
+
+.app-main .pricing-popular {
+  position: static;
+  display: inline-flex;
+  align-self: flex-start;
+  width: fit-content;
+  min-height: 28px;
+  margin-bottom: -4px;
+  border: 1px solid color-mix(in srgb, var(--navy) 16%, var(--line));
+  background: var(--navy);
+  color: var(--surface);
+}
+
+.app-main .pricing-current-badge {
+  border-color: color-mix(in srgb, var(--teal) 30%, var(--line));
+  background: color-mix(in srgb, var(--mint) 88%, var(--surface));
+  color: var(--teal-2);
+}
+
+.app-main .pricing-card-head,
+.app-main .pricing-card-current .pricing-card-head {
+  min-height: auto;
+  padding-right: 0;
+}
+
+.app-main .pricing-card-head h3 {
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.app-main .pricing-card-head p {
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.app-main .pricing-price-row {
+  position: relative;
+  gap: 8px;
+  min-height: 96px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--teal) 22%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 80%, var(--mint)), var(--surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 74%, transparent);
+}
+
+.app-main .pricing-price-row::before {
+  content: "";
+  position: absolute;
+  inset: 12px auto 12px 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--teal);
+}
+
+.app-main .pricing-price {
+  font-size: clamp(32px, 3.2vw, 42px);
+  line-height: .95;
+}
+
+.app-main .pricing-period {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.app-main .pricing-description {
+  min-height: 62px;
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+}
+
+.app-main .pricing-included-prefix {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 5px 9px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-2) 70%, var(--mint));
+  color: var(--navy);
+}
+
+.app-main .pricing-features {
+  gap: 12px;
+}
+
+.app-main .pricing-features li {
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
+}
+
+.app-main .pricing-features li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.app-main .pricing-benefit {
+  padding: 14px 15px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 72%, var(--mint)), var(--surface-2));
+}
+
+.app-main .pricing-card .btn {
+  min-height: 48px;
+}
+
+.app-main .pricing-note.card {
+  border-left: 5px solid var(--teal);
+  box-shadow: var(--jt-billing-shadow);
+}
+
+.app-main .pricing-current-alert.card {
+  border-left: 5px solid var(--teal);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-main .payment-panel {
+  grid-template-columns: minmax(250px, .88fr) minmax(310px, 1fr) minmax(380px, 1.16fr);
+  gap: 18px;
+}
+
+.app-main .payment-customer-card,
+.app-main .payment-order-card,
+.app-main .payment-methods-card {
+  border: 1px solid var(--jt-billing-line);
+  box-shadow: var(--jt-billing-shadow);
+}
+
+.app-main .payment-customer-card::before,
+.app-main .payment-order-card::before,
+.app-main .payment-methods-card::before {
+  height: 4px;
+}
+
+.app-main .payment-card-header h2 {
+  font-size: 22px;
+}
+
+.app-main .payment-step {
+  background: linear-gradient(180deg, var(--navy), color-mix(in srgb, var(--navy) 82%, var(--teal)));
+}
+
+.app-main .payment-customer-list div {
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.app-main .payment-order-item {
+  border-color: color-mix(in srgb, var(--teal) 20%, var(--line));
+}
+
+.app-main .payment-total {
+  padding: 18px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 66%, transparent);
+}
+
+.app-main .payment-total strong {
+  font-size: 30px;
+}
+
+.app-main .payment-method-list {
+  gap: 12px;
+}
+
+.app-main .payment-method {
+  border-color: color-mix(in srgb, var(--line) 78%, var(--teal));
+  background: var(--surface);
+}
+
+.app-main .payment-method.is-open {
+  border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+  box-shadow: 0 12px 28px rgba(17, 138, 126, .08);
+}
+
+.app-main .payment-method-title {
+  align-items: center;
+}
+
+.app-main .payment-method-title strong {
+  font-size: 16px;
+}
+
+.app-main .payment-method-action,
+.app-main .payment-copy-button,
+.app-main .payment-confirmed-copy-button {
+  min-height: 46px;
+  box-shadow: 0 10px 22px rgba(17, 138, 126, .16);
+}
+
+.app-main .payment-form-field label {
+  color: var(--navy);
+}
+
+.app-main .payment-form-field input {
+  min-height: 44px;
+  background: var(--surface);
+}
+
+.app-main .payment-card-flags {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.app-main .office-invite-card {
+  box-shadow: 0 12px 26px rgba(17, 138, 126, .08);
+}
+
+.app-main .payment-confirmed-hero {
+  padding: 30px;
+  border: 1px solid var(--jt-billing-line);
+  border-left: 6px solid var(--teal);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--mint) 55%, var(--surface)), var(--surface) 52%, var(--surface-2));
+  box-shadow: var(--jt-billing-shadow);
+}
+
+.app-main .payment-confirmed-copy h2 {
+  font-size: clamp(30px, 3.4vw, 42px);
+}
+
+.app-main .payment-confirmed-seal {
+  width: 128px;
+  height: 128px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 10px color-mix(in srgb, var(--mint) 70%, var(--surface));
+}
+
+.app-main .payment-confirmed-seal span {
+  background: linear-gradient(180deg, var(--teal), var(--teal-2));
+}
+
+.app-main .payment-confirmed-grid {
+  gap: 18px;
+}
+
+.app-main .payment-confirmed-card {
+  border-color: var(--jt-billing-line);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-main .payment-confirmed-card-head h3 {
+  font-size: 22px;
+}
+
+.app-main .payment-confirmed-list div {
+  align-items: center;
+  min-height: 54px;
+}
+
+.app-main .payment-confirmed-steps div {
+  min-height: 70px;
+}
+
+.app-main .profile-billing-plan {
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.app-main .profile-billing-row {
+  min-height: 58px;
+  padding: 14px 16px;
+}
+
+@media (max-width: 1240px) {
+  .app-main .payment-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, .95fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .app-main .pricing-hero.card,
+  .app-main .payment-panel,
+  .app-main .payment-confirmed-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .app-main .pricing-cycle-toggle {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-main .pricing-hero.card,
+  .app-main .pricing-card,
+  .app-main .payment-confirmed-hero {
+    padding: 18px;
+  }
+
+  .app-main .payment-total strong {
+    font-size: 26px;
   }
 }

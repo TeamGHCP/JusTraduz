@@ -193,6 +193,9 @@ assertEquals('3.0.3', $openApi['openapi'] ?? '', 'OpenAPI deve declarar versao 3
 assertTrue(isset($openApi['paths']['/api/v1/admin/reports/export']), 'OpenAPI deve documentar exportacao CSV.');
 assertTrue(isset($openApi['paths']['/api/v1/integrations/reports/summary']), 'OpenAPI deve documentar endpoint externo com token.');
 
+foreach (glob((getenv('RATE_LIMIT_STORAGE_PATH') ?: sys_get_temp_dir()) . DIRECTORY_SEPARATOR . 'public-api-*.json') ?: [] as $rateLimitFile) {
+    @unlink($rateLimitFile);
+}
 $apiClient = (new PublicApiClientService($pdo))->create('Teste externo', ['health:read', 'reports:read']);
 $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $apiClient['token'];
 ob_start();
@@ -200,6 +203,15 @@ ob_start();
 $integrationJson = ob_get_clean();
 $integrationPayload = json_decode((string) $integrationJson, true);
 assertTrue(isset($integrationPayload['cases_open']), 'API externa autenticada deve retornar resumo operacional.');
+assertEquals(1, (int) $pdo->query("SELECT COUNT(*) FROM audit_logs WHERE action = 'public_api.request' AND entity_type = 'public_api_client'")->fetchColumn(), 'API externa autenticada deve registrar auditoria.');
+
+putenv('PUBLIC_API_RATE_LIMIT_PER_MINUTE=1');
+ob_start();
+(new IntegrationController())->reportsSummary();
+$rateLimitedJson = ob_get_clean();
+$rateLimitedPayload = json_decode((string) $rateLimitedJson, true);
+assertEquals('rate_limited', $rateLimitedPayload['error'] ?? '', 'API externa deve aplicar rate limit por cliente.');
+putenv('PUBLIC_API_RATE_LIMIT_PER_MINUTE');
 $_SERVER['HTTP_AUTHORIZATION'] = '';
 
 $pdfFixture = tempnam(sys_get_temp_dir(), 'justraduz-pdf-');

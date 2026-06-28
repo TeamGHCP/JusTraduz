@@ -38,17 +38,17 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $this->assertConfigured();
 
         if (!$this->subscriptions->userCanSubscribe($userId)) {
-            return PaymentCheckoutResult::error('Usuario nao pode assinar planos.');
+            return PaymentCheckoutResult::error('Usuário não pode assinar planos.');
         }
 
         $user = $this->fetchUser($userId);
         if (!$user || !$this->subscriptions->planAvailableForUser($userId, $planId)) {
-            return PaymentCheckoutResult::error('Plano invalido.');
+            return PaymentCheckoutResult::error('Plano inválido.');
         }
 
         $plan = $this->fetchPlan($planId);
         if (!$plan) {
-            return PaymentCheckoutResult::error('Plano invalido.');
+            return PaymentCheckoutResult::error('Plano inválido.');
         }
 
         if (!in_array($billingCycle, ['monthly', 'yearly'], true)) {
@@ -85,7 +85,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
         $providerSubscriptionId = (string) ($subscription['id'] ?? '');
         if ($providerSubscriptionId === '') {
-            return PaymentCheckoutResult::error('Asaas nao retornou o ID da assinatura.');
+            return PaymentCheckoutResult::error('Asaas não retornou o ID da assinatura.');
         }
 
         $firstPayment = $this->firstPaymentForSubscription($providerSubscriptionId);
@@ -170,7 +170,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
         $payload = json_decode($rawPayload, true);
         if (!is_array($payload)) {
-            throw new InvalidArgumentException('Payload do webhook Asaas invalido.');
+            throw new InvalidArgumentException('Payload do webhook Asaas inválido.');
         }
 
         $event = (string) ($payload['event'] ?? $payload['event_type'] ?? 'asaas.webhook');
@@ -243,7 +243,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
         $providerSubscriptionId = trim($providerSubscriptionId);
         if ($providerSubscriptionId === '') {
-            throw new InvalidArgumentException('Assinatura Asaas nao informada.');
+            throw new InvalidArgumentException('Assinatura Asaas não informada.');
         }
 
         $local = $this->findLocalSubscription($providerSubscriptionId);
@@ -396,7 +396,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         }
 
         if (!$this->subscriptions->cancelCurrentForUser($userId)) {
-            throw new RuntimeException('Nao foi possivel cancelar a assinatura local.');
+            throw new RuntimeException('Não foi possível cancelar a assinatura local.');
         }
 
         $freeSubscription = $this->subscriptions->ensureDefaultForUser($userId);
@@ -519,7 +519,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $created = $this->request('POST', '/customers', $payload);
         $customerId = (string) ($created['id'] ?? '');
         if ($customerId === '') {
-            throw new RuntimeException('Asaas nao retornou o ID do cliente.');
+            throw new RuntimeException('Asaas não retornou o ID do cliente.');
         }
 
         return $customerId;
@@ -528,7 +528,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
     private function request(string $method, string $path, array $payload = []): array
     {
         if (!function_exists('curl_init')) {
-            throw new RuntimeException('Extensao cURL do PHP nao esta habilitada.');
+            throw new RuntimeException('Extensão cURL do PHP não está habilitada.');
         }
 
         $method = strtoupper($method);
@@ -1154,7 +1154,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
         $received = (string) ($headers['asaas-access-token'] ?? $headers['access-token'] ?? $headers['x-asaas-token'] ?? '');
         if ($received === '' || !hash_equals($secret, $received)) {
-            throw new RuntimeException('Token do webhook Asaas invalido.', 401);
+            throw new RuntimeException('Token do webhook Asaas inválido.', 401);
         }
     }
 

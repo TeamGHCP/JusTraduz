@@ -39,7 +39,7 @@ class BillingController extends BaseController
         }
 
         if (!$this->planExists($planId)) {
-            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano invalido.')));
+            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano inválido.')));
         }
 
         $_SESSION['billing_checkout'] = [
@@ -87,13 +87,13 @@ class BillingController extends BaseController
         }
 
         if (!$this->planExists($planId)) {
-            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano invalido.')));
+            $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano inválido.')));
         }
 
         try {
             $plan = $this->fetchPlan($planId);
             if (!$plan) {
-                $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano invalido.')));
+                $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Plano inválido.')));
             }
 
             $paymentData = $this->checkoutPaymentData();
@@ -107,7 +107,7 @@ class BillingController extends BaseController
         }
 
         if (!$checkout->ok) {
-            $this->response->redirect(app_url('/frontend/pagamento-plano.php?erro=' . urlencode($checkout->errorMessage ?: 'Plano invalido.')));
+            $this->response->redirect(app_url('/frontend/pagamento-plano.php?erro=' . urlencode($checkout->errorMessage ?: 'Plano inválido.')));
         }
 
         $this->audit->log('billing.checkout_create', 'subscription', (int) ($checkout->subscriptionId ?? 0), [

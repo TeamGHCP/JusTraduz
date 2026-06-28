@@ -190,7 +190,7 @@ $process = $processId > 0
     : null;
 
 if (!$process) {
-    header('Location: processos.php?erro=' . urlencode('Processo não encontrado ou sem permissao de acesso.'));
+    header('Location: processos.php?erro=' . urlencode('Processo não encontrado ou sem permissão de acesso.'));
     exit;
 }
 

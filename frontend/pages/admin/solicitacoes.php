@@ -7,8 +7,6 @@ $priority = trim((string) ($_GET['prioridade'] ?? ''));
 $responsible = trim((string) ($_GET['responsavel'] ?? ''));
 $scope = trim((string) ($_GET['scope'] ?? ''));
 $q = trim((string) ($_GET['q'] ?? ''));
-$successMessage = trim((string) ($_GET['sucesso'] ?? ''));
-$errorMessage = trim((string) ($_GET['erro'] ?? ''));
 
 function admin_cases_has_document_id(PDO $pdo): bool
 {
@@ -126,13 +124,6 @@ $unassignedCount = count_query($pdo, "SELECT COUNT(*) FROM cases WHERE status <>
 
     <main class="app-main">
       <?php render_topbar('Solicitações', 'Fila de ajuda jurídica com prioridade, responsável, documento e chat.', current_user_name()); ?>
-
-      <?php if ($successMessage !== ''): ?>
-        <div class="alert is-visible alert-success"><?= e($successMessage) ?></div>
-      <?php endif; ?>
-      <?php if ($errorMessage !== ''): ?>
-        <div class="alert is-visible alert-error"><?= e($errorMessage) ?></div>
-      <?php endif; ?>
 
       <section class="grid grid-4">
         <?= stat_card('Abertas', $openCount, 'help') ?>

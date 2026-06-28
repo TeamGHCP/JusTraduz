@@ -23,7 +23,7 @@ O projeto registra aliases versionados em `/api/v1` e endpoints de integracao co
 
 ## Credenciais de integracao
 
-Depois de importar um instalador consolidado atualizado ou aplicar um script incremental equivalente em base existente, crie um cliente externo com:
+Depois de importar um instalador consolidado atualizado, crie um cliente externo com:
 
 ```powershell
 php scripts\create-api-client.php --name=IntegracaoExterna --scopes=health:read,reports:read
@@ -35,13 +35,13 @@ Use o token retornado no header:
 Authorization: Bearer jt_xxx
 ```
 
+As chamadas autenticadas registram auditoria em `audit_logs` e usam rate limit por cliente/IP. O limite padrao e controlado por `PUBLIC_API_RATE_LIMIT_PER_MINUTE`.
+
 ## Regras antes de abrir para integracoes externas
 
 - Revisar contrato, suporte e LGPD com cliente externo antes de liberar token real.
 - Manter payloads, erros e codigos HTTP no contrato OpenAPI exposto por `/api/v1/openapi.json`.
-- Aplicar rate limit por integracao.
 - Versionar mudancas quebraveis.
-- Registrar auditoria por cliente externo.
 - Revisar LGPD e termos com profissional habilitado.
 
 Enquanto esses pontos nao existirem, libere tokens somente para homologacao controlada.

@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS user_organizations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     organization_id INT NOT NULL,
-    papel ENUM('membro', 'gestor', 'suporte') NOT NULL DEFAULT 'membro',
+    papel ENUM('dono', 'admin', 'membro', 'gestor', 'suporte') NOT NULL DEFAULT 'membro',
     is_primary TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_user_organization (user_id, organization_id),
@@ -523,9 +523,12 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('2026_06_11_create_user_onboarding_progress'),
     ('2026_06_13_google_oab_profile_fields'),
     ('2026_06_15_p2_saas'),
+    ('2026_06_22_update_paid_plans'),
     ('2026_06_23_add_free_plan'),
     ('2026_06_24_plan_audience_professional'),
     ('2026_06_26_max_plans'),
+    ('2026_06_26_office_invites'),
+    ('2026_06_26_permissions_privacy_schema'),
     ('2026_06_27_remove_intern_profile');
 
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
