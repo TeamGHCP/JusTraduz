@@ -110,7 +110,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     @media (max-width: 980px) {
       .home-page .home-hero {
         min-height: auto !important;
-        padding: 42px 0 48px !important;
+        padding: 64px 0 54px !important;
         overflow: hidden !important;
       }
 
@@ -168,44 +168,18 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         justify-content: center !important;
       }
 
+      /* Oculta o celular e a timeline de fluxo no mobile e tablet */
       .home-page .home-hero-visual,
       .home-page .hero-phone-wrap,
-      .home-page .iphone-mockup {
-        display: grid !important;
-        max-height: none !important;
-        overflow: visible !important;
-      }
-
-      .home-page .home-hero-visual {
-        position: relative !important;
-        width: 100% !important;
-        min-height: 610px !important;
-        height: 610px !important;
-        margin: 8px auto 0 !important;
-        overflow: hidden !important;
-      }
-
-      .home-page .hero-phone-wrap {
-        --phone-offset-x: 0px !important;
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 0 !important;
-        margin: 0 !important;
-      }
-
-      .home-page .iphone-mockup {
-        width: 390px !important;
-        height: 844px !important;
-        min-height: 844px !important;
-        transform: scale(.68) !important;
+      .home-page .iphone-mockup,
+      .home-page .home-flow-section {
+        display: none !important;
       }
     }
 
     @media (max-width: 640px) {
       .home-page .home-hero {
-        padding: 30px 0 40px !important;
+        padding: 48px 0 36px !important;
       }
 
       .home-page .home-hero h1 {
@@ -238,17 +212,6 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       .home-page .home-flow-button,
       .home-page .home-btn-outline {
         width: min(100%, 320px) !important;
-      }
-
-      .home-page .home-hero-visual {
-        min-height: 480px !important;
-        height: 480px !important;
-      }
-
-      .home-page .iphone-mockup {
-        transform: scale(.54) !important;
-        transform-origin: top center !important;
-        margin-top: -20px !important;
       }
     }
 
