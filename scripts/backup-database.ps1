@@ -19,6 +19,17 @@ function Read-EnvValue([string]$Path, [string]$Key, [string]$Default = "") {
     return $Default
 }
 
+function Resolve-OpenSsl {
+    $command = Get-Command openssl -ErrorAction SilentlyContinue
+    if ($command) { return $command.Source }
+
+    foreach ($candidate in @("C:\xampp\apache\bin\openssl.exe", "C:\xampp\php\extras\openssl\openssl.exe")) {
+        if (Test-Path -LiteralPath $candidate) { return $candidate }
+    }
+
+    throw "OpenSSL nao encontrado. Instale-o ou adicione o executavel ao PATH."
+}
+
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 
 $hostName = Read-EnvValue $EnvFile "DB_HOST" "localhost"
@@ -38,7 +49,7 @@ try {
         [Environment]::SetEnvironmentVariable("MYSQL_PWD", $dbPass, "Process")
     }
 
-    $args = @("--host=$hostName", "--port=$port", "--user=$dbUser", "--single-transaction", "--routines", "--triggers", "--databases", $dbName)
+    $args = @("--host=$hostName", "--port=$port", "--user=$dbUser", "--single-transaction", "--routines", "--triggers", $dbName)
     & $MysqlDump @args | Out-File -LiteralPath $sqlPath -Encoding utf8
     if ($LASTEXITCODE -ne 0) {
         throw "mysqldump falhou com codigo $LASTEXITCODE"
@@ -49,11 +60,12 @@ try {
 
 if ($encryptPass -ne "") {
     try {
+        $openSsl = Resolve-OpenSsl
         $previousBackupPass = [Environment]::GetEnvironmentVariable("JTD_BACKUP_PASSWORD", "Process")
         [Environment]::SetEnvironmentVariable("JTD_BACKUP_PASSWORD", $encryptPass, "Process")
 
         $encryptedPath = "$sqlPath.enc"
-        & openssl enc -aes-256-cbc -salt -pbkdf2 -in $sqlPath -out $encryptedPath -pass "env:JTD_BACKUP_PASSWORD"
+        & $openSsl enc -aes-256-cbc -salt -pbkdf2 -in $sqlPath -out $encryptedPath -pass "env:JTD_BACKUP_PASSWORD"
         if ($LASTEXITCODE -ne 0) {
             throw "openssl falhou ao criptografar o backup"
         }

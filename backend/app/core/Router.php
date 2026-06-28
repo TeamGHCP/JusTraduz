@@ -46,7 +46,7 @@ class Router
                 return;
             }
 
-            if ($method === 'POST') {
+            if ($method === 'POST' && !$this->isCsrfExempt($route['path'])) {
                 $csrfFile = dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
                 if (file_exists($csrfFile)) {
                     require_once $csrfFile;
@@ -68,6 +68,11 @@ class Router
         }
 
         echo 'Recurso não encontrado.';
+    }
+
+    private function isCsrfExempt(string $path): bool
+    {
+        return in_array($path, ['/billing/webhook'], true);
     }
 
     private static function expectsJson(): bool

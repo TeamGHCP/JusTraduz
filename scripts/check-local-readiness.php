@@ -2,6 +2,7 @@
 
 $root = dirname(__DIR__);
 
+require_once $root . '/backend/app/config/app.php';
 require_once $root . '/backend/app/controllers/HealthController.php';
 
 $failures = [];
@@ -27,9 +28,19 @@ if (($env['APP_DEBUG'] ?? '') !== 'false') {
     $warnings[] = 'APP_DEBUG nao esta false; use true apenas durante depuracao controlada.';
 }
 
+$originalHealthToken = $_GET['token'] ?? null;
+if (trim((string) ($env['HEALTHCHECK_TOKEN'] ?? '')) !== '') {
+    $_GET['token'] = (string) $env['HEALTHCHECK_TOKEN'];
+}
+
 ob_start();
 (new HealthController())->show();
 $healthRaw = ob_get_clean();
+if ($originalHealthToken === null) {
+    unset($_GET['token']);
+} else {
+    $_GET['token'] = $originalHealthToken;
+}
 $health = json_decode($healthRaw, true);
 
 if (!is_array($health)) {

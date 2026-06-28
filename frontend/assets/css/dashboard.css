@@ -415,6 +415,48 @@
   flex-wrap: wrap;
 }
 
+.topbar-account {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 5px 14px 5px 5px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, var(--surface-2));
+  box-shadow: 0 10px 28px rgba(23, 32, 51, .08);
+}
+
+.topbar-account-copy {
+  display: grid;
+  min-width: 0;
+  text-align: left;
+  line-height: 1.15;
+}
+
+.topbar-account-copy strong {
+  max-width: 180px;
+  overflow: hidden;
+  color: var(--navy);
+  font-size: 14px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-account-copy small {
+  max-width: 180px;
+  overflow: hidden;
+  color: var(--teal-2);
+  font-size: 12px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .theme-toggle {
   position: relative;
   display: inline-flex;
@@ -548,10 +590,10 @@
 }
 
 .topbar-avatar {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border: 3px solid var(--avatar-ring);
-  box-shadow: 0 0 0 1px var(--line), var(--shadow-sm);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--teal) 42%, var(--line)), var(--shadow-sm);
 }
 
 .avatar img {
@@ -1095,6 +1137,172 @@
   font-size: 34px;
   font-weight: 900;
   line-height: 1;
+}
+
+.lawyer-plan-grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.lawyer-plan-disclosure {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.lawyer-plan-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.lawyer-plan-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  min-height: 92px;
+  padding: 18px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.lawyer-plan-checkbox:focus-visible + .lawyer-plan-toggle {
+  outline: 3px solid color-mix(in srgb, var(--teal) 38%, transparent);
+  outline-offset: -3px;
+}
+
+.lawyer-plan-summary-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: rgba(17, 138, 126, .10);
+  color: var(--teal);
+}
+
+.lawyer-plan-summary-icon .svg-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.lawyer-plan-summary-copy {
+  min-width: 0;
+}
+
+.lawyer-plan-summary-copy span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.lawyer-plan-summary-copy strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--navy);
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.lawyer-plan-summary-arrow {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  transition: transform .18s ease;
+}
+
+.lawyer-plan-summary-arrow .svg-icon {
+  width: 15px;
+  height: 15px;
+  flex-basis: 15px;
+}
+
+.lawyer-plan-checkbox:checked + .lawyer-plan-toggle .lawyer-plan-summary-arrow {
+  transform: rotate(180deg);
+}
+
+.lawyer-plan-details {
+  max-height: 0;
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: max-height .22s ease, padding .22s ease, opacity .16s ease, visibility .22s;
+}
+
+.lawyer-plan-checkbox:not(:checked) ~ .lawyer-plan-details {
+  padding-top: 0;
+  padding-bottom: 0;
+  border-top-color: transparent;
+}
+
+.lawyer-plan-checkbox:checked ~ .lawyer-plan-details {
+  max-height: 920px;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.lawyer-plan-details .dash-section-title {
+  margin-top: 16px;
+}
+
+.lawyer-plan-card {
+  grid-template-columns: 40px minmax(0, 1fr);
+  min-height: 88px;
+  padding: 14px 16px;
+}
+
+.lawyer-plan-card .svg-icon {
+  width: 40px;
+  height: 40px;
+  padding: 9px;
+}
+
+.lawyer-plan-card span {
+  font-size: 11px;
+}
+
+.lawyer-plan-card strong {
+  overflow-wrap: anywhere;
+  font-size: 24px;
+  line-height: 1.08;
+}
+
+@media (max-width: 640px) {
+  .lawyer-plan-toggle {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .lawyer-plan-toggle > .badge {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .lawyer-plan-summary-arrow {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
 }
 
 .lawyer-dashboard .professional-alert {

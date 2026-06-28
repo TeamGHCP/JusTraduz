@@ -108,7 +108,7 @@ class AdminController extends BaseController
             $this->response->redirect(app_url('/frontend/admin/validar-oab.php?erro=' . urlencode('Informe a justificativa da decisao OAB.')));
         }
 
-        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo, status_cna, oab_status, oab, oab_uf, oab_parametro FROM users WHERE id = ? AND tipo IN ('advogado', 'estagiario')");
+        $stmt = $this->pdo->prepare("SELECT id, nome, email, tipo, status_cna, oab_status, oab, oab_uf, oab_parametro FROM users WHERE id = ? AND tipo = 'advogado'");
         $stmt->execute([$userId]);
         $professional = $stmt->fetch();
 
@@ -141,7 +141,7 @@ class AdminController extends BaseController
                          oab_validated_at = NOW(),
                          oab_validated_by = ?,
                          updated_at = NOW()
-                     WHERE id = ? AND tipo IN ('advogado', 'estagiario')"
+                     WHERE id = ? AND tipo = 'advogado'"
                 );
                 $stmt->execute([$message, $message, $adminId > 0 ? $adminId : null, $userId]);
 
@@ -261,12 +261,12 @@ class AdminController extends BaseController
             'oab' => [
                 'pending' => $this->count(
                     "SELECT COUNT(*) FROM users
-                     WHERE tipo IN ('advogado', 'estagiario')
+                     WHERE tipo = 'advogado'
                        AND status = 'ativo'
                        AND oab_verificado = FALSE
                        AND COALESCE(status_cna, 'pendente') = 'pendente'"
                 ),
-                'validated' => $this->count("SELECT COUNT(*) FROM users WHERE tipo IN ('advogado', 'estagiario') AND oab_verificado = TRUE"),
+                'validated' => $this->count("SELECT COUNT(*) FROM users WHERE tipo = 'advogado' AND oab_verificado = TRUE"),
             ],
             'ai' => [
                 'analyses' => $this->count('SELECT COUNT(*) FROM ai_results'),
@@ -383,11 +383,11 @@ class AdminController extends BaseController
             $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Usuario invalido.')));
         }
 
-        $stmt = $this->pdo->prepare("SELECT id, tipo FROM users WHERE id = ? AND tipo IN ('advogado', 'estagiario')");
+        $stmt = $this->pdo->prepare("SELECT id, tipo FROM users WHERE id = ? AND tipo = 'advogado'");
         $stmt->execute([$userId]);
         $professional = $stmt->fetch();
         if (!$professional) {
-            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Somente advogados e estagiarios podem ser vinculados a organizacoes.')));
+            $this->response->redirect(app_url('/frontend/admin/organizacoes.php?erro=' . urlencode('Somente advogados podem ser vinculados a organizações.')));
         }
 
         $organizationId = $organizationId > 0 ? $organizationId : null;

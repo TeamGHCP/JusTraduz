@@ -119,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         {
           label: "Perfis",
-          answer: "Cliente envia documentos e acompanha solicitações. Advogado atende casos e interage com clientes quando validado. Estagiário pode apoiar rotinas permitidas. Administrador gerencia usuários, auditoria e validações.",
+          answer: "Cliente envia documentos e acompanha solicitações. Advogado atende casos e interage com clientes quando validado. Administrador gerencia usuários, auditoria e validações.",
         },
         {
           label: "Contato",

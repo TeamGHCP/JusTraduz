@@ -12,6 +12,7 @@ foreach ($argv as $argument) {
     }
 }
 
+require_once $root . '/backend/app/config/app.php';
 require_once $root . '/backend/app/controllers/HealthController.php';
 require_once $root . '/backend/app/services/SlaService.php';
 
@@ -19,14 +20,14 @@ $pdo = report_database_connection($root);
 
 $report = [
     'generated_at' => date(DATE_ATOM),
-    'health' => capture_healthcheck(),
+    'health' => capture_healthcheck($root),
     'database' => [
         'connected' => $pdo instanceof PDO,
         'users' => count_rows($pdo, 'users'),
         'documents' => count_rows($pdo, 'documents'),
         'cases_open' => count_where($pdo, 'cases', "status <> 'finalizado'"),
         'cases_unassigned' => count_where($pdo, 'cases', "status <> 'finalizado' AND advogado_id IS NULL"),
-        'oab_pending' => count_where($pdo, 'users', "tipo IN ('advogado', 'estagiario') AND status = 'ativo' AND oab_verificado = 0 AND COALESCE(status_cna, 'pendente') = 'pendente'"),
+        'oab_pending' => count_where($pdo, 'users', "tipo = 'advogado' AND status = 'ativo' AND oab_verificado = 0 AND COALESCE(status_cna, 'pendente') = 'pendente'"),
         'job_queue_pending' => count_where($pdo, 'job_queue', "status = 'pending'"),
         'job_queue_failed' => count_where($pdo, 'job_queue', "status = 'failed'"),
         'mail_failed' => count_where($pdo, 'mail_logs', "status = 'failed'"),
@@ -54,11 +55,22 @@ if ($outputPath !== null && trim($outputPath) !== '') {
 
 echo $content;
 
-function capture_healthcheck(): array
+function capture_healthcheck(string $root): array
 {
+    $env = report_env_values($root . '/backend/.env');
+    $originalToken = $_GET['token'] ?? null;
+    if (trim((string) ($env['HEALTHCHECK_TOKEN'] ?? '')) !== '') {
+        $_GET['token'] = (string) $env['HEALTHCHECK_TOKEN'];
+    }
+
     ob_start();
     (new HealthController())->show();
     $raw = ob_get_clean();
+    if ($originalToken === null) {
+        unset($_GET['token']);
+    } else {
+        $_GET['token'] = $originalToken;
+    }
     $decoded = json_decode((string) $raw, true);
 
     if (!is_array($decoded)) {
@@ -129,11 +141,12 @@ function summarize_sla(?PDO $pdo): array
             'overdue' => 0,
             'due_soon' => 0,
             'on_track' => 0,
+            'without_sla' => 0,
         ];
     }
 
     try {
-        $stmt = $pdo->query("SELECT id, titulo, status, prioridade, created_at, advogado_id FROM cases WHERE status <> 'finalizado'");
+        $stmt = $pdo->query("SELECT id, titulo, status, prioridade, created_at, advogado_id, sla_due_at FROM cases WHERE status <> 'finalizado'");
         $cases = $stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
     } catch (Throwable) {
         $cases = [];
@@ -143,13 +156,18 @@ function summarize_sla(?PDO $pdo): array
         'overdue' => 0,
         'due_soon' => 0,
         'on_track' => 0,
+        'without_sla' => 0,
     ];
 
     foreach ($cases as $case) {
-        $state = SlaService::statusForCase($case)['state'] ?? 'on_track';
-        if (isset($summary[$state])) {
-            $summary[$state]++;
-        }
+        $state = SlaService::status($case['sla_due_at'] ?? null, (string) ($case['status'] ?? ''));
+        $reportState = match ($state) {
+            'vencido' => 'overdue',
+            'em_risco' => 'due_soon',
+            'sem_sla' => 'without_sla',
+            default => 'on_track',
+        };
+        $summary[$reportState]++;
     }
 
     return $summary;

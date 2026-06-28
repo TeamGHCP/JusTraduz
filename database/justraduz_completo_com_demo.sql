@@ -2,7 +2,7 @@
 -- Contem schema final, migrations incorporadas e dados de apresentacao.
 -- ATENCAO: este arquivo recria o banco justraduz do zero.
 -- Nao execute em uma base com dados reais sem backup.
--- Migrations de onboarding, SLA e produto futuro incorporadas e registradas em schema_migrations.
+-- Migration de onboarding/tour incorporada e registrada em schema_migrations.
 
 DROP DATABASE IF EXISTS justraduz;
 CREATE DATABASE IF NOT EXISTS justraduz
@@ -16,18 +16,6 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
     applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS organizations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(180) NOT NULL,
-    tipo ENUM('empresa', 'escritorio') NOT NULL DEFAULT 'empresa',
-    documento VARCHAR(32) NULL,
-    status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_organizations_status (status),
-    UNIQUE KEY uq_organizations_documento (documento)
-) DEFAULT CHARSET=utf8mb4;
-
 -- usuários
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -35,7 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL COLLATE utf8mb4_general_ci,
     senha VARCHAR(255) NOT NULL,
-    tipo ENUM('cliente', 'advogado', 'estagiario', 'admin') NOT NULL,
+    tipo ENUM('cliente', 'advogado', 'admin') NOT NULL,
     
     oab VARCHAR(20),
     oab_uf VARCHAR(10),
@@ -77,8 +65,61 @@ CREATE TABLE IF NOT EXISTS users (
     INDEX idx_users_provider (provider),
     INDEX idx_users_google_sub (google_sub),
     INDEX idx_users_deletion_schedule (deletion_scheduled_at),
-    CONSTRAINT fk_users_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (oab_validated_by) REFERENCES users(id) ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_onboarding_progress (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tour_key VARCHAR(80) NOT NULL,
+    tour_version VARCHAR(30) NOT NULL,
+    dashboard_profile VARCHAR(30) NOT NULL,
+    status ENUM('pending', 'completed', 'skipped', 'remind_later') NOT NULL DEFAULT 'pending',
+    started_at DATETIME NULL,
+    completed_at DATETIME NULL,
+    skipped_at DATETIME NULL,
+    reminded_at DATETIME NULL,
+    last_seen_step INT DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_user_tour_version (user_id, tour_key, tour_version),
+    INDEX idx_user_onboarding_user (user_id),
+    INDEX idx_user_onboarding_status (status),
+    CONSTRAINT fk_user_onboarding_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS organizations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(180) NOT NULL,
+    tipo ENUM('empresa', 'escritorio') NOT NULL DEFAULT 'empresa',
+    documento VARCHAR(32) NULL,
+    name VARCHAR(160) NULL,
+    slug VARCHAR(190) NULL,
+    owner_user_id INT NULL,
+    status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_organizations_status (status),
+    UNIQUE KEY uq_organizations_documento (documento),
+    UNIQUE KEY uq_organizations_slug (slug),
+    INDEX idx_organizations_owner (owner_user_id)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS organization_members (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role ENUM('owner', 'admin', 'member', 'viewer') NOT NULL DEFAULT 'member',
+    status ENUM('invited', 'active', 'suspended') NOT NULL DEFAULT 'active',
+    invited_by INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_organization_user (organization_id, user_id),
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_organization_members_user (user_id, status)
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS user_organizations (
@@ -106,24 +147,89 @@ CREATE TABLE IF NOT EXISTS role_permission_overrides (
     CONSTRAINT fk_role_permission_updated_by FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS user_onboarding_progress (
+CREATE TABLE IF NOT EXISTS organization_invites (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NOT NULL,
+    email VARCHAR(190) NOT NULL,
+    role ENUM('admin', 'member', 'viewer') NOT NULL DEFAULT 'member',
+    token_hash VARCHAR(255) NOT NULL,
+    status ENUM('pending', 'accepted', 'revoked', 'expired') NOT NULL DEFAULT 'pending',
+    invited_by INT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    accepted_at DATETIME NULL,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_organization_invites_email (email, status)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS plans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slug VARCHAR(80) NOT NULL UNIQUE,
+    audience ENUM('cliente', 'advogado', 'ambos') NOT NULL DEFAULT 'cliente',
+    name VARCHAR(120) NOT NULL,
+    description TEXT NULL,
+    monthly_price_cents INT NOT NULL DEFAULT 0,
+    yearly_price_cents INT NOT NULL DEFAULT 0,
+    limits_json JSON NOT NULL,
+    features_json JSON NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS subscriptions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    tour_key VARCHAR(80) NOT NULL,
-    tour_version VARCHAR(30) NOT NULL,
-    dashboard_profile VARCHAR(30) NOT NULL,
-    status ENUM('pending', 'completed', 'skipped', 'remind_later') NOT NULL DEFAULT 'pending',
-    started_at DATETIME NULL,
-    completed_at DATETIME NULL,
-    skipped_at DATETIME NULL,
-    reminded_at DATETIME NULL,
-    last_seen_step INT DEFAULT 0,
+    organization_id INT NULL,
+    plan_id INT NOT NULL,
+    billing_cycle ENUM('monthly', 'yearly') NOT NULL DEFAULT 'monthly',
+    status ENUM('trialing', 'active', 'past_due', 'canceled', 'expired') NOT NULL DEFAULT 'active',
+    provider VARCHAR(60) NOT NULL DEFAULT 'manual',
+    provider_subscription_id VARCHAR(190) NULL,
+    current_period_start DATETIME NULL,
+    current_period_end DATETIME NULL,
+    canceled_at DATETIME NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uniq_user_tour_version (user_id, tour_key, tour_version),
-    INDEX idx_user_onboarding_user (user_id),
-    INDEX idx_user_onboarding_status (status),
-    CONSTRAINT fk_user_onboarding_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    FOREIGN KEY (plan_id) REFERENCES plans(id),
+    INDEX idx_subscriptions_user_status (user_id, status),
+    INDEX idx_subscriptions_org_status (organization_id, status),
+    INDEX idx_subscriptions_provider (provider, provider_subscription_id)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS payment_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    subscription_id INT NULL,
+    user_id INT NULL,
+    provider VARCHAR(60) NOT NULL DEFAULT 'manual',
+    provider_event_id VARCHAR(190) NULL,
+    event_type VARCHAR(120) NOT NULL,
+    amount_cents INT NOT NULL DEFAULT 0,
+    currency CHAR(3) NOT NULL DEFAULT 'BRL',
+    status ENUM('pending', 'paid', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
+    payload_json JSON NULL,
+    processed_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_payment_events_status (status, created_at),
+    INDEX idx_payment_events_provider (provider, provider_event_id)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    permission_key VARCHAR(120) NOT NULL,
+    allowed BOOLEAN NOT NULL DEFAULT TRUE,
+    granted_by INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_user_permission (user_id, permission_key),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
 
 -- documentos
@@ -137,8 +243,8 @@ CREATE TABLE IF NOT EXISTS documents (
     texto_extraido LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_documents_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
-    INDEX idx_documents_organization (organization_id)
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    INDEX idx_documents_organization (organization_id, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- resultados da ia
@@ -164,25 +270,19 @@ CREATE TABLE IF NOT EXISTS cases (
     titulo VARCHAR(255),
     descricao TEXT,
     status ENUM('aberto', 'em_andamento', 'finalizado') DEFAULT 'aberto',
-    prioridade ENUM('baixa', 'media', 'normal', 'alta', 'urgente') DEFAULT 'media',
-    sla_deadline_at DATETIME NULL,
-    escalated_at DATETIME NULL,
-    assigned_to INT NULL,
-    escalation_status ENUM('none', 'due_soon', 'overdue', 'unassigned') NOT NULL DEFAULT 'none',
-    last_escalated_at DATETIME NULL,
+    prioridade ENUM('baixa', 'media', 'alta') DEFAULT 'media',
+    sla_due_at DATETIME NULL,
+    sla_status ENUM('ok', 'em_risco', 'vencido', 'sem_sla') DEFAULT 'sem_sla',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (cliente_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (advogado_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE SET NULL,
-    CONSTRAINT fk_cases_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
-    CONSTRAINT fk_cases_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_cases_cliente_status (cliente_id, status),
     INDEX idx_cases_advogado_status (advogado_id, status),
-    INDEX idx_cases_document (document_id),
-    INDEX idx_cases_organization (organization_id),
-    INDEX idx_cases_sla_status_deadline (status, sla_deadline_at),
-    INDEX idx_cases_assigned_to (assigned_to),
-    INDEX idx_cases_escalation (status, escalation_status, last_escalated_at)
+    INDEX idx_cases_organization_status (organization_id, status),
+    INDEX idx_cases_sla (sla_status, sla_due_at),
+    INDEX idx_cases_document (document_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS case_escalations (
@@ -225,6 +325,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 -- agenda de profissionais
 CREATE TABLE IF NOT EXISTS schedule_slots (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     professional_id INT NOT NULL,
     starts_at DATETIME NOT NULL,
     ends_at DATETIME NOT NULL,
@@ -232,7 +333,9 @@ CREATE TABLE IF NOT EXISTS schedule_slots (
     titulo VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (professional_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_schedule_organization (organization_id, starts_at),
     INDEX idx_schedule_professional (professional_id, starts_at),
     INDEX idx_schedule_status (status, starts_at)
 ) DEFAULT CHARSET=utf8mb4;
@@ -240,6 +343,7 @@ CREATE TABLE IF NOT EXISTS schedule_slots (
 -- agendamentos feitos por clientes
 CREATE TABLE IF NOT EXISTS appointments (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     slot_id INT NOT NULL,
     client_id INT NOT NULL,
     case_id INT NULL,
@@ -248,10 +352,12 @@ CREATE TABLE IF NOT EXISTS appointments (
     status ENUM('agendado', 'cancelado', 'concluido') DEFAULT 'agendado',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (slot_id) REFERENCES schedule_slots(id) ON DELETE CASCADE,
     FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE SET NULL,
     INDEX idx_appointments_client (client_id, created_at),
+    INDEX idx_appointments_organization (organization_id, created_at),
     INDEX idx_appointments_status (status, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
@@ -316,7 +422,7 @@ CREATE TABLE IF NOT EXISTS cna_validacao_logs (
 CREATE TABLE IF NOT EXISTS external_processes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    owner_type ENUM('cliente', 'advogado', 'estagiario') NOT NULL,
+    owner_type ENUM('cliente', 'advogado') NOT NULL,
     source VARCHAR(40) NOT NULL DEFAULT 'datajud',
     query_type ENUM('cpf', 'oab', 'cnj') NOT NULL,
     query_value VARCHAR(40) NOT NULL,
@@ -412,8 +518,45 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_p1_operations'),
     ('2026_06_11_create_user_onboarding_progress'),
     ('2026_06_13_google_oab_profile_fields'),
-    ('2026_06_23_cases_sla'),
-    ('2026_06_25_product_future');
+    ('2026_06_15_p2_saas'),
+    ('2026_06_23_add_free_plan'),
+    ('2026_06_24_plan_audience_professional'),
+    ('2026_06_26_max_plans'),
+    ('2026_06_27_remove_intern_profile');
+
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+INSERT INTO plans (slug, audience, name, description, monthly_price_cents, yearly_price_cents, limits_json, features_json, sort_order) VALUES
+    ('profissional_basico', 'advogado', 'Profissional básico', 'Plano inicial para advogados com OAB validada acompanharem a mesa profissional antes de contratar mais volume.', 0, 0,
+     JSON_OBJECT('document_upload', 5, 'document_ai', 5, 'ai_chat', 50, 'datajud_cnj', 1, 'ocr', 5),
+     JSON_ARRAY('5 documentos por mes', '5 analises com IA documental', '50 mensagens com IA Juridica', '1 consulta CNJ por mes', 'OCR basico para ate 5 arquivos'), 5),
+    ('gratuito', 'cliente', 'Gratuito', 'Plano inicial liberado automaticamente apos a conclusao do onboarding.', 0, 0,
+     JSON_OBJECT('document_upload', 5, 'document_ai', 5, 'ai_chat', 50, 'datajud_cnj', 1, 'ocr', 5),
+     JSON_ARRAY('5 documentos por mes', '5 analises com IA', '50 mensagens com IA Juridica', '1 consulta CNJ por mes', 'OCR basico para ate 5 arquivos'), 1),
+    ('essencial', 'cliente', 'Essencial', 'Ideal para cidadãos, estudantes e usuários ocasionais.', 1490, 14300,
+     JSON_OBJECT('document_upload', 30, 'document_ai', 30, 'ai_chat', 300, 'datajud_cnj', 30, 'ocr', 30),
+     JSON_ARRAY('Tradução de documentos jurídicos', 'IA Jurídica (Chat)', 'Consulta CNJ', 'Resumo automático de documentos', 'Histórico de documentos', 'Upload de PDF, DOCX e imagens', 'Até 30 documentos por mês'), 10),
+    ('pro', 'ambos', 'Pro', 'Ideal para advogados autônomos e profissionais jurídicos.', 4990, 47900,
+     JSON_OBJECT('document_upload', 500, 'document_ai', 500, 'ai_chat', 5000, 'datajud_cnj', 500, 'ocr', 500),
+     JSON_ARRAY('Até 500 documentos por mês', 'Até 500 análises com IA documental', 'Até 5.000 mensagens com IA Jurídica', 'Até 500 consultas CNJ por mês', 'Até 500 processamentos OCR por mês', 'Histórico de documentos e faturas'), 20),
+    ('max_cliente', 'cliente', 'Max', 'Mais volume para clientes que analisam e acompanham uma grande quantidade de documentos e processos.', 7990, 76700,
+     JSON_OBJECT('document_upload', 2000, 'document_ai', 2000, 'ai_chat', 20000, 'datajud_cnj', 2000, 'ocr', 2000),
+     JSON_ARRAY('Até 2.000 documentos por mês', 'Até 2.000 análises com IA documental', 'Até 20.000 mensagens com IA Jurídica', 'Até 2.000 consultas CNJ por mês', 'Até 2.000 processamentos OCR por mês', 'Histórico de documentos e faturas'), 25),
+    ('max_advogado', 'advogado', 'Max', 'Alto volume individual para advogados que operam documentos, consultas e análises jurídicas em escala.', 8990, 86300,
+     JSON_OBJECT('document_upload', 3000, 'document_ai', 3000, 'ai_chat', 30000, 'datajud_cnj', 3000, 'ocr', 3000),
+     JSON_ARRAY('Até 3.000 documentos por mês', 'Até 3.000 análises com IA documental', 'Até 30.000 mensagens com IA Jurídica', 'Até 3.000 consultas CNJ por mês', 'Até 3.000 processamentos OCR por mês', 'Casos, tarefas e agenda profissional', 'Histórico de documentos e faturas'), 25),
+    ('escritorio', 'advogado', 'Escritório', 'Ideal para escritórios e equipes jurídicas.', 9990, 95900,
+     JSON_OBJECT('document_upload', 0, 'document_ai', 0, 'ai_chat', 10000, 'datajud_cnj', 1000, 'ocr', 0),
+     JSON_ARRAY('Documentos, OCR e IA documental ilimitados', 'Até 10.000 mensagens com IA Jurídica', 'Até 1.000 consultas CNJ por mês', 'Compartilhamento por organização', 'Agenda, casos e tarefas por equipe', 'Histórico de documentos e faturas'), 30)
+ON DUPLICATE KEY UPDATE
+    audience = VALUES(audience),
+    name = VALUES(name),
+    description = VALUES(description),
+    monthly_price_cents = VALUES(monthly_price_cents),
+    yearly_price_cents = VALUES(yearly_price_cents),
+    limits_json = VALUES(limits_json),
+    features_json = VALUES(features_json),
+    sort_order = VALUES(sort_order);
 
 -- Dados de apresentacao.
 USE justraduz;
@@ -433,11 +576,10 @@ INSERT INTO tmp_demo_users
 SELECT id FROM users
 WHERE email IN (
     'admin@justraduz.demo',
-    'pietro@tamanini.dev.br',
     'cliente@justraduz.demo',
     'cliente2@justraduz.demo',
     'advogado@justraduz.demo',
-    'estagiario@justraduz.demo',
+    'advogado2@justraduz.demo',
     'pendente@justraduz.demo'
 );
 
@@ -536,43 +678,47 @@ DELETE FROM notifications WHERE id IN (SELECT id FROM tmp_demo_notifications);
 DELETE FROM messages WHERE id IN (SELECT id FROM tmp_demo_messages);
 DELETE FROM tasks WHERE id IN (SELECT id FROM tmp_demo_tasks);
 DELETE FROM appointments WHERE id IN (SELECT id FROM tmp_demo_appointments);
-DELETE FROM case_escalations WHERE case_id IN (SELECT id FROM tmp_demo_cases);
 DELETE FROM ai_results WHERE id IN (SELECT id FROM tmp_demo_ai_results);
 DELETE FROM documents WHERE id IN (SELECT id FROM tmp_demo_documents);
 DELETE FROM schedule_slots WHERE id IN (SELECT id FROM tmp_demo_slots);
 DELETE FROM cases WHERE id IN (SELECT id FROM tmp_demo_cases);
-DELETE FROM user_organizations WHERE user_id IN (SELECT id FROM tmp_demo_users);
 DELETE FROM users WHERE id IN (SELECT id FROM tmp_demo_users);
-DELETE FROM organizations WHERE documento IN ('12345678000190', '12ABC34501DE35') OR nome = 'Escritorio Demo JusTraduz';
-
-INSERT INTO organizations (nome, tipo, documento, status, created_at)
-VALUES ('Escritorio Demo JusTraduz', 'escritorio', '12ABC34501DE35', 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY));
-SET @demo_org_id = LAST_INSERT_ID();
 
 INSERT INTO users
-    (organization_id, nome, email, senha, tipo, telefone, cpf, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna, cna_validado_em, cna_origem, cna_tentativas, status, created_at)
+    (nome, email, senha, tipo, telefone, cpf, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna, cna_validado_em, cna_origem, cna_tentativas, status, created_at)
 VALUES
-    (NULL, 'Admin Demo', 'admin@justraduz.demo', @demo_password_hash, 'admin', '(11) 90000-0000', NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
-    (NULL, 'Pietro Tamanini', 'pietro@tamanini.dev.br', @pietro_password_hash, 'admin', NULL, NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
-    (NULL, 'Carla Cliente Demo', 'cliente@justraduz.demo', @demo_password_hash, 'cliente', '(11) 91111-1111', '52998224725', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 10 DAY)),
-    (NULL, 'Bruno Cliente Demo', 'cliente2@justraduz.demo', @demo_password_hash, 'cliente', '(21) 92222-2222', '39053344705', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 9 DAY)),
-    (@demo_org_id, 'Dra. Marina Costa', 'advogado@justraduz.demo', @demo_password_hash, 'advogado', '(31) 93333-3333', NULL, '123456', 'SP', 'Validado manualmente pela administracao.', 'demo-advogado-123456-sp', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 8 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 8 DAY)),
-    (@demo_org_id, 'Lucas Estagiario Demo', 'estagiario@justraduz.demo', @demo_password_hash, 'estagiario', '(41) 94444-4444', NULL, '654321', 'RJ', 'Validado manualmente pela administracao.', 'demo-estagiario-654321-rj', TRUE, 'estagiario', 'verificado', DATE_SUB(NOW(), INTERVAL 7 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 7 DAY)),
-    (@demo_org_id, 'Dr. Rafael Pendente', 'pendente@justraduz.demo', @demo_password_hash, 'advogado', '(51) 95555-5555', NULL, '778899', 'MG', 'Aguardando validacao administrativa.', NULL, FALSE, 'advogado', 'pendente', NULL, 'admin_manual', 0, 'ativo', DATE_SUB(NOW(), INTERVAL 2 DAY));
+    ('Admin Demo', 'admin@justraduz.demo', @demo_password_hash, 'admin', '(11) 90000-0000', NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
+    ('Pietro Tamanini', 'pietro@tamanini.dev.br', @pietro_password_hash, 'admin', NULL, NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
+    ('Carla Cliente Demo', 'cliente@justraduz.demo', @demo_password_hash, 'cliente', '(11) 91111-1111', '52998224725', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 10 DAY)),
+    ('Bruno Cliente Demo', 'cliente2@justraduz.demo', @demo_password_hash, 'cliente', '(21) 92222-2222', '39053344705', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 9 DAY)),
+    ('Dra. Marina Costa', 'advogado@justraduz.demo', @demo_password_hash, 'advogado', '(31) 93333-3333', NULL, '123456', 'SP', 'Validado manualmente pela administracao.', 'demo-advogado-123456-sp', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 8 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 8 DAY)),
+    ('Dr. André Martins', 'advogado2@justraduz.demo', @demo_password_hash, 'advogado', '(31) 94444-4444', NULL, '234567', 'MG', 'Validado manualmente pela administracao.', 'demo-advogado-234567-mg', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 7 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 7 DAY)),
+    ('Dr. Rafael Pendente', 'pendente@justraduz.demo', @demo_password_hash, 'advogado', '(51) 95555-5555', NULL, '778899', 'MG', 'Aguardando validacao administrativa.', NULL, FALSE, 'advogado', 'pendente', NULL, 'admin_manual', 0, 'ativo', DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 SELECT id INTO @admin_id FROM users WHERE email = 'admin@justraduz.demo';
-SELECT id INTO @pietro_id FROM users WHERE email = 'pietro@tamanini.dev.br';
 SELECT id INTO @cliente_id FROM users WHERE email = 'cliente@justraduz.demo';
 SELECT id INTO @cliente2_id FROM users WHERE email = 'cliente2@justraduz.demo';
 SELECT id INTO @advogado_id FROM users WHERE email = 'advogado@justraduz.demo';
-SELECT id INTO @estagiario_id FROM users WHERE email = 'estagiario@justraduz.demo';
+SELECT id INTO @advogado2_id FROM users WHERE email = 'advogado2@justraduz.demo';
 SELECT id INTO @pendente_id FROM users WHERE email = 'pendente@justraduz.demo';
 
-INSERT INTO user_organizations (user_id, organization_id, papel, is_primary)
-VALUES
-    (@advogado_id, @demo_org_id, 'gestor', 1),
-    (@estagiario_id, @demo_org_id, 'membro', 1),
-    (@pendente_id, @demo_org_id, 'membro', 1);
+INSERT INTO organizations (nome, tipo, name, slug, owner_user_id, status)
+VALUES ('Costa & Tamanini Demo', 'escritorio', 'Costa & Tamanini Demo', 'costa-tamanini-demo', @advogado_id, 'ativo')
+ON DUPLICATE KEY UPDATE nome = VALUES(nome), name = VALUES(name), owner_user_id = VALUES(owner_user_id), status = 'ativo';
+SELECT id INTO @org_demo_id FROM organizations WHERE slug = 'costa-tamanini-demo';
+
+INSERT INTO organization_members (organization_id, user_id, role, status, invited_by) VALUES
+    (@org_demo_id, @advogado_id, 'owner', 'active', @admin_id),
+    (@org_demo_id, @advogado2_id, 'member', 'active', @advogado_id)
+ON DUPLICATE KEY UPDATE role = VALUES(role), status = 'active';
+
+SELECT id INTO @plan_max_client_id FROM plans WHERE slug = 'max_cliente';
+SELECT id INTO @plan_max_lawyer_id FROM plans WHERE slug = 'max_advogado';
+SELECT id INTO @plan_office_id FROM plans WHERE slug = 'escritorio';
+INSERT INTO subscriptions (user_id, organization_id, plan_id, billing_cycle, status, provider, current_period_start, current_period_end) VALUES
+    (@cliente_id, NULL, @plan_max_client_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH)),
+    (@advogado2_id, @org_demo_id, @plan_max_lawyer_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH)),
+    (@advogado_id, @org_demo_id, @plan_office_id, 'monthly', 'active', 'demo_seed', NOW(), DATE_ADD(NOW(), INTERVAL 1 MONTH));
 
 INSERT INTO external_processes
     (user_id, owner_type, source, query_type, query_value, process_number, tribunal, uf, comarca, tipo_processo, classe_processual, assunto, status_inferido, status_normalizado, link, data_ultima_atualizacao, data_andamento_mais_recente, payload_json, last_synced_at)
@@ -581,21 +727,20 @@ VALUES
     (@cliente_id, 'cliente', 'datajud_demo', 'cnj', '10098761220238260100', '1009876-12.2023.8.26.0100', 'TJSP', 'SP', '1 Vara Civel de Sao Paulo', 'G1', 'Cumprimento de Sentenca', 'Cobranca contratual arquivada', 'Arquivado definitivamente', 'encerrado', NULL, DATE_SUB(CURDATE(), INTERVAL 80 DAY), DATE_SUB(CURDATE(), INTERVAL 35 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'justraduz', JSON_OBJECT('resumo_linguagem_simples', 'O processo aparece como encerrado no cache de demonstracao. Em geral, isso indica que nao ha novos andamentos esperados, salvo recurso, reativacao ou outra medida registrada pelo tribunal.', 'ultimas_movimentacoes', JSON_ARRAY(JSON_OBJECT('dataHora', DATE_SUB(CURDATE(), INTERVAL 35 DAY), 'descricao', 'Arquivado definitivamente')))), DATE_SUB(NOW(), INTERVAL 6 HOUR)),
     (@cliente2_id, 'cliente', 'datajud_demo', 'cnj', '50123457820248190001', '5012345-78.2024.8.19.0001', 'TJRJ', 'RJ', 'Juizado Especial Civel do Rio de Janeiro', 'G1', 'Procedimento do Juizado Especial Civel', 'Revisao de clausula de locacao', 'Concluso para despacho', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 15 DAY), DATE_SUB(CURDATE(), INTERVAL 4 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'justraduz', JSON_OBJECT('resumo_linguagem_simples', 'O processo esta aguardando analise do juiz. A ultima movimentacao indica que os autos foram encaminhados para despacho ou verificacao interna.', 'ultimas_movimentacoes', JSON_ARRAY(JSON_OBJECT('dataHora', DATE_SUB(CURDATE(), INTERVAL 4 DAY), 'descricao', 'Concluso para despacho')))), DATE_SUB(NOW(), INTERVAL 5 HOUR)),
     (@advogado_id, 'advogado', 'datajud_demo', 'oab', 'SP123456', '1023456-44.2024.8.26.0002', 'TJSP', 'SP', 'Sao Paulo', 'civil', 'Acao de Obrigacao de Fazer', 'Direito do consumidor', 'Concluso para despacho', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 6 DAY), DATE_SUB(CURDATE(), INTERVAL 2 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
-    (@advogado_id, 'advogado', 'datajud_demo', 'oab', 'SP123456', '1034567-21.2022.8.26.0053', 'TJSP', 'SP', 'Santos', 'trabalhista', 'Reclamacao Trabalhista', 'Verbas rescisorias', 'Baixado', 'baixado', NULL, DATE_SUB(CURDATE(), INTERVAL 120 DAY), DATE_SUB(CURDATE(), INTERVAL 60 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR)),
-    (@estagiario_id, 'estagiario', 'datajud_demo', 'oab', 'RJ654321', '5043210-33.2024.8.19.0209', 'TJRJ', 'RJ', 'Barra da Tijuca', 'civil', 'Monitoria de Processo', 'Acompanhamento de prazo processual', 'Aguardando publicacao', 'em andamento', NULL, DATE_SUB(CURDATE(), INTERVAL 8 DAY), DATE_SUB(CURDATE(), INTERVAL 3 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'estagiario', 'Lucas Estagiario Demo'), DATE_SUB(NOW(), INTERVAL 3 HOUR));
+    (@advogado_id, 'advogado', 'datajud_demo', 'oab', 'SP123456', '1034567-21.2022.8.26.0053', 'TJSP', 'SP', 'Santos', 'trabalhista', 'Reclamacao Trabalhista', 'Verbas rescisorias', 'Baixado', 'baixado', NULL, DATE_SUB(CURDATE(), INTERVAL 120 DAY), DATE_SUB(CURDATE(), INTERVAL 60 DAY), JSON_OBJECT('demo', true, 'origem', 'seed modulo 8', 'advogado', 'Dra. Marina Costa'), DATE_SUB(NOW(), INTERVAL 4 HOUR));
 
 INSERT INTO documents
     (user_id, organization_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
 VALUES
-    (@cliente_id, NULL, 'notificacao-extrajudicial-demo.png', 'png', 'backend/storage/documents/demo/notificacao-extrajudicial-demo.png',
+    (@cliente_id, @org_demo_id, 'notificacao-extrajudicial-demo.png', 'png', 'backend/storage/documents/demo/notificacao-extrajudicial-demo.png',
      'Notificacao extrajudicial cobrando multa contratual por atraso. O documento informa prazo de 5 dias para resposta e menciona possibilidade de medidas judiciais se nao houver contato.',
      DATE_SUB(NOW(), INTERVAL 4 DAY));
 SET @doc1_id = LAST_INSERT_ID();
 
 INSERT INTO documents
-    (user_id, organization_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
+    (user_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido, created_at)
 VALUES
-    (@cliente2_id, NULL, 'contrato-locacao-pendente-demo.png', 'png', 'backend/storage/documents/demo/contrato-locacao-pendente-demo.png',
+    (@cliente2_id, 'contrato-locacao-pendente-demo.png', 'png', 'backend/storage/documents/demo/contrato-locacao-pendente-demo.png',
      'Contrato de locacao residencial com clausula de multa, reajuste anual e vistoria de entrada. Documento aguardando analise automatica para a demonstracao.',
      DATE_SUB(NOW(), INTERVAL 2 DAY));
 SET @doc2_id = LAST_INSERT_ID();
@@ -629,21 +774,21 @@ VALUES
      DATE_SUB(NOW(), INTERVAL 4 DAY));
 
 INSERT INTO cases
-    (organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, sla_deadline_at, escalation_status, created_at)
+    (organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, sla_due_at, sla_status, created_at)
 VALUES
-    (@demo_org_id, @cliente_id, @advogado_id, @doc1_id, 'Revisar notificacao extrajudicial', 'Cliente recebeu cobranca com prazo de 5 dias e quer entender se deve responder imediatamente.', 'em_andamento', 'alta', DATE_SUB(DATE_ADD(NOW(), INTERVAL 24 HOUR), INTERVAL 3 DAY), 'overdue', DATE_SUB(NOW(), INTERVAL 3 DAY));
+    (@org_demo_id, @cliente_id, @advogado_id, @doc1_id, 'Revisar notificacao extrajudicial', 'Cliente recebeu cobranca com prazo de 5 dias e quer entender se deve responder imediatamente.', 'em_andamento', 'alta', DATE_SUB(NOW(), INTERVAL 2 DAY), 'vencido', DATE_SUB(NOW(), INTERVAL 3 DAY));
 SET @case1_id = LAST_INSERT_ID();
 
 INSERT INTO cases
-    (organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, sla_deadline_at, escalation_status, created_at)
+    (cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, created_at)
 VALUES
-    (NULL, @cliente2_id, NULL, @doc2_id, 'Duvida sobre contrato de locacao', 'Contrato tem multa e reajuste anual. Cliente quer saber quais clausulas exigem atencao.', 'aberto', 'alta', DATE_SUB(DATE_ADD(NOW(), INTERVAL 24 HOUR), INTERVAL 2 DAY), 'unassigned', DATE_SUB(NOW(), INTERVAL 2 DAY));
+    (@cliente2_id, NULL, @doc2_id, 'Duvida sobre contrato de locacao', 'Contrato tem multa e reajuste anual. Cliente quer saber quais clausulas exigem atencao.', 'aberto', 'alta', DATE_SUB(NOW(), INTERVAL 2 DAY));
 SET @case2_id = LAST_INSERT_ID();
 
 INSERT INTO cases
-    (organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, sla_deadline_at, escalation_status, created_at)
+    (cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade, created_at)
 VALUES
-    (@demo_org_id, @cliente_id, @advogado_id, @doc1_id, 'Orientacao concluida sobre prazo de resposta', 'Atendimento usado para demonstrar historico finalizado.', 'finalizado', 'baixa', DATE_SUB(DATE_ADD(NOW(), INTERVAL 72 HOUR), INTERVAL 6 DAY), 'none', DATE_SUB(NOW(), INTERVAL 6 DAY));
+    (@cliente_id, @advogado_id, @doc1_id, 'Orientacao concluida sobre prazo de resposta', 'Atendimento usado para demonstrar historico finalizado.', 'finalizado', 'baixa', DATE_SUB(NOW(), INTERVAL 6 DAY));
 SET @case3_id = LAST_INSERT_ID();
 
 INSERT INTO messages (case_id, sender_id, mensagem, created_at)
@@ -659,24 +804,20 @@ VALUES
     (@case1_id, 'Preparar minuta de resposta', 'Rascunhar resposta objetiva para envio dentro do prazo.', 'pendente', DATE_SUB(NOW(), INTERVAL 1 DAY)),
     (@case3_id, 'Registrar orientacao final', 'Fechar atendimento com resumo da orientacao prestada.', 'concluida', DATE_SUB(NOW(), INTERVAL 5 DAY));
 
-INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo, created_at)
-VALUES (@advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL 10 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL 11 HOUR), 'livre', 'Atendimento inicial', DATE_SUB(NOW(), INTERVAL 1 DAY));
+INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at, status, titulo, created_at)
+VALUES (@org_demo_id, @advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL 10 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 1 DAY), INTERVAL 11 HOUR), 'livre', 'Atendimento inicial', DATE_SUB(NOW(), INTERVAL 1 DAY));
 SET @slot_free_id = LAST_INSERT_ID();
 
-INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo, created_at)
-VALUES (@advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 15 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 16 HOUR), 'ocupado', 'Consulta sobre notificacao', DATE_SUB(NOW(), INTERVAL 1 DAY));
+INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at, status, titulo, created_at)
+VALUES (@org_demo_id, @advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 15 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 16 HOUR), 'ocupado', 'Consulta sobre notificacao', DATE_SUB(NOW(), INTERVAL 1 DAY));
 SET @slot_booked_id = LAST_INSERT_ID();
 
-INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo, created_at)
-VALUES (@advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 13 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 14 HOUR), 'bloqueado', 'Bloqueio interno para revisao', DATE_SUB(NOW(), INTERVAL 1 DAY));
+INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at, status, titulo, created_at)
+VALUES (@org_demo_id, @advogado_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 13 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 2 DAY), INTERVAL 14 HOUR), 'bloqueado', 'Bloqueio interno para revisao', DATE_SUB(NOW(), INTERVAL 1 DAY));
 SET @slot_blocked_id = LAST_INSERT_ID();
 
-INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo, created_at)
-VALUES (@estagiario_id, DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 3 DAY), INTERVAL 9 HOUR), DATE_ADD(DATE_ADD(CURDATE(), INTERVAL 3 DAY), INTERVAL 10 HOUR), 'livre', 'Triagem juridica', DATE_SUB(NOW(), INTERVAL 1 DAY));
-SET @slot_intern_id = LAST_INSERT_ID();
-
-INSERT INTO appointments (slot_id, client_id, case_id, assunto, observacoes, status, created_at)
-VALUES (@slot_booked_id, @cliente_id, @case1_id, 'Consulta sobre notificacao extrajudicial', 'Demo: atendimento marcado para explicar prazo e resposta.', 'agendado', DATE_SUB(NOW(), INTERVAL 12 HOUR));
+INSERT INTO appointments (organization_id, slot_id, client_id, case_id, assunto, observacoes, status, created_at)
+VALUES (@org_demo_id, @slot_booked_id, @cliente_id, @case1_id, 'Consulta sobre notificacao extrajudicial', 'Demo: atendimento marcado para explicar prazo e resposta.', 'agendado', DATE_SUB(NOW(), INTERVAL 12 HOUR));
 SET @appointment_id = LAST_INSERT_ID();
 
 INSERT INTO notifications (user_id, mensagem, lida, created_at)
@@ -690,7 +831,6 @@ INSERT INTO cna_validacao_logs
     (profissional_id, admin_id, acao, status_anterior, status_novo, origem, mensagem, justificativa, created_at)
 VALUES
     (@advogado_id, @admin_id, 'admin_approve', 'pendente', 'verificado', 'admin_manual', 'Validado manualmente pela administracao.', 'Seed demo para apresentacao.', DATE_SUB(NOW(), INTERVAL 8 DAY)),
-    (@estagiario_id, @admin_id, 'admin_approve', 'pendente', 'verificado', 'admin_manual', 'Validado manualmente pela administracao.', 'Seed demo para apresentacao.', DATE_SUB(NOW(), INTERVAL 7 DAY)),
     (@pendente_id, NULL, 'cadastro', NULL, 'pendente', 'admin_manual', 'Aguardando validacao administrativa.', NULL, DATE_SUB(NOW(), INTERVAL 2 DAY));
 
 INSERT INTO audit_logs

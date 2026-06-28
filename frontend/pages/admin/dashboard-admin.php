@@ -45,17 +45,16 @@ function admin_risk_level(int $value): string
     return $value >= 3 ? 'critical' : 'warning';
 }
 
-$userCount = count_query($pdo, 'SELECT COUNT(*) FROM users');
-$activeUserCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE status = 'ativo'");
+$userCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('cliente', 'advogado', 'admin')");
+$activeUserCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('cliente', 'advogado', 'admin') AND status = 'ativo'");
 $clientCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo = 'cliente'");
 $activeClientCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo = 'cliente' AND status = 'ativo'");
 $lawyerCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo = 'advogado'");
 $activeLawyerCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo = 'advogado' AND status = 'ativo'");
-$internCount = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo = 'estagiario'");
 $pendingProfessionalCount = count_query(
     $pdo,
     "SELECT COUNT(*) FROM users
-     WHERE tipo IN ('advogado', 'estagiario')
+     WHERE tipo = 'advogado'
        AND status = 'ativo'
        AND oab_verificado = FALSE
        AND COALESCE(status_cna, 'pendente') = 'pendente'
@@ -171,10 +170,9 @@ $caseStatus = [
 ];
 $maxCasesByStatus = max(1, $openCaseCount, $inProgressCaseCount, $closedCaseCount);
 
-$otherUserCount = max(0, $userCount - $clientCount - $lawyerCount - $internCount);
+$otherUserCount = max(0, $userCount - $clientCount - $lawyerCount);
 $clientDegrees = $userCount > 0 ? (int) round(($clientCount / $userCount) * 360) : 0;
 $lawyerDegrees = $userCount > 0 ? (int) round((($clientCount + $lawyerCount) / $userCount) * 360) : 0;
-$internDegrees = $userCount > 0 ? (int) round((($clientCount + $lawyerCount + $internCount) / $userCount) * 360) : 0;
 
 $topLawyers = fetch_all(
     $pdo,
@@ -192,7 +190,7 @@ $pendingProfessionals = fetch_all(
     $pdo,
     "SELECT id, nome, email, tipo, oab, oab_uf, oab_status, status_cna, created_at
      FROM users
-     WHERE tipo IN ('advogado', 'estagiario')
+     WHERE tipo = 'advogado'
        AND status = 'ativo'
        AND oab_verificado = FALSE
        AND COALESCE(status_cna, 'pendente') = 'pendente'
@@ -342,13 +340,12 @@ $healthChecks = [
             <h2>Usuários por perfil <?= help_icon('Usuários', 'Acompanhe a distribuição de contas. Alterações de acesso devem ter finalidade e rastreabilidade.') ?></h2>
           </div>
           <div class="donut-wrap">
-            <div class="donut-chart" style="--client-end: <?= $clientDegrees ?>deg; --lawyer-end: <?= $lawyerDegrees ?>deg; --intern-end: <?= $internDegrees ?>deg">
+            <div class="donut-chart" style="--client-end: <?= $clientDegrees ?>deg; --lawyer-end: <?= $lawyerDegrees ?>deg; --intern-end: <?= $lawyerDegrees ?>deg">
               <span><?= e((string) $userCount) ?></span>
             </div>
             <div class="chart-legend">
               <span><i class="legend-client"></i>Clientes: <?= e((string) $clientCount) ?></span>
               <span><i class="legend-lawyer"></i>Advogados: <?= e((string) $lawyerCount) ?></span>
-              <span><i class="legend-intern"></i>Estagiários: <?= e((string) $internCount) ?></span>
               <span><i class="legend-other"></i>Outros: <?= e((string) $otherUserCount) ?></span>
             </div>
           </div>

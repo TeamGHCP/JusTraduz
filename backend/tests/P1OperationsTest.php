@@ -4,6 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
 require_once dirname(__DIR__) . '/app/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/app/services/MailerService.php';
 require_once dirname(__DIR__) . '/app/services/ProcessRunnerService.php';
+require_once dirname(__DIR__) . '/app/services/PdfTextExtractor.php';
 require_once dirname(__DIR__) . '/app/services/StorageService.php';
 require_once dirname(__DIR__) . '/app/services/UploadScannerService.php';
 require_once dirname(__DIR__) . '/app/services/UsageLimiter.php';
@@ -22,8 +23,10 @@ build_test_schema($pdo);
 seed_test_data($pdo);
 
 $originalDsn = getenv('DB_DSN');
+$originalHealthcheckToken = getenv('HEALTHCHECK_TOKEN');
 $missingSqliteDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-missing-' . bin2hex(random_bytes(4));
 putenv('DB_DSN=sqlite:' . $missingSqliteDir . DIRECTORY_SEPARATOR . 'health.sqlite');
+putenv('HEALTHCHECK_TOKEN=');
 ob_start();
 (new HealthController())->show();
 $healthOutput = ob_get_clean();
@@ -31,6 +34,9 @@ $health = json_decode($healthOutput, true);
 assertEquals('degraded', $health['status'] ?? '', 'Healthcheck deve responder degradado quando o banco esta indisponivel.');
 assertTrue(($health['checks']['database'] ?? true) === false, 'Healthcheck deve marcar database como falso sem fatal error.');
 putenv('DB_DSN=' . $originalDsn);
+$originalHealthcheckToken === false
+    ? putenv('HEALTHCHECK_TOKEN')
+    : putenv('HEALTHCHECK_TOKEN=' . $originalHealthcheckToken);
 
 $processResult = ProcessRunnerService::run([PHP_BINARY, '-r', 'sleep(2);'], 1);
 assertEquals(124, (int) $processResult['exit_code'], 'ProcessRunner deve retornar codigo 124 em timeout.');
@@ -150,7 +156,7 @@ $usage = new UsageLimiter($pdo);
 putenv('USAGE_DAILY_DOCUMENT_AI=1');
 assertTrue($usage->allow(1, 'document_ai')['allowed'] === true, 'Primeiro uso deve caber na quota.');
 $usage->record(1, 'document_ai', 1, 1);
-assertTrue($usage->allow(1, 'document_ai')['allowed'] === false, 'Quota diaria deve bloquear uso excedente.');
+assertTrue($usage->allow(1, 'document_ai')['allowed'] === false, 'Quota mensal deve bloquear uso excedente.');
 
 $queue = new JobQueueService($pdo);
 $jobId = $queue->enqueue('document_analysis', ['document_id' => 1], 1);
@@ -195,6 +201,19 @@ $integrationJson = ob_get_clean();
 $integrationPayload = json_decode((string) $integrationJson, true);
 assertTrue(isset($integrationPayload['cases_open']), 'API externa autenticada deve retornar resumo operacional.');
 $_SERVER['HTTP_AUTHORIZATION'] = '';
+
+$pdfFixture = tempnam(sys_get_temp_dir(), 'justraduz-pdf-');
+file_put_contents($pdfFixture, "%PDF-1.4\nstream\nconteudo-incompativel (Texto recuperado) Tj\nendstream\n%%EOF");
+set_error_handler(static function (int $level, string $message, string $file, int $line): never {
+    throw new ErrorException($message, 0, $level, $file, $line);
+});
+try {
+    $pdfText = PdfTextExtractor::extract($pdfFixture);
+} finally {
+    restore_error_handler();
+    @unlink($pdfFixture);
+}
+assertTrue(str_contains($pdfText, 'Texto recuperado'), 'Stream PDF incompativel nao deve causar erro 500.');
 
 putenv('DOCUMENT_STORAGE_PATH');
 putenv('USAGE_DAILY_DOCUMENT_AI');

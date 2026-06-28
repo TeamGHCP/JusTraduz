@@ -4,7 +4,7 @@ require_role(['admin']);
 
 function admin_oab_validation_type_label(string $type): string
 {
-    return $type === 'estagiario' ? 'Estagiário' : 'Advogado';
+    return 'Advogado';
 }
 
 function admin_oab_validation_clipboard_text(array $professional): string
@@ -43,7 +43,7 @@ $pendingProfessionals = fetch_all(
     $pdo,
     "SELECT id, nome, email, telefone, tipo, foto_perfil, google_picture, oab, oab_uf, oab_status, status_cna, cna_origem, cna_ultimo_erro, created_at
      FROM users
-     WHERE tipo IN ('advogado', 'estagiario')
+     WHERE tipo = 'advogado'
        AND status = 'ativo'
        AND oab_verificado = FALSE
        AND COALESCE(status_cna, 'pendente') = 'pendente'
@@ -56,15 +56,15 @@ $pendingTotal = count_query(
     $pdo,
     "SELECT COUNT(*)
      FROM users
-     WHERE tipo IN ('advogado', 'estagiario')
+     WHERE tipo = 'advogado'
        AND status = 'ativo'
        AND oab_verificado = FALSE
        AND COALESCE(status_cna, 'pendente') = 'pendente'
        AND COALESCE(oab, '') <> ''
        AND COALESCE(oab_uf, '') <> ''"
 );
-$validatedTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('advogado', 'estagiario') AND status = 'ativo' AND oab_verificado = TRUE");
-$professionalTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo IN ('advogado', 'estagiario') AND status = 'ativo'");
+$validatedTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo = 'advogado' AND status = 'ativo' AND oab_verificado = TRUE");
+$professionalTotal = count_query($pdo, "SELECT COUNT(*) FROM users WHERE tipo = 'advogado' AND status = 'ativo'");
 $recentReviews = fetch_all(
     $pdo,
     "SELECT l.acao, l.status_anterior, l.status_novo, l.mensagem, l.justificativa, l.created_at,
@@ -191,7 +191,7 @@ $recentReviews = fetch_all(
                         </span>
                         <span>
                           <strong><?= e($professional['nome']) ?></strong>
-                          <span class="table-subtext"><?= e($professional['tipo'] === 'advogado' ? 'Advogado' : 'Estagiário') ?></span>
+                          <span class="table-subtext">Advogado</span>
                         </span>
                       </div>
                     </td>

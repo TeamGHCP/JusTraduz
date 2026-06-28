@@ -1,6 +1,6 @@
 # O que falta agora
 
-Data da revisão: 25/06/2026
+Data da revisão: 27/06/2026
 
 Esta é a lista única de pendências reais do JusTraduz. Itens já implementados foram removidos.
 
@@ -8,7 +8,9 @@ Esta é a lista única de pendências reais do JusTraduz. Itens já implementado
 
 - Rodar o roteiro completo de QA manual em `docs/ROTEIRO_QA_MANUAL.md`.
 - Testar visualmente em desktop, notebook, celular e projetor.
-- Conferir login e fluxo dos quatro perfis: Cliente, Advogado, Estagiário e Admin.
+- Conferir login e fluxo de Cliente, Advogado e Admin.
+- Ensaiar Max Cliente, Max Advogado e Escritório com dois advogados.
+- Ensaiar pagamento, convite por e-mail, cadastro/login e aceite no Escritório.
 - Ensaiar fluxo principal: upload, análise/explicação, solicitação, chat, agenda, admin e LGPD.
 - Preparar plano B para falha de internet, Gemini, DataJud ou SMTP.
 
@@ -32,9 +34,11 @@ Esta é a lista única de pendências reais do JusTraduz. Itens já implementado
 - Criar script incremental específico para qualquer base real existente a partir dos instaladores consolidados.
 - Testar rollback do script incremental em cópia do banco antes de produção.
 
-## Produto ainda futuro
+## Planos e cobrança
 
-- Planos e cobrança.
+- Concluir a compra manual no sandbox Asaas para Max Cliente, Max Advogado e Escritório.
+- Confirmar webhook, ativação, cancelamento e limites de cada plano.
+- Validar a entregabilidade dos convites com domínio próprio antes da produção.
 
 ## Acessibilidade e revisão formal
 

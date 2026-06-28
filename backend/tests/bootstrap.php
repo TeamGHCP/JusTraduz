@@ -2,12 +2,7 @@
 
 putenv('APP_DEBUG=false');
 putenv('APP_BASE_PATH=JusTraduz');
-
-$testDbPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-test-' . getmypid() . '.sqlite';
-if (file_exists($testDbPath)) {
-    @unlink($testDbPath);
-}
-putenv('DB_DSN=sqlite:' . $testDbPath);
+putenv('DB_DSN=sqlite::memory:');
 
 $testSessionPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'justraduz-test-sessions';
 if (!is_dir($testSessionPath)) {
@@ -26,30 +21,8 @@ $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $_SERVER['HTTP_USER_AGENT'] = 'JusTraduzTest/1.0';
 $_SERVER['SCRIPT_NAME'] = '/JusTraduz/backend/public/index.php';
 
-$databasePath = dirname(__DIR__) . '/app/config/database.php';
-$redirectExceptionPath = dirname(__DIR__) . '/app/core/RedirectException.php';
-
-if (!file_exists($databasePath)) {
-    throw new RuntimeException('Arquivo database.php não encontrado em: ' . $databasePath);
-}
-
-if (!file_exists($redirectExceptionPath)) {
-    throw new RuntimeException('Arquivo RedirectException.php não encontrado em: ' . $redirectExceptionPath);
-}
-
-require_once $databasePath;
-require_once $redirectExceptionPath;
-
-/*
- * Polyfill para caso o XAMPP esteja usando PHP abaixo de 8.0.
- * Se estiver em PHP 8+, a função nativa será usada.
- */
-if (!function_exists('str_contains')) {
-    function str_contains(string $haystack, string $needle): bool
-    {
-        return $needle === '' || strpos($haystack, $needle) !== false;
-    }
-}
+require_once dirname(__DIR__) . '/app/config/database.php';
+require_once dirname(__DIR__) . '/app/core/RedirectException.php';
 
 function test_pdo(): PDO
 {
@@ -61,8 +34,6 @@ function reset_test_state(): void
     $_GET = [];
     $_POST = [];
     $_FILES = [];
-    $_REQUEST = [];
-
     $_SERVER['REQUEST_METHOD'] = 'GET';
     $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
     $_SERVER['HTTP_USER_AGENT'] = 'JusTraduzTest/1.0';
@@ -73,7 +44,6 @@ function reset_test_state(): void
     if (session_status() === PHP_SESSION_ACTIVE) {
         session_unset();
     }
-
     $_SESSION = [];
 }
 
@@ -87,54 +57,28 @@ function assertTrue(bool $condition, string $message): void
 function assertEquals($expected, $actual, string $message): void
 {
     if ($expected !== $actual) {
-        throw new RuntimeException(
-            $message .
-            PHP_EOL . 'Esperado: ' . var_export($expected, true) .
-            PHP_EOL . 'Obtido: ' . var_export($actual, true)
-        );
+        throw new RuntimeException($message . ' Esperado: ' . var_export($expected, true) . ' Obtido: ' . var_export($actual, true));
+    }
+}
+
+function assertStringContains(string $needle, string $haystack, string $message): void
+{
+    if (!str_contains($haystack, $needle)) {
+        throw new RuntimeException($message . ' Procurado: ' . $needle . ' Em: ' . $haystack);
     }
 }
 
 function normalizeTextForAssertions(string $text): string
 {
-    if (function_exists('iconv')) {
-        $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
-        $text = $converted !== false ? $converted : $text;
-    }
-
-    $text = str_replace(["'", '`', '^', '~'], '', $text);
-    $text = strtolower($text);
-
-    return trim($text);
-}
-
-function assertStringContains(string $needle, string $haystack, string $message): void
-{
-    $normalizedNeedle = normalizeTextForAssertions($needle);
-    $normalizedHaystack = normalizeTextForAssertions($haystack);
-
-    if (!str_contains($normalizedHaystack, $normalizedNeedle)) {
-        throw new RuntimeException(
-            $message .
-            PHP_EOL . 'Procurado: ' . var_export($needle, true) .
-            PHP_EOL . 'Procurado normalizado: ' . var_export($normalizedNeedle, true) .
-            PHP_EOL . 'Em: ' . var_export($haystack, true) .
-            PHP_EOL . 'Em normalizado: ' . var_export($normalizedHaystack, true)
-        );
-    }
+    $converted = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+    $text = $converted !== false ? $converted : $text;
+    return str_replace(["'", '`', '^', '~'], '', $text);
 }
 
 function callPrivate(object|string $target, string $method, array $arguments = [])
 {
     $reflection = new ReflectionMethod($target, $method);
     $reflection->setAccessible(true);
-
-    if (!$reflection->isStatic() && !is_object($target)) {
-        throw new RuntimeException(
-            "O método {$method} não é estático. Passe uma instância do objeto em vez do nome da classe."
-        );
-    }
-
     return $reflection->invoke(is_object($target) ? $target : null, ...$arguments);
 }
 
@@ -149,45 +93,8 @@ function expectRedirect(callable $callback): string
     throw new RuntimeException('Era esperado um redirect.');
 }
 
-function reset_test_database(PDO $pdo): void
-{
-    $pdo->exec('PRAGMA foreign_keys = OFF');
-
-    $tables = [
-        'mail_logs',
-        'public_api_clients',
-        'case_escalations',
-        'role_permission_overrides',
-        'user_organizations',
-        'organizations',
-        'usage_events',
-        'job_queue',
-        'external_processes',
-        'cna_validacao_logs',
-        'password_reset_codes',
-        'audit_logs',
-        'notifications',
-        'appointments',
-        'schedule_slots',
-        'tasks',
-        'messages',
-        'cases',
-        'ai_results',
-        'documents',
-        'users',
-    ];
-
-    foreach ($tables as $table) {
-        $pdo->exec("DROP TABLE IF EXISTS {$table}");
-    }
-
-    $pdo->exec('PRAGMA foreign_keys = ON');
-}
-
 function build_test_schema(PDO $pdo): void
 {
-    reset_test_database($pdo);
-
     $schema = [
         'CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -221,11 +128,114 @@ function build_test_schema(PDO $pdo): void
             provider TEXT,
             profile_completed INTEGER DEFAULT 1,
             email_verified_at TEXT,
-            deletion_requested_at TEXT,
-            deletion_scheduled_at TEXT,
             status TEXT DEFAULT "ativo",
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT
+        )',
+        'CREATE TABLE organizations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            tipo TEXT DEFAULT "empresa",
+            documento TEXT,
+            slug TEXT NOT NULL UNIQUE,
+            owner_user_id INTEGER,
+            status TEXT DEFAULT "ativo",
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
+        )',
+        'CREATE TABLE organization_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER NOT NULL,
+            user_id INTEGER NOT NULL,
+            role TEXT DEFAULT "member",
+            status TEXT DEFAULT "active",
+            invited_by INTEGER,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT,
+            UNIQUE (organization_id, user_id)
+        )',
+        'CREATE TABLE user_organizations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            organization_id INTEGER NOT NULL,
+            papel TEXT DEFAULT "membro",
+            is_primary INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (user_id, organization_id)
+        )',
+        'CREATE TABLE organization_invites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER NOT NULL,
+            email TEXT NOT NULL,
+            role TEXT DEFAULT "member",
+            token_hash TEXT NOT NULL,
+            status TEXT DEFAULT "pending",
+            invited_by INTEGER,
+            expires_at TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            accepted_at TEXT
+        )',
+        'CREATE TABLE role_permission_overrides (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            role_name TEXT NOT NULL,
+            permission TEXT NOT NULL,
+            effect TEXT NOT NULL,
+            updated_by INTEGER,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (role_name, permission)
+        )',
+        'CREATE TABLE plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT NOT NULL UNIQUE,
+            audience TEXT DEFAULT "cliente",
+            name TEXT NOT NULL,
+            description TEXT,
+            monthly_price_cents INTEGER DEFAULT 0,
+            yearly_price_cents INTEGER DEFAULT 0,
+            limits_json TEXT NOT NULL,
+            features_json TEXT,
+            active INTEGER DEFAULT 1,
+            sort_order INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
+        )',
+        'CREATE TABLE subscriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            organization_id INTEGER,
+            plan_id INTEGER NOT NULL,
+            billing_cycle TEXT DEFAULT "monthly",
+            status TEXT DEFAULT "active",
+            provider TEXT DEFAULT "manual",
+            provider_subscription_id TEXT,
+            current_period_start TEXT,
+            current_period_end TEXT,
+            canceled_at TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT
+        )',
+        'CREATE TABLE payment_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            subscription_id INTEGER,
+            user_id INTEGER,
+            provider TEXT DEFAULT "manual",
+            provider_event_id TEXT,
+            event_type TEXT NOT NULL,
+            amount_cents INTEGER DEFAULT 0,
+            currency TEXT DEFAULT "BRL",
+            status TEXT DEFAULT "pending",
+            payload_json TEXT,
+            processed_at TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )',
+        'CREATE TABLE user_permissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            permission_key TEXT NOT NULL,
+            allowed INTEGER DEFAULT 1,
+            granted_by INTEGER,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (user_id, permission_key)
         )',
         'CREATE TABLE documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -257,36 +267,9 @@ function build_test_schema(PDO $pdo): void
             descricao TEXT,
             status TEXT DEFAULT "aberto",
             prioridade TEXT DEFAULT "media",
-            escalation_status TEXT DEFAULT "none",
-            last_escalated_at TEXT,
+            sla_due_at TEXT,
+            sla_status TEXT DEFAULT "sem_sla",
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )',
-        'CREATE TABLE organizations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            tipo TEXT NOT NULL DEFAULT "empresa",
-            documento TEXT,
-            status TEXT NOT NULL DEFAULT "ativo",
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT
-        )',
-        'CREATE TABLE user_organizations (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            organization_id INTEGER NOT NULL,
-            papel TEXT NOT NULL DEFAULT "membro",
-            is_primary INTEGER NOT NULL DEFAULT 0,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(user_id, organization_id)
-        )',
-        'CREATE TABLE role_permission_overrides (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            role_name TEXT NOT NULL,
-            permission TEXT NOT NULL,
-            effect TEXT NOT NULL,
-            updated_by INTEGER,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(role_name, permission)
         )',
         'CREATE TABLE case_escalations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -297,7 +280,7 @@ function build_test_schema(PDO $pdo): void
         )',
         'CREATE TABLE public_api_clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
+            nome TEXT NOT NULL UNIQUE,
             token_hash TEXT NOT NULL,
             scopes TEXT NOT NULL DEFAULT "health:read,reports:read",
             status TEXT NOT NULL DEFAULT "ativo",
@@ -326,6 +309,7 @@ function build_test_schema(PDO $pdo): void
         )',
         'CREATE TABLE schedule_slots (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER,
             professional_id INTEGER NOT NULL,
             starts_at TEXT NOT NULL,
             ends_at TEXT NOT NULL,
@@ -336,6 +320,7 @@ function build_test_schema(PDO $pdo): void
         )',
         'CREATE TABLE appointments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            organization_id INTEGER,
             slot_id INTEGER NOT NULL,
             client_id INTEGER NOT NULL,
             case_id INTEGER,
@@ -453,79 +438,47 @@ function build_test_schema(PDO $pdo): void
 function seed_test_data(PDO $pdo): void
 {
     $password = password_hash('Senha@123', PASSWORD_DEFAULT);
-
     $users = [
         [1, 'Cliente Um', 'cliente1@teste.local', 'cliente', 0, 'not_required', null, '52998224725'],
         [2, 'Cliente Dois', 'cliente2@teste.local', 'cliente', 0, 'not_required', null, '39053344705'],
         [3, 'Advogado OK', 'advogado@teste.local', 'advogado', 1, 'approved', 'verificado', null],
         [4, 'Advogado Pendente', 'pendente@teste.local', 'advogado', 0, 'pending', 'pendente', null],
         [5, 'Admin', 'admin@teste.local', 'admin', 1, 'not_required', null, null],
-        [6, 'Estagiario OK', 'estagiario@teste.local', 'estagiario', 1, 'approved', 'verificado', null],
     ];
 
     $stmt = $pdo->prepare(
-        'INSERT INTO users (
-            id,
-            organization_id,
-            nome,
-            email,
-            senha,
-            tipo,
-            oab_verificado,
-            oab_status,
-            status_cna,
-            cpf,
-            status,
-            profile_completed
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "ativo", 1)'
+        'INSERT INTO users (id, nome, email, senha, tipo, oab_verificado, oab_status, status_cna, cpf, status, profile_completed)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "ativo", 1)'
     );
 
-    $pdo->exec("INSERT INTO organizations (id, nome, tipo, documento, status) VALUES (1, 'Escritorio Demo', 'escritorio', '12ABC34501DE35', 'ativo')");
-
     foreach ($users as $user) {
-        $organizationId = in_array($user[3], ['advogado', 'estagiario'], true) ? 1 : null;
-        $stmt->execute([
-            $user[0],
-            $organizationId,
-            $user[1],
-            $user[2],
-            $password,
-            $user[3],
-            $user[4],
-            $user[5],
-            $user[6],
-            $user[7],
-        ]);
+        $stmt->execute([$user[0], $user[1], $user[2], $password, $user[3], $user[4], $user[5], $user[6], $user[7]]);
     }
 
-    $pdo->exec("INSERT INTO user_organizations (user_id, organization_id, papel, is_primary) SELECT id, 1, 'membro', 1 FROM users WHERE tipo IN ('advogado', 'estagiario')");
+    $pdo->exec("INSERT INTO plans (id, slug, audience, name, description, monthly_price_cents, yearly_price_cents, limits_json, features_json, active, sort_order) VALUES
+        (1, 'essencial', 'cliente', 'Essencial', 'Ideal para cidadãos, estudantes e usuários ocasionais.', 1490, 14300, '{\"document_upload\":30,\"document_ai\":30,\"ai_chat\":300,\"datajud_cnj\":30,\"ocr\":30}', '[\"Tradução de documentos jurídicos\",\"IA Jurídica (Chat)\",\"Consulta CNJ\",\"Resumo automático de documentos\",\"Histórico de documentos\",\"Upload de PDF, DOCX e imagens\",\"Até 30 documentos por mês\"]', 1, 10),
+        (2, 'pro', 'ambos', 'Pro', 'Ideal para advogados autônomos e profissionais jurídicos.', 4990, 47900, '{\"document_upload\":500,\"document_ai\":500,\"ai_chat\":5000,\"datajud_cnj\":500,\"ocr\":500}', '[\"Até 500 documentos por mês\",\"Até 500 análises com IA documental\",\"Até 5.000 mensagens com IA Jurídica\",\"Até 500 consultas CNJ por mês\",\"Até 500 processamentos OCR por mês\",\"Histórico de documentos e faturas\"]', 1, 20),
+        (3, 'escritorio', 'advogado', 'Escritório', 'Ideal para escritórios e equipes jurídicas.', 9990, 95900, '{\"document_upload\":0,\"document_ai\":0,\"ai_chat\":10000,\"datajud_cnj\":1000,\"ocr\":0}', '[\"Documentos, OCR e IA documental ilimitados\",\"Até 10.000 mensagens com IA Jurídica\",\"Até 1.000 consultas CNJ por mês\",\"Compartilhamento por organização\",\"Agenda, casos e tarefas por equipe\",\"Histórico de documentos e faturas\"]', 1, 30),
+        (4, 'gratuito', 'cliente', 'Gratuito', 'Plano inicial liberado automaticamente apos o onboarding.', 0, 0, '{\"document_upload\":5,\"document_ai\":5,\"ai_chat\":50,\"datajud_cnj\":1,\"ocr\":5}', '[\"5 documentos por mes\",\"5 analises com IA\",\"50 mensagens com IA Juridica\",\"1 consulta CNJ por mes\"]', 1, 1),
+        (5, 'profissional_basico', 'advogado', 'Profissional básico', 'Plano inicial para advogados com OAB validada.', 0, 0, '{\"document_upload\":5,\"document_ai\":5,\"ai_chat\":50,\"datajud_cnj\":1,\"ocr\":5}', '[\"5 documentos por mes\",\"5 analises com IA documental\",\"50 mensagens com IA Juridica\",\"1 consulta CNJ por mes\",\"OCR basico para ate 5 arquivos\"]', 1, 5),
+        (6, 'max_cliente', 'cliente', 'Max', 'Alto volume para clientes.', 7990, 76700, '{\"document_upload\":2000,\"document_ai\":2000,\"ai_chat\":20000,\"datajud_cnj\":2000,\"ocr\":2000}', '[\"Até 2.000 documentos por mês\"]', 1, 25),
+        (7, 'max_advogado', 'advogado', 'Max', 'Alto volume para advogados.', 8990, 86300, '{\"document_upload\":3000,\"document_ai\":3000,\"ai_chat\":30000,\"datajud_cnj\":3000,\"ocr\":3000}', '[\"Até 3.000 documentos por mês\"]', 1, 25)");
+    $pdo->exec("INSERT INTO organizations (id, nome, tipo, slug, owner_user_id, status) VALUES (1, 'Escritorio Teste', 'escritorio', 'escritorio-teste', 3, 'ativo')");
+    $pdo->exec("INSERT INTO organization_members (organization_id, user_id, role, status) VALUES
+        (1, 3, 'owner', 'active')");
 
-    $pdo->exec("
-        INSERT INTO documents (id, user_id, organization_id, nome_arquivo, tipo_arquivo, caminho) VALUES
-        (1, 1, 1, 'cliente-um.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-um.pdf'),
-        (2, 2, 1, 'cliente-dois.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-dois.pdf')
-    ");
-
-    $pdo->exec("
-        INSERT INTO cases (id, organization_id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade) VALUES
-        (1, 1, 1, 3, 1, 'Caso atendido', 'Descricao', 'em_andamento', 'media'),
-        (2, 1, 2, NULL, 2, 'Caso aberto', 'Descricao', 'aberto', 'media')
-    ");
-
-    $pdo->exec("
-        INSERT INTO messages (id, case_id, sender_id, mensagem) VALUES
+    $pdo->exec("INSERT INTO documents (id, user_id, nome_arquivo, tipo_arquivo, caminho) VALUES
+        (1, 1, 'cliente-um.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-um.pdf'),
+        (2, 2, 'cliente-dois.pdf', 'pdf', 'backend/storage/documents/test-fixtures/cliente-dois.pdf')");
+    $pdo->exec("INSERT INTO cases (id, cliente_id, advogado_id, document_id, titulo, descricao, status, prioridade) VALUES
+        (1, 1, 3, 1, 'Caso atendido', 'Descricao', 'em_andamento', 'media'),
+        (2, 2, NULL, 2, 'Caso aberto', 'Descricao', 'aberto', 'media')");
+    $pdo->exec("INSERT INTO messages (id, case_id, sender_id, mensagem) VALUES
         (1, 1, 1, 'Ola'),
-        (2, 1, 3, 'Resposta')
-    ");
-
-    $pdo->exec("
-        INSERT INTO schedule_slots (id, professional_id, starts_at, ends_at, status, titulo) VALUES
+        (2, 1, 3, 'Resposta')");
+    $pdo->exec("INSERT INTO schedule_slots (id, professional_id, starts_at, ends_at, status, titulo) VALUES
         (1, 3, '2030-01-10 10:00:00', '2030-01-10 11:00:00', 'livre', 'Consulta'),
-        (2, 4, '2030-01-10 12:00:00', '2030-01-10 13:00:00', 'livre', 'Pendente')
-    ");
-
-    $pdo->exec("
-        INSERT INTO appointments (id, slot_id, client_id, case_id, assunto, status) VALUES
-        (1, 1, 1, 1, 'Reuniao', 'agendado')
-    ");
+        (2, 4, '2030-01-10 12:00:00', '2030-01-10 13:00:00', 'livre', 'Pendente')");
+    $pdo->exec("INSERT INTO appointments (id, slot_id, client_id, case_id, assunto, status) VALUES
+        (1, 1, 1, 1, 'Reuniao', 'agendado')");
 }

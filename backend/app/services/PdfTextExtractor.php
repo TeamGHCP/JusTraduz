@@ -20,16 +20,7 @@ class PdfTextExtractor
         if (preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $contents, $matches)) {
             foreach ($matches[1] as $stream) {
                 $stream = ltrim($stream);
-                $decoded = @gzuncompress($stream);
-                if ($decoded === false) {
-                    $decoded = @gzdecode($stream);
-                }
-                if ($decoded === false) {
-                    $decoded = @gzuncompress(substr($stream, 2));
-                }
-                if ($decoded === false) {
-                    $decoded = $stream;
-                }
+                $decoded = self::decodeStream($stream);
 
                 $text = self::extractTextFromStream($decoded);
                 if ($text !== '') {
@@ -39,6 +30,35 @@ class PdfTextExtractor
         }
 
         return self::cleanText(implode("\n", $texts));
+    }
+
+    private static function decodeStream(string $stream): string
+    {
+        foreach ([$stream, substr($stream, 2)] as $candidate) {
+            if ($candidate === '') {
+                continue;
+            }
+
+            try {
+                $decoded = @gzuncompress($candidate);
+                if ($decoded !== false) {
+                    return $decoded;
+                }
+            } catch (Throwable) {
+                // Nem todo stream PDF usa FlateDecode.
+            }
+
+            try {
+                $decoded = @gzdecode($candidate);
+                if ($decoded !== false) {
+                    return $decoded;
+                }
+            } catch (Throwable) {
+                // Tenta o proximo formato e preserva o stream original como fallback.
+            }
+        }
+
+        return $stream;
     }
 
     private static function extractWithPdftotext(string $filePath): string

@@ -20,11 +20,6 @@ class PermissionService
             'schedule.manage_own',
             'profile.manage_own',
         ],
-        'estagiario' => [
-            'cases.view_assigned',
-            'schedule.view_own',
-            'profile.manage_own',
-        ],
         'admin' => [
             'admin.access',
             'users.view',

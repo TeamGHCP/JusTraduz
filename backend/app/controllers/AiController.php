@@ -53,7 +53,7 @@ class AiController
             $usage = new UsageLimiter(database_connection());
             $quota = $usage->allow($userId, 'ai_chat');
             if (!$quota['allowed']) {
-                $this->json(['erro' => 'Limite diario de mensagens com IA atingido. Tente novamente amanha.'], 429);
+                $this->json(['erro' => $usage->limitMessage('ai_chat', $quota)], 429);
                 return;
             }
         }
@@ -217,8 +217,8 @@ class AiController
             return 'Para falar com o time, use a página Contato do site. Descreva o assunto de forma objetiva e evite enviar CPF, senha, número de processo ou documentos sigilosos em mensagens abertas.';
         }
 
-        if (preg_match('/\b(perfil cliente|perfil advogado|advogado|cliente|estagiario|administrador|admin|oab)\b/', $normalized)) {
-            return 'O JusTraduz organiza o acesso por perfil. Cliente envia documentos e acompanha solicitações. Advogado atende casos e interage com clientes quando validado. Estagiário pode apoiar rotinas permitidas. Administrador gerencia usuários, auditoria e validações.';
+        if (preg_match('/\b(perfil cliente|perfil advogado|advogado|cliente|administrador|admin|oab)\b/', $normalized)) {
+            return 'O JusTraduz organiza o acesso por perfil. Cliente envia documentos e acompanha solicitações. Advogado atende casos e interage com clientes quando validado. Administrador gerencia usuários, auditoria e validações.';
         }
 
         if (preg_match('/\b(como funciona|usar o site|usar a plataforma|tutorial|passo a passo|primeiros passos|onde comeco|começar)\b/', $normalized)) {

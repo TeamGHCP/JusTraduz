@@ -18,9 +18,12 @@ Use este checklist no dia da apresentação local.
 
 - [ ] Cliente demo entra.
 - [ ] Advogado demo entra.
-- [ ] Estagiário demo entra.
+- [ ] Segundo advogado demo entra.
 - [ ] Admin demo entra pelo login administrativo.
 - [ ] Senha demo conferida: `Demo@2026!`.
+- [ ] Cliente demo aparece no Max Cliente.
+- [ ] Segundo advogado aparece no Max Advogado.
+- [ ] Escritório contém exatamente dois advogados ativos.
 
 ## Fluxo a ensaiar
 
@@ -33,6 +36,9 @@ Use este checklist no dia da apresentação local.
 - [ ] Agenda.
 - [ ] Painel admin.
 - [ ] Validação OAB.
+- [ ] Caso vencido aparece como exemplo intencional de SLA.
+- [ ] Convite do Escritório aceita somente conta de advogado.
+- [ ] Fluxos Max Cliente, Max Advogado e Escritório.
 - [ ] Relatórios admin.
 - [ ] Exportação LGPD.
 - [ ] PWA offline, se for demonstrado.
@@ -41,6 +47,6 @@ Use este checklist no dia da apresentação local.
 
 - [ ] Internet disponível se IA/DataJud/OAB forem usados.
 - [ ] Fluxo alternativo preparado caso API externa falhe.
-- [ ] `MAIL_LOG_ONLY=true` para demonstração sem SMTP real.
+- [ ] Usar `MAIL_LOG_ONLY=true` somente no plano B sem SMTP real.
 - [ ] Arquivos de exemplo disponíveis localmente.
 - [ ] Prints ou dados demo prontos para explicar partes que dependam de serviço externo.

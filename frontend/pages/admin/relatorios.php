@@ -3,7 +3,7 @@ require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_once PROJECT_ROOT_PATH . '/backend/app/services/SlaService.php';
 require_permission('reports.view');
 
-$usersByRole = fetch_all($pdo, 'SELECT tipo, COUNT(*) AS total FROM users GROUP BY tipo ORDER BY tipo');
+$usersByRole = fetch_all($pdo, "SELECT tipo, COUNT(*) AS total FROM users WHERE tipo IN ('cliente', 'advogado', 'admin') GROUP BY tipo ORDER BY tipo");
 $documentsTotal = count_query($pdo, 'SELECT COUNT(*) FROM documents');
 $documentsAnalyzed = count_query($pdo, 'SELECT COUNT(DISTINCT document_id) FROM ai_results');
 $casesByStatus = fetch_all($pdo, 'SELECT status, COUNT(*) AS total FROM cases GROUP BY status ORDER BY status');
@@ -11,7 +11,7 @@ $casesByPriority = fetch_all($pdo, 'SELECT prioridade, COUNT(*) AS total FROM ca
 $pendingOab = count_query(
     $pdo,
     "SELECT COUNT(*) FROM users
-     WHERE tipo IN ('advogado', 'estagiario')
+     WHERE tipo = 'advogado'
        AND status = 'ativo'
        AND oab_verificado = FALSE
        AND COALESCE(status_cna, 'pendente') = 'pendente'"

@@ -168,7 +168,7 @@ $metricCards = [
           <?php else: ?>
             <span class="badge badge-info">Aguardando envio</span>
             <strong>Nenhum envio</strong>
-            <p>Comece pelo upload de PDF, PNG, JPEG ou WebP.</p>
+            <p>Comece pelo upload de PDF, DOCX, PNG, JPEG ou WebP.</p>
           <?php endif; ?>
         </article>
 

@@ -175,7 +175,6 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
           <select class="select jt-input" id="tipo" name="tipo" data-account-type required>
             <option value="cliente">Cliente</option>
             <option value="advogado">Advogado</option>
-            <option value="estagiario">Estagiário</option>
           </select>
           <label class="jt-label" for="tipo">Tipo de conta</label>
           <small class="jt-error"></small>
@@ -230,7 +229,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
         </div>
 
         <div class="auth-note" data-professional-note hidden>
-          A OAB será usada apenas para validação profissional interna. O acesso profissional fica bloqueado até aprovação do admin.
+          A OAB/registro será usado somente para validação profissional interna. O acesso profissional fica bloqueado até a aprovação do admin.
         </div>
 
         <label class="checkline">

@@ -1,8 +1,8 @@
-# Operação pendente: backup, restore e healthcheck
+# Operação de backup, restore e healthcheck
 
-Estes passos ainda precisam ser executados e evidenciados em ambiente de homologação ou produção.
+Execute estes passos primeiro em uma base temporária e registre a evidência antes de usar em produção.
 
-## Backup pendente
+## Backup
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\backup-database.ps1 -EnvFile backend\.env -OutputDir backups
@@ -22,17 +22,21 @@ Também falta definir rotina de cópia para:
 
 Em produção, esses caminhos devem ficar fora do webroot sempre que possível.
 
-## Restore pendente
+Para backup criptografado (`.enc`), configure `BACKUP_ENCRYPTION_PASSWORD` e valide após descriptografar em ambiente controlado.
+
+## Restore
 
 Testar primeiro em ambiente limpo:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\restore-database.ps1 -EnvFile backend\.env -BackupPath backups\arquivo.sql
+powershell -ExecutionPolicy Bypass -File scripts\restore-database.ps1 -EnvFile backend\.env -BackupPath backups\arquivo.sql.enc -TargetDatabase justraduz_restore_test
 ```
 
 Depois restaurar documentos e anexos para os caminhos configurados no `.env`.
 
-## Validação pendente após restore
+Nunca use o nome da base principal no primeiro teste de restore.
+
+## Validação após restore
 
 - [ ] Login funciona.
 - [ ] Usuários e perfis existem.

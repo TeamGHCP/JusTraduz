@@ -42,4 +42,32 @@ class SlaService
 
         return ['state' => 'on_track', 'deadline' => $deadline, 'hours_remaining' => $hoursRemaining];
     }
+
+    public static function deadlineForPriority(string $priority): string
+    {
+        return (new DateTimeImmutable())->modify('+' . self::hoursForPriority($priority) . ' hours')->format('Y-m-d H:i:s');
+    }
+
+    public static function status(?string $deadline, string $caseStatus): string
+    {
+        if ($caseStatus === 'finalizado') {
+            return 'ok';
+        }
+
+        if (!$deadline) {
+            return 'sem_sla';
+        }
+
+        $now = new DateTimeImmutable();
+        $due = new DateTimeImmutable($deadline);
+        if ($due < $now) {
+            return 'vencido';
+        }
+
+        if ($due <= $now->modify('+12 hours')) {
+            return 'em_risco';
+        }
+
+        return 'ok';
+    }
 }

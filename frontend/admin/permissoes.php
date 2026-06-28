@@ -1,2 +1,2 @@
 <?php
-require dirname(__DIR__) . '/pages/admin/permissoes.php';
+require __DIR__ . '/../pages/admin/permissoes.php';

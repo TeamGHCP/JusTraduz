@@ -3,17 +3,20 @@
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
+require_once dirname(__DIR__) . '/services/OrganizationService.php';
 
 class ScheduleController extends BaseController
 {
     private AuditService $audit;
     private NotificationService $notifications;
+    private OrganizationService $organizations;
 
     public function __construct()
     {
         parent::__construct();
         $this->audit = new AuditService($this->pdo);
         $this->notifications = new NotificationService($this->pdo);
+        $this->organizations = new OrganizationService($this->pdo);
     }
 
     public function createSlot(): void
@@ -41,16 +44,31 @@ class ScheduleController extends BaseController
             return;
         }
 
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo) VALUES (?, ?, ?, ?, ?)'
-        );
-        $stmt->execute([
-            (int) $_SESSION['id'],
-            $startsAt->format('Y-m-d H:i:s'),
-            $endsAt->format('Y-m-d H:i:s'),
-            $status,
-            $title ?: null,
-        ]);
+        $organizationId = $this->organizations->currentOrganizationId((int) $_SESSION['id']);
+        if (database_table_has_column($this->pdo, 'schedule_slots', 'organization_id')) {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO schedule_slots (organization_id, professional_id, starts_at, ends_at, status, titulo) VALUES (?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([
+                $organizationId,
+                (int) $_SESSION['id'],
+                $startsAt->format('Y-m-d H:i:s'),
+                $endsAt->format('Y-m-d H:i:s'),
+                $status,
+                $title ?: null,
+            ]);
+        } else {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO schedule_slots (professional_id, starts_at, ends_at, status, titulo) VALUES (?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([
+                (int) $_SESSION['id'],
+                $startsAt->format('Y-m-d H:i:s'),
+                $endsAt->format('Y-m-d H:i:s'),
+                $status,
+                $title ?: null,
+            ]);
+        }
 
         $slotId = (int) $this->pdo->lastInsertId();
         $this->audit->log('schedule.slot_created', 'schedule_slot', $slotId, [
@@ -141,7 +159,7 @@ class ScheduleController extends BaseController
             $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Este horário não está mais livre.')));
         }
 
-        if (!in_array((string) $slot['tipo'], ['advogado', 'estagiario'], true) || (int) ($slot['oab_verificado'] ?? 0) !== 1) {
+        if ((string) $slot['tipo'] !== 'advogado' || (int) ($slot['oab_verificado'] ?? 0) !== 1) {
             $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Profissional inválido para agenda.')));
         }
 
@@ -159,10 +177,20 @@ class ScheduleController extends BaseController
                 $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Este horário acabou de ser reservado.')));
             }
 
-            $stmt = $this->pdo->prepare(
-                'INSERT INTO appointments (slot_id, client_id, case_id, assunto, observacoes) VALUES (?, ?, ?, ?, ?)'
-            );
-            $stmt->execute([$slotId, (int) $_SESSION['id'], $caseId, $subject, $notes ?: null]);
+            $organizationId = $this->organizations->currentOrganizationId((int) $_SESSION['id'])
+                ?: (int) ($slot['organization_id'] ?? 0)
+                ?: null;
+            if (database_table_has_column($this->pdo, 'appointments', 'organization_id')) {
+                $stmt = $this->pdo->prepare(
+                    'INSERT INTO appointments (organization_id, slot_id, client_id, case_id, assunto, observacoes) VALUES (?, ?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([$organizationId, $slotId, (int) $_SESSION['id'], $caseId, $subject, $notes ?: null]);
+            } else {
+                $stmt = $this->pdo->prepare(
+                    'INSERT INTO appointments (slot_id, client_id, case_id, assunto, observacoes) VALUES (?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([$slotId, (int) $_SESSION['id'], $caseId, $subject, $notes ?: null]);
+            }
             $appointmentId = (int) $this->pdo->lastInsertId();
             $this->pdo->commit();
         } catch (Throwable $e) {
@@ -350,7 +378,7 @@ class ScheduleController extends BaseController
 
     private function requireProfessional(): void
     {
-        if (!in_array($_SESSION['tipo'] ?? '', ['advogado', 'estagiario'], true)) {
+        if (($_SESSION['tipo'] ?? '') !== 'advogado') {
             $this->response->redirect(app_url('/frontend/agenda.php?erro=' . urlencode('Apenas profissionais gerenciam horários.')));
         }
 
@@ -482,7 +510,7 @@ class ScheduleController extends BaseController
             return (int) $appointment['client_id'] === $userId && $newStatus === 'cancelado';
         }
 
-        if (in_array($type, ['advogado', 'estagiario'], true)) {
+        if ($type === 'advogado') {
             return (int) $appointment['professional_id'] === $userId;
         }
 
@@ -518,11 +546,11 @@ class ScheduleController extends BaseController
         if ($userType === 'cliente') {
             $where[] = "s.status = 'livre'";
             $where[] = "u.status = 'ativo'";
-            $where[] = "u.tipo IN ('advogado', 'estagiario')";
+            $where[] = "u.tipo = 'advogado'";
             $where[] = 'u.oab_verificado = TRUE';
         } elseif ($userType === 'admin') {
             // Admin keeps the base range filter.
-        } elseif (in_array($userType, ['advogado', 'estagiario'], true)) {
+        } elseif ($userType === 'advogado') {
             $where[] = 's.professional_id = ?';
             $params[] = $userId;
         } else {
@@ -534,7 +562,7 @@ class ScheduleController extends BaseController
             $params[] = $professionalId;
         }
 
-        if (in_array($userType, ['cliente', 'admin'], true) && in_array($roleFilter, ['advogado', 'estagiario'], true)) {
+        if (in_array($userType, ['cliente', 'admin'], true) && $roleFilter === 'advogado') {
             $where[] = 'u.tipo = ?';
             $params[] = $roleFilter;
         }
@@ -552,7 +580,7 @@ class ScheduleController extends BaseController
             $params[] = $userId;
         } elseif ($userType === 'admin') {
             // Admin keeps the base range filter.
-        } elseif (in_array($userType, ['advogado', 'estagiario'], true)) {
+        } elseif ($userType === 'advogado') {
             $where[] = 's.professional_id = ?';
             $params[] = $userId;
         } else {
@@ -564,7 +592,7 @@ class ScheduleController extends BaseController
             $params[] = $professionalId;
         }
 
-        if (in_array($userType, ['cliente', 'admin'], true) && in_array($roleFilter, ['advogado', 'estagiario'], true)) {
+        if (in_array($userType, ['cliente', 'admin'], true) && $roleFilter === 'advogado') {
             $where[] = 'pro.tipo = ?';
             $params[] = $roleFilter;
         }

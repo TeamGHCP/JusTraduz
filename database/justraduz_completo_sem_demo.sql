@@ -21,11 +21,16 @@ CREATE TABLE IF NOT EXISTS organizations (
     nome VARCHAR(180) NOT NULL,
     tipo ENUM('empresa', 'escritorio') NOT NULL DEFAULT 'empresa',
     documento VARCHAR(32) NULL,
+    name VARCHAR(160) NULL,
+    slug VARCHAR(190) NULL,
+    owner_user_id INT NULL,
     status ENUM('ativo', 'inativo') NOT NULL DEFAULT 'ativo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_organizations_status (status),
-    UNIQUE KEY uq_organizations_documento (documento)
+    UNIQUE KEY uq_organizations_documento (documento),
+    UNIQUE KEY uq_organizations_slug (slug),
+    INDEX idx_organizations_owner (owner_user_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- usuários
@@ -35,7 +40,7 @@ CREATE TABLE IF NOT EXISTS users (
     nome VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL COLLATE utf8mb4_general_ci,
     senha VARCHAR(255) NOT NULL,
-    tipo ENUM('cliente', 'advogado', 'estagiario', 'admin') NOT NULL,
+    tipo ENUM('cliente', 'advogado', 'admin') NOT NULL,
     
     oab VARCHAR(20),
     oab_uf VARCHAR(10),
@@ -80,6 +85,10 @@ CREATE TABLE IF NOT EXISTS users (
     CONSTRAINT fk_users_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (oab_validated_by) REFERENCES users(id) ON DELETE SET NULL
 ) DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE organizations
+    ADD CONSTRAINT fk_organizations_owner_user
+    FOREIGN KEY (owner_user_id) REFERENCES users(id) ON DELETE SET NULL;
 
 CREATE TABLE IF NOT EXISTS user_organizations (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -126,6 +135,107 @@ CREATE TABLE IF NOT EXISTS user_onboarding_progress (
     CONSTRAINT fk_user_onboarding_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS organization_members (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NOT NULL,
+    user_id INT NOT NULL,
+    role ENUM('owner', 'admin', 'member', 'viewer') NOT NULL DEFAULT 'member',
+    status ENUM('invited', 'active', 'suspended') NOT NULL DEFAULT 'active',
+    invited_by INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_organization_user (organization_id, user_id),
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_organization_members_user (user_id, status)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS organization_invites (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NOT NULL,
+    email VARCHAR(190) NOT NULL,
+    role ENUM('admin', 'member', 'viewer') NOT NULL DEFAULT 'member',
+    token_hash VARCHAR(255) NOT NULL,
+    status ENUM('pending', 'accepted', 'revoked', 'expired') NOT NULL DEFAULT 'pending',
+    invited_by INT NULL,
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    accepted_at DATETIME NULL,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
+    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_organization_invites_email (email, status)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS plans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    slug VARCHAR(80) NOT NULL UNIQUE,
+    audience ENUM('cliente', 'advogado', 'ambos') NOT NULL DEFAULT 'cliente',
+    name VARCHAR(120) NOT NULL,
+    description TEXT NULL,
+    monthly_price_cents INT NOT NULL DEFAULT 0,
+    yearly_price_cents INT NOT NULL DEFAULT 0,
+    limits_json JSON NOT NULL,
+    features_json JSON NULL,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    organization_id INT NULL,
+    plan_id INT NOT NULL,
+    billing_cycle ENUM('monthly', 'yearly') NOT NULL DEFAULT 'monthly',
+    status ENUM('trialing', 'active', 'past_due', 'canceled', 'expired') NOT NULL DEFAULT 'active',
+    provider VARCHAR(60) NOT NULL DEFAULT 'manual',
+    provider_subscription_id VARCHAR(190) NULL,
+    current_period_start DATETIME NULL,
+    current_period_end DATETIME NULL,
+    canceled_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    FOREIGN KEY (plan_id) REFERENCES plans(id),
+    INDEX idx_subscriptions_user_status (user_id, status),
+    INDEX idx_subscriptions_org_status (organization_id, status),
+    INDEX idx_subscriptions_provider (provider, provider_subscription_id)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS payment_events (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    subscription_id INT NULL,
+    user_id INT NULL,
+    provider VARCHAR(60) NOT NULL DEFAULT 'manual',
+    provider_event_id VARCHAR(190) NULL,
+    event_type VARCHAR(120) NOT NULL,
+    amount_cents INT NOT NULL DEFAULT 0,
+    currency CHAR(3) NOT NULL DEFAULT 'BRL',
+    status ENUM('pending', 'paid', 'failed', 'refunded') NOT NULL DEFAULT 'pending',
+    payload_json JSON NULL,
+    processed_at DATETIME NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_payment_events_status (status, created_at),
+    INDEX idx_payment_events_provider (provider, provider_event_id)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    permission_key VARCHAR(120) NOT NULL,
+    allowed BOOLEAN NOT NULL DEFAULT TRUE,
+    granted_by INT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_user_permission (user_id, permission_key),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL
+) DEFAULT CHARSET=utf8mb4;
+
 -- documentos
 CREATE TABLE IF NOT EXISTS documents (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -137,8 +247,8 @@ CREATE TABLE IF NOT EXISTS documents (
     texto_extraido LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT fk_documents_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
-    INDEX idx_documents_organization (organization_id)
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
+    INDEX idx_documents_organization (organization_id, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- resultados da ia
@@ -164,25 +274,19 @@ CREATE TABLE IF NOT EXISTS cases (
     titulo VARCHAR(255),
     descricao TEXT,
     status ENUM('aberto', 'em_andamento', 'finalizado') DEFAULT 'aberto',
-    prioridade ENUM('baixa', 'media', 'normal', 'alta', 'urgente') DEFAULT 'media',
-    sla_deadline_at DATETIME NULL,
-    escalated_at DATETIME NULL,
-    assigned_to INT NULL,
-    escalation_status ENUM('none', 'due_soon', 'overdue', 'unassigned') NOT NULL DEFAULT 'none',
-    last_escalated_at DATETIME NULL,
+    prioridade ENUM('baixa', 'media', 'alta') DEFAULT 'media',
+    sla_due_at DATETIME NULL,
+    sla_status ENUM('ok', 'em_risco', 'vencido', 'sem_sla') DEFAULT 'sem_sla',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (cliente_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (advogado_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE SET NULL,
-    CONSTRAINT fk_cases_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
-    CONSTRAINT fk_cases_assigned_to FOREIGN KEY (assigned_to) REFERENCES users(id) ON DELETE SET NULL,
     INDEX idx_cases_cliente_status (cliente_id, status),
     INDEX idx_cases_advogado_status (advogado_id, status),
-    INDEX idx_cases_document (document_id),
-    INDEX idx_cases_organization (organization_id),
-    INDEX idx_cases_sla_status_deadline (status, sla_deadline_at),
-    INDEX idx_cases_assigned_to (assigned_to),
-    INDEX idx_cases_escalation (status, escalation_status, last_escalated_at)
+    INDEX idx_cases_organization_status (organization_id, status),
+    INDEX idx_cases_sla (sla_status, sla_due_at),
+    INDEX idx_cases_document (document_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS case_escalations (
@@ -225,6 +329,7 @@ CREATE TABLE IF NOT EXISTS tasks (
 -- agenda de profissionais
 CREATE TABLE IF NOT EXISTS schedule_slots (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     professional_id INT NOT NULL,
     starts_at DATETIME NOT NULL,
     ends_at DATETIME NOT NULL,
@@ -232,7 +337,9 @@ CREATE TABLE IF NOT EXISTS schedule_slots (
     titulo VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (professional_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_schedule_organization (organization_id, starts_at),
     INDEX idx_schedule_professional (professional_id, starts_at),
     INDEX idx_schedule_status (status, starts_at)
 ) DEFAULT CHARSET=utf8mb4;
@@ -240,6 +347,7 @@ CREATE TABLE IF NOT EXISTS schedule_slots (
 -- agendamentos feitos por clientes
 CREATE TABLE IF NOT EXISTS appointments (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    organization_id INT NULL,
     slot_id INT NOT NULL,
     client_id INT NOT NULL,
     case_id INT NULL,
@@ -248,10 +356,12 @@ CREATE TABLE IF NOT EXISTS appointments (
     status ENUM('agendado', 'cancelado', 'concluido') DEFAULT 'agendado',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL,
     FOREIGN KEY (slot_id) REFERENCES schedule_slots(id) ON DELETE CASCADE,
     FOREIGN KEY (client_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE SET NULL,
     INDEX idx_appointments_client (client_id, created_at),
+    INDEX idx_appointments_organization (organization_id, created_at),
     INDEX idx_appointments_status (status, created_at)
 ) DEFAULT CHARSET=utf8mb4;
 
@@ -316,7 +426,7 @@ CREATE TABLE IF NOT EXISTS cna_validacao_logs (
 CREATE TABLE IF NOT EXISTS external_processes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    owner_type ENUM('cliente', 'advogado', 'estagiario') NOT NULL,
+    owner_type ENUM('cliente', 'advogado') NOT NULL,
     source VARCHAR(40) NOT NULL DEFAULT 'datajud',
     query_type ENUM('cpf', 'oab', 'cnj') NOT NULL,
     query_value VARCHAR(40) NOT NULL,
@@ -412,7 +522,43 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('migration_case_document'),
     ('2026_06_11_create_user_onboarding_progress'),
     ('2026_06_13_google_oab_profile_fields'),
-    ('2026_06_23_cases_sla'),
-    ('2026_06_25_product_future');
+    ('2026_06_15_p2_saas'),
+    ('2026_06_23_add_free_plan'),
+    ('2026_06_24_plan_audience_professional'),
+    ('2026_06_26_max_plans'),
+    ('2026_06_27_remove_intern_profile');
 
+SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+INSERT INTO plans (slug, audience, name, description, monthly_price_cents, yearly_price_cents, limits_json, features_json, sort_order) VALUES
+    ('profissional_basico', 'advogado', 'Profissional básico', 'Plano inicial para advogados com OAB validada acompanharem a mesa profissional antes de contratar mais volume.', 0, 0,
+     JSON_OBJECT('document_upload', 5, 'document_ai', 5, 'ai_chat', 50, 'datajud_cnj', 1, 'ocr', 5),
+     JSON_ARRAY('5 documentos por mes', '5 analises com IA documental', '50 mensagens com IA Juridica', '1 consulta CNJ por mes', 'OCR basico para ate 5 arquivos'), 5),
+    ('gratuito', 'cliente', 'Gratuito', 'Plano inicial liberado automaticamente apos a conclusao do onboarding.', 0, 0,
+     JSON_OBJECT('document_upload', 5, 'document_ai', 5, 'ai_chat', 50, 'datajud_cnj', 1, 'ocr', 5),
+     JSON_ARRAY('5 documentos por mes', '5 analises com IA', '50 mensagens com IA Juridica', '1 consulta CNJ por mes', 'OCR basico para ate 5 arquivos'), 1),
+    ('essencial', 'cliente', 'Essencial', 'Ideal para cidadãos, estudantes e usuários ocasionais.', 1490, 14300,
+     JSON_OBJECT('document_upload', 30, 'document_ai', 30, 'ai_chat', 300, 'datajud_cnj', 30, 'ocr', 30),
+     JSON_ARRAY('Tradução de documentos jurídicos', 'IA Jurídica (Chat)', 'Consulta CNJ', 'Resumo automático de documentos', 'Histórico de documentos', 'Upload de PDF, DOCX e imagens', 'Até 30 documentos por mês'), 10),
+    ('pro', 'ambos', 'Pro', 'Ideal para advogados autônomos e profissionais jurídicos.', 4990, 47900,
+     JSON_OBJECT('document_upload', 500, 'document_ai', 500, 'ai_chat', 5000, 'datajud_cnj', 500, 'ocr', 500),
+     JSON_ARRAY('Até 500 documentos por mês', 'Até 500 análises com IA documental', 'Até 5.000 mensagens com IA Jurídica', 'Até 500 consultas CNJ por mês', 'Até 500 processamentos OCR por mês', 'Histórico de documentos e faturas'), 20),
+    ('max_cliente', 'cliente', 'Max', 'Mais volume para clientes que analisam e acompanham uma grande quantidade de documentos e processos.', 7990, 76700,
+     JSON_OBJECT('document_upload', 2000, 'document_ai', 2000, 'ai_chat', 20000, 'datajud_cnj', 2000, 'ocr', 2000),
+     JSON_ARRAY('Até 2.000 documentos por mês', 'Até 2.000 análises com IA documental', 'Até 20.000 mensagens com IA Jurídica', 'Até 2.000 consultas CNJ por mês', 'Até 2.000 processamentos OCR por mês', 'Histórico de documentos e faturas'), 25),
+    ('max_advogado', 'advogado', 'Max', 'Alto volume individual para advogados que operam documentos, consultas e análises jurídicas em escala.', 8990, 86300,
+     JSON_OBJECT('document_upload', 3000, 'document_ai', 3000, 'ai_chat', 30000, 'datajud_cnj', 3000, 'ocr', 3000),
+     JSON_ARRAY('Até 3.000 documentos por mês', 'Até 3.000 análises com IA documental', 'Até 30.000 mensagens com IA Jurídica', 'Até 3.000 consultas CNJ por mês', 'Até 3.000 processamentos OCR por mês', 'Casos, tarefas e agenda profissional', 'Histórico de documentos e faturas'), 25),
+    ('escritorio', 'advogado', 'Escritório', 'Ideal para escritórios e equipes jurídicas.', 9990, 95900,
+     JSON_OBJECT('document_upload', 0, 'document_ai', 0, 'ai_chat', 10000, 'datajud_cnj', 1000, 'ocr', 0),
+     JSON_ARRAY('Documentos, OCR e IA documental ilimitados', 'Até 10.000 mensagens com IA Jurídica', 'Até 1.000 consultas CNJ por mês', 'Compartilhamento por organização', 'Agenda, casos e tarefas por equipe', 'Histórico de documentos e faturas'), 30)
+ON DUPLICATE KEY UPDATE
+    audience = VALUES(audience),
+    name = VALUES(name),
+    description = VALUES(description),
+    monthly_price_cents = VALUES(monthly_price_cents),
+    yearly_price_cents = VALUES(yearly_price_cents),
+    limits_json = VALUES(limits_json),
+    features_json = VALUES(features_json),
+    sort_order = VALUES(sort_order);
 SELECT 'Banco JusTraduz instalado sem dados demo.' AS resultado;

@@ -110,7 +110,7 @@
   <section class="auth-panel auth-cadastro-panel">
     <div class="auth-card cadastro-card">
       <h1>Crie sua conta</h1>
-      <p class="subtitle">Cliente entra direto. Advogado e estagiário aguardam validação manual da OAB.</p>
+      <p class="subtitle">Cliente entra direto. Advogado aguarda validação manual da OAB.</p>
 
       <form class="auth-form" action="../backend/public/index.php?rota=/auth/registrar" method="post" novalidate>
         <div class="alert" data-auth-alert role="alert" aria-live="assertive" aria-atomic="true"></div>
@@ -122,7 +122,6 @@
           <select class="select jt-input" id="tipo" name="tipo" data-account-type>
             <option value="cliente">Cliente</option>
             <option value="advogado">Advogado</option>
-            <option value="estagiario">Estagiário</option>
           </select>
           <label class="jt-label" for="tipo">Tipo de conta</label>
           <small class="jt-error"></small>

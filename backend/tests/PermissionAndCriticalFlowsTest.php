@@ -14,6 +14,7 @@ require_once dirname(__DIR__) . '/app/services/OrganizationService.php';
 $pdo = test_pdo();
 build_test_schema($pdo);
 seed_test_data($pdo);
+putenv('MAIL_LOG_ONLY=true');
 
 reset_test_state();
 $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -32,6 +33,19 @@ putenv('PROFILE_PHOTO_STORAGE_PATH=backend/storage/profile_photos_test');
 $profileStorage = callPrivate($auth, 'profilePhotoStorage', []);
 assertEquals('backend/storage/profile_photos_test', $profileStorage['relative_dir'] ?? '', 'Foto de perfil deve respeitar PROFILE_PHOTO_STORAGE_PATH.');
 putenv('PROFILE_PHOTO_STORAGE_PATH');
+
+reset_test_state();
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_POST = [
+    'nome' => 'Perfil Removido',
+    'email' => 'perfil.removido@teste.local',
+    'telefone' => '(11) 99999-9999',
+    'senha' => 'Senha@12345',
+    'senha2' => 'Senha@12345',
+    'tipo' => 'estagiario',
+];
+$redirect = expectRedirect(static fn () => (new AuthController())->registrar());
+assertStringContains('Cliente ou Advogado', urldecode($redirect), 'Cadastro deve rejeitar o perfil removido.');
 
 reset_test_state();
 $_SERVER['REQUEST_METHOD'] = 'POST';
@@ -56,7 +70,7 @@ assertStringContains('/frontend/admin/dashboard-admin.php', $redirect, 'Admin at
 assertEquals('admin', $_SESSION['tipo'] ?? '', 'Admin login deve manter perfil admin na sessao.');
 assertTrue(PermissionService::roleHas('admin', 'reports.view') === true, 'Admin deve ter permissao para relatorios.');
 assertTrue(PermissionService::roleHas('cliente', 'reports.view') === false, 'Cliente nao deve ter permissao para relatorios.');
-assertTrue(PermissionService::roleHas('estagiario', 'cases.view_assigned') === true, 'Perfil estagiario deve permanecer com permissao assistiva.');
+assertTrue(PermissionService::roleHas('estagiario', 'cases.view_assigned') === false, 'Perfil removido nao deve manter permissoes.');
 assertTrue(in_array('permissions.manage', PermissionService::availablePermissions(), true), 'Permissoes dinamicas devem listar permissions.manage.');
 PermissionService::setOverride($pdo, 'cliente', 'reports.view', 'allow', 5);
 assertTrue(PermissionService::roleHas('cliente', 'reports.view') === true, 'Override allow deve conceder permissao ao perfil.');
@@ -170,7 +184,7 @@ $_SESSION = ['logado' => true, 'id' => 5, 'tipo' => 'admin'];
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $_POST = ['user_id' => '1', 'organization_id' => '1'];
 $redirect = expectRedirect(static fn () => (new AdminController())->assignOrganization());
-assertStringContains('Somente advogados e estagiarios', urldecode($redirect), 'Admin nao deve vincular cliente a organizacao.');
+assertStringContains('Somente advogados', urldecode($redirect), 'Admin nao deve vincular cliente a organizacao.');
 assertTrue($pdo->query('SELECT organization_id FROM users WHERE id = 1')->fetchColumn() === null, 'Cliente deve continuar sem organizacao.');
 
 reset_test_state();
@@ -234,25 +248,25 @@ reset_test_state();
 secure_session_start();
 $_SESSION = ['logado' => true, 'id' => 2, 'tipo' => 'cliente', '_csrf_token' => 'token-delete'];
 $_SERVER['REQUEST_METHOD'] = 'POST';
-$_POST = ['_csrf' => 'token-delete', 'confirmacao' => 'EXCLUIR'];
+putenv('PAYMENT_PROVIDER=manual');
+$_POST = ['_csrf' => 'token-delete', 'confirmacao' => 'EXCLUIR', 'senha_atual' => 'Senha@123'];
 $redirect = expectRedirect(static fn () => (new PrivacyController())->deleteAccount());
-assertStringContains('/frontend/perfil.php', $redirect, 'Encerramento LGPD deve agendar exclusao e voltar ao perfil.');
+assertStringContains('/frontend/login.html', $redirect, 'Encerramento LGPD deve bloquear a conta e voltar ao login.');
 $scheduled = $pdo->query('SELECT nome, email, status, cpf, deletion_requested_at, deletion_scheduled_at FROM users WHERE id = 2')->fetch();
 assertEquals('Cliente Dois', $scheduled['nome'] ?? '', 'Agendamento de exclusao deve preservar nome durante arrependimento.');
 assertEquals('cliente2@teste.local', $scheduled['email'] ?? '', 'Agendamento de exclusao deve preservar e-mail durante arrependimento.');
-assertEquals('ativo', $scheduled['status'] ?? '', 'Agendamento de exclusao deve manter conta ativa durante arrependimento.');
+assertEquals('inativo', $scheduled['status'] ?? '', 'Agendamento de exclusao deve bloquear a conta imediatamente.');
 assertTrue(!empty($scheduled['deletion_requested_at']), 'Agendamento deve registrar quando a exclusao foi pedida.');
 assertTrue(!empty($scheduled['deletion_scheduled_at']), 'Agendamento deve registrar data final de exclusao.');
 assertEquals(1, (int) $pdo->query('SELECT COUNT(*) FROM documents WHERE user_id = 2')->fetchColumn(), 'Documentos devem ser preservados durante 30 dias.');
 
 reset_test_state();
-secure_session_start();
-$_SESSION = ['logado' => true, 'id' => 2, 'tipo' => 'cliente', '_csrf_token' => 'token-cancel-delete'];
 $_SERVER['REQUEST_METHOD'] = 'POST';
-$_POST = ['_csrf' => 'token-cancel-delete'];
-$redirect = expectRedirect(static fn () => (new PrivacyController())->cancelAccountDeletion());
-assertStringContains('Exclusao cancelada', urldecode($redirect), 'Usuario deve conseguir cancelar exclusao agendada.');
+$_POST = ['email' => 'cliente2@teste.local', 'senha' => 'Senha@123'];
+$redirect = expectRedirect(static fn () => (new AuthController())->login());
+assertStringContains('/frontend/dashboard-cliente.php', $redirect, 'Login dentro do prazo deve recuperar a conta.');
 assertTrue($pdo->query('SELECT deletion_scheduled_at FROM users WHERE id = 2')->fetchColumn() === null, 'Cancelamento deve limpar data final de exclusao.');
+assertEquals('ativo', (string) $pdo->query('SELECT status FROM users WHERE id = 2')->fetchColumn(), 'Recuperacao deve reativar a conta.');
 
 $pdo->exec("UPDATE users SET deletion_requested_at = datetime('now', '-31 days'), deletion_scheduled_at = datetime('now', '-1 day') WHERE id = 2");
 $finalized = (new PrivacyController())->finalizeExpiredDeletions(10);

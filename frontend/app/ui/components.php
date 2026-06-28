@@ -13,7 +13,10 @@ function render_query_alert(): void
     }
 
     $isError = str_contains(query_message_kind(), 'error');
-    echo '<div class="alert is-visible ' . query_message_kind() . ' mt-16" role="' . ($isError ? 'alert' : 'status') . '" aria-live="' . ($isError ? 'assertive' : 'polite') . '">' . e($message) . '</div>';
+    echo '<div class="alert alert-query is-visible ' . query_message_kind() . ' mt-16" role="' . ($isError ? 'alert' : 'status') . '" aria-live="' . ($isError ? 'assertive' : 'polite') . '"' . (!$isError ? ' data-alert-auto-dismiss="3000"' : '') . '>' . e($message) . '</div>';
+    if (!$isError) {
+        echo '<script>(function(){var alert=document.querySelector("[data-alert-auto-dismiss]");if(!alert)return;var delay=parseInt(alert.getAttribute("data-alert-auto-dismiss")||"3000",10);window.setTimeout(function(){alert.classList.add("is-dismissing");window.setTimeout(function(){alert.remove();},260);},delay);})();</script>';
+    }
 }
 
 function render_sidebar(string $type, string $active, bool $isAdminPath = false): void
@@ -237,13 +240,6 @@ function sidebar_tour_meta(string $type, string $label): ?array
             'Notificações' => [11, 'Notificações administrativas', 'Veja alertas relevantes para a operação e a segurança.'],
             'Meu perfil' => [12, 'LGPD e governança', 'Use privilégios administrativos com finalidade, rastreabilidade e acesso mínimo.'],
         ],
-        'estagiario' => [
-            'Perfil' => [6, 'Perfil', 'Mantenha seus dados profissionais corretos e atualizados.'],
-            'Notificações' => [7, 'Notificações', 'Consulte apenas avisos relacionados às funções permitidas ao seu perfil.'],
-            'Processos' => [8, 'Limites de acesso', 'O acesso é assistivo e não equivale às permissões de um advogado.'],
-            'Agenda' => [9, 'Segurança e responsabilidade', 'Use somente dados necessários e preserve o sigilo profissional.'],
-            'Dashboard' => [10, 'Encerramento', 'Use a área assistiva dentro dos limites definidos pela supervisão.'],
-        ],
     ];
 
     return $items[$type][$label] ?? null;
@@ -285,6 +281,7 @@ function render_topbar(string $title, string $subtitle, string $roleLabel): void
 {
     $initial = strtoupper(substr(current_user_name(), 0, 1));
     $photoUrl = current_user_photo_url();
+    $accountPlanLabel = current_user_account_label();
     ?>
     <header class="topbar">
       <div>
@@ -292,16 +289,62 @@ function render_topbar(string $title, string $subtitle, string $roleLabel): void
         <p><?= e($subtitle) ?></p>
       </div>
       <div class="topbar-actions">
-        <span class="avatar topbar-avatar" title="<?= e(current_user_name()) ?>" aria-label="Usuário: <?= e(current_user_name()) ?>">
-          <span class="avatar-initial"><?= e($initial) ?></span>
-          <?php if ($photoUrl): ?>
-            <img src="<?= e($photoUrl) ?>" alt="<?= e(current_user_name()) ?>" referrerpolicy="no-referrer" onerror="this.remove()">
-          <?php endif; ?>
-        </span>
+        <div class="topbar-account" title="<?= e(current_user_name() . ' · ' . $accountPlanLabel) ?>">
+          <span class="topbar-account-copy">
+            <strong><?= e(current_user_name()) ?></strong>
+            <small><?= e($accountPlanLabel) ?></small>
+          </span>
+          <span class="avatar topbar-avatar" aria-label="Usuário: <?= e(current_user_name()) ?>">
+            <span class="avatar-initial"><?= e($initial) ?></span>
+            <?php if ($photoUrl): ?>
+              <img src="<?= e($photoUrl) ?>" alt="<?= e(current_user_name()) ?>" referrerpolicy="no-referrer" onerror="this.remove()">
+            <?php endif; ?>
+          </span>
+        </div>
       </div>
     </header>
     <?php
     render_query_alert();
+}
+
+function current_user_account_label(): string
+{
+    $type = current_user_type();
+    if ($type !== 'cliente') {
+        return sidebar_profile_label($type);
+    }
+
+    static $label = null;
+    if ($label !== null) {
+        return $label;
+    }
+
+    $label = 'Grátis';
+    if (!is_logged_in()) {
+        return $label;
+    }
+
+    global $pdo;
+    if (!isset($pdo) || !$pdo instanceof PDO || !database_table_exists($pdo, 'subscriptions')) {
+        return $label;
+    }
+
+    $stmt = $pdo->prepare(
+        "SELECT p.name
+         FROM subscriptions s
+         INNER JOIN plans p ON p.id = s.plan_id
+         WHERE s.user_id = ?
+           AND s.status IN ('trialing', 'active', 'past_due')
+         ORDER BY CASE s.status WHEN 'active' THEN 1 WHEN 'trialing' THEN 2 WHEN 'past_due' THEN 3 ELSE 9 END, s.created_at DESC
+         LIMIT 1"
+    );
+    $stmt->execute([current_user_id()]);
+    $planName = trim((string) ($stmt->fetchColumn() ?: ''));
+    if ($planName !== '') {
+        $label = $planName;
+    }
+
+    return $label;
 }
 
 function current_user_photo_url(): string
@@ -373,7 +416,7 @@ function context_help_asset_path(bool $isAdminPath, string $type): string
 function accessibility_asset_path(bool $isAdminPath): string
 {
     $path = $isAdminPath ? '../assets/js/accessibility.js' : 'assets/js/accessibility.js';
-    return $path . '?v=2026.06.14-06';
+    return $path . '?v=2026.06.15-02';
 }
 
 function stat_card(string $label, $value, string $icon): string
@@ -395,7 +438,6 @@ function sidebar_brand_href(string $type, bool $isAdminPath): string
     return match ($type) {
         'admin' => 'admin/dashboard-admin.php',
         'advogado' => 'dashboard-advogado.php',
-        'estagiario' => 'dashboard-estagiario.php',
         default => 'dashboard-cliente.php',
     };
 }
@@ -404,7 +446,6 @@ function sidebar_profile_label(string $type): string
 {
     return match ($type) {
         'advogado' => 'Advogado',
-        'estagiario' => 'Estagiário',
         'admin' => 'Administração',
         default => 'Cliente',
     };

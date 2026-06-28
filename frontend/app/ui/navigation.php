@@ -5,8 +5,6 @@ function dashboard_url(?string $type = null): string
     switch ($type ?? current_user_type()) {
         case 'advogado':
             return app_url('/frontend/dashboard-advogado.php');
-        case 'estagiario':
-            return app_url('/frontend/dashboard-estagiario.php');
         case 'admin':
             return app_url('/frontend/admin/dashboard-admin.php');
         default:
@@ -55,35 +53,7 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                     'icon' => 'user',
                     'items' => [
                         ['href' => 'perfil.php', 'label' => 'Perfil profissional', 'icon' => 'user'],
-                    ],
-                ],
-            ];
-        case 'estagiario':
-            return [
-                [
-                    'id' => 'overview',
-                    'label' => 'Visão geral',
-                    'icon' => 'home',
-                    'items' => [
-                        ['href' => 'dashboard-estagiario.php', 'label' => 'Dashboard', 'icon' => 'chart'],
-                        ['href' => 'notificacoes.php', 'label' => 'Notificações', 'icon' => 'bell'],
-                    ],
-                ],
-                [
-                    'id' => 'work',
-                    'label' => 'Trabalho assistido',
-                    'icon' => 'case',
-                    'items' => [
-                        ['href' => 'processos.php', 'label' => 'Processos', 'icon' => 'file'],
-                        ['href' => 'agenda.php', 'label' => 'Agenda', 'icon' => 'calendar'],
-                    ],
-                ],
-                [
-                    'id' => 'account',
-                    'label' => 'Conta',
-                    'icon' => 'user',
-                    'items' => [
-                        ['href' => 'perfil.php', 'label' => 'Perfil', 'icon' => 'user'],
+                        ['href' => 'subir-plano.php', 'label' => 'Planos profissionais', 'icon' => 'sparkles'],
                     ],
                 ],
             ];
@@ -111,6 +81,16 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                         ['href' => $adminPrefix . 'permissoes.php', 'label' => 'Permissões', 'icon' => 'shield'],
                         ['href' => $adminPrefix . 'validar-oab.php', 'label' => 'Validação OAB', 'icon' => 'shield'],
                         ['href' => $adminPrefix . 'solicitacoes.php', 'label' => 'Solicitações', 'icon' => 'case'],
+                        ['href' => $adminPrefix . 'organizacoes.php', 'label' => 'Organizações', 'icon' => 'folder'],
+                    ],
+                ],
+                [
+                    'id' => 'saas',
+                    'label' => 'SaaS',
+                    'icon' => 'sparkles',
+                    'items' => [
+                        ['href' => $adminPrefix . 'assinaturas.php', 'label' => 'Assinaturas', 'icon' => 'sparkles'],
+                        ['href' => $adminPrefix . 'permissoes.php', 'label' => 'Permissões', 'icon' => 'shield'],
                         ['href' => $adminPrefix . 'relatorios.php', 'label' => 'Relatórios', 'icon' => 'chart'],
                     ],
                 ],
@@ -187,6 +167,7 @@ function sidebar_navigation_modules(string $type, bool $isAdminPath = false): ar
                     'icon' => 'user',
                     'items' => [
                         ['href' => 'perfil.php', 'label' => 'Perfil', 'icon' => 'user'],
+                        ['href' => 'subir-plano.php', 'label' => 'Subir de plano', 'icon' => 'sparkles'],
                     ],
                 ],
             ];

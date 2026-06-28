@@ -182,16 +182,16 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
               <input type="hidden" name="redirect_to" value="documents">
               <div class="dash-section-title">
                 <div>
-                  <h2>Novo documento <?= help_icon('Enviar documento', 'Use para enviar PDF ou imagem. Confira o arquivo e autorize IA somente quando concordar com o processamento.') ?></h2>
+                  <h2>Novo documento <?= help_icon('Enviar documento', 'Use para enviar PDF, DOCX ou imagem. Confira o arquivo e autorize IA somente quando concordar com o processamento.') ?></h2>
                   <p class="text-muted">Envie o arquivo por aqui ou pela dashboard. Depois, acompanhe tudo no histórico abaixo.</p>
                 </div>
                 <span class="badge badge-success">Máx. 50 MB</span>
               </div>
               <label class="upload-box upload-box-featured" data-upload-box tabindex="0">
-                <input class="sr-only" type="file" name="documento" accept=".pdf,.png,.jpg,.jpeg,.webp" data-upload-input required>
+                <input class="sr-only" type="file" name="documento" accept=".pdf,.docx,.png,.jpg,.jpeg,.webp" data-upload-input required>
                 <?= icon_svg('upload') ?>
                 <strong>Arraste seu arquivo ou clique para selecionar</strong>
-                <p data-file-name>PDF, PNG, JPEG ou WebP</p>
+                <p data-file-name>PDF, DOCX, PNG, JPEG ou WebP</p>
                 <span class="btn btn-primary">Selecionar arquivo</span>
               </label>
               <label class="checkline mt-14">
@@ -214,7 +214,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
           <?php else: ?>
             <div class="table-wrap">
               <table class="table">
-                <thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th>Análise</th><th>Confianca</th><th>Enviado em</th><th>Acao</th></tr></thead>
+                <thead><tr><th>Cliente</th><th>Documento</th><th>Tipo</th><th>Análise</th><th>Confiança</th><th>Enviado em</th><th>Ação</th></tr></thead>
                 <tbody>
                   <?php foreach ($documents as $item): ?>
                     <?php $itemConfidence = $item['confianca'] !== null ? max(0, min(100, (float) $item['confianca'])) : null; ?>

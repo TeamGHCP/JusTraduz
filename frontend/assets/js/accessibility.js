@@ -215,15 +215,6 @@
     button.dataset.justraduzVlibrasToggle = 'true';
     button.addEventListener('click', function () {
       window.setTimeout(function () {
-        var wrapper = document.querySelector('[vw-plugin-wrapper]');
-        if (!wrapper) return;
-
-        var rect = wrapper.getBoundingClientRect();
-        var isClosed = !wrapper.classList.contains('active') || rect.width === 0 || rect.height === 0;
-        if (isClosed) {
-          wrapper.classList.add('active');
-          wrapper.style.setProperty('display', 'block', 'important');
-        }
         fitVlibrasWidget();
       }, 80);
     });
