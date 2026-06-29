@@ -66,7 +66,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         $paymentMethod = $this->normalizePaymentMethod((string) ($paymentData['method'] ?? ''));
         $billingType = $this->billingTypeForMethod($paymentMethod);
         $customerId = $this->findOrCreateCustomer($user);
-        $externalReference = 'justraduz_subscription_' . $userId . '_' . $planId . '_' . $billingCycle;
+        $externalReference = 'justraduz_subscription_' . $userId . '_' . $planId . '_' . $billingCycle . '_' . date('YmdHis') . '_' . bin2hex(random_bytes(4));
         $payload = [
             'customer' => $customerId,
             'billingType' => $billingType,
@@ -89,12 +89,16 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         }
 
         $firstPayment = $this->firstPaymentForSubscription($providerSubscriptionId);
+        $providerPaymentId = (string) ($firstPayment['id'] ?? '');
 
         $this->recordPaymentEvent(null, $userId, 'subscription.created', $amount, 'pending', [
             'provider_subscription_id' => $providerSubscriptionId,
+            'provider_payment_id' => $providerPaymentId ?: null,
             'provider_customer_id' => $customerId,
             'plan_id' => $planId,
             'billing_cycle' => $billingCycle,
+            'billing_type' => $billingType,
+            'payment_method' => $paymentMethod,
             'team_invites' => $teamInvites,
             'external_reference' => $externalReference,
             'asaas_response' => $subscription,
@@ -102,7 +106,6 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         ], $providerSubscriptionId);
 
         $paymentSource = $firstPayment ?: $subscription;
-        $providerPaymentId = (string) ($firstPayment['id'] ?? '');
         $paymentStatus = $firstPayment
             ? $this->paymentStatusFromAsaasStatus((string) ($firstPayment['status'] ?? ''))
             : 'pending';
@@ -146,6 +149,8 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             'provider_payment_id' => $providerPaymentId,
             'amount_cents' => $amount,
             'checkout_url' => $redirectUrl,
+            'asaas_payment_url' => $this->checkoutUrlFromResponse($paymentSource),
+            'external_reference' => $externalReference,
             'invoice_url' => (string) ($paymentSource['invoiceUrl'] ?? ''),
             'payment_link' => (string) ($paymentSource['paymentLink'] ?? ''),
             'due_date' => (string) ($paymentSource['dueDate'] ?? $subscription['nextDueDate'] ?? ''),
@@ -654,6 +659,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
         }
 
         return [
+            'provider_payment_id' => $providerPaymentId,
             'encoded_image' => (string) ($qrCode['encodedImage'] ?? ''),
             'payload' => (string) ($qrCode['payload'] ?? ''),
             'expiration_date' => (string) ($qrCode['expirationDate'] ?? ''),
@@ -1136,7 +1142,7 @@ class AsaasPaymentProvider implements PaymentProviderInterface
 
     private function checkoutUrlFromResponse(array $response): string
     {
-        foreach (['invoiceUrl', 'paymentLink', 'url'] as $key) {
+        foreach (['invoiceUrl', 'paymentLink', 'bankSlipUrl', 'url'] as $key) {
             if (!empty($response[$key]) && is_string($response[$key])) {
                 return $response[$key];
             }

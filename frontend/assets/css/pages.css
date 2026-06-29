@@ -697,6 +697,10 @@
   color: var(--teal-2);
 }
 
+.profile-privacy-actions {
+  margin-top: 18px;
+}
+
 body.has-modal-open {
   overflow: hidden;
 }
@@ -12537,5 +12541,114 @@ body.has-modal-open {
   border-radius: 12px !important;
   border: 1px solid rgba(148, 163, 184, 0.08) !important;
   background: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .pricing-cycle-toggle {
+  border-color: rgba(45, 212, 191, .28) !important;
+  background: rgba(15, 23, 42, .62) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 12px 28px rgba(0, 0, 0, .18) !important;
+}
+
+:root[data-theme="dark"] .pricing-card {
+  border-color: rgba(74, 91, 119, .72) !important;
+  background:
+    linear-gradient(180deg, #182233 0%, #121b2a 100%) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .28) !important;
+}
+
+:root[data-theme="dark"] .pricing-card-featured {
+  border: 2px solid transparent !important;
+  background:
+    linear-gradient(#182233, #121b2a) padding-box,
+    linear-gradient(135deg, rgba(94, 234, 212, .92), rgba(45, 212, 191, .28)) border-box !important;
+  box-shadow: 0 22px 54px rgba(0, 0, 0, .34), 0 0 22px rgba(45, 212, 191, .10) !important;
+}
+
+:root[data-theme="dark"] .pricing-card-current {
+  border-color: rgba(45, 212, 191, .58) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .30), inset 0 0 0 1px rgba(45, 212, 191, .12) !important;
+}
+
+:root[data-theme="dark"] .pricing-card:hover,
+:root[data-theme="dark"] .pricing-card:focus-visible,
+:root[data-theme="dark"] .pricing-card.is-card-active {
+  border-color: rgba(94, 234, 212, .62) !important;
+  box-shadow: 0 26px 58px rgba(0, 0, 0, .42), 0 0 0 1px rgba(45, 212, 191, .12) !important;
+}
+
+:root[data-theme="dark"] .pricing-card-featured:hover {
+  box-shadow: 0 30px 66px rgba(0, 0, 0, .46), 0 0 24px rgba(45, 212, 191, .18) !important;
+}
+
+:root[data-theme="dark"] .pricing-card-head h3,
+:root[data-theme="dark"] .pricing-price {
+  color: #f8fbff !important;
+}
+
+:root[data-theme="dark"] .pricing-card-head p,
+:root[data-theme="dark"] .pricing-description,
+:root[data-theme="dark"] .pricing-price-row small,
+:root[data-theme="dark"] .pricing-period {
+  color: #a9b5c7 !important;
+}
+
+:root[data-theme="dark"] .pricing-price-row {
+  border-color: rgba(45, 212, 191, .20) !important;
+  background:
+    linear-gradient(180deg, rgba(34, 48, 71, .86), rgba(18, 27, 42, .96)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+}
+
+:root[data-theme="dark"] .pricing-card:hover .pricing-price-row,
+:root[data-theme="dark"] .pricing-card:focus-visible .pricing-price-row,
+:root[data-theme="dark"] .pricing-card.is-card-active .pricing-price-row {
+  border-color: rgba(94, 234, 212, .36) !important;
+  background:
+    linear-gradient(180deg, rgba(18, 60, 58, .62), rgba(18, 27, 42, .96)) !important;
+}
+
+:root[data-theme="dark"] .pricing-features li {
+  border-bottom-color: rgba(148, 163, 184, .22) !important;
+  color: #d6deea !important;
+}
+
+:root[data-theme="dark"] .pricing-features .svg-icon {
+  color: #5eead4 !important;
+}
+
+:root[data-theme="dark"] .pricing-included-prefix {
+  background: rgba(15, 23, 42, .72) !important;
+  color: #f8fbff !important;
+}
+
+:root[data-theme="dark"] .pricing-benefit {
+  border: 1px solid rgba(45, 212, 191, .16) !important;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, .88), rgba(18, 27, 42, .98)) !important;
+}
+
+:root[data-theme="dark"] .pricing-benefit span {
+  color: #a9b5c7 !important;
+}
+
+:root[data-theme="dark"] .pricing-benefit strong {
+  color: #f8fbff !important;
+}
+
+:root[data-theme="dark"] .pricing-current-badge {
+  background: linear-gradient(135deg, rgba(45, 212, 191, .20), rgba(94, 234, 212, .08)) !important;
+  border-color: rgba(94, 234, 212, .42) !important;
+  color: #99f6e4 !important;
+}
+
+:root[data-theme="dark"] .pricing-card .btn-outline {
+  border-color: rgba(94, 234, 212, .36) !important;
+  background: rgba(15, 23, 42, .72) !important;
+  color: #99f6e4 !important;
+}
+
+:root[data-theme="dark"] .pricing-card:hover .btn-outline {
+  background: rgba(45, 212, 191, .12) !important;
+  border-color: #5eead4 !important;
 }
 

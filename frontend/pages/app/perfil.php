@@ -83,7 +83,7 @@ $profileTourKey = match ($type) {
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=dark-ui-fixes-20260629">
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
@@ -203,7 +203,7 @@ $profileTourKey = match ($type) {
                 Ao solicitar a exclusão, a conta entra em um prazo de segurança de 30 dias. Nesse período os dados ficam preservados para arrependimento; depois disso, a remoção definitiva pode ser processada.
               </div>
             <?php endif; ?>
-            <div class="form-actions">
+            <div class="form-actions profile-privacy-actions">
               <form class="inline-form" action="<?= e(app_url('/backend/public/index.php?rota=/privacy/export')) ?>" method="post">
                 <?= csrf_input() ?>
                 <button class="btn btn-outline" type="submit"><?= icon_svg('download') ?> Baixar meus dados</button>

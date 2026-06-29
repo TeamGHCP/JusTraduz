@@ -3,8 +3,8 @@
 @import url("./components.css?v=client-polish-1");
 @import url("./auth.css");
 
-@import url("./dashboard.css?v=site-polish-20260625");
-@import url("./pages.css?v=paid-plans-justraduz-3");
+@import url("./dashboard.css?v=dark-ui-fixes-20260629");
+@import url("./pages.css?v=dark-ui-fixes-20260629");
 
 @import url("./responsive.css?v=global-mobile-pass-2");
 @import url("./accessibility.css?v=2026.06.16-a11y-stack-7");

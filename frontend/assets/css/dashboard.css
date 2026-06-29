@@ -3680,3 +3680,25 @@ body.attachment-modal-open {
   background: rgba(255, 255, 255, .08);
   color: rgba(255, 255, 255, .78);
 }
+
+:root[data-theme="dark"] .client-next-step {
+  border-color: rgba(45, 212, 191, .34);
+  background:
+    radial-gradient(circle at 92% 12%, rgba(45, 212, 191, .16), transparent 34%),
+    linear-gradient(135deg, #111827 0%, #182233 56%, #123c3a 135%);
+  box-shadow: 0 24px 54px rgba(0, 0, 0, .28);
+}
+
+:root[data-theme="dark"] .client-next-step h2 {
+  color: #f8fbff;
+}
+
+:root[data-theme="dark"] .client-next-step p {
+  color: rgba(232, 238, 247, .78);
+}
+
+:root[data-theme="dark"] .client-next-step .badge {
+  border-color: rgba(147, 197, 253, .28);
+  background: rgba(147, 197, 253, .12);
+  color: #bfdbfe;
+}

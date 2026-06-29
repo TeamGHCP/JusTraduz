@@ -39,8 +39,11 @@ $metadata = is_array($checkout['metadata'] ?? null) ? $checkout['metadata'] : []
 $payUrl = trim((string) ($checkout['redirect_url'] ?? $metadata['checkout_url'] ?? ''));
 $invoiceUrl = trim((string) ($metadata['invoice_url'] ?? ''));
 $paymentLink = trim((string) ($metadata['payment_link'] ?? ''));
+$asaasPaymentUrl = trim((string) ($metadata['asaas_payment_url'] ?? ''));
 $dueDate = trim((string) ($metadata['due_date'] ?? ''));
 $providerSubscriptionId = trim((string) ($metadata['provider_subscription_id'] ?? ''));
+$providerPaymentId = trim((string) ($metadata['provider_payment_id'] ?? ''));
+$externalReference = trim((string) ($metadata['external_reference'] ?? ''));
 $pixQrCode = is_array($metadata['pix_qr_code'] ?? null) ? $metadata['pix_qr_code'] : [];
 $pixImage = trim((string) ($pixQrCode['encoded_image'] ?? ''));
 $pixPayload = trim((string) ($pixQrCode['payload'] ?? ''));
@@ -132,7 +135,7 @@ function payment_asaas_environment_label(): string
     return str_contains($apiUrl, 'api-sandbox.asaas.com') ? 'Asaas sandbox' : 'Asaas';
 }
 
-$cardPayUrl = $invoiceUrl !== '' ? $invoiceUrl : $payUrl;
+$pixPaymentUrl = $invoiceUrl !== '' ? $invoiceUrl : ($asaasPaymentUrl !== '' ? $asaasPaymentUrl : ($paymentLink !== '' ? $paymentLink : $payUrl));
 $expirationLabel = '';
 if ($pixExpiration !== '') {
     $expirationTimestamp = strtotime($pixExpiration);
@@ -160,7 +163,7 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagamento do plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=payment-pix-tracking-20260629">
 </head>
 <body>
   <div class="app-shell">
@@ -244,6 +247,12 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
               <?php endif; ?>
               <?php if ($dueLabel !== ''): ?>
                 <div><span>Vencimento</span><strong><?= e($dueLabel) ?></strong></div>
+              <?php endif; ?>
+              <?php if ($providerPaymentId !== ''): ?>
+                <div><span>ID Asaas</span><strong><?= e($providerPaymentId) ?></strong></div>
+              <?php endif; ?>
+              <?php if ($externalReference !== ''): ?>
+                <div><span>Referência</span><strong><?= e($externalReference) ?></strong></div>
               <?php endif; ?>
             </div>
 
@@ -343,12 +352,20 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
                           <img src="data:image/png;base64,<?= e($pixImage) ?>" alt="QRCode Pix do pagamento">
                         <?php endif; ?>
                         <?php if ($pixPayload !== ''): ?>
-                          <button type="button" class="payment-copy-button" data-copy-value="<?= e($pixPayload) ?>" data-copy-label="PIX copiado">
-                            <?= icon_svg('paperclip') ?> Copiar PIX
+                          <button type="button" class="payment-copy-button" data-copy-value="<?= e($pixPayload) ?>" data-copy-label="PIX copia e cola copiado">
+                            <?= icon_svg('paperclip') ?> Copiar PIX copia e cola
                           </button>
+                        <?php endif; ?>
+                        <?php if ($pixPaymentUrl !== ''): ?>
+                          <a class="payment-copy-button payment-asaas-link" href="<?= e($pixPaymentUrl) ?>" target="_blank" rel="noopener">
+                            <?= icon_svg('shield') ?> Abrir cobrança no Asaas
+                          </a>
                         <?php endif; ?>
                         <?php if ($expirationLabel !== ''): ?>
                           <small>Expira em <?= e($expirationLabel) ?></small>
+                        <?php endif; ?>
+                        <?php if ($providerPaymentId !== ''): ?>
+                          <small>Cobrança rastreável: <?= e($providerPaymentId) ?></small>
                         <?php endif; ?>
                       </div>
                     <?php elseif ($isCheckoutCreated): ?>
@@ -476,6 +493,6 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
   </div>
 
   <?php render_vlibras(); ?>
-  <script src="assets/js/payment-page.js?v=payment-page-1"></script>
+  <script src="assets/js/payment-page.js?v=payment-pix-tracking-20260629"></script>
 </body>
 </html>
