@@ -1207,7 +1207,7 @@ class AuthController extends BaseController
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
         $safeCode = htmlspecialchars($code, ENT_QUOTES, 'UTF-8');
         $logoPath = dirname(__DIR__, 3) . '/frontend/assets/img/email-logo.png';
-        $homeUrl = htmlspecialchars($this->absoluteAppUrl('/frontend/index.html'), ENT_QUOTES, 'UTF-8');
+        $homeUrl = htmlspecialchars($this->absoluteAppUrl('/frontend/index.php'), ENT_QUOTES, 'UTF-8');
 
         $message = <<<HTML
 <!doctype html>

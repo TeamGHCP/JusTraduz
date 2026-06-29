@@ -102,7 +102,7 @@ class BillingEmailService
         $safeIntro = htmlspecialchars($intro, ENT_QUOTES, 'UTF-8');
         $safeButton = htmlspecialchars($buttonLabel, ENT_QUOTES, 'UTF-8');
         $logoPath = dirname(__DIR__, 3) . '/frontend/assets/img/email-logo.png';
-        $homeUrl = htmlspecialchars($this->absoluteAppUrl('/frontend/index.html'), ENT_QUOTES, 'UTF-8');
+        $homeUrl = htmlspecialchars($this->absoluteAppUrl('/frontend/index.php'), ENT_QUOTES, 'UTF-8');
         $billingUrl = htmlspecialchars($this->absoluteAppUrl('/frontend/perfil.php?tab=faturamento'), ENT_QUOTES, 'UTF-8');
         $detailsRows = $this->detailsRows($details);
 
