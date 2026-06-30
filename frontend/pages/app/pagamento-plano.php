@@ -149,6 +149,13 @@ $holderCpf = preg_replace('/\D+/', '', (string) ($checkoutUser['cpf'] ?? '')) ?:
 $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? '')) ?: '';
 $currentPlanName = (string) ($currentSubscription['plan_name'] ?? '');
 $asaasEnvironmentLabel = payment_asaas_environment_label();
+$isSandbox = (strpos(strtolower($asaasEnvironmentLabel), 'sandbox') !== false);
+$fallbackQrUrl = '';
+if ($pixImage === '' && $pixPaymentUrl !== '') {
+    $fallbackQrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=250x250&chl=' . urlencode($pixPaymentUrl);
+} elseif ($isSandbox && $pixPaymentUrl !== '') {
+    $fallbackQrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=250x250&chl=' . urlencode($pixPaymentUrl);
+}
 $isOfficePlan = (string) ($plan['slug'] ?? '') === 'escritorio';
 $officeInviteMin = 0;
 $officeInviteLimit = OrganizationInviteService::OFFICE_INVITE_LIMIT;
@@ -346,11 +353,31 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
                   </button>
 
                   <div class="payment-method-body">
-                    <?php if ($isCheckoutCreated && $createdPaymentMethod === 'pix' && ($pixImage !== '' || $pixPayload !== '')): ?>
+                    <?php if ($isCheckoutCreated && $createdPaymentMethod === 'pix' && ($pixImage !== '' || $pixPayload !== '' || $fallbackQrUrl !== '')): ?>
                       <div class="payment-pix-box">
-                        <?php if ($pixImage !== ''): ?>
-                          <img src="data:image/png;base64,<?= e($pixImage) ?>" alt="QRCode Pix do pagamento">
+                        <?php if ($isSandbox): ?>
+                          <div class="payment-sandbox-warning" style="background: rgba(230, 162, 2, 0.1); border: 1px solid rgba(230, 162, 2, 0.3); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; text-align: left; font-size: 13px; color: #b78204; line-height: 1.4;">
+                            <strong style="display: inline-flex; align-items: center; gap: 4px;"><?= icon_svg('shield') ?> Ambiente de Testes (Sandbox)</strong><br>
+                            Aplicativos de banco reais exibirão um <strong>erro ("Chave Pix não encontrada" ou similar)</strong> se você tentar escanear este QR Code.<br>
+                            Para testar o fluxo de pagamento:
+                            <ul style="margin: 4px 0 0 16px; padding: 0;">
+                              <li>Escaneie o QR Code abaixo com a <strong>câmera normal do seu celular</strong> para abrir a página do Asaas e simular o pagamento.</li>
+                              <li>Ou use o botão <strong>"Já realizei o pagamento"</strong> no final desta página para simular e aprovar o pagamento automaticamente.</li>
+                            </ul>
+                          </div>
                         <?php endif; ?>
+
+                        <?php if ($isSandbox && $fallbackQrUrl !== ''): ?>
+                          <img src="<?= e($fallbackQrUrl) ?>" alt="QRCode da cobrança no Asaas">
+                          <small style="margin-top: -5px; color: var(--muted); text-align: center;">Escaneie com a <strong>câmera do celular</strong> para abrir o simulador do Asaas</small>
+                        <?php elseif ($pixImage !== ''): ?>
+                          <img src="data:image/png;base64,<?= e($pixImage) ?>" alt="QRCode Pix do pagamento">
+                          <small style="margin-top: -5px; color: var(--muted); text-align: center;">Escaneie com o app do seu banco</small>
+                        <?php elseif ($fallbackQrUrl !== ''): ?>
+                          <img src="<?= e($fallbackQrUrl) ?>" alt="QRCode Pix do pagamento (Link)">
+                          <small style="margin-top: -5px; color: var(--muted); text-align: center;">Escaneie com a <strong>câmera do celular</strong> para pagar no Asaas</small>
+                        <?php endif; ?>
+
                         <?php if ($pixPayload !== ''): ?>
                           <button type="button" class="payment-copy-button" data-copy-value="<?= e($pixPayload) ?>" data-copy-label="PIX copia e cola copiado">
                             <?= icon_svg('paperclip') ?> Copiar PIX copia e cola
