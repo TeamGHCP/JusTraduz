@@ -28,6 +28,8 @@ class AuthController extends BaseController
         $nome   = trim((string) $this->request->post('nome', ''));
         $email  = $this->normalizeEmail((string) $this->request->post('email', ''));
         $telefone = trim((string) $this->request->post('telefone', ''));
+        $dataNascimento = trim((string) $this->request->post('data_nascimento', ''));
+        $maioridadeConfirmada = (string) $this->request->post('maioridade_confirmada', '') === '1';
         $cpf = preg_replace('/\D+/', '', (string) $this->request->post('cpf', '')) ?? '';
         $senha  = trim((string) $this->request->post('senha', ''));
         $senha2 = trim((string) $this->request->post('senha2', ''));
@@ -55,6 +57,11 @@ class AuthController extends BaseController
         // Validações
         if (!$nome || !$email || !$senha) {
             $this->response->redirectWithError($frontUrl, 'Preencha todos os campos obrigatórios.');
+        }
+
+        $ageError = $this->ageValidationError($dataNascimento, $maioridadeConfirmada);
+        if ($ageError !== null) {
+            $this->response->redirectWithError($frontUrl, $ageError);
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -382,6 +389,8 @@ class AuthController extends BaseController
 
         $tipo = (string) $this->request->post('tipo', '');
         $telefone = preg_replace('/[^\d()+\-\s]/', '', trim((string) $this->request->post('telefone', ''))) ?? '';
+        $dataNascimento = trim((string) $this->request->post('data_nascimento', ''));
+        $maioridadeConfirmada = (string) $this->request->post('maioridade_confirmada', '') === '1';
         $cpf = preg_replace('/\D+/', '', (string) $this->request->post('cpf', '')) ?? '';
         $oab = preg_replace('/\D+/', '', (string) $this->request->post('inscricao', '')) ?? '';
         $oabUf = strtoupper(trim((string) $this->request->post('oab_uf', '')));
@@ -397,6 +406,11 @@ class AuthController extends BaseController
 
         if ($telefone === '' || strlen(preg_replace('/\D+/', '', $telefone) ?? '') < 10) {
             $this->response->redirectWithError($frontUrl, 'Informe um telefone valido com DDD.');
+        }
+
+        $ageError = $this->ageValidationError($dataNascimento, $maioridadeConfirmada);
+        if ($ageError !== null) {
+            $this->response->redirectWithError($frontUrl, $ageError);
         }
 
         $validUfs = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -736,6 +750,30 @@ class AuthController extends BaseController
 
         if (!preg_match('/[^A-Za-z0-9]/', $password)) {
             return 'A senha deve conter pelo menos um caractere especial.';
+        }
+
+        return null;
+    }
+
+    private function ageValidationError(string $birthDate, bool $confirmed): ?string
+    {
+        if (!$confirmed) {
+            return 'Confirme que voce tem 18 anos ou mais para criar uma conta no JusTraduz.';
+        }
+
+        if ($birthDate === '') {
+            return 'Informe sua data de nascimento.';
+        }
+
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $birthDate);
+        $errors = DateTimeImmutable::getLastErrors();
+        if (!$date || ($errors !== false && ((int) $errors['warning_count'] > 0 || (int) $errors['error_count'] > 0))) {
+            return 'Informe uma data de nascimento valida.';
+        }
+
+        $today = new DateTimeImmutable('today');
+        if ($date > $today || $date->modify('+18 years') > $today) {
+            return 'É necessário ter 18 anos ou mais para criar uma conta no JusTraduz.';
         }
 
         return null;

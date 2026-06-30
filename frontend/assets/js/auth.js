@@ -344,6 +344,30 @@
     return true;
   }
 
+  function getAgeValidationMessage(value) {
+    if (!value) {
+      return "Informe sua data de nascimento.";
+    }
+
+    const birthDate = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(birthDate.getTime())) {
+      return "Informe uma data de nascimento valida.";
+    }
+
+    const today = new Date();
+    const eighteenthBirthday = new Date(
+      birthDate.getFullYear() + 18,
+      birthDate.getMonth(),
+      birthDate.getDate()
+    );
+
+    if (birthDate > today || eighteenthBirthday > today) {
+      return "É necessário ter 18 anos ou mais para criar uma conta no JusTraduz.";
+    }
+
+    return "";
+  }
+
   function setButtonLoading(button, loading) {
     if (!button) return;
     if (loading) {
@@ -496,8 +520,21 @@
       const formCpf = form.querySelector('input[name="cpf"]');
       const formOab = form.querySelector('input[name="inscricao"]');
       const formUf = form.querySelector('select[name="oab_uf"]');
+      const birthDate = form.querySelector('input[name="data_nascimento"]');
 
       if (!validateFormFields(form)) {
+        return;
+      }
+
+      const ageMessage = birthDate ? getAgeValidationMessage(birthDate.value) : "";
+      if (birthDate && ageMessage) {
+        showFormMessage(form, ageMessage);
+        if (birthDate) {
+          birthDate.setCustomValidity(ageMessage);
+          markInvalidField(birthDate);
+          focusFieldControl(birthDate);
+          birthDate.addEventListener("input", () => birthDate.setCustomValidity(""), { once: true });
+        }
         return;
       }
 

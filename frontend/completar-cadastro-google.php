@@ -190,6 +190,16 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
           <small class="jt-error"></small>
         </div>
 
+        <div class="field jt-field">
+          <span class="auth-field-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+          </span>
+          <input class="input jt-input" type="date" id="google_data_nascimento" name="data_nascimento" autocomplete="bday" required>
+          <label class="jt-label" for="google_data_nascimento">Data de nascimento</label>
+          <small class="jt-error"></small>
+          <small class="field-help">Usada apenas para confirmar maioridade.</small>
+        </div>
+
         <div class="field jt-field" data-cpf-fields>
           <span class="auth-field-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h4"/><path d="M8 13h2"/><path d="M15 12h2"/><path d="M15 16h2"/></svg>
@@ -236,6 +246,11 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
         <label class="checkline">
           <input type="checkbox" required>
           <span>Li e aceito os <a href="termos.php">Termos de Uso</a> e a <a href="privacidade.php">Política de Privacidade</a>.</span>
+        </label>
+
+        <label class="checkline">
+          <input type="checkbox" name="maioridade_confirmada" value="1" required>
+          <span>Declaro que tenho 18 anos ou mais e que as informacoes fornecidas sao verdadeiras.</span>
         </label>
 
         <button class="btn btn-primary btn-block" type="submit" data-loading-text="Concluindo...">Concluir cadastro</button>
