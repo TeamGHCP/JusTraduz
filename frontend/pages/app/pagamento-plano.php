@@ -25,6 +25,7 @@ $hasActiveAsaasSubscription = $currentSubscription
 
 $checkout = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
 $checkoutAge = time() - (int) ($checkout['created_at'] ?? 0);
+
 if (($checkout['provider'] ?? '') !== 'asaas' || $checkoutAge > 3600) {
     if ($hasConfirmedPaymentPage || $hasActiveAsaasSubscription) {
         payment_redirect(app_url('/frontend/pagamento-confirmado.php'));
@@ -186,6 +187,28 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
             <span>Ao confirmar este pagamento, o plano <?= e($currentPlanName !== '' ? $currentPlanName : 'atual') ?> será substituído pelo plano <?= e((string) $plan['name']) ?>.</span>
           </div>
         <?php endif; ?>
+
+        <header class="payment-hero">
+          <div class="payment-hero-copy">
+            <span class="payment-hero-kicker"><?= icon_svg('shield') ?> Checkout seguro</span>
+            <h1>Plano <?= e((string) $plan['name']) ?></h1>
+            <p>Revise os dados da assinatura e escolha a forma de pagamento para ativar seus recursos no JusTraduz.</p>
+          </div>
+
+          <div class="payment-hero-summary" aria-label="Resumo do pagamento">
+            <span><?= e($cycleLabel) ?></span>
+            <strong><?= e(payment_money($amountCents)) ?><small><?= e($periodLabel) ?></small></strong>
+            <em><?= e($isCheckoutCreated ? 'Cobranca gerada' : 'Aguardando confirmacao') ?></em>
+          </div>
+
+          <div class="payment-hero-meta">
+            <span><?= icon_svg('lock') ?> <?= e($asaasEnvironmentLabel) ?></span>
+            <?php if ($dueLabel !== ''): ?>
+              <span><?= icon_svg('file') ?> Vence em <?= e($dueLabel) ?></span>
+            <?php endif; ?>
+            <span><?= icon_svg('check') ?> Acesso digital</span>
+          </div>
+        </header>
 
         <div class="payment-panel">
           <section class="payment-customer-card">
@@ -356,11 +379,11 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
                     <?php if ($isCheckoutCreated && $createdPaymentMethod === 'pix' && ($pixImage !== '' || $pixPayload !== '' || $fallbackQrUrl !== '')): ?>
                       <div class="payment-pix-box">
                         <?php if ($isSandbox): ?>
-                          <div class="payment-sandbox-warning" style="background: rgba(230, 162, 2, 0.1); border: 1px solid rgba(230, 162, 2, 0.3); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; text-align: left; font-size: 13px; color: #b78204; line-height: 1.4;">
-                            <strong style="display: inline-flex; align-items: center; gap: 4px;"><?= icon_svg('shield') ?> Ambiente de Testes (Sandbox)</strong><br>
+                          <div class="payment-sandbox-warning">
+                            <strong><?= icon_svg('shield') ?> Ambiente de Testes (Sandbox)</strong><br>
                             Aplicativos de banco reais exibirão um <strong>erro ("Chave Pix não encontrada" ou similar)</strong> se você tentar escanear este QR Code.<br>
                             Para testar o fluxo de pagamento:
-                            <ul style="margin: 4px 0 0 16px; padding: 0;">
+                            <ul>
                               <li>Escaneie o QR Code abaixo com a <strong>câmera normal do seu celular</strong> para abrir a página do Asaas e simular o pagamento.</li>
                               <li>Ou use o botão <strong>"Já realizei o pagamento"</strong> no final desta página para simular e aprovar o pagamento automaticamente.</li>
                             </ul>
@@ -369,13 +392,13 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
 
                         <?php if ($isSandbox && $fallbackQrUrl !== ''): ?>
                           <img src="<?= e($fallbackQrUrl) ?>" alt="QRCode da cobrança no Asaas">
-                          <small style="margin-top: -5px; color: var(--muted); text-align: center;">Escaneie com a <strong>câmera do celular</strong> para abrir o simulador do Asaas</small>
+                          <small class="payment-pix-caption">Escaneie com a <strong>câmera do celular</strong> para abrir o simulador do Asaas</small>
                         <?php elseif ($pixImage !== ''): ?>
                           <img src="data:image/png;base64,<?= e($pixImage) ?>" alt="QRCode Pix do pagamento">
-                          <small style="margin-top: -5px; color: var(--muted); text-align: center;">Escaneie com o app do seu banco</small>
+                          <small class="payment-pix-caption">Escaneie com o app do seu banco</small>
                         <?php elseif ($fallbackQrUrl !== ''): ?>
                           <img src="<?= e($fallbackQrUrl) ?>" alt="QRCode Pix do pagamento (Link)">
-                          <small style="margin-top: -5px; color: var(--muted); text-align: center;">Escaneie com a <strong>câmera do celular</strong> para pagar no Asaas</small>
+                          <small class="payment-pix-caption">Escaneie com a <strong>câmera do celular</strong> para pagar no Asaas</small>
                         <?php endif; ?>
 
                         <?php if ($pixPayload !== ''): ?>

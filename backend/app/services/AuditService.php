@@ -18,20 +18,19 @@ class AuditService
         $safeDetails = $this->redact($details);
         $json = $safeDetails ? json_encode($safeDetails, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null;
 
+        $userId = $this->currentUserId();
         $stmt = $this->pdo->prepare(
             'INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details, ip_address, user_agent)
              VALUES (?, ?, ?, ?, ?, ?, ?)'
         );
-
-        $stmt->execute([
-            $this->currentUserId(),
-            mb_substr($action, 0, 100),
-            $entityType ? mb_substr($entityType, 0, 80) : null,
-            $entityId,
-            $json,
-            mb_substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45) ?: null,
-            mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255) ?: null,
-        ]);
+        $stmt->bindValue(1, $userId, $userId === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+        $stmt->bindValue(2, mb_substr($action, 0, 100), \PDO::PARAM_STR);
+        $stmt->bindValue(3, $entityType ? mb_substr($entityType, 0, 80) : null, $entityType ? \PDO::PARAM_STR : \PDO::PARAM_NULL);
+        $stmt->bindValue(4, $entityId, $entityId === null ? \PDO::PARAM_NULL : \PDO::PARAM_INT);
+        $stmt->bindValue(5, $json, $json === null ? \PDO::PARAM_NULL : \PDO::PARAM_STR);
+        $stmt->bindValue(6, mb_substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45) ?: null, \PDO::PARAM_STR);
+        $stmt->bindValue(7, mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255) ?: null, \PDO::PARAM_STR);
+        $stmt->execute();
     }
 
     private function currentUserId(): ?int
