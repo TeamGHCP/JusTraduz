@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const openingLoader = document.querySelector("[data-opening-loader]");
 document.querySelectorAll("[data-phone-demo]").forEach((phone) => {
     const cards = Array.from(phone.querySelectorAll("[data-phone-open]"));
     const sheets = Array.from(phone.querySelectorAll("[data-phone-sheet]"));

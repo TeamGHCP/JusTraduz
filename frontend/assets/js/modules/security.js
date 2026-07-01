@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.querySelectorAll("[data-security-panel]").forEach((panel) => {
     const tabs = Array.from(panel.querySelectorAll("[data-security-tab]"));
     const preview = panel.querySelector(".home-security-preview");

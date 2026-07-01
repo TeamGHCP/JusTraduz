@@ -1,5 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-if (steps.length === 0 || panels.length === 0) {
+  document.querySelectorAll("[data-flow-steps]").forEach((flow) => {
+    if (flow.closest("[hidden]")) {
+      return;
+    }
+
+    const steps = Array.from(flow.querySelectorAll("[data-flow-step]"));
+    const panels = Array.from(flow.querySelectorAll("[data-flow-panel]"));
+
+    if (steps.length === 0 || panels.length === 0) {
       return;
     }
 
