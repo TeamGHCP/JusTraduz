@@ -32,10 +32,10 @@ class RateLimiterMiddleware
         $key = 'rl:' . md5($ip . ':' . $path);
 
         // Sensitive paths have lower limit (10 hits per min)
-        $isSensitive = in_array($path, [
+        $isSensitive = (in_array($path, [
             '/login', '/register', '/recuperar-senha', '/pagamento', '/checkout', '/billing/webhook',
             '/auth/login', '/auth/registrar', '/auth/reset-password', '/auth/admin-login'
-        ], true) || str_contains($path, '/auth/');
+        ], true) || str_contains($path, '/auth/')) && $path !== '/auth/csrf';
 
         $maxHits = $isSensitive ? 10 : 100;
         $window = 60; // 1 minute

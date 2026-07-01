@@ -11,6 +11,7 @@ namespace App\Controllers {
     use App\Services\PasswordResetService;
     use App\Services\ProfileService;
     use App\Exceptions\ValidationException;
+    use App\Core\RedirectException;
     use Throwable;
 
     class AuthController extends BaseController
@@ -129,10 +130,11 @@ namespace App\Controllers {
                 $this->signInUser($usuario);
                 $this->audit->log('auth.google_login', 'user', (int) $usuario['id'], ['email' => $usuario['email'] ?? null]);
                 $this->response->redirect(APP_URL . $this->dashboardPathFor((string) $usuario['tipo']));
+            } catch (RedirectException $e) {
+                throw $e;
             } catch (ValidationException $e) {
                 $this->response->redirectWithError($frontUrl, $e->getMessage());
             } catch (Throwable $e) {
-                file_put_contents(dirname(__DIR__, 2) . '/oauth_debug.txt', $e->getMessage() . "\n" . $e->getTraceAsString());
                 error_log('Google OAuth error: ' . $e->getMessage());
                 $this->response->redirectWithError($frontUrl, 'Não foi possível entrar com Google agora.');
             }
@@ -175,7 +177,10 @@ namespace App\Controllers {
                 CsrfMiddleware::generateToken();
                 $token = $_SESSION['_csrf_token'] ?? '';
             }
-            $this->response->json(['csrf_token' => $token]);
+            $this->response->json([
+                'csrf' => $token,
+                'csrf_token' => $token
+            ]);
         }
 
         public function forceLogout(): void
