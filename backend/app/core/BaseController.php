@@ -1,13 +1,12 @@
 <?php
 
-require_once __DIR__ . '/Request.php';
-require_once __DIR__ . '/Response.php';
-require_once dirname(__DIR__) . '/config/app.php';
-require_once dirname(__DIR__) . '/services/PermissionService.php';
-require_once dirname(__DIR__) . '/support/session.php';
+namespace App\Core;
+
+use App\Services\PermissionService;
+use PDO;
 
 if (!defined('APP_URL')) {
-    define('APP_URL', app_base_path());
+    define('APP_URL', \app_base_path());
 }
 
 abstract class BaseController
@@ -18,7 +17,6 @@ abstract class BaseController
 
     public function __construct()
     {
-        require_once dirname(__DIR__) . '/config/database.php';
         $this->request = new Request();
         $this->response = new Response();
         $this->pdo = database_connection();
@@ -26,7 +24,7 @@ abstract class BaseController
 
     protected function startSession(): void
     {
-        secure_session_start();
+        \secure_session_start();
     }
 
     protected function requireLoggedIn(string $redirectUrl, string $message = 'Faça login para continuar.'): void

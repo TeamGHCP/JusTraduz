@@ -1,5 +1,10 @@
 <?php
 
+namespace App\Core;
+
+use App\Middlewares\CsrfMiddleware;
+use Throwable;
+
 class Router
 {
     private array $routes = [];
@@ -29,16 +34,36 @@ class Router
         $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
         $uri = (string) ($_GET['rota'] ?? '/');
 
+        $matchedRoute = null;
         foreach ($this->routes as $route) {
-            if ($route['method'] !== $method || $route['path'] !== $uri) {
-                continue;
+            if ($route['method'] === $method && $route['path'] === $uri) {
+                $matchedRoute = $route;
+                break;
+            }
+        }
+
+        // Compatibility fallback: if not matched and has /api/v1 prefix, strip it and look for the internal route
+        if (!$matchedRoute && str_starts_with($uri, '/api/v1/')) {
+            $strippedUri = substr($uri, 7); // Strip '/api/v1'
+            foreach ($this->routes as $route) {
+                if ($route['method'] === $method && $route['path'] === $strippedUri) {
+                    $matchedRoute = $route;
+                    break;
+                }
+            }
+        }
+
+        if ($matchedRoute) {
+            // Apply global rate limiting
+            if (class_exists('App\Middlewares\RateLimiterMiddleware')) {
+                \App\Middlewares\RateLimiterMiddleware::check($matchedRoute['path']);
             }
 
-            $controllerFile = dirname(__DIR__) . '/controllers/' . $route['controller'] . '.php';
-            if (!file_exists($controllerFile)) {
-                error_log('Controller not found: ' . $route['controller']);
+            $controllerClass = 'App\\Controllers\\' . $matchedRoute['controller'];
+            if (!class_exists($controllerClass)) {
+                error_log('Controller class not found: ' . $controllerClass);
                 http_response_code(500);
-                if (!self::expectsJson() && class_exists('ErrorHandler') && ErrorHandler::renderErrorPage(500)) {
+                if (!self::expectsJson() && class_exists('App\\Core\\ErrorHandler') && ErrorHandler::renderErrorPage(500)) {
                     return;
                 }
 
@@ -46,24 +71,20 @@ class Router
                 return;
             }
 
-            if ($method === 'POST' && !$this->isCsrfExempt($route['path'])) {
-                $csrfFile = dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
-                if (file_exists($csrfFile)) {
-                    require_once $csrfFile;
+            if ($method === 'POST' && !$this->isCsrfExempt($matchedRoute['path'])) {
+                if (class_exists('App\\Middlewares\\CsrfMiddleware')) {
                     CsrfMiddleware::validate();
                 }
             }
 
-            require_once $controllerFile;
-
-            $controller = new $route['controller']();
-            $action = $route['action'];
+            $controller = new $controllerClass();
+            $action = $matchedRoute['action'];
             $controller->$action();
             return;
         }
 
         http_response_code(404);
-        if (!self::expectsJson() && class_exists('ErrorHandler') && ErrorHandler::renderErrorPage(404)) {
+        if (!self::expectsJson() && class_exists('App\\Core\\ErrorHandler') && ErrorHandler::renderErrorPage(404)) {
             return;
         }
 

@@ -1,0 +1,27 @@
+{
+    "name": "justraduz/justraduz",
+    "description": "JusTraduz Backend Refactoring and Security Hardening",
+    "type": "project",
+    "require": {
+        "php": ">=8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\Core\\": "backend/app/core/",
+            "App\\Controllers\\": "backend/app/controllers/",
+            "App\\Services\\Payments\\Asaas\\": "backend/app/services/payments/asaas/",
+            "App\\Services\\Payments\\": "backend/app/services/payments/",
+            "App\\Services\\": "backend/app/services/",
+            "App\\Middlewares\\": "backend/app/middlewares/",
+            "App\\Support\\": "backend/app/support/",
+            "App\\Repositories\\": "backend/app/repositories/",
+            "App\\Validators\\": "backend/app/validators/",
+            "App\\Dtos\\": "backend/app/dtos/",
+            "App\\Helpers\\": "backend/app/helpers/",
+            "App\\Policies\\": "backend/app/policies/",
+            "App\\Exceptions\\": "backend/app/exceptions/",
+            "App\\Transformers\\": "backend/app/transformers/",
+            "App\\Resources\\": "backend/app/resources/"
+        }
+    }
+}

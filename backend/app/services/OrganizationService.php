@@ -1,5 +1,10 @@
 <?php
 
+namespace App\Services;
+
+use PDO;
+use Throwable;
+
 class OrganizationService
 {
     private PDO $pdo;

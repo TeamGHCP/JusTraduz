@@ -1,0 +1,1508 @@
+/* Error pages */
+.error-page {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(17, 138, 126, .12), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(47, 95, 152, .12), transparent 28%),
+    linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%);
+  color: var(--text);
+}
+
+.error-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(17, 138, 126, .16) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, .8), transparent 78%);
+  opacity: .45;
+}
+
+.error-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 22px 0 38px;
+}
+
+.error-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 66px;
+}
+
+.error-brand {
+  display: inline-flex;
+  align-items: center;
+}
+
+.error-brand img {
+  width: 150px;
+  height: auto;
+}
+
+.error-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-nav a {
+  padding: 9px 11px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 850;
+  transition: background .16s ease, color .16s ease;
+}
+
+.error-nav a:hover {
+  background: var(--surface);
+  color: var(--teal);
+}
+
+.error-panel {
+  align-self: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 460px);
+  gap: clamp(28px, 6vw, 76px);
+  align-items: center;
+  padding: 42px 0 70px;
+}
+
+.error-copy {
+  max-width: 660px;
+}
+
+.error-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin: 0 0 18px;
+  padding: 0 11px;
+  border: 1px solid rgba(17, 138, 126, .18);
+  border-radius: 999px;
+  background: rgba(17, 138, 126, .08);
+  color: var(--teal-2);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.error-copy h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(42px, 7vw, 78px);
+  font-weight: 950;
+  line-height: .96;
+  letter-spacing: 0;
+}
+
+.error-text {
+  max-width: 590px;
+  margin: 22px 0 0;
+  color: var(--muted);
+  font-size: clamp(16px, 1.7vw, 19px);
+  line-height: 1.65;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 30px 0 0;
+}
+
+.error-actions .btn {
+  min-height: 46px;
+  border-radius: 8px;
+}
+
+.error-console {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(198, 209, 221, .84);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .94), rgba(248, 250, 252, .96));
+  box-shadow: 0 28px 70px rgba(23, 32, 51, .16);
+}
+
+.error-console::before {
+  content: "";
+  position: absolute;
+  inset: -60px -80px auto auto;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: rgba(17, 138, 126, .12);
+}
+
+.error-console-head {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 9px;
+  align-items: center;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.error-dot {
+  grid-row: span 2;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 0 6px rgba(17, 138, 126, .11);
+}
+
+.error-dot-warning {
+  background: var(--warning);
+  box-shadow: 0 0 0 6px rgba(168, 103, 22, .12);
+}
+
+.error-console-head strong {
+  color: var(--navy);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.error-console-head small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.error-document {
+  position: relative;
+  margin: 18px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.error-code {
+  display: block;
+  color: var(--teal);
+  font-size: clamp(64px, 11vw, 112px);
+  font-weight: 950;
+  line-height: .82;
+  letter-spacing: 0;
+}
+
+.error-document h2 {
+  margin: 18px 0 8px;
+  color: var(--navy);
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.error-document p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.error-document-lines {
+  display: grid;
+  gap: 9px;
+  margin-top: 22px;
+}
+
+.error-document-lines span {
+  display: block;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+.error-document-lines span:nth-child(2) {
+  width: 76%;
+}
+
+.error-document-lines span:nth-child(3) {
+  width: 48%;
+}
+
+.error-checklist {
+  display: grid;
+  gap: 8px;
+  padding: 0 18px 18px;
+}
+
+.error-checklist a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 900;
+  transition: border-color .16s ease, color .16s ease, transform .16s ease;
+}
+
+.error-checklist a::after {
+  content: ">";
+  color: var(--teal);
+}
+
+.error-checklist a:hover {
+  border-color: rgba(17, 138, 126, .42);
+  color: var(--teal);
+  transform: translateX(2px);
+}
+
+.error-panel-server .error-kicker,
+.error-panel-server .error-code {
+  color: var(--warning);
+}
+
+.error-panel-server .error-kicker {
+  border-color: rgba(168, 103, 22, .18);
+  background: rgba(168, 103, 22, .08);
+}
+
+@media (max-width: 860px) {
+  .error-screen {
+    width: min(100% - 28px, 620px);
+  }
+
+  .error-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .error-panel {
+    grid-template-columns: 1fr;
+    gap: 26px;
+    padding: 24px 0 44px;
+  }
+
+  .error-actions {
+    display: grid;
+  }
+
+  .error-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .error-screen {
+    width: calc(100% - 24px);
+    padding-top: 12px;
+  }
+
+  .error-nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .error-copy h1 {
+    font-size: clamp(38px, 14vw, 56px);
+  }
+
+  .error-document {
+    margin: 12px;
+    padding: 18px;
+  }
+
+  .error-checklist {
+    padding: 0 12px 12px;
+  }
+}
+
+/* Planos pagos - guarda final do cascade */
+.payment-page .payment-panel {
+  gap: 14px;
+}
+
+.payment-page .payment-alert,
+.payment-page .payment-customer-card,
+.payment-page .payment-order-card,
+.payment-page .payment-methods-card,
+.payment-page .payment-status-card,
+.payment-page .payment-method,
+.payment-page .office-invite-card,
+.payment-confirmed-page .payment-confirmed-hero,
+.payment-confirmed-page .payment-confirmed-card {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.payment-page .payment-step,
+.payment-confirmed-page .payment-confirmed-seal,
+.payment-confirmed-page .payment-confirmed-card-head > span,
+.payment-confirmed-page .payment-confirmed-steps span {
+  border-radius: var(--radius-sm);
+}
+
+.payment-page .payment-method-action,
+.payment-page .payment-copy-button,
+.payment-confirmed-page .payment-confirmed-copy-button {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #fff;
+}
+
+.payment-page .payment-method-action:hover,
+.payment-page .payment-copy-button:hover,
+.payment-page .payment-copy-button.is-copied,
+.payment-confirmed-page .payment-confirmed-copy-button:hover,
+.payment-confirmed-page .payment-confirmed-copy-button.is-copied {
+  border-color: var(--teal-2);
+  background: var(--teal-2);
+}
+
+.payment-confirmed-page .payment-confetti-layer,
+.payment-confirmed-page .payment-confetti-piece,
+.payment-confirmed-page .payment-confirmed-hero::before,
+.payment-confirmed-page .payment-confirmed-card::before {
+  display: none;
+}
+
+.payment-confirmed-page .payment-confirmed-hero {
+  min-height: 0;
+  border-color: rgba(17, 138, 126, .24);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, var(--surface-2)), var(--surface));
+}
+
+.payment-confirmed-page .payment-confirmed-card:hover,
+.payment-confirmed-page .payment-confirmed-card.is-active {
+  border-color: rgba(17, 138, 126, .26);
+  box-shadow: var(--shadow-sm);
+  transform: none;
+}
+
+.payment-confirmed-page .payment-confirmed-seal span,
+.payment-confirmed-page.is-ready .payment-confirmed-steps div {
+  animation: none;
+}
+
+.payment-confirmed-page .payment-confirmed-steps div,
+.payment-confirmed-page.is-ready .payment-confirmed-steps div {
+  opacity: 1;
+  transform: none;
+}
+
+/* Planos pagos - polimento visual adicional */
+.pricing-page {
+  --billing-stripe: linear-gradient(90deg, var(--teal), color-mix(in srgb, var(--teal) 42%, transparent));
+}
+
+.pricing-page .pricing-hero.card {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--line) 70%, var(--teal));
+}
+
+.pricing-page .pricing-hero.card::before,
+.pricing-page .pricing-card::after,
+.payment-page .payment-customer-card::before,
+.payment-page .payment-order-card::before,
+.payment-page .payment-methods-card::before,
+.payment-confirmed-page .payment-confirmed-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 3px;
+  background: var(--billing-stripe, linear-gradient(90deg, var(--teal), transparent));
+  pointer-events: none;
+}
+
+.pricing-page .pricing-hero.card > *,
+.pricing-page .pricing-card > *,
+.payment-page .payment-customer-card > *,
+.payment-page .payment-order-card > *,
+.payment-page .payment-methods-card > *,
+.payment-confirmed-page .payment-confirmed-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.pricing-page .pricing-card,
+.payment-page .payment-customer-card,
+.payment-page .payment-order-card,
+.payment-page .payment-methods-card,
+.payment-confirmed-page .payment-confirmed-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.pricing-page .pricing-card {
+  border-color: color-mix(in srgb, var(--line) 88%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, var(--surface-2)), var(--surface)),
+    var(--surface);
+}
+
+.pricing-page .pricing-card-featured {
+  border-color: color-mix(in srgb, var(--teal) 46%, var(--line));
+  box-shadow: 0 14px 30px rgba(17, 138, 126, .11);
+}
+
+.pricing-page .pricing-card-current {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mint) 42%, var(--surface)), var(--surface)),
+    var(--surface);
+}
+
+.pricing-page .pricing-card-head p,
+.pricing-page .pricing-description,
+.pricing-page .pricing-price-row small {
+  line-height: 1.45;
+}
+
+.pricing-page .pricing-price-row {
+  border-color: color-mix(in srgb, var(--line) 76%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 88%, var(--mint)), var(--surface-2));
+}
+
+.pricing-page .pricing-price {
+  letter-spacing: 0;
+}
+
+.pricing-page .pricing-period {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-left: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pricing-page .pricing-features li {
+  min-height: 28px;
+}
+
+.pricing-page .pricing-features .svg-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 3px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--mint) 86%, var(--surface));
+  color: var(--teal);
+}
+
+.pricing-page .pricing-benefit {
+  border-left: 3px solid var(--teal);
+}
+
+.pricing-page .pricing-card .btn {
+  min-height: 44px;
+  font-weight: 900;
+}
+
+.pricing-page .pricing-note.card {
+  align-items: center;
+  border-color: color-mix(in srgb, var(--line) 76%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--mint)), var(--surface));
+}
+
+.payment-page .payment-panel {
+  align-items: stretch;
+}
+
+.payment-page .payment-customer-card,
+.payment-page .payment-order-card,
+.payment-page .payment-methods-card {
+  min-height: 100%;
+}
+
+.payment-page .payment-card-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+}
+
+.payment-page .payment-step {
+  background: var(--navy);
+}
+
+.payment-page .payment-order-item {
+  align-items: flex-start;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 90%, var(--mint)), var(--surface-2));
+}
+
+.payment-page .payment-total {
+  margin-top: 14px;
+  border-left: 3px solid var(--teal);
+}
+
+.payment-page .payment-method {
+  transition: border-color .18s ease, background-color .18s ease;
+}
+
+.payment-page .payment-method.is-open {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, var(--mint)), var(--surface));
+}
+
+.payment-page .payment-method-title > .svg-icon,
+.payment-page .office-invite-head > span {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 7px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--mint) 86%, var(--surface));
+  color: var(--teal);
+  flex: 0 0 34px;
+}
+
+.payment-page .office-invite-card {
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, var(--mint)), var(--surface));
+}
+
+.payment-page .office-invite-stepper {
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.payment-page .office-invite-field input,
+.payment-page .payment-form-field input {
+  border-color: color-mix(in srgb, var(--line) 88%, var(--teal));
+}
+
+.payment-page .payment-pix-box {
+  border-style: solid;
+  background:
+    linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface-2) 86%, var(--mint)));
+}
+
+.payment-page .payment-card-flags img {
+  padding: 5px;
+  background: var(--surface);
+}
+
+.payment-confirmed-page .payment-confirmed-hero {
+  border-left: 4px solid var(--teal);
+}
+
+.payment-confirmed-page .payment-confirmed-seal {
+  border: 1px solid color-mix(in srgb, var(--line) 70%, var(--teal));
+}
+
+.payment-confirmed-page .payment-confirmed-list div,
+.payment-confirmed-page .payment-confirmed-steps div {
+  border-color: color-mix(in srgb, var(--line) 86%, var(--teal));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 94%, var(--mint)), var(--surface-2));
+}
+
+/* Planos pagos - v3 visual premium */
+.app-main .pricing-page,
+.app-main .payment-page,
+.app-main .payment-confirmed-page {
+  --jt-billing-ink: var(--navy);
+  --jt-billing-soft: color-mix(in srgb, var(--surface-2) 74%, var(--mint));
+  --jt-billing-line: color-mix(in srgb, var(--line) 72%, var(--teal));
+  --jt-billing-shadow: 0 18px 42px rgba(23, 32, 51, .10);
+}
+
+.app-main .pricing-page {
+  gap: 22px;
+}
+
+.app-main .pricing-hero.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 20px 28px;
+  align-items: center;
+  padding: 28px;
+  border: 1px solid var(--jt-billing-line);
+  border-left: 5px solid var(--teal);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--surface) 88%, var(--mint)) 0%, var(--surface) 48%, var(--surface-2) 100%);
+  box-shadow: var(--jt-billing-shadow);
+}
+
+.app-main .pricing-hero.card::before {
+  height: 0;
+}
+
+.app-main .pricing-kicker {
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid color-mix(in srgb, var(--teal) 28%, var(--line));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--mint) 84%, var(--surface));
+  color: var(--teal-2);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #fff 62%, transparent);
+}
+
+.app-main .pricing-hero h2 {
+  max-width: 780px;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.06;
+}
+
+.app-main .pricing-hero p {
+  max-width: 760px;
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+  font-size: 15px;
+}
+
+.app-main .pricing-cycle-toggle {
+  justify-self: end;
+  width: min(100%, 310px);
+  min-height: 52px;
+  padding: 5px;
+  border-color: color-mix(in srgb, var(--line) 68%, var(--teal));
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 72%, transparent), 0 10px 24px rgba(23, 32, 51, .08);
+}
+
+.app-main .pricing-cycle-thumb {
+  inset: 5px auto 5px 5px;
+  width: calc(50% - 5px);
+  background: linear-gradient(180deg, var(--teal), var(--teal-2));
+}
+
+.app-main .pricing-cycle-option {
+  min-height: 42px;
+  font-size: 13px;
+}
+
+.app-main .pricing-grid {
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 18px;
+}
+
+.app-main .pricing-card {
+  min-height: 100%;
+  padding: 22px;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, var(--teal));
+  background:
+    linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface-2) 58%, var(--surface)));
+  box-shadow: 0 12px 30px rgba(23, 32, 51, .07);
+}
+
+.app-main .pricing-card:hover,
+.app-main .pricing-card:focus-visible,
+.app-main .pricing-card.is-card-active {
+  border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+  box-shadow: 0 18px 38px rgba(23, 32, 51, .11);
+}
+
+.app-main .pricing-card-featured {
+  border-color: color-mix(in srgb, var(--teal) 62%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mint) 54%, var(--surface)), var(--surface) 44%, var(--surface-2));
+  box-shadow: 0 18px 42px rgba(17, 138, 126, .14);
+}
+
+.app-main .pricing-card::after {
+  height: 4px;
+  background: linear-gradient(90deg, var(--teal), color-mix(in srgb, var(--teal) 18%, transparent));
+}
+
+.app-main .pricing-card-featured::after {
+  background: linear-gradient(90deg, var(--teal), var(--navy));
+}
+
+.app-main .pricing-popular {
+  position: static;
+  display: inline-flex;
+  align-self: flex-start;
+  width: fit-content;
+  min-height: 28px;
+  margin-bottom: -4px;
+  border: 1px solid color-mix(in srgb, var(--navy) 16%, var(--line));
+  background: var(--navy);
+  color: var(--surface);
+}
+
+.app-main .pricing-current-badge {
+  border-color: color-mix(in srgb, var(--teal) 30%, var(--line));
+  background: color-mix(in srgb, var(--mint) 88%, var(--surface));
+  color: var(--teal-2);
+}
+
+.app-main .pricing-card-head,
+.app-main .pricing-card-current .pricing-card-head {
+  min-height: auto;
+  padding-right: 0;
+}
+
+.app-main .pricing-card-head h3 {
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.app-main .pricing-card-head p {
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.app-main .pricing-price-row {
+  position: relative;
+  gap: 8px;
+  min-height: 96px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--teal) 22%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 80%, var(--mint)), var(--surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 74%, transparent);
+}
+
+.app-main .pricing-price-row::before {
+  content: "";
+  position: absolute;
+  inset: 12px auto 12px 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--teal);
+}
+
+.app-main .pricing-price {
+  font-size: clamp(32px, 3.2vw, 42px);
+  line-height: .95;
+}
+
+.app-main .pricing-period {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.app-main .pricing-description {
+  min-height: 62px;
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+}
+
+.app-main .pricing-included-prefix {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 30px;
+  padding: 5px 9px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-2) 70%, var(--mint));
+  color: var(--navy);
+}
+
+.app-main .pricing-features {
+  gap: 12px;
+}
+
+.app-main .pricing-features li {
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
+}
+
+.app-main .pricing-features li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.app-main .pricing-benefit {
+  padding: 14px 15px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 72%, var(--mint)), var(--surface-2));
+}
+
+.app-main .pricing-card .btn {
+  min-height: 48px;
+}
+
+.app-main .pricing-note.card {
+  border-left: 5px solid var(--teal);
+  box-shadow: var(--jt-billing-shadow);
+}
+
+.app-main .pricing-current-alert.card {
+  border-left: 5px solid var(--teal);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-main .payment-panel {
+  grid-template-columns: minmax(250px, .9fr) minmax(320px, 1fr) minmax(390px, 1.18fr);
+  gap: 20px;
+}
+
+.app-main .payment-page {
+  gap: 20px;
+}
+
+.app-main .payment-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(230px, 300px);
+  gap: 20px;
+  align-items: end;
+  padding: 24px;
+  border: 1px solid var(--jt-billing-line);
+  border-left: 6px solid var(--teal);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--mint) 54%, var(--surface)), var(--surface) 48%, var(--surface-2));
+  box-shadow: var(--jt-billing-shadow);
+}
+
+.app-main .payment-hero-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.app-main .payment-hero-kicker,
+.app-main .payment-hero-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--teal-2);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.app-main .payment-hero-kicker .svg-icon,
+.app-main .payment-hero-meta .svg-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.app-main .payment-hero h1 {
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(30px, 3vw, 44px);
+  line-height: 1.08;
+}
+
+.app-main .payment-hero p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.app-main .payment-hero-summary {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--teal) 22%, var(--line));
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, .72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .78);
+}
+
+.app-main .payment-hero-summary span,
+.app-main .payment-hero-summary em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.app-main .payment-hero-summary strong {
+  color: var(--teal-2);
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1;
+  text-align: right;
+}
+
+.app-main .payment-hero-summary small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.app-main .payment-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  grid-column: 1 / -1;
+}
+
+.app-main .payment-hero-meta span {
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--teal) 18%, var(--line));
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .72);
+  color: var(--navy);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.app-main .payment-customer-card,
+.app-main .payment-order-card,
+.app-main .payment-methods-card {
+  border: 1px solid var(--jt-billing-line);
+  box-shadow: var(--jt-billing-shadow);
+  overflow: hidden;
+}
+
+.app-main .payment-customer-card::before,
+.app-main .payment-order-card::before,
+.app-main .payment-methods-card::before {
+  content: "";
+  display: block;
+  margin: -18px -18px 18px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--teal), color-mix(in srgb, #d8a11d 62%, var(--teal)));
+}
+
+.app-main .payment-card-header h2 {
+  font-size: 22px;
+}
+
+.app-main .payment-step {
+  background: linear-gradient(180deg, var(--navy), color-mix(in srgb, var(--navy) 82%, var(--teal)));
+}
+
+.app-main .payment-customer-list div {
+  padding: 12px 13px;
+  border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.app-main .payment-order-item {
+  border-color: color-mix(in srgb, var(--teal) 20%, var(--line));
+}
+
+.app-main .payment-total {
+  padding: 18px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 66%, transparent);
+}
+
+.app-main .payment-total strong {
+  font-size: 30px;
+}
+
+.app-main .payment-method-list {
+  gap: 12px;
+}
+
+.app-main .payment-method {
+  border-color: color-mix(in srgb, var(--line) 78%, var(--teal));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, 0)),
+    var(--surface);
+}
+
+.app-main .payment-method.is-open {
+  border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+  box-shadow: 0 12px 28px rgba(17, 138, 126, .08);
+}
+
+.app-main .payment-method-title {
+  align-items: center;
+}
+
+.app-main .payment-method-title > .svg-icon {
+  box-sizing: content-box;
+  width: 22px;
+  height: 22px;
+  padding: 9px;
+  border-radius: var(--radius-sm);
+  background: var(--billing-accent-soft);
+}
+
+.app-main .payment-method-title strong {
+  font-size: 16px;
+}
+
+.app-main .payment-method-action,
+.app-main .payment-copy-button,
+.app-main .payment-confirmed-copy-button {
+  min-height: 46px;
+  box-shadow: 0 10px 22px rgba(17, 138, 126, .16);
+}
+
+.app-main .payment-pix-box {
+  gap: 12px;
+  padding: 18px;
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--teal) 32%, var(--line));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .68), rgba(255, 255, 255, 0)),
+    var(--surface-2);
+}
+
+.app-main .payment-pix-box img {
+  width: min(210px, 100%);
+  padding: 10px;
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, .08);
+}
+
+.app-main .payment-pix-box small,
+.app-main .payment-pix-box .payment-pix-caption {
+  max-width: 320px;
+  margin-top: -2px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.app-main .payment-sandbox-warning {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid rgba(190, 125, 0, .28);
+  border-left: 4px solid #c78913;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 246, 221, .86);
+  color: #865c05;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.app-main .payment-sandbox-warning strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6f4c02;
+}
+
+.app-main .payment-sandbox-warning .svg-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.app-main .payment-sandbox-warning ul {
+  margin: 6px 0 0 18px;
+  padding: 0;
+}
+
+.app-main .payment-method-note {
+  padding: 12px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.app-main .payment-form-field label {
+  color: var(--navy);
+}
+
+.app-main .payment-form-field input {
+  min-height: 44px;
+  background: var(--surface);
+}
+
+.app-main .payment-card-flags {
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.app-main .payment-actions {
+  padding-top: 4px;
+}
+
+.app-main .payment-actions .btn.btn-outline {
+  background: var(--surface);
+}
+
+.app-main .office-invite-card {
+  box-shadow: 0 12px 26px rgba(17, 138, 126, .08);
+}
+
+.app-main .payment-confirmed-hero {
+  padding: 30px;
+  border: 1px solid var(--jt-billing-line);
+  border-left: 6px solid var(--teal);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--mint) 55%, var(--surface)), var(--surface) 52%, var(--surface-2));
+  box-shadow: var(--jt-billing-shadow);
+}
+
+.app-main .payment-confirmed-copy h2 {
+  font-size: clamp(30px, 3.4vw, 42px);
+}
+
+.app-main .payment-confirmed-seal {
+  width: 128px;
+  height: 128px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 10px color-mix(in srgb, var(--mint) 70%, var(--surface));
+}
+
+.app-main .payment-confirmed-seal span {
+  background: linear-gradient(180deg, var(--teal), var(--teal-2));
+}
+
+.app-main .payment-confirmed-grid {
+  gap: 18px;
+}
+
+.app-main .payment-confirmed-card {
+  border-color: var(--jt-billing-line);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-main .payment-confirmed-card-head h3 {
+  font-size: 22px;
+}
+
+.app-main .payment-confirmed-list div {
+  align-items: center;
+  min-height: 54px;
+}
+
+.app-main .payment-confirmed-steps div {
+  min-height: 70px;
+}
+
+@media (max-width: 1240px) {
+  .app-main .payment-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, .95fr);
+  }
+}
+
+@media (max-width: 980px) {
+  .app-main .pricing-hero.card,
+  .app-main .payment-hero,
+  .app-main .payment-panel,
+  .app-main .payment-confirmed-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .app-main .payment-hero-summary {
+    justify-items: start;
+  }
+
+  .app-main .payment-hero-summary strong {
+    text-align: left;
+  }
+
+  .app-main .pricing-cycle-toggle {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-main .pricing-hero.card,
+  .app-main .payment-hero,
+  .app-main .pricing-card,
+  .app-main .payment-confirmed-hero {
+    padding: 18px;
+  }
+
+  .app-main .payment-hero-meta {
+    display: grid;
+  }
+
+  .app-main .payment-hero-meta span {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .app-main .payment-total strong {
+    font-size: 26px;
+  }
+}
+
+/* ==========================================
+   MELHORIAS DE DESIGN PREMIUM - PLANOS E COBRANCA
+   ========================================== */
+
+/* Botao de Alternancia de Ciclo */
+.pricing-cycle-toggle {
+  border: 1px solid rgba(17, 138, 126, 0.2) !important;
+  background: rgba(15, 23, 42, 0.04) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+.pricing-cycle-toggle.is-yearly {
+  border-color: rgba(45, 212, 191, 0.3) !important;
+}
+
+.pricing-cycle-thumb {
+  background: linear-gradient(135deg, var(--teal-2), var(--teal)) !important;
+  box-shadow: 0 4px 12px rgba(17, 138, 126, 0.35) !important;
+}
+
+/* Estilos aprimorados para os cartoes de planos */
+.pricing-card {
+  border: 1px solid rgba(148, 163, 184, 0.16) !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02) !important;
+  padding: 30px 24px !important;
+  gap: 22px !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Cartao em Destaque (Featured - PRO) */
+.pricing-card-featured {
+  border: 2px solid transparent !important;
+  background: linear-gradient(#ffffff, #ffffff) padding-box,
+              linear-gradient(135deg, var(--teal-2), var(--mint)) border-box !important;
+  box-shadow: 0 16px 36px rgba(17, 138, 126, 0.08), 0 2px 8px rgba(45, 212, 191, 0.04) !important;
+}
+
+.pricing-card:hover,
+.pricing-card:focus-visible,
+.pricing-card.is-card-active {
+  border-color: rgba(45, 212, 191, 0.45) !important;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(45, 212, 191, 0.08) !important;
+  transform: perspective(900px) rotateX(var(--pricing-card-rotate-x)) rotateY(var(--pricing-card-rotate-y)) translateY(-6px) !important;
+}
+
+.pricing-card-featured:hover {
+  box-shadow: 0 24px 48px rgba(17, 138, 126, 0.14), 0 0 12px rgba(45, 212, 191, 0.12) !important;
+}
+
+/* Plano Atual */
+.pricing-card-current {
+  border: 2px solid rgba(45, 212, 191, 0.5) !important;
+  box-shadow: 0 8px 24px rgba(17, 138, 126, 0.06), inset 0 0 0 1px rgba(45, 212, 191, 0.05) !important;
+}
+
+/* Badge Mais Escolhido */
+.pricing-popular {
+  top: -12px !important;
+  right: 24px !important;
+  background: linear-gradient(135deg, var(--teal-2), var(--teal)) !important;
+  box-shadow: 0 4px 10px rgba(17, 138, 126, 0.25) !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  padding: 4px 10px !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Badge Plano Atual */
+.pricing-current-badge {
+  top: -12px !important;
+  right: 24px !important;
+  background: linear-gradient(135deg, var(--mint), rgba(45, 212, 191, 0.2)) !important;
+  border: 1px solid rgba(45, 212, 191, 0.4) !important;
+  color: var(--teal-2) !important;
+  box-shadow: 0 4px 10px rgba(45, 212, 191, 0.15) !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+}
+
+/* Titulos e Precos */
+.pricing-card-head h3 {
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  color: #172033 !important;
+}
+
+.pricing-price-row {
+  border-radius: 12px !important;
+  border: 1px solid rgba(148, 163, 184, 0.08) !important;
+  background: #f8fafc !important;
+  padding: 18px !important;
+}
+
+.pricing-card:hover .pricing-price-row {
+  border-color: rgba(45, 212, 191, 0.25) !important;
+  background: rgba(240, 253, 250, 0.7) !important;
+}
+
+.pricing-price {
+  font-size: 34px !important;
+  font-weight: 800 !important;
+  color: #172033 !important;
+}
+
+/* Recursos listados */
+.pricing-features li {
+  font-size: 14px !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+.pricing-features .svg-icon {
+  color: #0d9488 !important; /* Teal escuro */
+}
+
+/* Botoes do Plano */
+.pricing-card .btn {
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.01em !important;
+}
+
+.pricing-card .btn-primary {
+  background: linear-gradient(135deg, var(--teal-2), var(--teal)) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(17, 138, 126, 0.2) !important;
+}
+
+.pricing-card:hover .btn-primary {
+  box-shadow: 0 8px 20px rgba(17, 138, 126, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+.pricing-card .btn-outline {
+  border-color: rgba(17, 138, 126, 0.3) !important;
+  color: var(--teal-2) !important;
+}
+
+.pricing-card:hover .btn-outline {
+  background: rgba(17, 138, 126, 0.05) !important;
+  border-color: var(--teal-2) !important;
+}
+
+/* Alerta de Plano Ativo */
+.pricing-current-alert {
+  border-radius: 16px !important;
+  padding: 20px !important;
+  box-shadow: 0 8px 20px rgba(17, 138, 126, 0.04) !important;
+}
+
+/* Painel de Confirmacao do Checkout de Pagamento */
+.payment-panel {
+  border-radius: 18px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03) !important;
+}
+
+.payment-method-selector label {
+  border-radius: 12px !important;
+  transition: all 0.2s ease !important;
+}
+
+.payment-method-selector input:checked + label {
+  border-color: var(--teal-2) !important;
+  background: rgba(240, 253, 250, 0.5) !important;
+  box-shadow: 0 0 0 1px var(--teal-2) !important;
+}
+
+.payment-detail-card {
+  border-radius: 12px !important;
+  border: 1px solid rgba(148, 163, 184, 0.08) !important;
+  background: #f8fafc !important;
+}
+
+:root[data-theme="dark"] .pricing-cycle-toggle {
+  border-color: rgba(45, 212, 191, .28) !important;
+  background: rgba(15, 23, 42, .62) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 12px 28px rgba(0, 0, 0, .18) !important;
+}
+
+:root[data-theme="dark"] .pricing-card {
+  border-color: rgba(74, 91, 119, .72) !important;
+  background:
+    linear-gradient(180deg, #182233 0%, #121b2a 100%) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .28) !important;
+}
+
+:root[data-theme="dark"] .pricing-card-featured {
+  border: 2px solid transparent !important;
+  background:
+    linear-gradient(#182233, #121b2a) padding-box,
+    linear-gradient(135deg, rgba(94, 234, 212, .92), rgba(45, 212, 191, .28)) border-box !important;
+  box-shadow: 0 22px 54px rgba(0, 0, 0, .34), 0 0 22px rgba(45, 212, 191, .10) !important;
+}
+
+:root[data-theme="dark"] .pricing-card-current {
+  border-color: rgba(45, 212, 191, .58) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .30), inset 0 0 0 1px rgba(45, 212, 191, .12) !important;
+}
+
+:root[data-theme="dark"] .pricing-card:hover,
+:root[data-theme="dark"] .pricing-card:focus-visible,
+:root[data-theme="dark"] .pricing-card.is-card-active {
+  border-color: rgba(94, 234, 212, .62) !important;
+  box-shadow: 0 26px 58px rgba(0, 0, 0, .42), 0 0 0 1px rgba(45, 212, 191, .12) !important;
+}
+
+:root[data-theme="dark"] .pricing-card-featured:hover {
+  box-shadow: 0 30px 66px rgba(0, 0, 0, .46), 0 0 24px rgba(45, 212, 191, .18) !important;
+}
+
+:root[data-theme="dark"] .pricing-card-head h3,
+:root[data-theme="dark"] .pricing-price {
+  color: #f8fbff !important;
+}
+
+:root[data-theme="dark"] .pricing-card-head p,
+:root[data-theme="dark"] .pricing-description,
+:root[data-theme="dark"] .pricing-price-row small,
+:root[data-theme="dark"] .pricing-period {
+  color: #a9b5c7 !important;
+}
+
+:root[data-theme="dark"] .pricing-price-row {
+  border-color: rgba(45, 212, 191, .20) !important;
+  background:
+    linear-gradient(180deg, rgba(34, 48, 71, .86), rgba(18, 27, 42, .96)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+}
+
+:root[data-theme="dark"] .pricing-card:hover .pricing-price-row,
+:root[data-theme="dark"] .pricing-card:focus-visible .pricing-price-row,
+:root[data-theme="dark"] .pricing-card.is-card-active .pricing-price-row {
+  border-color: rgba(94, 234, 212, .36) !important;
+  background:
+    linear-gradient(180deg, rgba(18, 60, 58, .62), rgba(18, 27, 42, .96)) !important;
+}
+
+:root[data-theme="dark"] .pricing-features li {
+  border-bottom-color: rgba(148, 163, 184, .22) !important;
+  color: #d6deea !important;
+}
+
+:root[data-theme="dark"] .pricing-features .svg-icon {
+  color: #5eead4 !important;
+}
+
+:root[data-theme="dark"] .pricing-included-prefix {
+  background: rgba(15, 23, 42, .72) !important;
+  color: #f8fbff !important;
+}
+
+:root[data-theme="dark"] .pricing-benefit {
+  border: 1px solid rgba(45, 212, 191, .16) !important;
+  background:
+    linear-gradient(180deg, rgba(15, 23, 42, .88), rgba(18, 27, 42, .98)) !important;
+}
+
+:root[data-theme="dark"] .pricing-benefit span {
+  color: #a9b5c7 !important;
+}
+
+:root[data-theme="dark"] .pricing-benefit strong {
+  color: #f8fbff !important;
+}
+
+:root[data-theme="dark"] .pricing-current-badge {
+  background: linear-gradient(135deg, rgba(45, 212, 191, .20), rgba(94, 234, 212, .08)) !important;
+  border-color: rgba(94, 234, 212, .42) !important;
+  color: #99f6e4 !important;
+}
+
+:root[data-theme="dark"] .pricing-card .btn-outline {
+  border-color: rgba(94, 234, 212, .36) !important;
+  background: rgba(15, 23, 42, .72) !important;
+  color: #99f6e4 !important;
+}
+
+:root[data-theme="dark"] .pricing-card:hover .btn-outline {
+  background: rgba(45, 212, 191, .12) !important;
+  border-color: #5eead4 !important;
+}
+

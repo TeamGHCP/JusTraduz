@@ -332,7 +332,16 @@ class CaseController extends BaseController
 
         $mime = (string) ($message['attachment_mime'] ?: (mime_content_type($absolutePath) ?: 'application/octet-stream'));
         $filename = $this->safeAttachmentName((string) ($message['attachment_original_name'] ?? ('anexo-' . $messageId)));
-        $disposition = $this->request->get('download', '') === '1' ? 'attachment' : 'inline';
+        
+        $safeInlineMimes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ];
+        $requestedDisposition = $this->request->get('download', '') === '1' ? 'attachment' : 'inline';
+        $disposition = in_array(strtolower($mime), $safeInlineMimes, true) ? $requestedDisposition : 'attachment';
 
         header('X-Content-Type-Options: nosniff');
         header('Cache-Control: private, no-store, max-age=0');
@@ -446,6 +455,17 @@ class CaseController extends BaseController
             $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Formato de anexo não permitido.')));
         }
 
+        if (in_array($extension, ['png', 'jpg', 'jpeg', 'webp'], true)) {
+            $webpPath = \App\Services\UploadScannerService::convertToWebp($tmpName, $mime);
+            if ($webpPath !== null) {
+                $tmpName = $webpPath;
+                $file['tmp_name'] = $webpPath;
+                $extension = 'webp';
+                $mime = 'image/webp';
+                $originalName = pathinfo($originalName, PATHINFO_FILENAME) . '.webp';
+            }
+        }
+
         if ($extension === 'docx' && !$this->hasValidDocxStructure($tmpName)) {
             $this->audit->log('message.attachment_blocked', 'case', $caseId, [
                 'sender_id' => $userId,
@@ -475,6 +495,10 @@ class CaseController extends BaseController
 
         if (!move_uploaded_file($tmpName, $destination)) {
             $this->response->redirect(app_url('/frontend/chat.php?case_id=' . $caseId . '&erro=' . urlencode('Não foi possível salvar o anexo.')));
+        }
+
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+            \App\Services\UploadScannerService::stripImageMetadata($destination, $mime);
         }
 
         return [

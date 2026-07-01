@@ -1,12 +1,14 @@
 <?php
 
-require_once dirname(__DIR__) . '/support/session.php';
+namespace App\Middlewares;
+
+use RuntimeException;
 
 class CsrfMiddleware
 {
     public static function generateToken(): string
     {
-        secure_session_start();
+        \secure_session_start();
 
         if (empty($_SESSION['_csrf_token'])) {
             $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
@@ -22,7 +24,7 @@ class CsrfMiddleware
 
     public static function validate(): void
     {
-        secure_session_start();
+        \secure_session_start();
 
         $token = '';
 

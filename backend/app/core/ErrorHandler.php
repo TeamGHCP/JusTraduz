@@ -1,5 +1,10 @@
 <?php
 
+namespace App\Core;
+
+use Throwable;
+use ErrorException;
+
 class ErrorHandler
 {
     public static function register(): void
@@ -13,7 +18,7 @@ class ErrorHandler
         error_log(sprintf("Uncaught exception: %s in %s:%d", $e->getMessage(), $e->getFile(), $e->getLine()));
 
         // Tratamento especial para RedirectException (verifica se a classe existe)
-        if (class_exists('RedirectException') && $e instanceof RedirectException) {
+        if ($e instanceof RedirectException) {
             $status = $e->getCode() ?: 302;
             header('Location: ' . $e->getUrl(), true, $status);
             // Retorna ao dispatcher para que o fluxo seja controlado centralmente.

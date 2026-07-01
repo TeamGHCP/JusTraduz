@@ -4,7 +4,14 @@
 @import url("./auth.css");
 
 @import url("./dashboard.css?v=dark-ui-fixes-20260629");
-@import url("./pages.css?v=dark-ui-fixes-20260629");
+@import url("./home.css?v=dark-ui-fixes-20260629");
+@import url("./contato.css?v=dark-ui-fixes-20260629");
+@import url("./termos.css?v=dark-ui-fixes-20260629");
+@import url("./planos.css?v=dark-ui-fixes-20260629");
+@import url("./pagamento-plano.css?v=dark-ui-fixes-20260629");
+@import url("./pagamento-confirmado.css?v=dark-ui-fixes-20260629");
+@import url("./errors.css?v=dark-ui-fixes-20260629");
+
 
 @import url("./responsive.css?v=global-mobile-pass-2");
 @import url("./accessibility.css?v=2026.06.16-a11y-stack-7");

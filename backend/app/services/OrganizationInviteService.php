@@ -1,9 +1,14 @@
 <?php
 
-require_once __DIR__ . '/MailerService.php';
-require_once __DIR__ . '/NotificationService.php';
-require_once __DIR__ . '/OrganizationService.php';
-require_once dirname(__DIR__) . '/config/app.php';
+namespace App\Services;
+
+use App\Services\MailerService;
+use App\Services\NotificationService;
+use App\Services\OrganizationService;
+use PDO;
+use DateTimeImmutable;
+use InvalidArgumentException;
+use Throwable;
 
 class OrganizationInviteService
 {
@@ -175,6 +180,79 @@ class OrganizationInviteService
         return $result;
     }
 
+    public function acceptPendingByUserId(int $userId): array
+    {
+        if (!OrganizationService::enabled($this->pdo) || !database_table_exists($this->pdo, 'organization_invites')) {
+            return ['ok' => false, 'reason' => 'feature_disabled'];
+        }
+
+        $user = $this->fetchUser($userId);
+        if (!$user || (string) ($user['tipo'] ?? '') !== 'advogado') {
+            return ['ok' => false, 'reason' => 'invalid_user'];
+        }
+
+        $invite = $this->pendingInviteByEmail((string) ($user['email'] ?? ''));
+        if (!$invite) {
+            return ['ok' => false, 'reason' => 'no_pending_invite'];
+        }
+
+        $this->pdo->beginTransaction();
+        try {
+            $this->addMember((int) $invite['organization_id'], $userId, 'member', (int) ($invite['invited_by'] ?? 0));
+            $this->markInvite((int) $invite['id'], 'accepted');
+            $this->pdo->commit();
+        } catch (Throwable $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+
+        $this->notifyOwnerOnAccept($invite, $user);
+        return [
+            'ok' => true,
+            'organization_id' => (int) $invite['organization_id'],
+            'invite_id' => (int) $invite['id']
+        ];
+    }
+
+    public function pendingOfficeInviteRequirement(): ?array
+    {
+        $id = $this->currentUserId();
+        if ($id <= 0 || !database_table_exists($this->pdo, 'organization_invites')) {
+            return null;
+        }
+
+        $email = $this->fetchUserEmail($id);
+        if ($email === '') {
+            return null;
+        }
+
+        $invite = $this->pendingInviteByEmail($email);
+        return $invite ?: null;
+    }
+
+    private function fetchUser(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT id, nome, email, tipo FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    private function fetchUserEmail(int $id): string
+    {
+        $stmt = $this->pdo->prepare('SELECT email FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        return (string) ($stmt->fetchColumn() ?: '');
+    }
+
+    private function fetchUserByEmail(string $email): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT id, nome, email, tipo FROM users WHERE email = ? AND status = "ativo" LIMIT 1');
+        $stmt->execute([strtolower(trim($email))]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
     private function ensureOfficeOrganization(array $owner): int
     {
         $ownerId = (int) ($owner['id'] ?? 0);
@@ -184,7 +262,7 @@ class OrganizationInviteService
         }
 
         $name = trim((string) ($owner['nome'] ?? 'Escritorio JusTraduz'));
-        $name = $name !== '' ? 'Escritorio de ' . $name : 'Escritorio JusTraduz';
+        $name = $name !== '' ? 'Escritório de ' . $name : 'Escritório JusTraduz';
         $organizationId = (new OrganizationService($this->pdo))->create($name, $ownerId);
         if ($organizationId > 0 && database_table_has_column($this->pdo, 'users', 'organization_id')) {
             $this->pdo->prepare('UPDATE users SET organization_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
@@ -192,6 +270,29 @@ class OrganizationInviteService
         }
 
         return $organizationId;
+    }
+
+    private function addMember(int $organizationId, int $userId, string $role, int $invitedBy): void
+    {
+        $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        if ($driver === 'sqlite') {
+            $this->pdo->prepare(
+                "INSERT INTO organization_members (organization_id, user_id, role, status, invited_by)
+                 VALUES (?, ?, ?, 'active', ?)
+                 ON CONFLICT(organization_id, user_id) DO UPDATE SET role = excluded.role, status = 'active'"
+            )->execute([$organizationId, $userId, $role, $invitedBy ?: null]);
+        } else {
+            $this->pdo->prepare(
+                "INSERT INTO organization_members (organization_id, user_id, role, status, invited_by)
+                 VALUES (?, ?, ?, 'active', ?)
+                 ON DUPLICATE KEY UPDATE role = VALUES(role), status = 'active', updated_at = CURRENT_TIMESTAMP"
+            )->execute([$organizationId, $userId, $role, $invitedBy ?: null]);
+        }
+
+        if (database_table_has_column($this->pdo, 'users', 'organization_id')) {
+            $this->pdo->prepare('UPDATE users SET organization_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+                ->execute([$organizationId, $userId]);
+        }
     }
 
     private function upsertInvite(int $organizationId, string $email, string $token, int $invitedBy, string $expiresAt): void
@@ -235,27 +336,14 @@ class OrganizationInviteService
         return null;
     }
 
-    private function addMember(int $organizationId, int $userId, string $role, int $invitedBy): void
+    private function pendingInviteByEmail(string $email): ?array
     {
-        $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
-        if ($driver === 'sqlite') {
-            $this->pdo->prepare(
-                "INSERT INTO organization_members (organization_id, user_id, role, status, invited_by)
-                 VALUES (?, ?, ?, 'active', ?)
-                 ON CONFLICT(organization_id, user_id) DO UPDATE SET role = excluded.role, status = 'active'"
-            )->execute([$organizationId, $userId, $role, $invitedBy ?: null]);
-        } else {
-            $this->pdo->prepare(
-                "INSERT INTO organization_members (organization_id, user_id, role, status, invited_by)
-                 VALUES (?, ?, ?, 'active', ?)
-                 ON DUPLICATE KEY UPDATE role = VALUES(role), status = 'active', updated_at = CURRENT_TIMESTAMP"
-            )->execute([$organizationId, $userId, $role, $invitedBy ?: null]);
-        }
-
-        if (database_table_has_column($this->pdo, 'users', 'organization_id')) {
-            $this->pdo->prepare('UPDATE users SET organization_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
-                ->execute([$organizationId, $userId]);
-        }
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM organization_invites WHERE email = ? AND status = "pending" AND expires_at >= ? ORDER BY id DESC LIMIT 1'
+        );
+        $stmt->execute([$email, date('Y-m-d H:i:s')]);
+        $row = $stmt->fetch();
+        return $row ?: null;
     }
 
     private function markInvite(int $inviteId, string $status): void
@@ -263,22 +351,6 @@ class OrganizationInviteService
         $acceptedAt = $status === 'accepted' ? date('Y-m-d H:i:s') : null;
         $this->pdo->prepare('UPDATE organization_invites SET status = ?, accepted_at = ? WHERE id = ?')
             ->execute([$status, $acceptedAt, $inviteId]);
-    }
-
-    private function notifyExistingUser(string $email, array $owner, int $organizationId): void
-    {
-        $userId = $this->userIdByEmail($email);
-        if ($userId <= 0) {
-            return;
-        }
-        if (!database_table_exists($this->pdo, 'notifications')) {
-            return;
-        }
-
-        (new NotificationService($this->pdo))->notify(
-            $userId,
-            'Você recebeu um convite para participar do plano Escritório de ' . (string) ($owner['nome'] ?? 'um advogado') . '.'
-        );
     }
 
     private function sendInviteEmail(string $email, array $owner, array $invite, string $token): bool
@@ -369,7 +441,8 @@ class OrganizationInviteService
 </html>
 HTML;
 
-        return (new MailerService())->send($email, $subject, $message, true, [
+        $mailer = new MailerService();
+        return $mailer->send($email, $subject, $message, true, [
             'justraduz-logo' => [
                 'path' => $logoPath,
                 'content_type' => 'image/png',
@@ -377,13 +450,21 @@ HTML;
         ]);
     }
 
-    private function fetchUser(int $userId): ?array
+    private function notifyExistingUser(string $email, array $owner, int $organizationId): void
     {
-        $stmt = $this->pdo->prepare('SELECT id, nome, email, tipo FROM users WHERE id = ? LIMIT 1');
-        $stmt->execute([$userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $userId = $this->userIdByEmail($email);
+        if ($userId <= 0) {
+            return;
+        }
+        if (!database_table_exists($this->pdo, 'notifications')) {
+            return;
+        }
 
-        return $user ?: null;
+        $notifications = new NotificationService($this->pdo);
+        $notifications->notify(
+            $userId,
+            'Você recebeu um convite para participar do plano Escritório de ' . (string) ($owner['nome'] ?? 'um advogado') . '.'
+        );
     }
 
     private function userIdByEmail(string $email): int
@@ -392,12 +473,18 @@ HTML;
         return (int) ($user['id'] ?? 0);
     }
 
-    private function fetchUserByEmail(string $email): ?array
+    private function notifyOwnerOnAccept(array $invite, array $member): void
     {
-        $stmt = $this->pdo->prepare('SELECT id, nome, email, tipo FROM users WHERE email = ? AND status = "ativo" LIMIT 1');
-        $stmt->execute([strtolower(trim($email))]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $user ?: null;
+        $ownerId = (int) ($invite['invited_by'] ?? 0);
+        if ($ownerId <= 0) {
+            return;
+        }
+
+        $memberName = (string) ($member['nome'] ?? 'Novo Advogado');
+        $msg = "O advogado {$memberName} aceitou o seu convite e agora faz parte da sua equipe no plano Escritório.";
+
+        $notifications = new NotificationService($this->pdo);
+        $notifications->notify($ownerId, $msg);
     }
 
     private function absoluteAppUrl(string $path): string
@@ -425,5 +512,11 @@ HTML;
         $scheme = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') ? 'https' : 'http';
         $host = trim((string) ($_SERVER['HTTP_HOST'] ?? 'localhost')) ?: 'localhost';
         return $scheme . '://' . $host . '/' . ltrim($url, '/');
+    }
+
+    private function currentUserId(): int
+    {
+        secure_session_start();
+        return (int) ($_SESSION['id'] ?? 0);
     }
 }

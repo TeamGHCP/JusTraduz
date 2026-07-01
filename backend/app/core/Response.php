@@ -1,12 +1,13 @@
 <?php
 
+namespace App\Core;
+
 class Response
 {
     // Redireciona para uma URL
     public function redirect(string $url): void
     {
         // Lança uma exceção de redirect para ser tratada pelo handler global
-        require_once dirname(__DIR__) . '/core/RedirectException.php';
         throw new RedirectException($url, 302);
     }
 

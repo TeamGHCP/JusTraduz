@@ -19,8 +19,7 @@ putenv('RATE_LIMIT_STORAGE_PATH=' . $testRateLimitPath);
 $_SERVER['REQUEST_METHOD'] = 'GET';
 $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
 $_SERVER['HTTP_USER_AGENT'] = 'JusTraduzTest/1.0';
-$_SERVER['SCRIPT_NAME'] = '/JusTraduz/backend/public/index.php';
-
+require_once dirname(__DIR__) . '/app/support/autoload.php';
 require_once dirname(__DIR__) . '/app/config/database.php';
 require_once dirname(__DIR__) . '/app/core/RedirectException.php';
 
@@ -432,6 +431,23 @@ function build_test_schema(PDO $pdo): void
 
     foreach ($schema as $statement) {
         $pdo->exec($statement);
+    }
+
+    $migrationsDir = dirname(__DIR__, 2) . '/database/migrations';
+    if (is_dir($migrationsDir)) {
+        $files = glob($migrationsDir . '/*.sql');
+        if ($files) {
+            sort($files);
+            foreach ($files as $file) {
+                $sql = file_get_contents($file);
+                $statements = array_filter(array_map('trim', explode(';', $sql)));
+                foreach ($statements as $stmt) {
+                    if ($stmt !== '') {
+                        $pdo->exec($stmt);
+                    }
+                }
+            }
+        }
     }
 }
 

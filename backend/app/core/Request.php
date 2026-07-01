@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Core;
+
 class Request
 {
     // Retorna o método HTTP (GET, POST, etc)

@@ -1,5 +1,11 @@
 <?php
 
+namespace App\Services;
+
+use PDO;
+use InvalidArgumentException;
+use Throwable;
+
 class PermissionService
 {
     private static array $overrideCache = [];
@@ -194,7 +200,6 @@ class PermissionService
 
         self::$overrideCache[$role] = [];
         try {
-            require_once dirname(__DIR__) . '/config/database.php';
             $pdo = database_connection();
             if (!self::tableExists($pdo, 'role_permission_overrides')) {
                 return self::$overrideCache[$role];

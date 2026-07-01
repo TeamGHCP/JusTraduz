@@ -82,6 +82,16 @@ class DocumentController extends BaseController
             $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Formato não permitido.')));
         }
 
+        if (in_array($extension, ['png', 'jpg', 'jpeg', 'webp'], true)) {
+            $webpPath = \App\Services\UploadScannerService::convertToWebp($file['tmp_name'], $mime);
+            if ($webpPath !== null) {
+                $file['tmp_name'] = $webpPath;
+                $extension = 'webp';
+                $mime = 'image/webp';
+                $file['name'] = pathinfo($file['name'], PATHINFO_FILENAME) . '.webp';
+            }
+        }
+
         if ($extension === 'docx' && !$this->hasValidDocxStructure((string) $file['tmp_name'])) {
             $this->audit->log('document.upload_blocked', 'document', null, [
                 'nome_arquivo' => $file['name'],
@@ -112,6 +122,10 @@ class DocumentController extends BaseController
 
         if (!move_uploaded_file($file['tmp_name'], $destination)) {
             $this->response->redirect(app_url($uploadRedirect . '?erro=' . urlencode('Não foi possível salvar o arquivo.')));
+        }
+
+        if (in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+            \App\Services\UploadScannerService::stripImageMetadata($destination, $mime);
         }
 
         $relativePath = $this->storage->documentReference($userId, $safeName);
@@ -275,7 +289,16 @@ class DocumentController extends BaseController
 
         $mime = mime_content_type($absolutePath) ?: 'application/octet-stream';
         $filename = $this->safeDownloadName((string) ($document['nome_arquivo'] ?? ('documento-' . $documentId)));
-        $disposition = $this->request->get('download', '') === '1' ? 'attachment' : 'inline';
+        
+        $safeInlineMimes = [
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+        ];
+        $requestedDisposition = $this->request->get('download', '') === '1' ? 'attachment' : 'inline';
+        $disposition = in_array(strtolower($mime), $safeInlineMimes, true) ? $requestedDisposition : 'attachment';
 
         header('X-Content-Type-Options: nosniff');
         header('Cache-Control: private, no-store, max-age=0');
