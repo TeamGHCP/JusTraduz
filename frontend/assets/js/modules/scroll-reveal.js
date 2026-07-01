@@ -1,5 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const revealSelectors = [
+(function() {
+  const init = () => {
+const revealSelectors = [
     ".home-hero h1",
     ".home-hero-copy > p",
     ".home-hero .hero-actions",
@@ -95,4 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
       revealElements.forEach((element) => element.classList.add("is-visible"));
     }
   }
-});
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

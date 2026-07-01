@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
+(function() {
+  const init = () => {
 const header = document.querySelector("[data-site-header]");
   const toggle = document.querySelector("[data-nav-toggle]");
 
@@ -56,4 +57,11 @@ const header = document.querySelector("[data-site-header]");
       menuQuery.addListener(syncMenuMode);
     }
   }
-});
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

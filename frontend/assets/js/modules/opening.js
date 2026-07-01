@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
+(function() {
+  const init = () => {
 const openingLoader = document.querySelector("[data-opening-loader]");
 
   if (openingLoader) {
@@ -48,4 +49,11 @@ const openingLoader = document.querySelector("[data-opening-loader]");
       window.setTimeout(removeOpeningLoader, 7800);
     }
   }
-});
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

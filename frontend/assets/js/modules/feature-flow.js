@@ -1,5 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+(function() {
+  const init = () => {
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
     const panels = Array.from(flow.querySelectorAll("[data-flow-panel]"));
     const timeline = flow.querySelector("[data-flow-progress-timeline]");
@@ -613,6 +614,11 @@ document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
 
     requestLineUpdateDebounced();
   });
+  };
 
-});
-
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

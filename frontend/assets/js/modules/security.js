@@ -1,5 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+(function() {
+  const init = () => {
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.querySelectorAll("[data-security-panel]").forEach((panel) => {
     const tabs = Array.from(panel.querySelectorAll("[data-security-tab]"));
     const preview = panel.querySelector(".home-security-preview");
@@ -60,4 +61,11 @@ document.querySelectorAll("[data-security-panel]").forEach((panel) => {
 
     activate(tabs.find((tab) => tab.classList.contains("is-active"))?.dataset.securityTab || "consentimento");
   });
-});
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

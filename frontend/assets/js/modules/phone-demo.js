@@ -1,5 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+(function() {
+  const init = () => {
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const openingLoader = document.querySelector("[data-opening-loader]");
 document.querySelectorAll("[data-phone-demo]").forEach((phone) => {
     const cards = Array.from(phone.querySelectorAll("[data-phone-open]"));
@@ -113,4 +114,11 @@ document.querySelectorAll("[data-phone-demo]").forEach((phone) => {
       animateConfidence();
     }
   });
-});
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

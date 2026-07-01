@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
+(function() {
+  const init = () => {
 document.querySelectorAll("[data-feedback-marquee] .feedback-track").forEach((track) => {
     const group = track.querySelector(".feedback-group");
 
@@ -30,4 +31,11 @@ document.querySelectorAll("[data-feedback-marquee] .feedback-track").forEach((tr
 
   document.addEventListener("visibilitychange", syncFeedbackMarqueeState);
   syncFeedbackMarqueeState();
-});
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();

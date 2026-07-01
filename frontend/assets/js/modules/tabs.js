@@ -1,5 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll("[data-flow-steps]").forEach((flow) => {
+(function() {
+  const init = () => {
+document.querySelectorAll("[data-flow-steps]").forEach((flow) => {
     if (flow.closest("[hidden]")) {
       return;
     }
@@ -33,4 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     activateStep(steps.find((step) => step.classList.contains("is-active"))?.dataset.flowStep || steps[0].dataset.flowStep);
   });
-});
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
