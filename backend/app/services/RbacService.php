@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+
 class RbacService
 {
     private PDO $pdo;
@@ -56,5 +64,12 @@ class RbacService
         $stmt = $this->pdo->prepare('SELECT tipo FROM users WHERE id = ?');
         $stmt->execute([$userId]);
         return (string) ($stmt->fetchColumn() ?: '');
+    }
+}
+}
+
+namespace {
+    if (!class_exists('RbacService')) {
+        class_alias('App\Services\RbacService', 'RbacService');
     }
 }

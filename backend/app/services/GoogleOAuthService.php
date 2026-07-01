@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+
 class GoogleOAuthService
 {
     private const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -359,5 +367,12 @@ class GoogleOAuthService
         }
 
         return $values;
+    }
+}
+}
+
+namespace {
+    if (!class_exists('GoogleOAuthService')) {
+        class_alias('App\Services\GoogleOAuthService', 'GoogleOAuthService');
     }
 }

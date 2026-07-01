@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+
 class UsageLimiter
 {
     private PDO $pdo;
@@ -149,5 +157,12 @@ class UsageLimiter
         }
 
         return max(0, (int) $value);
+    }
+}
+}
+
+namespace {
+    if (!class_exists('UsageLimiter')) {
+        class_alias('App\Services\UsageLimiter', 'UsageLimiter');
     }
 }

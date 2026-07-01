@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+
 require_once dirname(__DIR__) . '/config/database.php';
 
 class DataJudService
@@ -652,5 +660,12 @@ class DataJudService
 
         $env = database_env_values(dirname(__DIR__, 2) . '/.env');
         return trim((string) ($env[$key] ?? ''));
+    }
+}
+}
+
+namespace {
+    if (!class_exists('DataJudService')) {
+        class_alias('App\Services\DataJudService', 'DataJudService');
     }
 }

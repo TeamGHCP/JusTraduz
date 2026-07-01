@@ -1,5 +1,14 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+    use DateTimeImmutable;
+
 class SlaService
 {
     private const SLA_HOURS = [
@@ -69,5 +78,12 @@ class SlaService
         }
 
         return 'ok';
+    }
+}
+}
+
+namespace {
+    if (!class_exists('SlaService')) {
+        class_alias('App\Services\SlaService', 'SlaService');
     }
 }

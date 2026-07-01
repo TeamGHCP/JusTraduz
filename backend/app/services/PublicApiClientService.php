@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+
 require_once __DIR__ . '/OrganizationService.php';
 require_once __DIR__ . '/AuditService.php';
 
@@ -127,5 +135,12 @@ class PublicApiClientService
         }
 
         return $directory;
+    }
+}
+}
+
+namespace {
+    if (!class_exists('PublicApiClientService')) {
+        class_alias('App\Services\PublicApiClientService', 'PublicApiClientService');
     }
 }

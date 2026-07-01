@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+
 class StorageService
 {
     private string $projectRoot;
@@ -133,5 +141,12 @@ class StorageService
     {
         $real = realpath($path) ?: $path;
         return rtrim(strtolower(str_replace('\\', '/', $real)), '/');
+    }
+}
+}
+
+namespace {
+    if (!class_exists('StorageService')) {
+        class_alias('App\Services\StorageService', 'StorageService');
     }
 }

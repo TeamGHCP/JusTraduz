@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+
 class OnboardingService
 {
     private PDO $pdo;
@@ -151,5 +159,12 @@ class OnboardingService
         }
 
         return $exists;
+    }
+}
+}
+
+namespace {
+    if (!class_exists('OnboardingService')) {
+        class_alias('App\Services\OnboardingService', 'OnboardingService');
     }
 }

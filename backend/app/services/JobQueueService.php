@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+
 class JobQueueService
 {
     private PDO $pdo;
@@ -89,5 +97,12 @@ class JobQueueService
         );
         $stmt->execute([$type, '%"' . $entityKey . '":' . $entityId . '%']);
         return (int) $stmt->fetchColumn();
+    }
+}
+}
+
+namespace {
+    if (!class_exists('JobQueueService')) {
+        class_alias('App\Services\JobQueueService', 'JobQueueService');
     }
 }

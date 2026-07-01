@@ -1,5 +1,13 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+
 require_once __DIR__ . '/ProcessRunnerService.php';
 
 class PdfTextExtractor
@@ -195,5 +203,12 @@ class PdfTextExtractor
         $text = preg_replace('/[ \t]+/', ' ', $text);
         $text = preg_replace('/\R{3,}/', "\n\n", $text);
         return trim((string) $text);
+    }
+}
+}
+
+namespace {
+    if (!class_exists('PdfTextExtractor')) {
+        class_alias('App\Services\PdfTextExtractor', 'PdfTextExtractor');
     }
 }

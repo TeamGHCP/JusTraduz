@@ -1,5 +1,15 @@
 <?php
 
+namespace App\Services {
+    use PDO;
+    use PDOException;
+    use Exception;
+    use RuntimeException;
+    use stdClass;
+    use Throwable;
+    use DateTimeZone;
+    use DateTimeImmutable;
+
 class GeminiService
 {
     private const MAX_INLINE_BYTES = 19 * 1024 * 1024;
@@ -528,5 +538,12 @@ class GeminiService
         }
 
         return $text;
+    }
+}
+}
+
+namespace {
+    if (!class_exists('GeminiService')) {
+        class_alias('App\Services\GeminiService', 'GeminiService');
     }
 }
