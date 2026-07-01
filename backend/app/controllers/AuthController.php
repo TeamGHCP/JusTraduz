@@ -132,6 +132,7 @@ namespace App\Controllers {
             } catch (ValidationException $e) {
                 $this->response->redirectWithError($frontUrl, $e->getMessage());
             } catch (Throwable $e) {
+                file_put_contents(dirname(__DIR__, 2) . '/oauth_debug.txt', $e->getMessage() . "\n" . $e->getTraceAsString());
                 error_log('Google OAuth error: ' . $e->getMessage());
                 $this->response->redirectWithError($frontUrl, 'Não foi possível entrar com Google agora.');
             }
