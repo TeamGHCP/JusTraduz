@@ -22,10 +22,10 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-feedback-stable-1">
   <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
-<body class="seo-simplify-page terms-page-enhanced">
+<body class="seo-simplify-page terms-page-enhanced terms-story-page">
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/header.php'; ?>
 
   <main>
@@ -38,14 +38,17 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </p>
 
         <div class="terms-hero-actions">
-          <a class="btn btn-primary home-btn-primary" href="login.html?cadastro">
-            <span class="home-btn-label">Enviar documento</span>
-            <span class="home-btn-icon" aria-hidden="true">
-              <svg class="svg-icon" viewBox="0 0 24 24">
-                <path d="M5 12h14"/>
-                <path d="m13 6 6 6-6 6"/>
-              </svg>
-            </span>
+          <a class="home-flow-button" href="login.html?cadastro">
+            <svg class="home-flow-button-arrow home-flow-button-arrow-left svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+            <span>Enviar documento</span>
+            <span class="home-flow-button-circle" aria-hidden="true"></span>
+            <svg class="home-flow-button-arrow home-flow-button-arrow-right svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
           </a>
           <a class="btn btn-outline home-btn-outline" href="#como-enviar">Ver instruções</a>
         </div>
@@ -63,7 +66,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </aside>
 
         <article class="terms-modern-card">
-          <div id="como-enviar-doc" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="como-enviar-doc" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>Como funciona o envio do documento?</h2>
             <p>
               Simplificar um documento jurídico no JusTraduz é simples e intuitivo. Após criar a sua conta na plataforma:
@@ -76,7 +79,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </ol>
           </div>
 
-          <div id="o-que-recebe" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="o-que-recebe" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>O que o usuário recebe na análise?</h2>
             <p>
               Ao final do processamento, a plataforma exibe uma central de leitura dividida em três pilares principais:
@@ -88,7 +91,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </ul>
           </div>
 
-          <div id="documentos-aceitos" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="documentos-aceitos" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>Tipos de documentos aceitos</h2>
             <p>
               A nossa tecnologia é otimizada para interpretar uma grande gama de textos civis e administrativos:
@@ -101,7 +104,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </ul>
           </div>
 
-          <div id="privacidade-dados" class="terms-modern-section-static" style="border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
+          <div id="privacidade-dados" class="terms-modern-section-static how-step how-step-warning" style="border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
             <h2>Cuidados com a privacidade (LGPD)</h2>
             <p>
               Sabemos que documentos jurídicos contêm informações delicadas. Por isso, o JusTraduz adota segurança rigorosa na proteção de dados pessoais:
@@ -126,7 +129,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
+  <script src="assets/js/main.js?v=2026.07.02-feedback-stable-1"></script>
   <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
   <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
 </body>

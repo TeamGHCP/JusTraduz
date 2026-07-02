@@ -22,7 +22,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-feedback-stable-1">
   <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
 <body class="how-it-works-page terms-page-enhanced">
@@ -38,14 +38,17 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </p>
 
         <div class="terms-hero-actions">
-          <a class="btn btn-primary home-btn-primary" href="#fluxo-etapas">
-            <span class="home-btn-label">Ver as etapas</span>
-            <span class="home-btn-icon" aria-hidden="true">
-              <svg class="svg-icon" viewBox="0 0 24 24">
-                <path d="M5 12h14"/>
-                <path d="m13 6 6 6-6 6"/>
-              </svg>
-            </span>
+          <a class="home-flow-button" href="#fluxo-etapas">
+            <svg class="home-flow-button-arrow home-flow-button-arrow-left svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+            <span>Ver as etapas</span>
+            <span class="home-flow-button-circle" aria-hidden="true"></span>
+            <svg class="home-flow-button-arrow home-flow-button-arrow-right svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
           </a>
           <a class="btn btn-outline home-btn-outline" href="login.html?cadastro">Criar conta grátis</a>
         </div>
@@ -64,7 +67,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </aside>
 
         <article class="terms-modern-card">
-          <div id="passo1" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="passo1" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <span class="contact-kicker">Passo 01</span>
             <h2>Envie seu documento com segurança</h2>
             <p>
@@ -75,7 +78,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </p>
           </div>
 
-          <div id="passo2" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="passo2" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <span class="contact-kicker">Passo 02</span>
             <h2>Tradução inteligente do juridiquês</h2>
             <p>
@@ -89,7 +92,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </ul>
           </div>
 
-          <div id="passo3" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="passo3" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <span class="contact-kicker">Passo 03</span>
             <h2>Organize suas dúvidas e prepare-se</h2>
             <p>
@@ -100,7 +103,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </p>
           </div>
 
-          <div id="passo4" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="passo4" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <span class="contact-kicker">Passo 04</span>
             <h2>Conecte-se com um profissional</h2>
             <p>
@@ -111,8 +114,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </p>
           </div>
 
-          <div id="responsabilidade" class="terms-modern-section-static" style="border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
-            <div class="feedback-card" style="border-left: 4px solid var(--primary); background: rgba(0,143,128,0.03); padding: 24px;">
+          <div id="responsabilidade" class="terms-modern-section-static how-step how-step-warning" style="border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
+            <div class="feedback-card how-warning-card" style="border-left: 4px solid var(--primary); background: rgba(0,143,128,0.03); padding: 24px;">
               <h3 style="margin-top: 0; color: var(--primary);">⚠️ Aviso Importante</h3>
               <p style="font-size: 14px; line-height: 1.6; margin-bottom: 0;">
                 O JusTraduz é uma plataforma tecnológica de suporte informativo. <strong>A inteligência artificial do JusTraduz não fornece pareceres jurídicos, não define estratégias processuais e não substitui de nenhuma forma o atendimento ou a consulta com um advogado habilitado.</strong> Use as informações do sistema para compreender melhor seus documentos e se preparar para discussões com profissionais qualificados.
@@ -130,7 +133,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
+  <script src="assets/js/main.js?v=2026.07.02-feedback-stable-1"></script>
   <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
   <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
 </body>

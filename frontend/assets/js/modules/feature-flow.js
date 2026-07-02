@@ -399,7 +399,9 @@ document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
   });
 
   if (revealElements.length > 0) {
-    revealElements.forEach((element, index) => {
+    revealElements
+      .filter((element) => !element.matches(".feedback-card"))
+      .forEach((element, index) => {
       element.classList.add("reveal-on-scroll");
       const isHero = element.closest(".home-hero");
       const isFlowPanelCopy = element.matches(".home-flow-panel-copy");
@@ -407,7 +409,6 @@ document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
       const isFlowListItem = element.matches(".home-flow-feature-list li");
       const isAiDocument = element.matches(".ai-document-mockup");
       const isAiFinding = element.matches(".ai-finding-card");
-      const isFeedback = element.matches(".feedback-card");
       const directions = ["up", "left", "right", "down", "zoom"];
       const direction = isFlowPanelCopy
         ? "left"
@@ -419,9 +420,7 @@ document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
               ? "right"
               : isFlowListItem
                 ? "left"
-                : isFeedback
-                  ? directions[index % directions.length]
-                  : directions[index % 3];
+                : directions[index % 3];
       const aiFindingIndex = isAiFinding
         ? Array.from(element.parentElement.querySelectorAll(".ai-finding-card")).indexOf(element)
         : 0;
@@ -431,13 +430,11 @@ document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
           ? (index % 3) * 140
           : isAiFinding
             ? 180 + (aiFindingIndex * 150)
-          : isFeedback
-            ? (index % 6) * 95
             : (index % 5) * 120;
 
       element.dataset.reveal = direction;
       element.style.setProperty("--reveal-delay", `${delay}ms`);
-    });
+      });
 
     if (prefersReducedMotion) {
       revealElements.forEach((element) => element.classList.add("is-visible"));

@@ -17,7 +17,6 @@ const revealSelectors = [
     ".ai-document-mockup",
     ".ai-finding-card",
     ".home-feedback-copy",
-    ".feedback-card",
     ".feedback-columns",
     "#depoimentos .testimonial-marquee",
     "#depoimentos .testimonial-controls",
@@ -42,7 +41,6 @@ const revealSelectors = [
       const isFlowListItem = element.matches(".home-flow-feature-list li");
       const isAiDocument = element.matches(".ai-document-mockup");
       const isAiFinding = element.matches(".ai-finding-card");
-      const isFeedback = element.matches(".feedback-card");
       const directions = ["up", "left", "right", "down", "zoom"];
       const direction = isFlowPanelCopy
         ? "left"
@@ -54,9 +52,7 @@ const revealSelectors = [
               ? "right"
               : isFlowListItem
                 ? "left"
-                : isFeedback
-                  ? directions[index % directions.length]
-                  : directions[index % 3];
+                : directions[index % 3];
       const aiFindingIndex = isAiFinding
         ? Array.from(element.parentElement.querySelectorAll(".ai-finding-card")).indexOf(element)
         : 0;
@@ -66,8 +62,6 @@ const revealSelectors = [
           ? (index % 3) * 140
           : isAiFinding
             ? 180 + (aiFindingIndex * 150)
-          : isFeedback
-            ? (index % 6) * 95
             : (index % 5) * 120;
 
       element.dataset.reveal = direction;

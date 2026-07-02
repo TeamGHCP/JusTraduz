@@ -94,6 +94,28 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
       line-height: 1.35;
     }
 
+    .google-complete-switch .jt-field-date .auth-field-icon {
+      top: 28px;
+    }
+
+    .google-complete-switch .jt-field-date .jt-input {
+      padding-top: 22px;
+      padding-bottom: 8px;
+      color: #172033;
+      font-weight: 750;
+    }
+
+    .google-complete-switch .jt-field-date .jt-label {
+      top: 7px;
+      color: var(--teal);
+      font-size: 11px;
+      transform: translateY(0);
+    }
+
+    .google-complete-switch .jt-field-date .jt-input::-webkit-datetime-edit {
+      padding-top: 2px;
+    }
+
     .google-complete-switch .google-oab-grid {
       grid-template-columns: minmax(0, 1fr) 136px;
       align-items: start;
@@ -190,7 +212,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
           <small class="jt-error"></small>
         </div>
 
-        <div class="field jt-field">
+        <div class="field jt-field jt-field-date has-value">
           <span class="auth-field-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" focusable="false"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
           </span>

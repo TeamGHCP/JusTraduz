@@ -22,10 +22,10 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-feedback-stable-1">
   <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
-<body class="seo-translate-page terms-page-enhanced">
+<body class="seo-translate-page terms-page-enhanced terms-story-page">
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/header.php'; ?>
 
   <main>
@@ -38,14 +38,17 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </p>
 
         <div class="terms-hero-actions">
-          <a class="btn btn-primary home-btn-primary" href="login.html?cadastro">
-            <span class="home-btn-label">Traduzir agora</span>
-            <span class="home-btn-icon" aria-hidden="true">
-              <svg class="svg-icon" viewBox="0 0 24 24">
-                <path d="M5 12h14"/>
-                <path d="m13 6 6 6-6 6"/>
-              </svg>
-            </span>
+          <a class="home-flow-button" href="login.html?cadastro">
+            <svg class="home-flow-button-arrow home-flow-button-arrow-left svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+            <span>Traduzir agora</span>
+            <span class="home-flow-button-circle" aria-hidden="true"></span>
+            <svg class="home-flow-button-arrow home-flow-button-arrow-right svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
           </a>
           <a class="btn btn-outline home-btn-outline" href="#sobre-juridiques">Saber mais</a>
         </div>
@@ -64,7 +67,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </aside>
 
         <article class="terms-modern-card">
-          <div id="oque-e" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="oque-e" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>O que é o juridiquês?</h2>
             <p>
               O "juridiquês" é o termo informal usado para descrever o jargão técnico excessivo, frases prolixas e termos em latim frequentemente utilizados por advogados, juízes e outros profissionais do Direito.
@@ -74,7 +77,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </p>
           </div>
 
-          <div id="por-que" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="por-que" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>Por que os documentos jurídicos são difíceis?</h2>
             <p>
               Documentos como contratos de prestação de serviços, termos de adesão, acordos de confidencialidade e notificações extrajudiciais costumam ser construídos com sentenças extremamente longas, referências cruzadas a leis antigas e termos ambíguos.
@@ -84,7 +87,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </p>
           </div>
 
-          <div id="como-ajudamos" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="como-ajudamos" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>Como o JusTraduz ajuda você a traduzir linguagem jurídica</h2>
             <p>
               O JusTraduz foi criado para ser uma ponte. Nossa tecnologia de Inteligência Artificial processa o documento e decompõe a linguagem técnica e intimidadora em uma explicação didática.
@@ -96,7 +99,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </ul>
           </div>
 
-          <div id="documentos" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="documentos" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>Exemplos de documentos que podem ser simplificados</h2>
             <p>
               Você pode usar o JusTraduz para ter um entendimento preliminar de diversos tipos de textos:
@@ -110,8 +113,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </ul>
           </div>
 
-          <div id="limites" class="terms-modern-section-static" style="border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
-            <div class="feedback-card" style="border-left: 4px solid var(--primary); background: rgba(0,143,128,0.03); padding: 24px;">
+          <div id="limites" class="terms-modern-section-static how-step how-step-warning" style="border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
+            <div class="feedback-card how-warning-card" style="border-left: 4px solid var(--primary); background: rgba(0,143,128,0.03); padding: 24px;">
               <h3 style="margin-top: 0; color: var(--primary);">⚠️ Limitações Importantes</h3>
               <p style="font-size: 14px; line-height: 1.6; margin-bottom: 12px;">
                 A inteligência artificial ajuda a clarear a leitura, mas ela não analisa validade jurídica de contratos, não prevê desfechos processuais e não substitui o trabalho profissional de um advogado.
@@ -132,7 +135,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
+  <script src="assets/js/main.js?v=2026.07.02-feedback-stable-1"></script>
   <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
   <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
 </body>

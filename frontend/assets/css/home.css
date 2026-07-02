@@ -4056,6 +4056,7 @@ body.has-modal-open {
   will-change: transform;
 }
 
+.feedback-columns.is-paused .feedback-track,
 .feedback-column:hover .feedback-track,
 .feedback-column:focus-within .feedback-track {
   animation-play-state: paused;
@@ -4090,6 +4091,14 @@ body.has-modal-open {
     border-color .22s ease,
     box-shadow .22s ease,
     background .22s ease;
+}
+
+.feedback-columns .feedback-card.reveal-on-scroll,
+.feedback-columns .feedback-card.reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  transition-delay: 0ms;
 }
 
 .feedback-card:hover {
@@ -4154,7 +4163,7 @@ body.has-modal-open {
   }
 
   to {
-    transform: translateY(-50%);
+    transform: translateY(var(--feedback-shift, -50%));
   }
 }
 

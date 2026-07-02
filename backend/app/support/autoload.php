@@ -5,8 +5,48 @@ require_once dirname(__DIR__) . '/config/app.php';
 require_once dirname(__DIR__) . '/support/session.php';
 require_once dirname(__DIR__) . '/support/security.php';
 
-// Include composer autoloader
-require_once dirname(__DIR__, 3) . '/vendor/autoload.php';
+// Include Composer autoloader when available. In local/XAMPP setups the vendor
+// directory may not exist yet, so keep a small PSR-4 fallback for first run.
+$composerAutoload = dirname(__DIR__, 3) . '/vendor/autoload.php';
+
+if (is_file($composerAutoload)) {
+    require_once $composerAutoload;
+} else {
+    spl_autoload_register(function ($class) {
+        $prefixes = [
+            'App\\Core\\' => dirname(__DIR__) . '/core/',
+            'App\\Controllers\\' => dirname(__DIR__) . '/controllers/',
+            'App\\Services\\Payments\\Asaas\\' => dirname(__DIR__) . '/services/payments/asaas/',
+            'App\\Services\\Payments\\' => dirname(__DIR__) . '/services/payments/',
+            'App\\Services\\' => dirname(__DIR__) . '/services/',
+            'App\\Middlewares\\' => dirname(__DIR__) . '/middlewares/',
+            'App\\Support\\' => dirname(__DIR__) . '/support/',
+            'App\\Repositories\\' => dirname(__DIR__) . '/repositories/',
+            'App\\Validators\\' => dirname(__DIR__) . '/validators/',
+            'App\\Dtos\\' => dirname(__DIR__) . '/dtos/',
+            'App\\Helpers\\' => dirname(__DIR__) . '/helpers/',
+            'App\\Policies\\' => dirname(__DIR__) . '/policies/',
+            'App\\Exceptions\\' => dirname(__DIR__) . '/exceptions/',
+            'App\\Transformers\\' => dirname(__DIR__) . '/transformers/',
+            'App\\Resources\\' => dirname(__DIR__) . '/resources/',
+        ];
+
+        foreach ($prefixes as $prefix => $baseDir) {
+            if (strncmp($class, $prefix, strlen($prefix)) !== 0) {
+                continue;
+            }
+
+            $relativeClass = substr($class, strlen($prefix));
+            $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
+
+            if (is_file($file)) {
+                require_once $file;
+            }
+
+            return;
+        }
+    });
+}
 
 spl_autoload_register(function ($class) {
     $map = [

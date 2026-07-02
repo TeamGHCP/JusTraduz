@@ -104,7 +104,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-feedback-stable-1">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
   <style>
     @media (max-width: 980px) {
@@ -682,7 +682,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </div>
 
         <div class="feedback-columns" data-feedback-marquee aria-label="Depoimentos de usuários">
-          <div class="feedback-column" style="--feedback-speed: 28s;">
+          <div class="feedback-column" style="--feedback-speed: 58s;">
             <div class="feedback-track">
               <div class="feedback-group">
                 <article class="feedback-card">
@@ -724,7 +724,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </div>
           </div>
 
-          <div class="feedback-column" style="--feedback-speed: 34s;">
+          <div class="feedback-column" style="--feedback-speed: 68s;">
             <div class="feedback-track">
               <div class="feedback-group">
                 <article class="feedback-card">
@@ -766,7 +766,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </div>
           </div>
 
-          <div class="feedback-column" style="--feedback-speed: 31s;">
+          <div class="feedback-column" style="--feedback-speed: 62s;">
             <div class="feedback-track">
               <div class="feedback-group">
                 <article class="feedback-card">
@@ -930,7 +930,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
+  <script src="assets/js/main.js?v=2026.07.02-feedback-stable-1"></script>
   <script src="assets/js/chatbot.js?v=2026.06.18-02"></script>
   <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
   <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>

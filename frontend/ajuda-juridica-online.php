@@ -22,10 +22,10 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-feedback-stable-1">
   <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
-<body class="seo-help-online-page terms-page-enhanced">
+<body class="seo-help-online-page terms-page-enhanced terms-story-page">
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/header.php'; ?>
 
   <main>
@@ -38,14 +38,17 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </p>
 
         <div class="terms-hero-actions">
-          <a class="btn btn-primary home-btn-primary" href="login.html?cadastro">
-            <span class="home-btn-label">Pedir orientação</span>
-            <span class="home-btn-icon" aria-hidden="true">
-              <svg class="svg-icon" viewBox="0 0 24 24">
-                <path d="M5 12h14"/>
-                <path d="m13 6 6 6-6 6"/>
-              </svg>
-            </span>
+          <a class="home-flow-button" href="login.html?cadastro">
+            <svg class="home-flow-button-arrow home-flow-button-arrow-left svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
+            <span>Pedir orientação</span>
+            <span class="home-flow-button-circle" aria-hidden="true"></span>
+            <svg class="home-flow-button-arrow home-flow-button-arrow-right svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14"/>
+              <path d="m13 6 6 6-6 6"/>
+            </svg>
           </a>
           <a class="btn btn-outline home-btn-outline" href="#como-conectar">Como conectar</a>
         </div>
@@ -63,7 +66,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </aside>
 
         <article class="terms-modern-card">
-          <div id="como-funciona-ajuda" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="como-funciona-ajuda" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>Como funciona a ajuda jurídica no sistema?</h2>
             <p>
               Muitas pessoas têm dificuldade em explicar o seu problema para um profissional do direito ou acabam esquecendo detalhes cruciais. O JusTraduz ajuda a evitar isso estruturando a sua solicitação em poucos passos:
@@ -75,7 +78,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </ul>
           </div>
 
-          <div id="papel-plataforma" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="papel-plataforma" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>Qual o papel da plataforma?</h2>
             <p>
               O JusTraduz funciona como um facilitador de comunicação. Nós fornecemos ferramentas de organização de documentos e histórico para que você possa apresentar sua dúvida de forma didática.
@@ -85,15 +88,15 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </p>
           </div>
 
-          <div id="diretrizes-eticas" class="terms-modern-section-static" style="margin-bottom: 48px;">
+          <div id="diretrizes-eticas" class="terms-modern-section-static how-step" style="margin-bottom: 48px;">
             <h2>Diretrizes e conformidade ética</h2>
             <p>
               O JusTraduz atua em total consonância com as regras éticas da Ordem dos Advogados do Brasil (OAB) e não realiza captação ilegal de clientela. Os profissionais cadastrados mantêm total independência técnica em sua atuação, e o cadastro na plataforma é voluntário.
             </p>
           </div>
 
-          <div id="limites-consulta" class="terms-modern-section-static" style="border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
-            <div class="feedback-card" style="border-left: 4px solid var(--primary); background: rgba(0,143,128,0.03); padding: 24px;">
+          <div id="limites-consulta" class="terms-modern-section-static how-step how-step-warning" style="border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
+            <div class="feedback-card how-warning-card" style="border-left: 4px solid var(--primary); background: rgba(0,143,128,0.03); padding: 24px;">
               <h3 style="margin-top: 0; color: var(--primary);">⚠️ Termos do Serviço e Limitações</h3>
               <p style="font-size: 14px; line-height: 1.6; margin-bottom: 12px;">
                 <strong>O JusTraduz não realiza consultas gratuitas e não promete qualquer decisão judicial favorável.</strong>
@@ -117,7 +120,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
+  <script src="assets/js/main.js?v=2026.07.02-feedback-stable-1"></script>
   <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
   <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
 </body>
