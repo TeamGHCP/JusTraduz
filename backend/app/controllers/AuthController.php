@@ -6,6 +6,7 @@ namespace App\Controllers {
     use App\Services\AuditService;
     use App\Services\AvatarService;
     use App\Services\LoginService;
+    use App\Services\OrganizationInviteService;
     use App\Services\RegisterService;
     use App\Services\OAuthService;
     use App\Services\PasswordResetService;

@@ -2,6 +2,7 @@
     "name": "justraduz/justraduz",
     "description": "JusTraduz Backend Refactoring and Security Hardening",
     "type": "project",
+    "license": "MIT",
     "require": {
         "php": ">=8.0"
     },

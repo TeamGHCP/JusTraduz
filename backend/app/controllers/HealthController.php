@@ -69,7 +69,7 @@ class HealthController
         try {
             return $pdo->query('SELECT 1')->fetchColumn() !== false;
         } catch (Throwable $exception) {
-            error_log('Health database check failed: ' . $exception->getMessage());
+            $this->logFailure('Health database check failed: ' . $exception->getMessage());
             return false;
         }
     }
@@ -126,11 +126,18 @@ class HealthController
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         } catch (Throwable $exception) {
-            error_log('Health database connection failed: ' . $exception->getMessage());
+            $this->logFailure('Health database connection failed: ' . $exception->getMessage());
             $this->pdo = null;
         }
 
         return $this->pdo;
+    }
+
+    private function logFailure(string $message): void
+    {
+        if ($this->envEnabled('HEALTHCHECK_LOG_FAILURES')) {
+            error_log($message);
+        }
     }
 
     private function storageOk(string $key, string $default): bool

@@ -35,13 +35,17 @@
         return;
       }
 
-      var original = button.innerHTML;
+      var original = Array.prototype.map.call(button.childNodes, function (node) {
+        return node.cloneNode(true);
+      });
       navigator.clipboard.writeText(text).then(function () {
         button.textContent = "Resumo copiado";
         button.classList.add("is-copied");
 
         window.setTimeout(function () {
-          button.innerHTML = original;
+          button.replaceChildren.apply(button, original.map(function (node) {
+            return node.cloneNode(true);
+          }));
           button.classList.remove("is-copied");
         }, 1800);
       });

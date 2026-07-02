@@ -171,7 +171,7 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagamento do plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=payment-pix-tracking-20260629">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
 </head>
 <body>
   <div class="app-shell">
@@ -543,6 +543,6 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
   </div>
 
   <?php render_vlibras(); ?>
-  <script src="assets/js/payment-page.js?v=payment-pix-tracking-20260629"></script>
+  <script src="assets/js/payment-page.js?v=payment-checkout-polish-20260702"></script>
 </body>
 </html>

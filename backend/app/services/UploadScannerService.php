@@ -30,11 +30,64 @@ namespace App\Services {
             }
             $sample = (string) fread($handle, 1024 * 1024);
             fclose($handle);
+            if ($this->hasUnsafeDoubleExtension($originalName)) {
+                return false;
+            }
+
+            if (!$this->matchesExpectedMagicBytes($sample, $mime)) {
+                return false;
+            }
+
             if ($this->matchesUnsafeSignature($sample, $originalName, $mime)) {
                 return false;
             }
 
             return $this->scanWithClamAv($path);
+        }
+
+        private function hasUnsafeDoubleExtension(string $originalName): bool
+        {
+            $parts = array_values(array_filter(explode('.', strtolower($originalName)), static fn ($part) => $part !== ''));
+            if (count($parts) < 3) {
+                return false;
+            }
+
+            array_pop($parts);
+            $unsafe = ['php', 'phtml', 'phar', 'cgi', 'exe', 'bat', 'cmd', 'sh', 'js', 'html', 'htm', 'svg'];
+            foreach ($parts as $part) {
+                if (in_array($part, $unsafe, true)) {
+                    $this->lastError = 'Arquivo bloqueado por dupla extensÃ£o perigosa.';
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private function matchesExpectedMagicBytes(string $sample, string $mime): bool
+        {
+            if ($sample === '') {
+                $this->lastError = 'Arquivo vazio ou ilegÃ­vel.';
+                return false;
+            }
+
+            $ok = match (strtolower($mime)) {
+                'application/pdf' => str_starts_with($sample, '%PDF-'),
+                'image/png' => str_starts_with($sample, "\x89PNG\r\n\x1A\n"),
+                'image/jpeg', 'image/jpg' => str_starts_with($sample, "\xFF\xD8\xFF"),
+                'image/webp' => str_starts_with($sample, 'RIFF') && substr($sample, 8, 4) === 'WEBP',
+                'application/zip',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => str_starts_with($sample, "PK\x03\x04") || str_starts_with($sample, "PK\x05\x06") || str_starts_with($sample, "PK\x07\x08"),
+                'application/msword' => str_starts_with($sample, "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1"),
+                'text/plain' => !str_contains(substr($sample, 0, 4096), "\0"),
+                default => true,
+            };
+
+            if (!$ok) {
+                $this->lastError = 'Assinatura real do arquivo nÃ£o corresponde ao tipo declarado.';
+            }
+
+            return $ok;
         }
 
         private function matchesUnsafeSignature(string $sample, string $originalName, string $mime): bool

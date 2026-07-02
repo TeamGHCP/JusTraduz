@@ -15,8 +15,6 @@ class ErrorHandler
 
     public static function handleException(Throwable $e): void
     {
-        error_log(sprintf("Uncaught exception: %s in %s:%d", $e->getMessage(), $e->getFile(), $e->getLine()));
-
         // Tratamento especial para RedirectException (verifica se a classe existe)
         if ($e instanceof RedirectException) {
             $status = $e->getCode() ?: 302;
@@ -24,6 +22,8 @@ class ErrorHandler
             // Retorna ao dispatcher para que o fluxo seja controlado centralmente.
             return;
         }
+
+        error_log(sprintf("Uncaught exception: %s in %s:%d", $e->getMessage(), $e->getFile(), $e->getLine()));
 
         $code = (int) $e->getCode();
         $status = ($code >= 400 && $code < 600) ? $code : 500;
@@ -72,18 +72,28 @@ class ErrorHandler
 
     public static function renderErrorPage(int $status): bool
     {
-        $page = match ($status) {
-            404 => '404.html',
-            default => '500.html',
+        $pages = match ($status) {
+            404 => ['404.php', '404.html'],
+            default => ['500.php', '500.html'],
         };
 
-        $path = dirname(__DIR__, 3) . '/frontend/' . $page;
-        if (!is_file($path)) {
+        $path = null;
+        foreach ($pages as $page) {
+            $candidate = dirname(__DIR__, 3) . '/frontend/' . $page;
+            if (is_file($candidate)) {
+                $path = $candidate;
+                break;
+            }
+        }
+
+        if ($path === null) {
             return false;
         }
 
         header('Content-Type: text/html; charset=UTF-8');
-        $html = (string) file_get_contents($path);
+        ob_start();
+        require $path;
+        $html = (string) ob_get_clean();
         $base = htmlspecialchars(self::frontendBasePath(), ENT_QUOTES, 'UTF-8');
         echo str_replace('<head>', '<head>' . PHP_EOL . '  <base href="' . $base . '">', $html);
         return true;

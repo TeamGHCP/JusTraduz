@@ -113,7 +113,7 @@ $heroCopy = $isProfessionalPricing
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e($pageTitle) ?> | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=dark-ui-fixes-20260629">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
 </head>
 <body>
   <div class="app-shell">

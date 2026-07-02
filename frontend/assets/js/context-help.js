@@ -3,10 +3,57 @@
 
   var lastHelpTrigger = null;
 
-  function escapeHtml(value) {
-    var node = document.createElement('div');
-    node.textContent = String(value || '');
-    return node.innerHTML;
+  function svgPath(d) {
+    var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    return path;
+  }
+
+  function helpIcon() {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'svg-icon');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    svg.appendChild(svgPath('M12 3.25a8.75 8.75 0 0 0-7.62 13.05l-1.13 4.45 4.45-1.13A8.75 8.75 0 1 0 12 3.25Z'));
+    svg.appendChild(svgPath('M9.35 9.45a2.75 2.75 0 1 1 4.85 1.78c-.95.82-1.7 1.3-1.7 2.77'));
+    svg.appendChild(svgPath('M12.5 17.15h.01'));
+    return svg;
+  }
+
+  function buildModal(title, description) {
+    var modal = document.createElement('div');
+    modal.className = 'context-help-modal';
+
+    var dialog = document.createElement('section');
+    dialog.className = 'context-help-dialog';
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.setAttribute('aria-labelledby', 'context-help-title');
+
+    var heading = document.createElement('h2');
+    heading.id = 'context-help-title';
+    heading.textContent = String(title || '');
+
+    var paragraph = document.createElement('p');
+    paragraph.textContent = String(description || '');
+
+    var actions = document.createElement('div');
+    actions.className = 'onboarding-actions';
+
+    var close = document.createElement('button');
+    close.className = 'btn btn-primary';
+    close.type = 'button';
+    close.dataset.helpClose = '';
+    close.textContent = 'Entendi';
+
+    actions.appendChild(close);
+    dialog.appendChild(heading);
+    dialog.appendChild(paragraph);
+    dialog.appendChild(actions);
+    modal.appendChild(dialog);
+
+    return modal;
   }
 
   function closeModal(modal, returnFocus) {
@@ -50,10 +97,7 @@
       button.dataset.helpTitle = title;
       button.dataset.helpDescription = descriptionFor(title);
       button.setAttribute('aria-label', 'Ajuda: ' + title);
-      button.innerHTML = '<svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-        '<path d="M12 3.25a8.75 8.75 0 0 0-7.62 13.05l-1.13 4.45 4.45-1.13A8.75 8.75 0 1 0 12 3.25Z"></path>' +
-        '<path d="M9.35 9.45a2.75 2.75 0 1 1 4.85 1.78c-.95.82-1.7 1.3-1.7 2.77"></path>' +
-        '<path d="M12.5 17.15h.01"></path></svg>';
+      button.appendChild(helpIcon());
       heading.appendChild(document.createTextNode(' '));
       heading.appendChild(button);
     });
@@ -70,12 +114,7 @@
     var existing = document.querySelector('.context-help-modal');
     if (existing) existing.remove();
 
-    var modal = document.createElement('div');
-    modal.className = 'context-help-modal';
-    modal.innerHTML = '<section class="context-help-dialog" role="dialog" aria-modal="true" aria-labelledby="context-help-title">' +
-      '<h2 id="context-help-title">' + escapeHtml(button.dataset.helpTitle) + '</h2>' +
-      '<p>' + escapeHtml(button.dataset.helpDescription) + '</p>' +
-      '<div class="onboarding-actions"><button class="btn btn-primary" type="button" data-help-close>Entendi</button></div></section>';
+    var modal = buildModal(button.dataset.helpTitle, button.dataset.helpDescription);
     document.body.appendChild(modal);
 
     var closeButton = modal.querySelector('[data-help-close]');

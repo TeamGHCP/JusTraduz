@@ -7,7 +7,21 @@ use Throwable;
 
 class RateLimiterMiddleware
 {
-    public static function check(string $path): void
+    private const PROFILES = [
+        'auth' => ['max_hits' => 8, 'window' => 60],
+        'register' => ['max_hits' => 5, 'window' => 300],
+        'password_reset' => ['max_hits' => 5, 'window' => 300],
+        'payment' => ['max_hits' => 20, 'window' => 60],
+        'upload' => ['max_hits' => 12, 'window' => 300],
+        'public_api' => ['max_hits' => 120, 'window' => 60],
+        'invite' => ['max_hits' => 20, 'window' => 300],
+        'oauth' => ['max_hits' => 10, 'window' => 300],
+        'webhook' => ['max_hits' => 300, 'window' => 60],
+        'admin' => ['max_hits' => 60, 'window' => 60],
+        'default' => ['max_hits' => 100, 'window' => 60],
+    ];
+
+    public static function check(string $path, array $options = []): void
     {
         try {
             require_once dirname(__DIR__) . '/config/database.php';
@@ -29,16 +43,11 @@ class RateLimiterMiddleware
         self::gc($pdo);
 
         $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
-        $key = 'rl:' . md5($ip . ':' . $path);
-
-        // Sensitive paths have lower limit (10 hits per min)
-        $isSensitive = (in_array($path, [
-            '/login', '/register', '/recuperar-senha', '/pagamento', '/checkout', '/billing/webhook',
-            '/auth/login', '/auth/registrar', '/auth/reset-password', '/auth/admin-login'
-        ], true) || str_contains($path, '/auth/')) && $path !== '/auth/csrf';
-
-        $maxHits = $isSensitive ? 10 : 100;
-        $window = 60; // 1 minute
+        $profile = self::profileForPath($path, (string) ($options['profile'] ?? ''));
+        $maxHits = max(1, (int) ($options['max_hits'] ?? $profile['max_hits']));
+        $window = max(1, (int) ($options['window'] ?? $profile['window']));
+        $identity = self::identity($path);
+        $key = 'rl:' . md5($identity . ':' . $path . ':' . $maxHits . ':' . $window);
         $now = time();
 
         try {
@@ -88,6 +97,73 @@ class RateLimiterMiddleware
         } catch (Throwable) {
             // Ignore creation errors
         }
+    }
+
+    private static function profileForPath(string $path, string $requestedProfile): array
+    {
+        if (isset(self::PROFILES[$requestedProfile])) {
+            return self::PROFILES[$requestedProfile];
+        }
+
+        if (str_starts_with($path, '/api/v1/')) {
+            return self::PROFILES['public_api'];
+        }
+
+        if (in_array($path, ['/auth/login', '/auth/admin-login'], true)) {
+            return self::PROFILES['auth'];
+        }
+
+        if ($path === '/auth/registrar') {
+            return self::PROFILES['register'];
+        }
+
+        if (in_array($path, ['/auth/reset-password', '/profile/password-code', '/profile/password-reset'], true)) {
+            return self::PROFILES['password_reset'];
+        }
+
+        if (str_starts_with($path, '/billing/')) {
+            return $path === '/billing/webhook' ? self::PROFILES['webhook'] : self::PROFILES['payment'];
+        }
+
+        if (str_starts_with($path, '/documents/')) {
+            return self::PROFILES['upload'];
+        }
+
+        if (str_starts_with($path, '/organization/invite')) {
+            return self::PROFILES['invite'];
+        }
+
+        if (str_starts_with($path, '/auth/google')) {
+            return self::PROFILES['oauth'];
+        }
+
+        if (str_starts_with($path, '/admin/')) {
+            return self::PROFILES['admin'];
+        }
+
+        return self::PROFILES['default'];
+    }
+
+    private static function identity(string $path): string
+    {
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1');
+        $userId = (string) ($_SESSION['id'] ?? '');
+
+        if ($userId !== '' && !in_array($path, ['/auth/login', '/auth/admin-login', '/auth/registrar', '/auth/reset-password'], true)) {
+            return 'user:' . $userId . '|ip:' . $ip;
+        }
+
+        $email = strtolower(trim((string) ($_POST['email'] ?? '')));
+        if ($email !== '' && in_array($path, ['/auth/login', '/auth/admin-login', '/auth/registrar', '/auth/reset-password'], true)) {
+            return 'email:' . hash('sha256', $email) . '|ip:' . $ip;
+        }
+
+        $apiKey = trim((string) ($_SERVER['HTTP_X_API_KEY'] ?? $_SERVER['HTTP_AUTHORIZATION'] ?? ''));
+        if ($apiKey !== '' && str_starts_with($path, '/api/v1/')) {
+            return 'api:' . hash('sha256', $apiKey) . '|ip:' . $ip;
+        }
+
+        return 'ip:' . $ip;
     }
 
     private static function gc(PDO $pdo): void

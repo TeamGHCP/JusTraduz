@@ -8,11 +8,11 @@
 @import url("./contato.css?v=dark-ui-fixes-20260629");
 @import url("./termos.css?v=dark-ui-fixes-20260629");
 @import url("./planos.css?v=dark-ui-fixes-20260629");
-@import url("./pagamento-plano.css?v=dark-ui-fixes-20260629");
+@import url("./pagamento-plano.css?v=payment-checkout-polish-20260702");
 @import url("./pagamento-confirmado.css?v=dark-ui-fixes-20260629");
 @import url("./errors.css?v=dark-ui-fixes-20260629");
 
 
 @import url("./responsive.css?v=global-mobile-pass-2");
-@import url("./accessibility.css?v=2026.06.16-a11y-stack-7");
+@import url("./accessibility.css?v=2026.07.02-vlibras-panel-1");
 @import url("./cookie-consent.css?v=2026.06.25-3");

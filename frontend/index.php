@@ -104,7 +104,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
   <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
   <style>
     @media (max-width: 980px) {
@@ -228,7 +228,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       }
     }
   </style>
-  <script src="assets/js/cookie-consent.js?v=2026.06.25-1"></script>
+  <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
   <script src="assets/js/pwa.js?v=2026.06.20-01" defer></script>
 </head>
 <body id="top" class="home-page has-opening-loader">
@@ -932,7 +932,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
   <script src="assets/js/chatbot.js?v=2026.06.18-02"></script>
-  <script src="assets/js/vlibras-init.js?v=2026.06.25-1" defer></script>
-  <script src="assets/js/accessibility.js?v=2026.06.16-a11y-stack"></script>
+  <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+  <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
 </body>
 </html>

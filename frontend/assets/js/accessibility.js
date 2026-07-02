@@ -19,7 +19,9 @@
   }
 
   function canUseExternalAccessibility() {
-    return !!(window.JusTraduzCookieConsent && window.JusTraduzCookieConsent.allowed('accessibility'));
+    if (!window.JusTraduzCookieConsent) return true;
+    if (window.JusTraduzCookieConsent.hasDecision && !window.JusTraduzCookieConsent.hasDecision()) return true;
+    return !!window.JusTraduzCookieConsent.allowed('accessibility');
   }
 
   if (canUsePreferences()) {
@@ -55,6 +57,51 @@
     window.setTimeout(function () { liveRegion.textContent = message; }, 30);
   }
 
+  function svg(viewBox, paths) {
+    var node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    node.setAttribute('viewBox', viewBox);
+    node.setAttribute('focusable', 'false');
+    paths.forEach(function (pathData) {
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathData);
+      node.appendChild(path);
+    });
+    return node;
+  }
+
+  function accessibilityIcon() {
+    var node = svg('0 0 64 64', [
+      'M17 25h30',
+      'M32 25v15',
+      'M32 39 23 51',
+      'M32 39 41 51'
+    ]);
+    var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '32');
+    circle.setAttribute('cy', '14');
+    circle.setAttribute('r', '6');
+    node.insertBefore(circle, node.firstChild);
+    return node;
+  }
+
+  function audioIcon() {
+    return svg('0 0 24 24', [
+      'M4 10v4',
+      'M8 7v10',
+      'M12 4v16',
+      'M16 7v10',
+      'M20 10v4'
+    ]);
+  }
+
+  function appendTextElement(parent, tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    node.textContent = text;
+    parent.appendChild(node);
+    return node;
+  }
+
   function makeSkipLink() {
     var main = document.querySelector('main');
     if (!main) return;
@@ -63,7 +110,7 @@
     var link = document.createElement('a');
     link.className = 'skip-link';
     link.href = '#' + main.id;
-    link.textContent = 'Pular para o conteúdo principal';
+    link.textContent = 'Pular para o conteÃºdo principal';
     document.body.insertBefore(link, document.body.firstChild);
   }
 
@@ -80,13 +127,20 @@
     launcher.className = 'a11y-launcher';
     launcher.setAttribute('aria-label', 'Abrir menu de acessibilidade');
     launcher.title = 'Acessibilidade';
-    launcher.innerHTML =
-      '<span class="a11y-launcher-glow" aria-hidden="true"></span>' +
-      '<span class="a11y-launcher-icon" aria-hidden="true">' +
-      '<svg viewBox="0 0 64 64" focusable="false"><circle cx="32" cy="14" r="6"></circle>' +
-      '<path d="M17 25h30"></path><path d="M32 25v15"></path>' +
-      '<path d="M32 39 23 51"></path><path d="M32 39 41 51"></path></svg></span>' +
-      '<span class="a11y-launcher-label" aria-hidden="true">Acessibilidade</span>';
+    var glow = document.createElement('span');
+    var icon = document.createElement('span');
+    var label = document.createElement('span');
+    glow.className = 'a11y-launcher-glow';
+    glow.setAttribute('aria-hidden', 'true');
+    icon.className = 'a11y-launcher-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.appendChild(accessibilityIcon());
+    label.className = 'a11y-launcher-label';
+    label.setAttribute('aria-hidden', 'true');
+    label.textContent = 'Acessibilidade';
+    launcher.appendChild(glow);
+    launcher.appendChild(icon);
+    launcher.appendChild(label);
     launcher.setAttribute('aria-haspopup', 'dialog');
     launcher.setAttribute('aria-expanded', 'false');
     launcher.addEventListener('click', openPanel);
@@ -111,9 +165,16 @@
       var widget = document.createElement('div');
       widget.setAttribute('vw', '');
       widget.className = 'enabled';
-      widget.innerHTML =
-        '<div vw-access-button class="active"></div>' +
-        '<div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div>';
+      var accessButton = document.createElement('div');
+      var pluginWrapper = document.createElement('div');
+      var topWrapper = document.createElement('div');
+      accessButton.setAttribute('vw-access-button', '');
+      accessButton.className = 'active';
+      pluginWrapper.setAttribute('vw-plugin-wrapper', '');
+      topWrapper.className = 'vw-plugin-top-wrapper';
+      pluginWrapper.appendChild(topWrapper);
+      widget.appendChild(accessButton);
+      widget.appendChild(pluginWrapper);
       document.body.appendChild(widget);
     }
 
@@ -141,9 +202,31 @@
     }
 
     if (window.JusTraduzCookieConsent && window.JusTraduzCookieConsent.loadScript) {
-      window.JusTraduzCookieConsent.loadScript('accessibility', 'justraduz-vlibras-plugin', 'https://vlibras.gov.br/app/vlibras-plugin.js', startWidget);
+      if (window.JusTraduzCookieConsent.hasDecision && window.JusTraduzCookieConsent.hasDecision()) {
+        window.JusTraduzCookieConsent.loadScript('accessibility', 'justraduz-vlibras-plugin', 'https://vlibras.gov.br/app/vlibras-plugin.js', startWidget);
+      } else {
+        loadVlibrasScript(startWidget);
+      }
       return;
     }
+
+    loadVlibrasScript(startWidget);
+  }
+
+  function loadVlibrasScript(callback) {
+    var existing = document.getElementById('justraduz-vlibras-plugin');
+    if (existing) {
+      if (callback) existing.addEventListener('load', callback, { once: true });
+      return existing;
+    }
+
+    var script = document.createElement('script');
+    script.id = 'justraduz-vlibras-plugin';
+    script.src = 'https://vlibras.gov.br/app/vlibras-plugin.js';
+    script.async = true;
+    if (callback) script.addEventListener('load', callback, { once: true });
+    document.body.appendChild(script);
+    return script;
   }
 
   function cleanupVlibras() {
@@ -229,37 +312,139 @@
     window.addEventListener('resize', fitVlibrasWidget);
   }
 
+  function makeButton(className, text, dataAttribute, ariaLabel) {
+    var button = document.createElement('button');
+    button.className = className;
+    button.type = 'button';
+    button.textContent = text;
+    if (dataAttribute) button.setAttribute(dataAttribute, '');
+    if (ariaLabel) button.setAttribute('aria-label', ariaLabel);
+    return button;
+  }
+
+  function buildAccessibilityPanel() {
+    var panel = document.createElement('section');
+    panel.className = 'a11y-panel';
+    panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
+    panel.setAttribute('aria-labelledby', 'a11y-title');
+    panel.setAttribute('aria-describedby', 'a11y-description');
+
+    var header = document.createElement('div');
+    var titleWrap = document.createElement('div');
+    var symbol = document.createElement('span');
+    var title = document.createElement('h2');
+    var close = makeButton('a11y-close', 'x', null, 'Fechar acessibilidade');
+    header.className = 'a11y-panel-header';
+    titleWrap.className = 'a11y-panel-title';
+    symbol.className = 'a11y-panel-symbol';
+    symbol.setAttribute('aria-hidden', 'true');
+    symbol.appendChild(accessibilityIcon());
+    title.id = 'a11y-title';
+    title.textContent = 'Acessibilidade';
+    titleWrap.appendChild(symbol);
+    titleWrap.appendChild(title);
+    header.appendChild(titleWrap);
+    header.appendChild(close);
+
+    var description = document.createElement('p');
+    description.id = 'a11y-description';
+    description.textContent = 'Ajuste a tela do jeito que ficar mais confortavel para voce.';
+
+    var fontSection = document.createElement('div');
+    var fontControls = document.createElement('div');
+    fontSection.className = 'a11y-panel-section';
+    fontControls.className = 'a11y-font-controls';
+    appendTextElement(fontSection, 'strong', '', 'Tamanho do conteudo');
+    fontControls.appendChild(makeButton('btn btn-outline', 'A-', 'data-a11y-font-down', 'Diminuir conteudo'));
+    var fontValue = appendTextElement(fontControls, 'span', 'a11y-font-value', '100%');
+    fontValue.setAttribute('aria-live', 'polite');
+    fontControls.appendChild(makeButton('btn btn-outline', 'A+', 'data-a11y-font-up', 'Aumentar conteudo'));
+    fontSection.appendChild(fontControls);
+
+    var actions = document.createElement('div');
+    actions.className = 'a11y-panel-section a11y-panel-actions';
+    [
+      ['data-a11y-contrast', 'Alto contraste'],
+      ['data-a11y-readable', 'Leitura confortavel'],
+      ['data-a11y-motion', 'Reduzir movimentos']
+    ].forEach(function (item) {
+      var button = makeButton('btn btn-outline a11y-toggle', item[1], item[0]);
+      button.setAttribute('aria-pressed', 'false');
+      actions.appendChild(button);
+    });
+
+    var speech = document.createElement('div');
+    var speechHeading = document.createElement('div');
+    var speechIcon = document.createElement('span');
+    var speechCopy = document.createElement('div');
+    var speechControls = document.createElement('div');
+    speech.className = 'a11y-panel-section a11y-speech-section';
+    speechHeading.className = 'a11y-section-heading';
+    speechIcon.className = 'a11y-speech-icon';
+    speechIcon.setAttribute('aria-hidden', 'true');
+    speechIcon.appendChild(audioIcon());
+    appendTextElement(speechCopy, 'strong', '', 'Leitura em voz alta');
+    appendTextElement(speechCopy, 'small', '', 'Ouca o conteudo principal desta pagina.');
+    speechHeading.appendChild(speechIcon);
+    speechHeading.appendChild(speechCopy);
+    speechControls.className = 'a11y-speech-controls';
+    speechControls.appendChild(makeButton('btn btn-primary', 'Ouvir pagina', 'data-a11y-speech-start'));
+    var pause = makeButton('btn btn-outline', 'Pausar', 'data-a11y-speech-pause');
+    var stop = makeButton('btn btn-outline', 'Parar', 'data-a11y-speech-stop');
+    pause.disabled = true;
+    stop.disabled = true;
+    speechControls.appendChild(pause);
+    speechControls.appendChild(stop);
+
+    var speedLabel = document.createElement('label');
+    var speedSelect = document.createElement('select');
+    speedLabel.className = 'a11y-speed-label';
+    speedLabel.setAttribute('for', 'a11y-speech-rate');
+    speedLabel.appendChild(document.createTextNode('Velocidade '));
+    speedSelect.className = 'select';
+    speedSelect.id = 'a11y-speech-rate';
+    speedSelect.setAttribute('data-a11y-speech-rate', '');
+    [
+      ['0.65', 'Lenta (0,65x)'],
+      ['1', 'Normal (1x)'],
+      ['1.6', 'Rapida (1,6x)']
+    ].forEach(function (item) {
+      var option = document.createElement('option');
+      option.value = item[0];
+      option.textContent = item[1];
+      speedSelect.appendChild(option);
+    });
+    speedLabel.appendChild(speedSelect);
+
+    var status = appendTextElement(speech, 'p', 'a11y-speech-status', 'Pronto para iniciar.');
+    status.setAttribute('data-a11y-speech-status', '');
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    speech.insertBefore(speechHeading, status);
+    speech.insertBefore(speechControls, status);
+    speech.insertBefore(speedLabel, status);
+
+    var resetSection = document.createElement('div');
+    resetSection.className = 'a11y-panel-section';
+    resetSection.appendChild(makeButton('btn btn-soft', 'Restaurar padrao', 'data-a11y-reset'));
+
+    panel.appendChild(header);
+    panel.appendChild(description);
+    panel.appendChild(fontSection);
+    panel.appendChild(actions);
+    panel.appendChild(speech);
+    panel.appendChild(resetSection);
+    return panel;
+  }
+
   function openPanel() {
     if (panelBackdrop) return;
     previousFocus = document.activeElement;
     launcher.setAttribute('aria-expanded', 'true');
     panelBackdrop = document.createElement('div');
     panelBackdrop.className = 'a11y-panel-backdrop';
-    panelBackdrop.innerHTML =
-      '<section class="a11y-panel" role="dialog" aria-modal="true" aria-labelledby="a11y-title" aria-describedby="a11y-description">' +
-      '<div class="a11y-panel-header"><div class="a11y-panel-title"><span class="a11y-panel-symbol" aria-hidden="true">' +
-      '<svg viewBox="0 0 64 64"><circle cx="32" cy="14" r="6"></circle><path d="M17 25h30"></path><path d="M32 25v15"></path><path d="M32 39 23 51"></path><path d="M32 39 41 51"></path></svg>' +
-      '</span><h2 id="a11y-title">Acessibilidade</h2></div><button class="a11y-close" type="button" aria-label="Fechar acessibilidade">×</button></div>' +
-      '<p id="a11y-description">Ajuste a tela do jeito que ficar mais confortável para você.</p>' +
-      '<div class="a11y-panel-section"><strong>Tamanho do conteúdo</strong><div class="a11y-font-controls">' +
-      '<button class="btn btn-outline" type="button" data-a11y-font-down aria-label="Diminuir conteúdo">A−</button>' +
-      '<span class="a11y-font-value" aria-live="polite">100%</span>' +
-      '<button class="btn btn-outline" type="button" data-a11y-font-up aria-label="Aumentar conteúdo">A+</button></div></div>' +
-      '<div class="a11y-panel-section a11y-panel-actions">' +
-      '<button class="btn btn-outline a11y-toggle" type="button" data-a11y-contrast aria-pressed="false">Alto contraste</button>' +
-      '<button class="btn btn-outline a11y-toggle" type="button" data-a11y-readable aria-pressed="false">Leitura confortável</button>' +
-      '<button class="btn btn-outline a11y-toggle" type="button" data-a11y-motion aria-pressed="false">Reduzir movimentos</button></div>' +
-      '<div class="a11y-panel-section a11y-speech-section"><div class="a11y-section-heading"><span class="a11y-speech-icon" aria-hidden="true">' +
-      '<svg viewBox="0 0 24 24"><path d="M4 10v4"></path><path d="M8 7v10"></path><path d="M12 4v16"></path><path d="M16 7v10"></path><path d="M20 10v4"></path></svg>' +
-      '</span><div><strong>Leitura em voz alta</strong><small>Ouça o conteúdo principal desta página.</small></div></div>' +
-      '<div class="a11y-speech-controls"><button class="btn btn-primary" type="button" data-a11y-speech-start>Ouvir página</button>' +
-      '<button class="btn btn-outline" type="button" data-a11y-speech-pause disabled>Pausar</button>' +
-      '<button class="btn btn-outline" type="button" data-a11y-speech-stop disabled>Parar</button></div>' +
-      '<label class="a11y-speed-label" for="a11y-speech-rate">Velocidade <select class="select" id="a11y-speech-rate" data-a11y-speech-rate>' +
-      '<option value="0.65">Lenta (0,65×)</option><option value="1">Normal (1×)</option><option value="1.6">Rápida (1,6×)</option></select></label>' +
-      '<p class="a11y-speech-status" data-a11y-speech-status role="status" aria-live="polite">Pronto para iniciar.</p></div>' +
-      '<div class="a11y-panel-section"><button class="btn btn-soft" type="button" data-a11y-reset>Restaurar padrão</button></div>' +
-      '</section>';
+    panelBackdrop.appendChild(buildAccessibilityPanel());
     document.body.appendChild(panelBackdrop);
 
     panelBackdrop.querySelector('.a11y-close').addEventListener('click', closePanel);
@@ -267,8 +452,8 @@
     panelBackdrop.querySelector('[data-a11y-font-up]').addEventListener('click', function () { changeFont(1); });
     panelBackdrop.querySelector('[data-a11y-font-down]').addEventListener('click', function () { changeFont(-1); });
     panelBackdrop.querySelector('[data-a11y-contrast]').addEventListener('click', function () { state.contrast = !state.contrast; apply('Alto contraste ' + (state.contrast ? 'ativado' : 'desativado')); });
-    panelBackdrop.querySelector('[data-a11y-readable]').addEventListener('click', function () { state.readable = !state.readable; apply('Leitura confortável ' + (state.readable ? 'ativada' : 'desativada')); });
-    panelBackdrop.querySelector('[data-a11y-motion]').addEventListener('click', function () { state.motion = !state.motion; apply('Redução de movimentos ' + (state.motion ? 'ativada' : 'desativada')); });
+    panelBackdrop.querySelector('[data-a11y-readable]').addEventListener('click', function () { state.readable = !state.readable; apply('Leitura confortÃ¡vel ' + (state.readable ? 'ativada' : 'desativada')); });
+    panelBackdrop.querySelector('[data-a11y-motion]').addEventListener('click', function () { state.motion = !state.motion; apply('ReduÃ§Ã£o de movimentos ' + (state.motion ? 'ativada' : 'desativada')); });
     panelBackdrop.querySelector('[data-a11y-speech-start]').addEventListener('click', startPageSpeech);
     panelBackdrop.querySelector('[data-a11y-speech-pause]').addEventListener('click', toggleSpeechPause);
     panelBackdrop.querySelector('[data-a11y-speech-stop]').addEventListener('click', function () { stopPageSpeech(true); });
@@ -301,7 +486,7 @@
   function changeFont(direction) {
     var index = fontSteps.indexOf(Number(state.font));
     state.font = fontSteps[Math.max(0, Math.min(fontSteps.length - 1, index + direction))];
-    apply('Tamanho do conteúdo: ' + state.font + ' por cento');
+    apply('Tamanho do conteÃºdo: ' + state.font + ' por cento');
   }
 
   function syncPanel() {
@@ -375,7 +560,7 @@
   function beginPageSpeech() {
     var text = pageSpeechText();
     if (!text) {
-      updateSpeechStatus('Não encontrei conteúdo para ler.');
+      updateSpeechStatus('NÃ£o encontrei conteÃºdo para ler.');
       return;
     }
     speechChunks = splitSpeechText(text);
@@ -392,7 +577,7 @@
     if (speechStatus === 'idle' || speechIndex >= speechChunks.length) {
       if (speechStatus !== 'idle') {
         speechStatus = 'idle';
-        updateSpeechStatus('Leitura concluída.');
+        updateSpeechStatus('Leitura concluÃ­da.');
         syncSpeechControls();
       }
       return;
@@ -410,7 +595,7 @@
     activeUtterance.onerror = function (event) {
       if (event.error === 'canceled' || event.error === 'interrupted') return;
       speechStatus = 'idle';
-      updateSpeechStatus('Não foi possível continuar a leitura.');
+      updateSpeechStatus('NÃ£o foi possÃ­vel continuar a leitura.');
       syncSpeechControls();
     };
     window.speechSynthesis.speak(activeUtterance);
@@ -419,7 +604,7 @@
   function speechRateLabel() {
     var rate = Number(state.speechRate) || 1;
     if (rate < .9) return 'lenta';
-    if (rate > 1.1) return 'rápida';
+    if (rate > 1.1) return 'rÃ¡pida';
     return 'normal';
   }
 
@@ -461,7 +646,7 @@
     var stop = panelBackdrop.querySelector('[data-a11y-speech-stop]');
     if (!start || !pause || !stop) return;
     var active = speechStatus !== 'idle';
-    start.textContent = active ? 'Reiniciar leitura' : 'Ouvir página';
+    start.textContent = active ? 'Reiniciar leitura' : 'Ouvir pÃ¡gina';
     pause.disabled = !active;
     stop.disabled = !active;
     pause.textContent = speechStatus === 'paused' ? 'Continuar' : 'Pausar';
@@ -474,7 +659,7 @@
         var caption = document.createElement('caption');
         var section = table.closest('section');
         var heading = section && section.querySelector('h1, h2, h3');
-        caption.textContent = heading ? heading.textContent.trim() : 'Tabela de informações ' + (index + 1);
+        caption.textContent = heading ? heading.textContent.trim() : 'Tabela de informaÃ§Ãµes ' + (index + 1);
         table.insertBefore(caption, table.firstChild);
       }
       table.querySelectorAll('thead th').forEach(function (header) { header.setAttribute('scope', 'col'); });
@@ -482,22 +667,38 @@
       if (wrap) {
         wrap.tabIndex = 0;
         wrap.setAttribute('role', 'region');
-        wrap.setAttribute('aria-label', table.caption.textContent + '. Deslize horizontalmente se necessário.');
+        wrap.setAttribute('aria-label', table.caption.textContent + '. Deslize horizontalmente se necessÃ¡rio.');
       }
     });
   }
 
   function enhancePasswords() {
     function eyeIcon(hidden) {
+      var node;
       if (hidden) {
-        return '<svg class="password-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3l18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 4.2A10.6 10.6 0 0 1 12 4c5.5 0 9 5 10 8a13.2 13.2 0 0 1-2.2 3.7"/><path d="M6.6 6.7C4.3 8.2 2.8 10.5 2 12c1 3 4.5 8 10 8 1.7 0 3.2-.4 4.5-1.1"/></svg>';
+        node = svg('0 0 24 24', [
+          'M3 3l18 18',
+          'M10.6 10.6a2 2 0 0 0 2.8 2.8',
+          'M9.9 4.2A10.6 10.6 0 0 1 12 4c5.5 0 9 5 10 8a13.2 13.2 0 0 1-2.2 3.7',
+          'M6.6 6.7C4.3 8.2 2.8 10.5 2 12c1 3 4.5 8 10 8 1.7 0 3.2-.4 4.5-1.1'
+        ]);
+      } else {
+        node = svg('0 0 24 24', [
+          'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z'
+        ]);
+        var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '12');
+        circle.setAttribute('cy', '12');
+        circle.setAttribute('r', '3');
+        node.appendChild(circle);
       }
-
-      return '<svg class="password-toggle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+      node.setAttribute('class', 'password-toggle-icon');
+      node.setAttribute('aria-hidden', 'true');
+      return node;
     }
 
     function setPasswordToggleState(button, visible) {
-      button.innerHTML = eyeIcon(visible);
+      button.replaceChildren(eyeIcon(visible));
       button.setAttribute('aria-label', visible ? 'Ocultar senha' : 'Mostrar senha');
       button.setAttribute('title', visible ? 'Ocultar senha' : 'Mostrar senha');
       button.setAttribute('aria-pressed', String(visible));
@@ -572,7 +773,7 @@
 
   function accessibleName(field) {
     var label = field.id && document.querySelector('label[for="' + CSS.escape(field.id) + '"]');
-    return label ? label.textContent.trim() : (field.getAttribute('aria-label') || field.name || 'obrigatório');
+    return label ? label.textContent.trim() : (field.getAttribute('aria-label') || field.name || 'obrigatÃ³rio');
   }
 
   function enhanceLinksAndNavigation() {
@@ -616,7 +817,7 @@
   function resetAccessibilityPreferences() {
     stopPageSpeech(false);
     state = { font: 100, contrast: false, readable: false, motion: false, speechRate: 1 };
-    apply('Preferências de acessibilidade restauradas.');
+    apply('PreferÃªncias de acessibilidade restauradas.');
   }
 
   function init() {
@@ -640,3 +841,4 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 }());
+

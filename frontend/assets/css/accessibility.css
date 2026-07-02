@@ -462,7 +462,7 @@ html body div[vw].enabled div[vw-plugin-wrapper] {
   min-height: 0 !important;
   max-width: calc(100vw - 88px) !important;
   max-height: calc(100vh - 24px) !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   border-radius: 14px !important;
   transform: translateY(-50%) !important;
   z-index: 99998 !important;

@@ -76,11 +76,21 @@
     toast.id = options.id;
     toast.className = "pwa-toast" + (options.kind ? " " + options.kind : "");
     toast.setAttribute("role", "status");
-    toast.innerHTML =
-      "<div><strong>" + escapeHtml(options.title) + "</strong><span>" + escapeHtml(options.message) + "</span></div>" +
-      "<div class=\"pwa-toast-actions\"></div>";
 
-    var actions = toast.querySelector(".pwa-toast-actions");
+    var copy = document.createElement("div");
+    var title = document.createElement("strong");
+    var message = document.createElement("span");
+    var actions = document.createElement("div");
+
+    title.textContent = String(options.title || "");
+    message.textContent = String(options.message || "");
+    actions.className = "pwa-toast-actions";
+
+    copy.appendChild(title);
+    copy.appendChild(message);
+    toast.appendChild(copy);
+    toast.appendChild(actions);
+
     (options.actions || []).forEach(function (action) {
       var button = document.createElement("button");
       button.type = "button";
@@ -100,18 +110,6 @@
         removeToast(options.id);
       }, options.timeout);
     }
-  }
-
-  function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, function (char) {
-      return {
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        "\"": "&quot;",
-        "'": "&#039;"
-      }[char];
-    });
   }
 
   function showInstallPrompt() {

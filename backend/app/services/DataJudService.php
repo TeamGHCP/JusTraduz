@@ -13,6 +13,7 @@ require_once dirname(__DIR__) . '/config/database.php';
 class DataJudService
 {
     private const DEFAULT_BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
+    private const DEFAULT_PUBLIC_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
     private PDO $pdo;
     private ?string $lastError = null;
@@ -63,7 +64,9 @@ class DataJudService
 
         $hit = is_array($search['hit'] ?? null) ? $search['hit'] : [];
         if (!$hit) {
-            return $this->failure('O DataJud não encontrou dados públicos para este número de processo nos tribunais consultados.');
+            $searched = implode(', ', array_map('strtoupper', (array) ($search['searched_tribunals'] ?? [])));
+            $suffix = $searched !== '' ? ' Tribunais consultados: ' . $searched . '.' : '';
+            return $this->failure('O DataJud não encontrou dados públicos para este número de processo. Ele pode estar em segredo de justiça, ainda não ter sido enviado ao DataJud ou o número pode estar incorreto.' . $suffix);
         }
 
         $process = $this->normalizeProcess($hit, $cnj, (string) $search['tribunal'], $cpf, $lgpdConsent);
@@ -110,10 +113,12 @@ class DataJudService
         }
 
         return [
-            'ok' => true,
+            'ok' => $errors === [],
             'tribunal' => $preferredTribunal,
             'hit' => [],
+            'searched_tribunals' => $tribunals,
             'errors' => $errors,
+            'message' => $errors !== [] ? implode(' | ', array_slice($errors, 0, 3)) : 'Nenhum resultado encontrado.',
         ];
     }
 
@@ -123,6 +128,11 @@ class DataJudService
             return [$preferredTribunal];
         }
 
+        return array_slice($this->branchTribunalsForCnj($cnj), 0, $this->maxFallbackTribunals());
+    }
+
+    private function branchTribunalsForCnj(string $cnj): array
+    {
         $branch = substr($cnj, 13, 1);
         return match ($branch) {
             '4' => array_map(static fn (int $region): string => 'trf' . $region, range(1, 6)),
@@ -150,9 +160,6 @@ class DataJudService
                     'match' => [
                         'numeroProcesso' => $cnj,
                     ],
-                ],
-                'sort' => [
-                    ['@timestamp' => ['order' => 'desc']],
                 ],
             ]
         );
@@ -286,7 +293,7 @@ class DataJudService
     private function headers(): array
     {
         $headers = ['Content-Type: application/json'];
-        $apiKey = $this->envValue('DATAJUD_API_KEY');
+        $apiKey = $this->envValue('DATAJUD_API_KEY') ?: self::DEFAULT_PUBLIC_API_KEY;
         if ($apiKey !== '') {
             $headers[] = 'Authorization: APIKey ' . $apiKey;
         }
@@ -300,7 +307,7 @@ class DataJudService
         usort($items, static fn (array $a, array $b): int => strcmp((string) ($b['dataHora'] ?? ''), (string) ($a['dataHora'] ?? '')));
 
         return array_map(function (array $movement): array {
-            $name = $this->namedValue($movement['movimentoNacional'] ?? null);
+            $name = $this->namedValue($movement['movimentoNacional'] ?? ($movement['nome'] ?? ''));
             $complements = [];
             foreach ((array) ($movement['complementosTabelados'] ?? []) as $complement) {
                 $value = $this->namedValue($complement);
@@ -648,7 +655,13 @@ class DataJudService
     private function requestTimeout(): int
     {
         $value = (int) $this->envValue('DATAJUD_TIMEOUT');
-        return $value > 0 ? min($value, 60) : 12;
+        return $value > 0 ? min($value, 60) : 25;
+    }
+
+    private function maxFallbackTribunals(): int
+    {
+        $value = (int) $this->envValue('DATAJUD_MAX_FALLBACK_TRIBUNALS');
+        return $value > 0 ? min($value, 5) : 3;
     }
 
     private function envValue(string $key): string

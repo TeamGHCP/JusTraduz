@@ -89,22 +89,56 @@ $internalRoutes = [
 
 // Register public API routes
 foreach ($publicApiRoutes as [$method, $path, $controller, $action]) {
-    $router->{strtolower($method)}($path, $controller, $action);
+    $router->{strtolower($method)}($path, $controller, $action, ['rate_limit' => ['profile' => 'public_api']]);
 }
 
 // Register webhook routes
 foreach ($webhookRoutes as [$method, $path, $controller, $action]) {
-    $router->{strtolower($method)}($path, $controller, $action);
+    $router->{strtolower($method)}($path, $controller, $action, ['rate_limit' => ['profile' => 'webhook']]);
 }
 
 // Register admin routes
 foreach ($adminRoutes as [$method, $path, $controller, $action]) {
-    $router->{strtolower($method)}($path, $controller, $action);
+    $router->{strtolower($method)}($path, $controller, $action, ['rate_limit' => ['profile' => 'admin']]);
 }
 
 // Register internal routes
 foreach ($internalRoutes as [$method, $path, $controller, $action]) {
-    $router->{strtolower($method)}($path, $controller, $action);
+    $router->{strtolower($method)}($path, $controller, $action, ['rate_limit' => route_rate_limit_profile($path)]);
+    $router->legacyRedirect('/api/v1' . $path, $path, [$method]);
 }
 
 $router->dispatch();
+
+function route_rate_limit_profile(string $path): array
+{
+    if (in_array($path, ['/auth/login', '/auth/admin-login'], true)) {
+        return ['profile' => 'auth'];
+    }
+
+    if ($path === '/auth/registrar') {
+        return ['profile' => 'register'];
+    }
+
+    if (in_array($path, ['/auth/reset-password', '/profile/password-code', '/profile/password-reset'], true)) {
+        return ['profile' => 'password_reset'];
+    }
+
+    if (str_starts_with($path, '/auth/google')) {
+        return ['profile' => 'oauth'];
+    }
+
+    if (str_starts_with($path, '/billing/')) {
+        return ['profile' => 'payment'];
+    }
+
+    if ($path === '/documents/upload' || $path === '/messages/send') {
+        return ['profile' => 'upload'];
+    }
+
+    if (str_starts_with($path, '/organization/invite')) {
+        return ['profile' => 'invite'];
+    }
+
+    return ['profile' => 'default'];
+}

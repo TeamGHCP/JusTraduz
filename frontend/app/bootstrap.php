@@ -9,6 +9,9 @@ security_headers(false);
 secure_session_start();
 
 require_once PROJECT_ROOT_PATH . '/backend/app/config/app.php';
+require_once PROJECT_ROOT_PATH . '/backend/app/support/autoload.php';
+ErrorHandler::register();
+
 require_once PROJECT_ROOT_PATH . '/backend/app/config/database.php';
 require_once PROJECT_ROOT_PATH . '/backend/app/services/PermissionService.php';
 

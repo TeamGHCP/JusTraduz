@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
   const calendarEl = document.getElementById("calendar");
   if (!calendarEl) return;
 
@@ -71,14 +71,6 @@
     return Number.isNaN(date.getTime()) ? "" : formatDateISO(date);
   }
 
-  function escapeHtml(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
   function monthLabel(y, m) {
     return new Date(y, m - 1, 1).toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
   }
@@ -135,7 +127,7 @@
     if (!daySlotsModal || !daySlotsTitle || !daySlotsContent) return;
 
     daySlotsTitle.textContent = `Horarios de ${formatDayLabel(dayDate)}`;
-    const rows = [];
+    daySlotsContent.replaceChildren();
 
     slots
       .slice()
@@ -143,35 +135,33 @@
       .forEach((slot) => {
         const canEdit = isProfessional && currentUserId === Number(slot.professional_id);
         const canBook = currentUserType === "cliente" && String(slot.status) === "livre";
-        rows.push(`
-          <div class="day-slot-row">
-            <div>
-              <div class="day-slot-time">${formatHour(slot.starts_at)} - ${formatHour(slot.ends_at)}</div>
-              <div class="day-slot-title">${escapeHtml(slot.titulo || "Horario de atendimento")}</div>
-              <div class="day-slot-meta">${escapeHtml(slot.professional_name || slot.profissional || "")} ${slot.status ? "| " + escapeHtml(slot.status) : ""}</div>
-            </div>
-            ${canBook ? `<button type="button" class="btn btn-primary btn-sm" data-scroll-slot="${slot.id}">Agendar</button>` : ""}
-            ${canEdit ? `<button type="button" class="btn btn-soft btn-sm" data-edit-slot="${slot.id}">Editar</button>` : ""}
-          </div>
-        `);
+        daySlotsContent.appendChild(daySlotRow({
+          time: `${formatHour(slot.starts_at)} - ${formatHour(slot.ends_at)}`,
+          title: slot.titulo || "Horario de atendimento",
+          meta: `${slot.professional_name || slot.profissional || ""}${slot.status ? " | " + slot.status : ""}`,
+          scrollSlot: canBook ? slot.id : null,
+          editSlot: canEdit ? slot.id : null,
+        }));
       });
 
     appointments
       .slice()
       .sort((a, b) => parseServerDate(a.starts_at) - parseServerDate(b.starts_at))
       .forEach((appointment) => {
-        rows.push(`
-          <div class="day-slot-row day-slot-row-appointment">
-            <div>
-              <div class="day-slot-time">${formatHour(appointment.starts_at)} - ${formatHour(appointment.ends_at)}</div>
-              <div class="day-slot-title">${escapeHtml(appointment.assunto || "Atendimento agendado")}</div>
-              <div class="day-slot-meta">${escapeHtml(appointment.client_name || appointment.professional_name || "")} | ${escapeHtml(appointment.status || "agendado")}</div>
-            </div>
-          </div>
-        `);
+        daySlotsContent.appendChild(daySlotRow({
+          time: `${formatHour(appointment.starts_at)} - ${formatHour(appointment.ends_at)}`,
+          title: appointment.assunto || "Atendimento agendado",
+          meta: `${appointment.client_name || appointment.professional_name || ""} | ${appointment.status || "agendado"}`,
+          appointment: true,
+        }));
       });
 
-    daySlotsContent.innerHTML = rows.length ? rows.join("") : '<p class="text-muted">Nenhum horário neste dia.</p>';
+    if (!daySlotsContent.children.length) {
+      const empty = document.createElement("p");
+      empty.className = "text-muted";
+      empty.textContent = "Nenhum horário neste dia.";
+      daySlotsContent.appendChild(empty);
+    }
     daySlotsContent.querySelectorAll("[data-scroll-slot]").forEach((button) => {
       button.addEventListener("click", () => {
         hideDayModal();
@@ -188,6 +178,48 @@
     daySlotsModal.style.display = "flex";
   }
 
+  function daySlotRow(options) {
+    const row = document.createElement("div");
+    row.className = options.appointment ? "day-slot-row day-slot-row-appointment" : "day-slot-row";
+
+    const content = document.createElement("div");
+    const time = document.createElement("div");
+    const title = document.createElement("div");
+    const meta = document.createElement("div");
+
+    time.className = "day-slot-time";
+    time.textContent = options.time || "--:--";
+    title.className = "day-slot-title";
+    title.textContent = options.title || "";
+    meta.className = "day-slot-meta";
+    meta.textContent = options.meta || "";
+
+    content.appendChild(time);
+    content.appendChild(title);
+    content.appendChild(meta);
+    row.appendChild(content);
+
+    if (options.scrollSlot) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn btn-primary btn-sm";
+      button.dataset.scrollSlot = String(options.scrollSlot);
+      button.textContent = "Agendar";
+      row.appendChild(button);
+    }
+
+    if (options.editSlot) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn btn-soft btn-sm";
+      button.dataset.editSlot = String(options.editSlot);
+      button.textContent = "Editar";
+      row.appendChild(button);
+    }
+
+    return row;
+  }
+
   function hideDayModal() {
     if (daySlotsModal) daySlotsModal.style.display = "none";
   }
@@ -199,7 +231,7 @@
     const daysInMonth = last.getDate();
     const table = document.createElement("table");
     table.className = "calendar-table";
-    table.innerHTML = "<thead><tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sab</th></tr></thead>";
+    table.appendChild(calendarHeader());
 
     const tbody = document.createElement("tbody");
     let row = document.createElement("tr");
@@ -271,17 +303,20 @@
     tbody.appendChild(row);
     table.appendChild(tbody);
 
-    calendarEl.innerHTML = "";
+    calendarEl.replaceChildren();
     const controls = document.createElement("div");
     controls.className = "calendar-controls";
-    controls.innerHTML = `
-      <button id="cal-prev" class="btn btn-outline btn-sm" type="button">&lt;</button>
-      <div class="calendar-month-summary">
-        <strong>${monthLabel(year, month)}</strong>
-        <span>${total} item(ns) de agenda no mes</span>
-      </div>
-      <button id="cal-next" class="btn btn-outline btn-sm" type="button">&gt;</button>
-    `;
+    controls.appendChild(calendarControlButton("cal-prev", "<"));
+    const summary = document.createElement("div");
+    summary.className = "calendar-month-summary";
+    const monthName = document.createElement("strong");
+    monthName.textContent = monthLabel(year, month);
+    const totalLabel = document.createElement("span");
+    totalLabel.textContent = `${total} item(ns) de agenda no mes`;
+    summary.appendChild(monthName);
+    summary.appendChild(totalLabel);
+    controls.appendChild(summary);
+    controls.appendChild(calendarControlButton("cal-next", ">"));
     calendarEl.appendChild(controls);
     calendarEl.appendChild(table);
 
@@ -304,6 +339,27 @@
       }
       render();
     });
+  }
+
+  function calendarHeader() {
+    const thead = document.createElement("thead");
+    const row = document.createElement("tr");
+    ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].forEach((label) => {
+      const th = document.createElement("th");
+      th.textContent = label;
+      row.appendChild(th);
+    });
+    thead.appendChild(row);
+    return thead;
+  }
+
+  function calendarControlButton(id, label) {
+    const button = document.createElement("button");
+    button.id = id;
+    button.className = "btn btn-outline btn-sm";
+    button.type = "button";
+    button.textContent = label;
+    return button;
   }
 
   async function render() {

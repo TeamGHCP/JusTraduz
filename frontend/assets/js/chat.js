@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     modal.hidden = true;
     document.body.classList.remove("attachment-modal-open");
-    preview.innerHTML = "";
+    preview.replaceChildren();
 
     if (lastFocused) {
       lastFocused.focus();
@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     lastFocused = trigger;
     title.textContent = name;
     download.href = `${url}&download=1`;
-    preview.innerHTML = "";
+    preview.replaceChildren();
 
     if (type === "image") {
       const image = document.createElement("img");

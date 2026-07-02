@@ -8,6 +8,13 @@
     { name: "Hipercard", slug: "hipercard", image: "assets/img/payment-flags/hipercard.svg", pattern: /^(38|60)/ },
   ];
 
+  function renderBrandImage(target, image, alt) {
+    var img = document.createElement("img");
+    img.src = image;
+    img.alt = alt;
+    target.replaceChildren(img);
+  }
+
   document.querySelectorAll("[data-payment-method-toggle]").forEach(function (toggle) {
     toggle.addEventListener("click", function () {
       var current = toggle.closest("[data-payment-method]");
@@ -47,11 +54,11 @@
         brand.setAttribute("aria-label", detected.name);
 
         if (!detected.slug) {
-          brand.innerHTML = '<img src="' + placeholderBrand + '" alt="Bandeira do cartão">';
+          renderBrandImage(brand, placeholderBrand, "Bandeira do cartao");
           return;
         }
 
-        brand.innerHTML = '<img src="' + detected.image + '" alt="' + detected.name + '">';
+        renderBrandImage(brand, detected.image, detected.name);
 
         brand.classList.add("is-detected", "is-" + detected.slug);
       });
@@ -72,12 +79,12 @@
       }
 
       navigator.clipboard.writeText(link).then(function () {
-        var original = button.innerHTML;
+        var original = button.textContent;
         button.textContent = button.dataset.copyLabel || "Copiado";
         button.classList.add("is-copied");
 
         window.setTimeout(function () {
-          button.innerHTML = original;
+          button.textContent = original;
           button.classList.remove("is-copied");
         }, 1800);
       });
@@ -137,7 +144,7 @@
       });
 
       document.querySelectorAll("[data-office-invite-hidden]").forEach(function (target) {
-        target.innerHTML = "";
+        target.replaceChildren();
         emails.forEach(function (email) {
           var hidden = document.createElement("input");
           hidden.type = "hidden";

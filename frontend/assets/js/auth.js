@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
   const frontendMarker = "/frontend/";
   const frontendIndex = window.location.pathname.indexOf(frontendMarker);
   const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";
@@ -75,7 +75,15 @@
 
     valueLabel.className = "jt-select-value";
     button.appendChild(valueLabel);
-    button.insertAdjacentHTML("beforeend", '<svg class="jt-select-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg>');
+    const chevron = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const chevronPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    chevron.setAttribute("class", "jt-select-chevron");
+    chevron.setAttribute("viewBox", "0 0 24 24");
+    chevron.setAttribute("aria-hidden", "true");
+    chevron.setAttribute("focusable", "false");
+    chevronPath.setAttribute("d", "m6 9 6 6 6-6");
+    chevron.appendChild(chevronPath);
+    button.appendChild(chevron);
 
     list.id = listId;
     list.className = "jt-select-list";

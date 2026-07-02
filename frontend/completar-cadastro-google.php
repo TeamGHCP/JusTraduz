@@ -25,7 +25,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=global-responsive-20260628-2">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
   <link rel="stylesheet" href="assets/css/auth-novo.css?v=custom-select-flow-8">
   <style>
     .auth-switch-page .auth-card .btn.btn-block {
@@ -142,7 +142,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
       }
     }
   </style>
-  <script src="assets/js/cookie-consent.js?v=2026.06.25-1"></script>
+  <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>
@@ -315,7 +315,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
 <script src="assets/js/auth.js?v=custom-select-flow-8"></script>
 <script src="assets/js/auth-novo.js?v=opening-skip-1"></script>
-<script src="assets/js/accessibility.js?v=2026.06.16-a11y-stack"></script>
-<script src="assets/js/vlibras-init.js?v=2026.06.25-1" defer></script>
+<script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
+<script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
 </body>
 </html>

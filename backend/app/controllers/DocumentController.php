@@ -14,6 +14,7 @@ require_once dirname(__DIR__) . '/services/SubscriptionService.php';
 require_once dirname(__DIR__) . '/services/UploadScannerService.php';
 require_once dirname(__DIR__) . '/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
+require_once dirname(__DIR__) . '/helpers/DownloadSecurity.php';
 
 class DocumentController extends BaseController
 {
@@ -288,17 +289,8 @@ class DocumentController extends BaseController
         }
 
         $mime = mime_content_type($absolutePath) ?: 'application/octet-stream';
-        $filename = $this->safeDownloadName((string) ($document['nome_arquivo'] ?? ('documento-' . $documentId)));
-        
-        $safeInlineMimes = [
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'image/gif',
-            'image/webp',
-        ];
-        $requestedDisposition = $this->request->get('download', '') === '1' ? 'attachment' : 'inline';
-        $disposition = in_array(strtolower($mime), $safeInlineMimes, true) ? $requestedDisposition : 'attachment';
+        $filename = \App\Helpers\DownloadSecurity::safeFilename((string) ($document['nome_arquivo'] ?? ('documento-' . $documentId)), 'documento');
+        $disposition = \App\Helpers\DownloadSecurity::disposition($absolutePath, $mime, $this->request->get('download', '') === '1');
 
         header('X-Content-Type-Options: nosniff');
         header('Cache-Control: private, no-store, max-age=0');
@@ -513,12 +505,6 @@ class DocumentController extends BaseController
         $userId = (int) ($_SESSION['id'] ?? 0);
 
         return PermissionService::canDeleteDocument($type, $userId, $document);
-    }
-
-    private function safeDownloadName(string $filename): string
-    {
-        $filename = trim(preg_replace('/[^\w.\- ]+/u', '_', $filename) ?? '');
-        return $filename !== '' ? $filename : 'documento';
     }
 
     private function isAllowedUploadMime(string $extension, string $mime): bool

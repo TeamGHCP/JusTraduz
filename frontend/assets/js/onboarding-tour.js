@@ -132,6 +132,68 @@
     setSidebarOpen(shell, isSidebarStep);
   }
 
+  function appendText(parent, tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    node.textContent = text;
+    parent.appendChild(node);
+    return node;
+  }
+
+  function tourButton(className, text, dataAttribute) {
+    var button = document.createElement('button');
+    button.className = className;
+    button.type = 'button';
+    button.textContent = text;
+    if (dataAttribute) button.setAttribute(dataAttribute, '');
+    return button;
+  }
+
+  function iconSvg(viewBox, paths) {
+    var node = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    node.setAttribute('viewBox', viewBox);
+    node.setAttribute('aria-hidden', 'true');
+    paths.forEach(function (pathData) {
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathData);
+      node.appendChild(path);
+    });
+    return node;
+  }
+
+  function buildPopoverContent(element) {
+    var fragment = document.createDocumentFragment();
+    var title = appendText(fragment, 'h2', '', element.dataset.tourTitle || 'Conheca esta area');
+    var description = appendText(fragment, 'p', '', element.dataset.tourDescription || '');
+    var count = appendText(fragment, 'span', 'onboarding-count', 'Passo ' + (state.index + 1) + ' de ' + state.steps.length);
+    var progress = document.createElement('div');
+    var progressBar = document.createElement('span');
+    var actions = document.createElement('div');
+
+    title.id = 'onboarding-step-title';
+    description.id = 'onboarding-step-description';
+    progress.className = 'onboarding-progress';
+    progressBar.style.width = (((state.index + 1) / state.steps.length) * 100) + '%';
+    progress.appendChild(progressBar);
+    actions.className = 'onboarding-actions';
+    actions.appendChild(tourButton('btn btn-outline btn-sm', 'Pular', 'data-tour-skip'));
+    if (state.index) {
+      actions.appendChild(tourButton('btn btn-soft btn-sm', 'Voltar', 'data-tour-back'));
+    }
+    actions.appendChild(tourButton(
+      'btn btn-primary btn-sm',
+      state.index === state.steps.length - 1 ? 'Finalizar' : 'Proximo',
+      'data-tour-next'
+    ));
+
+    fragment.appendChild(title);
+    fragment.appendChild(description);
+    fragment.appendChild(count);
+    fragment.appendChild(progress);
+    fragment.appendChild(actions);
+    return fragment;
+  }
+
   function isMostlyVisible(element) {
     var rect = element.getBoundingClientRect();
     var margin = 28;
@@ -174,16 +236,7 @@
     });
     element.classList.add('onboarding-highlight');
     scrollStepIntoView(element);
-    popover.innerHTML =
-      '<h2 id="onboarding-step-title">' + escapeHtml(element.dataset.tourTitle || 'Conheça esta área') + '</h2>' +
-      '<p id="onboarding-step-description">' + escapeHtml(element.dataset.tourDescription || '') + '</p>' +
-      '<span class="onboarding-count">Passo ' + (state.index + 1) + ' de ' + state.steps.length + '</span>' +
-      '<div class="onboarding-progress"><span style="width:' + (((state.index + 1) / state.steps.length) * 100) + '%"></span></div>' +
-      '<div class="onboarding-actions">' +
-      '<button class="btn btn-outline btn-sm" type="button" data-tour-skip>Pular</button>' +
-      (state.index ? '<button class="btn btn-soft btn-sm" type="button" data-tour-back>Voltar</button>' : '') +
-      '<button class="btn btn-primary btn-sm" type="button" data-tour-next>' +
-      (state.index === state.steps.length - 1 ? 'Finalizar' : 'Próximo') + '</button></div>';
+    popover.replaceChildren(buildPopoverContent(element));
     enhancePopover();
     bindPopover();
     schedulePosition();
@@ -195,12 +248,11 @@
     var progress = popover.querySelector('.onboarding-progress');
 
     if (title && !popover.querySelector('.onboarding-popover-head')) {
-      title.insertAdjacentHTML('beforebegin',
-        '<div class="onboarding-popover-head">' +
-        '<span class="onboarding-step-kicker">' + escapeHtml(profileLabel()) + ' tour</span>' +
-        '<span class="onboarding-count">Passo ' + (state.index + 1) + ' de ' + state.steps.length + '</span>' +
-        '</div>'
-      );
+      var head = document.createElement('div');
+      head.className = 'onboarding-popover-head';
+      appendText(head, 'span', 'onboarding-step-kicker', profileLabel() + ' tour');
+      appendText(head, 'span', 'onboarding-count', 'Passo ' + (state.index + 1) + ' de ' + state.steps.length);
+      title.parentNode.insertBefore(head, title);
     }
 
     Array.prototype.slice.call(popover.children).forEach(function (node) {
@@ -209,15 +261,21 @@
 
     if (progress) {
       progress.setAttribute('aria-label', 'Progresso do tour');
-      progress.insertAdjacentHTML('afterend', '<div class="onboarding-step-dots" aria-hidden="true">' + progressDots() + '</div>');
+      progress.parentNode.insertBefore(progressDots(), progress.nextSibling);
     }
   }
 
   function progressDots() {
-    return state.steps.map(function (_, index) {
-      var className = index === state.index ? ' is-active' : index < state.index ? ' is-complete' : '';
-      return '<span class="' + className + '"></span>';
-    }).join('');
+    var dots = document.createElement('div');
+    dots.className = 'onboarding-step-dots';
+    dots.setAttribute('aria-hidden', 'true');
+    state.steps.forEach(function (_, index) {
+      var dot = document.createElement('span');
+      if (index === state.index) dot.classList.add('is-active');
+      if (index < state.index) dot.classList.add('is-complete');
+      dots.appendChild(dot);
+    });
+    return dots;
   }
 
   function bindPopover() {
@@ -267,28 +325,12 @@
     popover.style.visibility = 'visible';
   }
 
-  function confirmSkip() {
-    var modal = document.createElement('div');
-    modal.className = 'onboarding-skip-dialog';
-    modal.innerHTML = '<section class="onboarding-skip-card" role="alertdialog" aria-modal="true">' +
-      '<h2>Quer ver este tour depois?</h2><p>Escolha como o JusTraduz deve lembrar sua preferência.</p>' +
-      '<p class="onboarding-save-message" data-skip-message hidden></p>' +
-      '<div class="onboarding-actions"><button class="btn btn-outline" data-skip-cancel>Continuar tour</button>' +
-      '<button class="btn btn-soft" data-skip-later>Sim, mostrar depois</button>' +
-      '<button class="btn btn-primary" data-skip-never>Não mostrar novamente</button></div></section>';
-    document.body.appendChild(modal);
-    modal.querySelector('[data-skip-cancel]').addEventListener('click', function () { modal.remove(); });
-    modal.querySelector('[data-skip-later]').addEventListener('click', function () { skip('remind_later', modal); });
-    modal.querySelector('[data-skip-never]').addEventListener('click', function () { skip('dont_show_again', modal); });
-    modal.querySelector('[data-skip-cancel]').focus();
-  }
-
   function skip(mode, modal) {
     var buttons = modal.querySelectorAll('button');
     var message = modal.querySelector('[data-skip-message]');
     buttons.forEach(function (button) { button.disabled = true; });
     message.hidden = false;
-    message.textContent = 'Salvando sua preferência...';
+    message.textContent = 'Salvando sua preferÃªncia...';
 
     request(config.skipUrl, payload({ skip_mode: mode, manual: state.manual ? '1' : '0' }))
       .then(function () {
@@ -299,32 +341,116 @@
         close();
       })
       .catch(function (error) {
-        message.textContent = error.message || 'Não foi possível salvar. Tente novamente.';
+        message.textContent = error.message || 'NÃ£o foi possÃ­vel salvar. Tente novamente.';
         buttons.forEach(function (button) { button.disabled = false; });
       });
+  }
+
+  function buildSkipOption(className, iconPaths, title, description, arrow, dataAttribute) {
+    var button = document.createElement('button');
+    var icon = document.createElement('span');
+    var copy = document.createElement('span');
+    var arrowNode = document.createElement('span');
+
+    button.className = 'onboarding-skip-option ' + className;
+    button.type = 'button';
+    button.setAttribute(dataAttribute, '');
+    icon.className = 'onboarding-option-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.appendChild(iconSvg('0 0 24 24', iconPaths));
+    appendText(copy, 'strong', '', title);
+    appendText(copy, 'small', '', description);
+    arrowNode.className = 'onboarding-option-arrow';
+    arrowNode.setAttribute('aria-hidden', 'true');
+    arrowNode.textContent = arrow;
+
+    button.appendChild(icon);
+    button.appendChild(copy);
+    button.appendChild(arrowNode);
+    return button;
+  }
+
+  function buildSkipDialog() {
+    var card = document.createElement('section');
+    var head = document.createElement('div');
+    var icon = document.createElement('span');
+    var copy = document.createElement('div');
+    var message = document.createElement('p');
+    var options = document.createElement('div');
+    var continueButton = document.createElement('button');
+
+    card.className = 'onboarding-skip-card';
+    card.setAttribute('role', 'alertdialog');
+    card.setAttribute('aria-modal', 'true');
+    card.setAttribute('aria-labelledby', 'onboarding-skip-title');
+    head.className = 'onboarding-skip-head';
+    icon.className = 'onboarding-skip-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.appendChild(iconSvg('0 0 24 24', [
+      'M12 3.25a8.75 8.75 0 0 0-7.62 13.05l-1.13 4.45 4.45-1.13A8.75 8.75 0 1 0 12 3.25Z',
+      'M9.35 9.45a2.75 2.75 0 1 1 4.85 1.78c-.95.82-1.7 1.3-1.7 2.77',
+      'M12.5 17.15h.01'
+    ]));
+    appendText(copy, 'span', 'onboarding-skip-eyebrow', 'Preferencia do tour');
+    var title = appendText(copy, 'h2', '', 'Quer ver este tour depois?');
+    title.id = 'onboarding-skip-title';
+    appendText(copy, 'p', '', 'Escolha uma opcao. Voce podera abrir o tour novamente pela sidebar.');
+    head.appendChild(icon);
+    head.appendChild(copy);
+
+    message.className = 'onboarding-save-message';
+    message.setAttribute('data-skip-message', '');
+    message.hidden = true;
+
+    options.className = 'onboarding-skip-options';
+    options.appendChild(buildSkipOption(
+      'is-later',
+      ['M12 8v5l3 2'],
+      'Sim, mostrar depois',
+      'O tour aparecera novamente no proximo acesso.',
+      '>',
+      'data-skip-later'
+    ));
+    options.firstChild.querySelector('svg').appendChild((function () {
+      var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', '12');
+      circle.setAttribute('cy', '12');
+      circle.setAttribute('r', '9');
+      return circle;
+    }()));
+    options.appendChild(buildSkipOption(
+      'is-never',
+      ['m8.5 8.5 7 7'],
+      'Nao mostrar novamente',
+      'O tour ficara oculto ate voce inicia-lo manualmente.',
+      '>',
+      'data-skip-never'
+    ));
+    options.lastChild.querySelector('svg').insertBefore((function () {
+      var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', '12');
+      circle.setAttribute('cy', '12');
+      circle.setAttribute('r', '9');
+      return circle;
+    }()), options.lastChild.querySelector('svg').firstChild);
+
+    continueButton.className = 'onboarding-skip-continue';
+    continueButton.type = 'button';
+    continueButton.setAttribute('data-skip-cancel', '');
+    continueButton.appendChild(iconSvg('0 0 24 24', ['m9 18 6-6-6-6']));
+    continueButton.appendChild(document.createTextNode('Continuar tour'));
+
+    card.appendChild(head);
+    card.appendChild(message);
+    card.appendChild(options);
+    card.appendChild(continueButton);
+    return card;
   }
 
   function confirmSkipModern() {
     var modal = document.createElement('div');
     modal.className = 'onboarding-skip-dialog';
-    modal.innerHTML = '<section class="onboarding-skip-card" role="alertdialog" aria-modal="true" aria-labelledby="onboarding-skip-title">' +
-      '<div class="onboarding-skip-head">' +
-      '<span class="onboarding-skip-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.25a8.75 8.75 0 0 0-7.62 13.05l-1.13 4.45 4.45-1.13A8.75 8.75 0 1 0 12 3.25Z"></path><path d="M9.35 9.45a2.75 2.75 0 1 1 4.85 1.78c-.95.82-1.7 1.3-1.7 2.77"></path><path d="M12.5 17.15h.01"></path></svg></span>' +
-      '<div><span class="onboarding-skip-eyebrow">Preferência do tour</span>' +
-      '<h2 id="onboarding-skip-title">Quer ver este tour depois?</h2>' +
-      '<p>Escolha uma opção. Você poderá abrir o tour novamente pela sidebar.</p></div></div>' +
-      '<p class="onboarding-save-message" data-skip-message hidden></p>' +
-      '<div class="onboarding-skip-options">' +
-      '<button class="onboarding-skip-option is-later" type="button" data-skip-later>' +
-      '<span class="onboarding-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8v5l3 2"></path><circle cx="12" cy="12" r="9"></circle></svg></span>' +
-      '<span><strong>Sim, mostrar depois</strong><small>O tour aparecerá novamente no próximo acesso.</small></span>' +
-      '<span class="onboarding-option-arrow" aria-hidden="true">›</span></button>' +
-      '<button class="onboarding-skip-option is-never" type="button" data-skip-never>' +
-      '<span class="onboarding-option-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="m8.5 8.5 7 7"></path></svg></span>' +
-      '<span><strong>Não mostrar novamente</strong><small>O tour ficará oculto até você iniciá-lo manualmente.</small></span>' +
-      '<span class="onboarding-option-arrow" aria-hidden="true">›</span></button></div>' +
-      '<button class="onboarding-skip-continue" type="button" data-skip-cancel>' +
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>Continuar tour</button></section>';
+    modal.appendChild(buildSkipDialog());
     document.body.appendChild(modal);
     modal.querySelector('[data-skip-cancel]').addEventListener('click', function () { modal.remove(); });
     modal.querySelector('[data-skip-later]').addEventListener('click', function () { skip('remind_later', modal); });
@@ -345,12 +471,6 @@
     if (previousFocus && previousFocus.focus) previousFocus.focus();
   }
 
-  function escapeHtml(value) {
-    var node = document.createElement('div');
-    node.textContent = String(value || '');
-    return node.innerHTML;
-  }
-
   function initReset() {
     document.querySelectorAll('[data-tour-reset]').forEach(function (button) {
       button.addEventListener('click', function () {
@@ -360,10 +480,10 @@
             sessionStorage.removeItem(storageKey());
           } catch (error) {}
           var message = document.querySelector('[data-tour-reset-message]');
-          if (message) { message.hidden = false; message.textContent = 'Tour resetado. Ele aparecerá no próximo acesso à dashboard.'; }
+          if (message) { message.hidden = false; message.textContent = 'Tour resetado. Ele aparecerÃ¡ no prÃ³ximo acesso Ã  dashboard.'; }
         }).catch(function () {
           var message = document.querySelector('[data-tour-reset-message]');
-          if (message) { message.hidden = false; message.textContent = 'Não foi possível resetar o tour agora.'; }
+          if (message) { message.hidden = false; message.textContent = 'NÃ£o foi possÃ­vel resetar o tour agora.'; }
         }).finally(function () { button.disabled = false; });
       });
     });
@@ -407,3 +527,5 @@
     }
   });
 }());
+
+

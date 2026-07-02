@@ -312,7 +312,9 @@ CREATE TABLE IF NOT EXISTS messages (
     attachment_size INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_messages_case_id (case_id),
+    INDEX idx_messages_sender_id (sender_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- tarefas
@@ -323,7 +325,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     descricao TEXT,
     status ENUM('pendente', 'em_andamento', 'concluida') DEFAULT 'pendente',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+    FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
+    INDEX idx_tasks_case_id (case_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 -- agenda de profissionais
@@ -529,7 +532,8 @@ INSERT IGNORE INTO schema_migrations (version) VALUES
     ('2026_06_26_max_plans'),
     ('2026_06_26_office_invites'),
     ('2026_06_26_permissions_privacy_schema'),
-    ('2026_06_27_remove_intern_profile');
+    ('2026_06_27_remove_intern_profile'),
+    ('20260701_0001_create_messages_and_tasks_indexes.sql');
 
 SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;
 

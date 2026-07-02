@@ -77,7 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function handleSubmit(form, pendingMessage, onSuccess) {
     const submitButton = form.querySelector('[type="submit"]');
-    const originalText = submitButton?.innerHTML || '';
+    const originalNodes = submitButton
+      ? Array.from(submitButton.childNodes).map((node) => node.cloneNode(true))
+      : [];
 
     if (submitButton) submitButton.disabled = true;
     showMessage(pendingMessage, 'info');
@@ -92,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
-        submitButton.innerHTML = originalText;
+        submitButton.replaceChildren(...originalNodes.map((node) => node.cloneNode(true)));
       }
     }
   }

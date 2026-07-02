@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justraduz-pwa-2026-06-28-php-migration-v1";
+const CACHE_VERSION = "justraduz-pwa-2026-07-02-vlibras-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "offline.html";
 const PUBLIC_PAGE_FALLBACKS = new Set([

@@ -21,7 +21,7 @@ assertTrue(database_table_exists($pdo, 'rate_limits'), 'Tabela rate_limits deve 
 $stmt = $pdo->query("SELECT * FROM rate_limits");
 $rows = $stmt->fetchAll();
 assertEquals(1, count($rows), 'Deve haver exatamente 1 registro de rate limit.');
-assertEquals('rl:' . md5('192.168.1.50:/some/test/route'), $rows[0]['key'], 'Chave do rate limit deve corresponder ao md5.');
+assertEquals('rl:' . md5('ip:192.168.1.50:/some/test/route:100:60'), $rows[0]['key'], 'Chave do rate limit deve corresponder ao md5.');
 assertEquals(1, (int)$rows[0]['hits'], 'Contador de hits deve iniciar em 1.');
 
 // Increment hit

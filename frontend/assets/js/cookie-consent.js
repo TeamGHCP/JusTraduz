@@ -152,7 +152,7 @@
       ]);
     }
 
-    if (!allowed("accessibility")) {
+    if (hasDecision() && !allowed("accessibility")) {
       removeStorageKeys(["justraduz_accessibility_v1"]);
       cleanupVlibras();
     }
@@ -234,12 +234,46 @@
   }
 
   function makeIcon() {
-    return [
-      "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\" focusable=\"false\">",
-      "<path d=\"M12 3 5 6v5c0 4.7 3 8.5 7 10 4-1.5 7-5.3 7-10V6l-7-3Z\"></path>",
-      "<path d=\"m9 12 2 2 4-5\"></path>",
-      "</svg>"
-    ].join("");
+    var icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    var shield = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var check = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    icon.setAttribute("viewBox", "0 0 24 24");
+    icon.setAttribute("aria-hidden", "true");
+    icon.setAttribute("focusable", "false");
+    shield.setAttribute("d", "M12 3 5 6v5c0 4.7 3 8.5 7 10 4-1.5 7-5.3 7-10V6l-7-3Z");
+    check.setAttribute("d", "m9 12 2 2 4-5");
+    icon.appendChild(shield);
+    icon.appendChild(check);
+    return icon;
+  }
+
+  function closeIcon() {
+    var icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("viewBox", "0 0 24 24");
+    icon.setAttribute("aria-hidden", "true");
+    ["M18 6 6 18", "m6 6 12 12"].forEach(function (pathData) {
+      var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", pathData);
+      icon.appendChild(path);
+    });
+    return icon;
+  }
+
+  function cookieButton(className, text, dataAttribute) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = className;
+    button.textContent = text;
+    button.setAttribute(dataAttribute, "");
+    return button;
+  }
+
+  function appendText(parent, tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    node.textContent = text;
+    parent.appendChild(node);
+    return node;
   }
 
   function buildBanner() {
@@ -248,72 +282,111 @@
     banner.setAttribute("role", "dialog");
     banner.setAttribute("aria-modal", "false");
     banner.setAttribute("aria-labelledby", "cookie-banner-title");
-    banner.innerHTML = [
-      "<div class=\"cookie-banner-icon\">", makeIcon(), "</div>",
-      "<div class=\"cookie-banner-copy\">",
-      "<span class=\"cookie-kicker\">Privacidade JusTraduz</span>",
-      "<h2 id=\"cookie-banner-title\">Controle seus cookies</h2>",
-      "<p>Usamos cookies essenciais para segurança e login. Você escolhe se quer salvar preferencias, carregar recursos externos de acessibilidade e liberar medicao de uso.</p>",
-      "</div>",
-      "<div class=\"cookie-banner-actions\">",
-      "<button type=\"button\" class=\"cookie-btn cookie-btn-ghost\" data-cookie-reject>Recusar opcionais</button>",
-      "<button type=\"button\" class=\"cookie-btn cookie-btn-outline\" data-cookie-custom>Personalizar</button>",
-      "<button type=\"button\" class=\"cookie-btn cookie-btn-primary\" data-cookie-accept>Aceitar todos</button>",
-      "</div>"
-    ].join("");
+
+    var icon = document.createElement("div");
+    icon.className = "cookie-banner-icon";
+    icon.appendChild(makeIcon());
+
+    var copy = document.createElement("div");
+    copy.className = "cookie-banner-copy";
+    appendText(copy, "span", "cookie-kicker", "Privacidade JusTraduz");
+    var title = appendText(copy, "h2", "", "Controle seus cookies");
+    title.id = "cookie-banner-title";
+    appendText(copy, "p", "", "Usamos cookies essenciais para seguranca e login. Voce escolhe se quer salvar preferencias, carregar recursos externos de acessibilidade e liberar medicao de uso.");
+
+    var actions = document.createElement("div");
+    actions.className = "cookie-banner-actions";
+    actions.appendChild(cookieButton("cookie-btn cookie-btn-ghost", "Recusar opcionais", "data-cookie-reject"));
+    actions.appendChild(cookieButton("cookie-btn cookie-btn-outline", "Personalizar", "data-cookie-custom"));
+    actions.appendChild(cookieButton("cookie-btn cookie-btn-primary", "Aceitar todos", "data-cookie-accept"));
+
+    banner.appendChild(icon);
+    banner.appendChild(copy);
+    banner.appendChild(actions);
     document.body.appendChild(banner);
     return banner;
   }
 
   function buildToggle(category, title, description, locked) {
-    var disabled = locked ? " disabled checked" : "";
-    var checked = !locked && allowed(category) ? " checked" : "";
     var status = locked ? "Sempre ativo" : "Opcional";
+    var label = document.createElement("label");
+    var copy = document.createElement("span");
+    var wrap = document.createElement("span");
+    var input = document.createElement("input");
+    var switchNode = document.createElement("span");
 
-    return [
-      "<label class=\"cookie-option\">",
-      "<span class=\"cookie-option-copy\">",
-      "<strong>", title, "</strong>",
-      "<small>", description, "</small>",
-      "</span>",
-      "<span class=\"cookie-switch-wrap\">",
-      "<span class=\"cookie-option-status\">", status, "</span>",
-      "<input type=\"checkbox\" data-cookie-toggle=\"", category, "\"", disabled, checked, ">",
-      "<span class=\"cookie-switch\" aria-hidden=\"true\"></span>",
-      "</span>",
-      "</label>"
-    ].join("");
+    label.className = "cookie-option";
+    copy.className = "cookie-option-copy";
+    appendText(copy, "strong", "", title);
+    appendText(copy, "small", "", description);
+
+    wrap.className = "cookie-switch-wrap";
+    appendText(wrap, "span", "cookie-option-status", status);
+    input.type = "checkbox";
+    input.setAttribute("data-cookie-toggle", category);
+    input.disabled = locked;
+    input.checked = locked || allowed(category);
+    switchNode.className = "cookie-switch";
+    switchNode.setAttribute("aria-hidden", "true");
+    wrap.appendChild(input);
+    wrap.appendChild(switchNode);
+
+    label.appendChild(copy);
+    label.appendChild(wrap);
+    return label;
   }
 
   function buildModal() {
     var modal = document.createElement("div");
+    var backdrop = document.createElement("div");
+    var card = document.createElement("section");
+    var header = document.createElement("header");
+    var cardTitle = document.createElement("div");
+    var cardIcon = document.createElement("span");
+    var titleCopy = document.createElement("div");
+    var close = document.createElement("button");
+    var body = document.createElement("div");
+    var footer = document.createElement("footer");
+
     modal.className = "cookie-modal";
     modal.hidden = true;
-    modal.innerHTML = [
-      "<div class=\"cookie-modal-backdrop\" data-cookie-close></div>",
-      "<section class=\"cookie-card\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"cookie-modal-title\">",
-      "<header class=\"cookie-card-head\">",
-      "<div class=\"cookie-card-title\">",
-      "<span class=\"cookie-card-icon\">", makeIcon(), "</span>",
-      "<div><span class=\"cookie-kicker\">Central de preferencias</span><h2 id=\"cookie-modal-title\">Gerenciar cookies</h2></div>",
-      "</div>",
-      "<button type=\"button\" class=\"cookie-icon-btn\" data-cookie-close aria-label=\"Fechar preferencias\">",
-      "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M18 6 6 18\"></path><path d=\"m6 6 12 12\"></path></svg>",
-      "</button>",
-      "</header>",
-      "<div class=\"cookie-card-body\">",
-      buildToggle("essential", "Essenciais", "Mantém sessão, segurança, CSRF, login e funcionamento básico do site.", true),
-      buildToggle("preferences", "Preferencias", "Salva tema, menu lateral, instalacao do app e ajustes locais de interface.", false),
-      buildToggle("accessibility", "Acessibilidade externa", "Permite carregar VLibras e manter preferencias locais de acessibilidade.", false),
-      buildToggle("analytics", "Medição de uso", "Reserva consentimento para ferramentas de métricas. Hoje o site não carrega analytics sem sua autorização.", false),
-      "</div>",
-      "<footer class=\"cookie-card-actions\">",
-      "<button type=\"button\" class=\"cookie-btn cookie-btn-ghost\" data-cookie-reject>Recusar opcionais</button>",
-      "<button type=\"button\" class=\"cookie-btn cookie-btn-outline\" data-cookie-save>Salvar escolhas</button>",
-      "<button type=\"button\" class=\"cookie-btn cookie-btn-primary\" data-cookie-accept>Aceitar todos</button>",
-      "</footer>",
-      "</section>"
-    ].join("");
+    backdrop.className = "cookie-modal-backdrop";
+    backdrop.setAttribute("data-cookie-close", "");
+    card.className = "cookie-card";
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.setAttribute("aria-labelledby", "cookie-modal-title");
+    header.className = "cookie-card-head";
+    cardTitle.className = "cookie-card-title";
+    cardIcon.className = "cookie-card-icon";
+    cardIcon.appendChild(makeIcon());
+    appendText(titleCopy, "span", "cookie-kicker", "Central de preferencias");
+    var title = appendText(titleCopy, "h2", "", "Gerenciar cookies");
+    title.id = "cookie-modal-title";
+    close.type = "button";
+    close.className = "cookie-icon-btn";
+    close.setAttribute("data-cookie-close", "");
+    close.setAttribute("aria-label", "Fechar preferencias");
+    close.appendChild(closeIcon());
+    body.className = "cookie-card-body";
+    body.appendChild(buildToggle("essential", "Essenciais", "Mantem sessao, seguranca, CSRF, login e funcionamento basico do site.", true));
+    body.appendChild(buildToggle("preferences", "Preferencias", "Salva tema, menu lateral, instalacao do app e ajustes locais de interface.", false));
+    body.appendChild(buildToggle("accessibility", "Acessibilidade externa", "Permite carregar VLibras e manter preferencias locais de acessibilidade.", false));
+    body.appendChild(buildToggle("analytics", "Medicao de uso", "Reserva consentimento para ferramentas de metricas. Hoje o site nao carrega analytics sem sua autorizacao.", false));
+    footer.className = "cookie-card-actions";
+    footer.appendChild(cookieButton("cookie-btn cookie-btn-ghost", "Recusar opcionais", "data-cookie-reject"));
+    footer.appendChild(cookieButton("cookie-btn cookie-btn-outline", "Salvar escolhas", "data-cookie-save"));
+    footer.appendChild(cookieButton("cookie-btn cookie-btn-primary", "Aceitar todos", "data-cookie-accept"));
+
+    cardTitle.appendChild(cardIcon);
+    cardTitle.appendChild(titleCopy);
+    header.appendChild(cardTitle);
+    header.appendChild(close);
+    card.appendChild(header);
+    card.appendChild(body);
+    card.appendChild(footer);
+    modal.appendChild(backdrop);
+    modal.appendChild(card);
     document.body.appendChild(modal);
     return modal;
   }
@@ -321,6 +394,7 @@
   function buildManageButton() {
     var sidebarFooter = document.querySelector(".app-shell .sidebar-footer");
     var button = document.createElement("button");
+    var label = document.createElement("span");
     button.type = "button";
     button.className = "cookie-manage-button";
     if (sidebarFooter) {
@@ -328,7 +402,9 @@
     }
     button.setAttribute("aria-label", "Gerenciar cookies");
     button.title = "Gerenciar cookies";
-    button.innerHTML = makeIcon() + "<span>Cookies</span>";
+    label.textContent = "Cookies";
+    button.appendChild(makeIcon());
+    button.appendChild(label);
     button.addEventListener("click", openPreferences);
 
     if (sidebarFooter) {
@@ -339,7 +415,6 @@
 
     return button;
   }
-
   function bindControls(root) {
     root.querySelectorAll("[data-cookie-accept]").forEach(function (button) {
       button.addEventListener("click", acceptAll);
@@ -412,3 +487,4 @@
     initUi();
   }
 }());
+

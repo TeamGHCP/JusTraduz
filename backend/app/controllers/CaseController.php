@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/services/NotificationService.php';
 require_once dirname(__DIR__) . '/services/PermissionService.php';
 require_once dirname(__DIR__) . '/services/StorageService.php';
 require_once dirname(__DIR__) . '/services/UploadScannerService.php';
+require_once dirname(__DIR__) . '/helpers/DownloadSecurity.php';
 
 class CaseController extends BaseController
 {
@@ -331,17 +332,8 @@ class CaseController extends BaseController
         }
 
         $mime = (string) ($message['attachment_mime'] ?: (mime_content_type($absolutePath) ?: 'application/octet-stream'));
-        $filename = $this->safeAttachmentName((string) ($message['attachment_original_name'] ?? ('anexo-' . $messageId)));
-        
-        $safeInlineMimes = [
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'image/gif',
-            'image/webp',
-        ];
-        $requestedDisposition = $this->request->get('download', '') === '1' ? 'attachment' : 'inline';
-        $disposition = in_array(strtolower($mime), $safeInlineMimes, true) ? $requestedDisposition : 'attachment';
+        $filename = \App\Helpers\DownloadSecurity::safeFilename((string) ($message['attachment_original_name'] ?? ('anexo-' . $messageId)), 'anexo');
+        $disposition = \App\Helpers\DownloadSecurity::disposition($absolutePath, $mime, $this->request->get('download', '') === '1');
 
         header('X-Content-Type-Options: nosniff');
         header('Cache-Control: private, no-store, max-age=0');
