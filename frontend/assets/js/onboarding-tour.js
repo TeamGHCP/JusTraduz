@@ -330,7 +330,7 @@
     var message = modal.querySelector('[data-skip-message]');
     buttons.forEach(function (button) { button.disabled = true; });
     message.hidden = false;
-    message.textContent = 'Salvando sua preferÃªncia...';
+    message.textContent = 'Salvando sua preferência...';
 
     request(config.skipUrl, payload({ skip_mode: mode, manual: state.manual ? '1' : '0' }))
       .then(function () {
@@ -341,7 +341,7 @@
         close();
       })
       .catch(function (error) {
-        message.textContent = error.message || 'NÃ£o foi possÃ­vel salvar. Tente novamente.';
+        message.textContent = error.message || 'Não foi possível salvar. Tente novamente.';
         buttons.forEach(function (button) { button.disabled = false; });
       });
   }
@@ -480,10 +480,10 @@
             sessionStorage.removeItem(storageKey());
           } catch (error) {}
           var message = document.querySelector('[data-tour-reset-message]');
-          if (message) { message.hidden = false; message.textContent = 'Tour resetado. Ele aparecerÃ¡ no prÃ³ximo acesso Ã  dashboard.'; }
+          if (message) { message.hidden = false; message.textContent = 'Tour resetado. Ele aparecerá no próximo acesso à dashboard.'; }
         }).catch(function () {
           var message = document.querySelector('[data-tour-reset-message]');
-          if (message) { message.hidden = false; message.textContent = 'NÃ£o foi possÃ­vel resetar o tour agora.'; }
+          if (message) { message.hidden = false; message.textContent = 'Não foi possível resetar o tour agora.'; }
         }).finally(function () { button.disabled = false; });
       });
     });

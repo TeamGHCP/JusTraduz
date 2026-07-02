@@ -56,7 +56,7 @@ namespace App\Services {
             $unsafe = ['php', 'phtml', 'phar', 'cgi', 'exe', 'bat', 'cmd', 'sh', 'js', 'html', 'htm', 'svg'];
             foreach ($parts as $part) {
                 if (in_array($part, $unsafe, true)) {
-                    $this->lastError = 'Arquivo bloqueado por dupla extensÃ£o perigosa.';
+                    $this->lastError = 'Arquivo bloqueado por dupla extensão perigosa.';
                     return true;
                 }
             }
@@ -67,7 +67,7 @@ namespace App\Services {
         private function matchesExpectedMagicBytes(string $sample, string $mime): bool
         {
             if ($sample === '') {
-                $this->lastError = 'Arquivo vazio ou ilegÃ­vel.';
+                $this->lastError = 'Arquivo vazio ou ilegível.';
                 return false;
             }
 
@@ -84,7 +84,7 @@ namespace App\Services {
             };
 
             if (!$ok) {
-                $this->lastError = 'Assinatura real do arquivo nÃ£o corresponde ao tipo declarado.';
+                $this->lastError = 'Assinatura real do arquivo não corresponde ao tipo declarado.';
             }
 
             return $ok;

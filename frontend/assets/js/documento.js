@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("[data-copy-text]").forEach((button) => {
     button.addEventListener("click", async () => {
       const target = document.querySelector(button.dataset.copyText);

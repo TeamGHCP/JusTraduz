@@ -23,6 +23,11 @@ class RateLimiterMiddleware
 
     public static function check(string $path, array $options = []): void
     {
+        if (self::driver() !== 'db') {
+            self::checkFile($path, $options);
+            return;
+        }
+
         try {
             require_once dirname(__DIR__) . '/config/database.php';
             if (function_exists('database_connection')) {
@@ -39,6 +44,7 @@ class RateLimiterMiddleware
             return;
         }
 
+        self::applyShortLockTimeout($pdo);
         self::ensureTableExists($pdo);
         self::gc($pdo);
 
@@ -83,6 +89,82 @@ class RateLimiterMiddleware
         }
     }
 
+    private static function driver(): string
+    {
+        $driver = strtolower(trim((string) getenv('RATE_LIMIT_DRIVER')));
+        return $driver !== '' ? $driver : 'file';
+    }
+
+    private static function checkFile(string $path, array $options = []): void
+    {
+        $profile = self::profileForPath($path, (string) ($options['profile'] ?? ''));
+        $maxHits = max(1, (int) ($options['max_hits'] ?? $profile['max_hits']));
+        $window = max(1, (int) ($options['window'] ?? $profile['window']));
+        $identity = self::identity($path);
+        $key = md5($identity . ':' . $path . ':' . $maxHits . ':' . $window);
+        $now = time();
+
+        $dir = dirname(__DIR__, 2) . '/storage/rate-limits';
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+            return;
+        }
+
+        self::gcFiles($dir, $now);
+
+        $file = $dir . '/' . $key . '.json';
+        $handle = @fopen($file, 'c+');
+        if (!$handle) {
+            return;
+        }
+
+        try {
+            if (!flock($handle, LOCK_EX)) {
+                return;
+            }
+
+            $contents = stream_get_contents($handle);
+            $row = json_decode($contents !== false ? $contents : '', true);
+            $hits = (int) ($row['hits'] ?? 0);
+            $expiresAt = (int) ($row['expires_at'] ?? 0);
+
+            if ($expiresAt <= $now) {
+                $hits = 1;
+                $expiresAt = $now + $window;
+            } elseif ($hits >= $maxHits) {
+                self::reject(max(1, $expiresAt - $now));
+            } else {
+                $hits++;
+            }
+
+            ftruncate($handle, 0);
+            rewind($handle);
+            fwrite($handle, json_encode(['hits' => $hits, 'expires_at' => $expiresAt]));
+        } catch (Throwable) {
+            return;
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
+    private static function gcFiles(string $dir, int $now): void
+    {
+        try {
+            if (random_int(1, 100) > 5) {
+                return;
+            }
+
+            foreach (glob($dir . '/*.json') ?: [] as $file) {
+                $row = json_decode((string) @file_get_contents($file), true);
+                if ((int) ($row['expires_at'] ?? 0) < $now) {
+                    @unlink($file);
+                }
+            }
+        } catch (Throwable) {
+            // Ignore cleanup failures.
+        }
+    }
+
     private static function ensureTableExists(PDO $pdo): void
     {
         try {
@@ -96,6 +178,20 @@ class RateLimiterMiddleware
             }
         } catch (Throwable) {
             // Ignore creation errors
+        }
+    }
+
+    private static function applyShortLockTimeout(PDO $pdo): void
+    {
+        try {
+            if ($pdo->getAttribute(PDO::ATTR_DRIVER_NAME) !== 'mysql') {
+                return;
+            }
+
+            $pdo->exec('SET SESSION innodb_lock_wait_timeout = 1');
+            $pdo->exec('SET SESSION lock_wait_timeout = 1');
+        } catch (Throwable) {
+            // Ignore unsupported drivers/settings. Rate limiting must never block routing.
         }
     }
 

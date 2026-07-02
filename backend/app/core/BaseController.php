@@ -19,6 +19,7 @@ abstract class BaseController
     {
         $this->request = new Request();
         $this->response = new Response();
+        require_once dirname(__DIR__) . '/config/database.php';
         $this->pdo = database_connection();
     }
 

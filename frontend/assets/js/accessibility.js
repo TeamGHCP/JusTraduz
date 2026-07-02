@@ -110,7 +110,7 @@
     var link = document.createElement('a');
     link.className = 'skip-link';
     link.href = '#' + main.id;
-    link.textContent = 'Pular para o conteÃºdo principal';
+    link.textContent = 'Pular para o conteúdo principal';
     document.body.insertBefore(link, document.body.firstChild);
   }
 
@@ -452,8 +452,8 @@
     panelBackdrop.querySelector('[data-a11y-font-up]').addEventListener('click', function () { changeFont(1); });
     panelBackdrop.querySelector('[data-a11y-font-down]').addEventListener('click', function () { changeFont(-1); });
     panelBackdrop.querySelector('[data-a11y-contrast]').addEventListener('click', function () { state.contrast = !state.contrast; apply('Alto contraste ' + (state.contrast ? 'ativado' : 'desativado')); });
-    panelBackdrop.querySelector('[data-a11y-readable]').addEventListener('click', function () { state.readable = !state.readable; apply('Leitura confortÃ¡vel ' + (state.readable ? 'ativada' : 'desativada')); });
-    panelBackdrop.querySelector('[data-a11y-motion]').addEventListener('click', function () { state.motion = !state.motion; apply('ReduÃ§Ã£o de movimentos ' + (state.motion ? 'ativada' : 'desativada')); });
+    panelBackdrop.querySelector('[data-a11y-readable]').addEventListener('click', function () { state.readable = !state.readable; apply('Leitura confortável ' + (state.readable ? 'ativada' : 'desativada')); });
+    panelBackdrop.querySelector('[data-a11y-motion]').addEventListener('click', function () { state.motion = !state.motion; apply('Redução de movimentos ' + (state.motion ? 'ativada' : 'desativada')); });
     panelBackdrop.querySelector('[data-a11y-speech-start]').addEventListener('click', startPageSpeech);
     panelBackdrop.querySelector('[data-a11y-speech-pause]').addEventListener('click', toggleSpeechPause);
     panelBackdrop.querySelector('[data-a11y-speech-stop]').addEventListener('click', function () { stopPageSpeech(true); });
@@ -486,7 +486,7 @@
   function changeFont(direction) {
     var index = fontSteps.indexOf(Number(state.font));
     state.font = fontSteps[Math.max(0, Math.min(fontSteps.length - 1, index + direction))];
-    apply('Tamanho do conteÃºdo: ' + state.font + ' por cento');
+    apply('Tamanho do conteúdo: ' + state.font + ' por cento');
   }
 
   function syncPanel() {
@@ -560,7 +560,7 @@
   function beginPageSpeech() {
     var text = pageSpeechText();
     if (!text) {
-      updateSpeechStatus('NÃ£o encontrei conteÃºdo para ler.');
+      updateSpeechStatus('Não encontrei conteúdo para ler.');
       return;
     }
     speechChunks = splitSpeechText(text);
@@ -577,7 +577,7 @@
     if (speechStatus === 'idle' || speechIndex >= speechChunks.length) {
       if (speechStatus !== 'idle') {
         speechStatus = 'idle';
-        updateSpeechStatus('Leitura concluÃ­da.');
+        updateSpeechStatus('Leitura concluída.');
         syncSpeechControls();
       }
       return;
@@ -595,7 +595,7 @@
     activeUtterance.onerror = function (event) {
       if (event.error === 'canceled' || event.error === 'interrupted') return;
       speechStatus = 'idle';
-      updateSpeechStatus('NÃ£o foi possÃ­vel continuar a leitura.');
+      updateSpeechStatus('Não foi possível continuar a leitura.');
       syncSpeechControls();
     };
     window.speechSynthesis.speak(activeUtterance);
@@ -604,7 +604,7 @@
   function speechRateLabel() {
     var rate = Number(state.speechRate) || 1;
     if (rate < .9) return 'lenta';
-    if (rate > 1.1) return 'rÃ¡pida';
+    if (rate > 1.1) return 'rápida';
     return 'normal';
   }
 
@@ -646,7 +646,7 @@
     var stop = panelBackdrop.querySelector('[data-a11y-speech-stop]');
     if (!start || !pause || !stop) return;
     var active = speechStatus !== 'idle';
-    start.textContent = active ? 'Reiniciar leitura' : 'Ouvir pÃ¡gina';
+    start.textContent = active ? 'Reiniciar leitura' : 'Ouvir página';
     pause.disabled = !active;
     stop.disabled = !active;
     pause.textContent = speechStatus === 'paused' ? 'Continuar' : 'Pausar';
@@ -659,7 +659,7 @@
         var caption = document.createElement('caption');
         var section = table.closest('section');
         var heading = section && section.querySelector('h1, h2, h3');
-        caption.textContent = heading ? heading.textContent.trim() : 'Tabela de informaÃ§Ãµes ' + (index + 1);
+        caption.textContent = heading ? heading.textContent.trim() : 'Tabela de informações ' + (index + 1);
         table.insertBefore(caption, table.firstChild);
       }
       table.querySelectorAll('thead th').forEach(function (header) { header.setAttribute('scope', 'col'); });
@@ -667,7 +667,7 @@
       if (wrap) {
         wrap.tabIndex = 0;
         wrap.setAttribute('role', 'region');
-        wrap.setAttribute('aria-label', table.caption.textContent + '. Deslize horizontalmente se necessÃ¡rio.');
+        wrap.setAttribute('aria-label', table.caption.textContent + '. Deslize horizontalmente se necessário.');
       }
     });
   }
@@ -773,7 +773,7 @@
 
   function accessibleName(field) {
     var label = field.id && document.querySelector('label[for="' + CSS.escape(field.id) + '"]');
-    return label ? label.textContent.trim() : (field.getAttribute('aria-label') || field.name || 'obrigatÃ³rio');
+    return label ? label.textContent.trim() : (field.getAttribute('aria-label') || field.name || 'obrigatório');
   }
 
   function enhanceLinksAndNavigation() {
@@ -817,7 +817,7 @@
   function resetAccessibilityPreferences() {
     stopPageSpeech(false);
     state = { font: 100, contrast: false, readable: false, motion: false, speechRate: 1 };
-    apply('PreferÃªncias de acessibilidade restauradas.');
+    apply('Preferências de acessibilidade restauradas.');
   }
 
   function init() {

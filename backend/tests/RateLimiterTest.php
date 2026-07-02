@@ -4,6 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
 
 reset_test_state();
 $pdo = test_pdo();
+putenv('RATE_LIMIT_DRIVER=db');
 
 // Ensure clean database state
 if (database_table_exists($pdo, 'rate_limits')) {
@@ -30,4 +31,5 @@ $stmt = $pdo->query("SELECT hits FROM rate_limits");
 $hits = (int)$stmt->fetchColumn();
 assertEquals(2, $hits, 'Contador de hits deve ser 2 após segunda requisição.');
 
+putenv('RATE_LIMIT_DRIVER');
 echo "RateLimiterTest: OK\n";
