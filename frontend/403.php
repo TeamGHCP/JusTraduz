@@ -1,5 +1,5 @@
 <?php
-http_response_code(404);
+http_response_code(403);
 require_once __DIR__ . '/includes/seo.php';
 ?>
 <!DOCTYPE html>
@@ -7,9 +7,9 @@ require_once __DIR__ . '/includes/seo.php';
 <head>
   <?php
     renderSeo([
-      'title' => 'Página não encontrada | JusTraduz',
-      'description' => 'Não encontramos a página solicitada. Retorne para o JusTraduz e continue navegando com segurança.',
-      'canonical' => 'https://justraduz.com.br/404',
+      'title' => 'Acesso negado | JusTraduz',
+      'description' => 'Voce nao tem permissao para acessar esta area do JusTraduz.',
+      'canonical' => 'https://justraduz.com.br/403',
       'robots' => 'noindex, nofollow'
     ]);
   ?>
@@ -27,24 +27,24 @@ require_once __DIR__ . '/includes/seo.php';
 <body class="error-page">
   <main class="error-screen">
     <header class="error-topbar">
-      <a class="error-brand" href="index.php" aria-label="JusTraduz - página inicial">
+      <a class="error-brand" href="index.php" aria-label="JusTraduz - pagina inicial">
         <img src="assets/img/logo.png" alt="JusTraduz">
       </a>
       <nav class="error-nav" aria-label="Navegacao de apoio">
-        <a href="index.php#recursos">Recursos</a>
+        <a href="index.php#seguranca">Seguranca</a>
         <a href="contato">Suporte</a>
       </nav>
     </header>
 
     <section class="error-panel" aria-labelledby="error-title">
       <div class="error-copy">
-        <span class="error-kicker">Erro 404</span>
-        <h1 id="error-title">Não encontramos essa página.</h1>
-        <p class="error-text">O endereço pode ter mudado ou o link pode estar incompleto. Volte para uma área segura do JusTraduz e continue de onde parou.</p>
+        <span class="error-kicker">Erro 403</span>
+        <h1 id="error-title">Acesso restrito.</h1>
+        <p class="error-text">Esta area exige permissao ou uma sessao valida. Entre com uma conta autorizada ou volte para uma area publica do JusTraduz.</p>
 
         <div class="error-actions">
-          <a class="btn btn-primary" href="index.php">Voltar para o início</a>
-          <a class="btn btn-outline" href="login.html">Acessar conta</a>
+          <a class="btn btn-primary" href="login.html">Entrar na conta</a>
+          <a class="btn btn-outline" href="index.php">Voltar para o inicio</a>
         </div>
       </div>
 
@@ -52,12 +52,12 @@ require_once __DIR__ . '/includes/seo.php';
         <div class="error-console-head">
           <span class="error-dot"></span>
           <strong>JusTraduz</strong>
-          <small>Verificação de rota</small>
+          <small>Controle de acesso</small>
         </div>
         <div class="error-document">
-          <span class="error-code">404</span>
-          <h2>Rota indisponível</h2>
-          <p>Não há uma página publicada para este caminho.</p>
+          <span class="error-code">403</span>
+          <h2>Permissao insuficiente</h2>
+          <p>O servidor bloqueou este caminho para proteger dados e configuracoes internas.</p>
           <div class="error-document-lines" aria-hidden="true">
             <span></span>
             <span></span>
@@ -65,9 +65,9 @@ require_once __DIR__ . '/includes/seo.php';
           </div>
         </div>
         <div class="error-checklist">
-          <a href="index.php">Ir para a landing page</a>
-          <a href="login.html?cadastro">Criar uma conta</a>
-          <a href="contato">Solicitar ajuda</a>
+          <a href="login.html">Entrar novamente</a>
+          <a href="contato">Solicitar suporte</a>
+          <a href="privacidade">Ver privacidade</a>
         </div>
       </aside>
     </section>

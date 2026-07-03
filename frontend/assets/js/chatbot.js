@@ -224,7 +224,11 @@ document.addEventListener("DOMContentLoaded", () => {
       avatar.setAttribute("aria-hidden", "true");
 
       const image = document.createElement("img");
-      image.src = "assets/img/chat-bot-logo.png";
+      image.src = "assets/img/chat-bot-logo-small.png";
+      image.width = 48;
+      image.height = 48;
+      image.loading = "lazy";
+      image.decoding = "async";
       image.alt = "";
       avatar.appendChild(image);
       item.appendChild(avatar);
@@ -247,7 +251,11 @@ document.addEventListener("DOMContentLoaded", () => {
     avatar.setAttribute("aria-hidden", "true");
 
     const image = document.createElement("img");
-    image.src = "assets/img/chat-bot-logo.png";
+    image.src = "assets/img/chat-bot-logo-small.png";
+    image.width = 48;
+    image.height = 48;
+    image.loading = "lazy";
+    image.decoding = "async";
     image.alt = "";
     avatar.appendChild(image);
     item.appendChild(avatar);

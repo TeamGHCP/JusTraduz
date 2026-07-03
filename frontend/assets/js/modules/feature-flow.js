@@ -1,6 +1,7 @@
 (function() {
   const init = () => {
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const openingLoader = document.querySelector("[data-opening-loader]");
 document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
     const panels = Array.from(flow.querySelectorAll("[data-flow-panel]"));
     const timeline = flow.querySelector("[data-flow-progress-timeline]");
@@ -397,67 +398,6 @@ document.querySelectorAll("[data-home-feature-flow]").forEach((flow) => {
       startTypewriter();
     }
   });
-
-  if (revealElements.length > 0) {
-    revealElements
-      .filter((element) => !element.matches(".feedback-card"))
-      .forEach((element, index) => {
-      element.classList.add("reveal-on-scroll");
-      const isHero = element.closest(".home-hero");
-      const isFlowPanelCopy = element.matches(".home-flow-panel-copy");
-      const isFlowPreview = element.matches(".home-flow-system-preview");
-      const isFlowListItem = element.matches(".home-flow-feature-list li");
-      const isAiDocument = element.matches(".ai-document-mockup");
-      const isAiFinding = element.matches(".ai-finding-card");
-      const directions = ["up", "left", "right", "down", "zoom"];
-      const direction = isFlowPanelCopy
-        ? "left"
-        : isFlowPreview
-          ? "right"
-          : isAiDocument
-            ? "up"
-            : isAiFinding
-              ? "right"
-              : isFlowListItem
-                ? "left"
-                : directions[index % 3];
-      const aiFindingIndex = isAiFinding
-        ? Array.from(element.parentElement.querySelectorAll(".ai-finding-card")).indexOf(element)
-        : 0;
-      const delay = isHero
-        ? index * 160
-        : isFlowListItem
-          ? (index % 3) * 140
-          : isAiFinding
-            ? 180 + (aiFindingIndex * 150)
-            : (index % 5) * 120;
-
-      element.dataset.reveal = direction;
-      element.style.setProperty("--reveal-delay", `${delay}ms`);
-      });
-
-    if (prefersReducedMotion) {
-      revealElements.forEach((element) => element.classList.add("is-visible"));
-    } else if ("IntersectionObserver" in window) {
-      const revealObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) {
-            return;
-          }
-
-          entry.target.classList.add("is-visible");
-          observer.unobserve(entry.target);
-        });
-      }, {
-        rootMargin: "0px 0px -70px 0px",
-        threshold: 0.12,
-      });
-
-      revealElements.forEach((element) => revealObserver.observe(element));
-    } else {
-      revealElements.forEach((element) => element.classList.add("is-visible"));
-    }
-  }
 
   document.querySelectorAll("[data-ai-document-insights]").forEach((section) => {
     const cards = Array.from(section.querySelectorAll("[data-insight-card]"));

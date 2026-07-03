@@ -67,7 +67,14 @@
     new window.VLibras.Widget("https://vlibras.gov.br/app");
   }
 
-  start();
-  window.addEventListener("load", start);
-  window.addEventListener("justraduz:cookie-consent-changed", start);
+  window.JusTraduzStartVlibras = start;
+  window.addEventListener("justraduz:vlibras-request", start);
+  window.addEventListener("justraduz:cookie-consent-changed", function () {
+    if (window.JusTraduzVlibrasStarted && !canLoad()) {
+      document.querySelectorAll('[vw], script[src*="vlibras.gov.br"]').forEach(function (node) {
+        node.remove();
+      });
+      window.JusTraduzVlibrasStarted = false;
+    }
+  });
 }());

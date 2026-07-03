@@ -10,7 +10,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     renderSeo([
       'title' => 'Blog do JusTraduz | Simplificação e Informação Jurídica',
       'description' => 'Acompanhe artigos didáticos sobre direito, contratos e explicações simples de termos jurídicos complexos no blog oficial do JusTraduz.',
-      'canonical' => 'https://justraduz.com.br/blog',
+      'canonical' => 'https://justraduz.com.br/blog/',
       'robots' => 'index, follow'
     ]);
   ?>

@@ -8,7 +8,7 @@ $activePage = $activePage ?? '';
   <header class="site-header home-header" data-site-header>
     <div class="container nav-bar">
       <a class="brand" href="<?= $prefix ?>index.php" aria-label="JusTraduz">
-        <img src="<?= $prefix ?>assets/img/logo.png" alt="JusTraduz">
+        <img src="<?= $prefix ?>assets/img/logo-header.png" width="256" height="93" alt="JusTraduz">
       </a>
 
       <nav class="nav-links" aria-label="Menu principal">
@@ -16,7 +16,7 @@ $activePage = $activePage ?? '';
         <a href="<?= $prefix ?>index.php#fluxo">Fluxo</a>
         <a href="<?= $prefix ?>index.php#seguranca">Segurança</a>
         <a class="<?= $activePage === 'como-funciona' ? 'is-active' : '' ?>" href="<?= $prefix ?>como-funciona">Como funciona</a>
-        <a class="<?= $activePage === 'blog' ? 'is-active' : '' ?>" href="<?= $prefix ?>blog">Blog</a>
+        <a class="<?= $activePage === 'blog' ? 'is-active' : '' ?>" href="<?= $prefix ?>blog/">Blog</a>
       </nav>
 
       <div class="nav-actions">

@@ -110,7 +110,8 @@ img {
   max-width: 100%;
 }
 
-:root[data-theme="dark"] img[src$="/logo.png"] {
+:root[data-theme="dark"] img[src$="/logo.png"],
+:root[data-theme="dark"] img[src$="/logo-header.png"] {
   content: url("../img/logo-modo-escuro-normalizado.png");
 }
 
@@ -692,7 +693,7 @@ button {
   min-width: 150px;
 }
 
-.footer-col h4 {
+.footer-col h3 {
   margin: 0 0 18px;
   color: rgba(255, 255, 255, .9);
   font-size: 13px;
@@ -747,7 +748,7 @@ button {
 
 .footer-bottom p {
   margin: 0;
-  color: rgba(255, 255, 255, .38);
+  color: rgba(255, 255, 255, .68);
   font-size: 12px;
   font-weight: 500;
 }

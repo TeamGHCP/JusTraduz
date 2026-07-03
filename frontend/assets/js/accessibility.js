@@ -441,6 +441,7 @@
   function openPanel() {
     if (panelBackdrop) return;
     previousFocus = document.activeElement;
+    ensureVlibras();
     launcher.setAttribute('aria-expanded', 'true');
     panelBackdrop = document.createElement('div');
     panelBackdrop.className = 'a11y-panel-backdrop';
@@ -823,7 +824,6 @@
   function init() {
     apply();
     makeSkipLink();
-    ensureVlibras();
     buildLauncher();
     enhanceTables();
     enhancePasswords();
@@ -833,8 +833,8 @@
     document.addEventListener('keydown', trapDialogFocus);
     window.addEventListener('pagehide', function () { stopPageSpeech(false); });
     window.addEventListener('justraduz:cookie-consent-changed', function () {
-      if (canUseExternalAccessibility()) ensureVlibras();
-      else cleanupVlibras();
+      if (!canUseExternalAccessibility()) cleanupVlibras();
+      else if (panelBackdrop) ensureVlibras();
     });
   }
 

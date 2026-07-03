@@ -1,4 +1,5 @@
 <?php
+http_response_code(500);
 require_once __DIR__ . '/includes/seo.php';
 ?>
 <!DOCTYPE html>

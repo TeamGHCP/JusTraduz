@@ -115,7 +115,7 @@
 }
 
 .cookie-btn-primary {
-  background: var(--teal, #118a7e);
+  background: #0f766d;
   color: #fff;
   box-shadow: 0 12px 22px rgba(17, 138, 126, .20);
 }

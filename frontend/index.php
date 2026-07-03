@@ -17,6 +17,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
   <link class="apple-touch-icon" href="assets/img/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <meta name="theme-color" content="#008f80">
   <meta name="application-name" content="JusTraduz">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -104,8 +106,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-feedback-stable-1">
-  <link rel="stylesheet" href="assets/css/chatbot.css?v=2026.06.14-06">
+  <link rel="stylesheet" href="assets/css/style-home-bundle.min.css?v=pagespeed-visual-safe-20260703">
   <style>
     @media (max-width: 980px) {
       .home-page .home-hero {
@@ -228,8 +229,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       }
     }
   </style>
-  <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
-  <script src="assets/js/pwa.js?v=2026.06.20-01" defer></script>
+  <script src="assets/js/cookie-consent.min.js?v=pagespeed-visual-safe-20260703"></script>
+  <script src="assets/js/pwa.min.js?v=pagespeed-visual-safe-20260703" defer></script>
 </head>
 <body id="top" class="home-page has-opening-loader">
   <div class="jt-cinematic-loader" data-opening-loader aria-hidden="true">
@@ -687,7 +688,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
               <div class="feedback-group">
                 <article class="feedback-card">
                   <div class="feedback-person">
-                    <img src="assets/img/depoimentos/ana-ribeiro.jpg" alt="Foto de Ana Ribeiro" loading="lazy" decoding="async">
+                    <img src="assets/img/depoimentos/thumbs/ana-ribeiro.jpg" width="48" height="48" alt="Foto de Ana Ribeiro" loading="lazy" decoding="async">
                     <div>
                       <strong>Ana Ribeiro</strong>
                       <span>Curitiba, PR</span>
@@ -699,7 +700,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
                 <article class="feedback-card">
                   <div class="feedback-person">
-                    <img src="assets/img/depoimentos/bruno-martins.jpg" alt="Foto de Bruno Martins" loading="lazy" decoding="async">
+                    <img src="assets/img/depoimentos/thumbs/bruno-martins.jpg" width="48" height="48" alt="Foto de Bruno Martins" loading="lazy" decoding="async">
                     <div>
                       <strong>Bruno Martins</strong>
                       <span>Belo Horizonte, MG</span>
@@ -711,7 +712,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
                 <article class="feedback-card">
                   <div class="feedback-person">
-                    <img src="assets/img/depoimentos/carolina-lima.jpg" alt="Foto de Carolina Lima" loading="lazy" decoding="async">
+                    <img src="assets/img/depoimentos/thumbs/carolina-lima.jpg" width="48" height="48" alt="Foto de Carolina Lima" loading="lazy" decoding="async">
                     <div>
                       <strong>Carolina Lima</strong>
                       <span>São Paulo, SP</span>
@@ -729,7 +730,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
               <div class="feedback-group">
                 <article class="feedback-card">
                   <div class="feedback-person">
-                    <img src="assets/img/depoimentos/diego-souza.jpg" alt="Foto de Diego Souza" loading="lazy" decoding="async">
+                    <img src="assets/img/depoimentos/thumbs/diego-souza.jpg" width="48" height="48" alt="Foto de Diego Souza" loading="lazy" decoding="async">
                     <div>
                       <strong>Diego Souza</strong>
                       <span>Recife, PE</span>
@@ -741,7 +742,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
                 <article class="feedback-card">
                   <div class="feedback-person">
-                    <img src="assets/img/depoimentos/elisa-nogueira.jpg" alt="Foto de Elisa Nogueira" loading="lazy" decoding="async">
+                    <img src="assets/img/depoimentos/thumbs/elisa-nogueira.jpg" width="48" height="48" alt="Foto de Elisa Nogueira" loading="lazy" decoding="async">
                     <div>
                       <strong>Elisa Nogueira</strong>
                       <span>Florianópolis, SC</span>
@@ -753,7 +754,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
                 <article class="feedback-card">
                   <div class="feedback-person">
-                    <img src="assets/img/depoimentos/felipe-azevedo.jpg" alt="Foto de Felipe Azevedo" loading="lazy" decoding="async">
+                    <img src="assets/img/depoimentos/thumbs/felipe-azevedo.jpg" width="48" height="48" alt="Foto de Felipe Azevedo" loading="lazy" decoding="async">
                     <div>
                       <strong>Felipe Azevedo</strong>
                       <span>Goiânia, GO</span>
@@ -771,7 +772,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
               <div class="feedback-group">
                 <article class="feedback-card">
                   <div class="feedback-person">
-                    <img src="assets/img/depoimentos/gabriela-rocha.jpg" alt="Foto de Gabriela Rocha" loading="lazy" decoding="async">
+                    <img src="assets/img/depoimentos/thumbs/gabriela-rocha.jpg" width="48" height="48" alt="Foto de Gabriela Rocha" loading="lazy" decoding="async">
                     <div>
                       <strong>Gabriela Rocha</strong>
                       <span>Salvador, BA</span>
@@ -783,7 +784,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
                 <article class="feedback-card">
                   <div class="feedback-person">
-                    <img src="assets/img/depoimentos/helena-duarte.jpg" alt="Foto de Helena Duarte" loading="lazy" decoding="async">
+                    <img src="assets/img/depoimentos/thumbs/helena-duarte.jpg" width="48" height="48" alt="Foto de Helena Duarte" loading="lazy" decoding="async">
                     <div>
                       <strong>Helena Duarte</strong>
                       <span>Campinas, SP</span>
@@ -795,7 +796,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
                 <article class="feedback-card">
                   <div class="feedback-person">
-                    <img src="assets/img/depoimentos/igor-almeida.jpg" alt="Foto de Igor Almeida" loading="lazy" decoding="async">
+                    <img src="assets/img/depoimentos/thumbs/igor-almeida.jpg" width="48" height="48" alt="Foto de Igor Almeida" loading="lazy" decoding="async">
                     <div>
                       <strong>Igor Almeida</strong>
                       <span>Porto Alegre, RS</span>
@@ -819,7 +820,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </div>
 
         <div class="home-security-panel" data-security-panel>
-          <div class="home-security-tabs" role="list" aria-label="Pontos de segurança">
+          <div class="home-security-tabs" role="group" aria-label="Pontos de segurança">
             <button class="home-security-tab is-active" type="button" data-security-tab="consentimento" aria-pressed="true">
               <span>01</span>
               <strong>Consentimento claro</strong>
@@ -873,7 +874,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <aside class="ai-chatbot" data-ai-chatbot aria-label="Assistente virtual JusTraduz">
     <button class="ai-chatbot-callout" type="button" data-ai-chatbot-toggle aria-label="Abrir chat com IA" aria-expanded="false">
-      <img class="ai-chatbot-callout-robot" src="assets/img/chat-bot-logo.png" alt="Avatar da JusTraduz IA">
+      <img class="ai-chatbot-callout-robot" src="assets/img/chat-bot-logo-small.png" width="54" height="54" loading="lazy" decoding="async" alt="Avatar da JusTraduz IA">
       <span class="ai-chatbot-callout-bubble">Consulte o JusIA</span>
     </button>
 
@@ -881,7 +882,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       <header class="ai-chatbot-header">
         <div class="ai-chatbot-identity">
           <span class="ai-chatbot-avatar" aria-hidden="true">
-            <img src="assets/img/chat-bot-logo.png" alt="Avatar da JusTraduz IA">
+            <img src="assets/img/chat-bot-logo-small.png" width="48" height="48" loading="lazy" decoding="async" alt="Avatar da JusTraduz IA">
           </span>
           <div>
             <span id="ai-chatbot-title">JusTraduz IA</span>
@@ -930,9 +931,9 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     </section>
   </aside>
 
-  <script src="assets/js/main.js?v=2026.07.02-feedback-stable-1"></script>
-  <script src="assets/js/chatbot.js?v=2026.06.18-02"></script>
+  <script src="assets/js/main-home-bundle.min.js?v=pagespeed-visual-safe-20260703"></script>
+  <script src="assets/js/chatbot.min.js?v=pagespeed-visual-safe-20260703"></script>
   <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
-  <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
+  <script src="assets/js/accessibility.min.js?v=pagespeed-visual-safe-20260703"></script>
 </body>
 </html>

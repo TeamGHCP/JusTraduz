@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justraduz-pwa-2026-07-02-vlibras-v2";
+const CACHE_VERSION = "justraduz-pwa-2026-07-03-cleanup-v1";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "offline.html";
 const PUBLIC_PAGE_FALLBACKS = new Set([
@@ -9,6 +9,7 @@ const PUBLIC_PAGE_FALLBACKS = new Set([
   "/contato.php",
   "/termos.php",
   "/privacidade.php",
+  "/403.php",
   "/404.php",
   "/500.php"
 ]);
@@ -22,9 +23,11 @@ const STATIC_ASSETS = [
   "contato.php",
   "termos.php",
   "privacidade.php",
+  "403.php",
   "404.php",
   "500.php",
   "assets/css/style.css",
+  "assets/css/style-home-bundle.min.css",
   "assets/css/base.css",
   "assets/css/layout.css",
   "assets/css/components.css",
@@ -40,8 +43,12 @@ const STATIC_ASSETS = [
   "assets/css/auth-novo.css",
   "assets/css/responsive.css",
   "assets/css/chatbot.css",
+  "assets/css/chatbot.min.css",
   "assets/css/cookie-consent.css",
+  "assets/css/cookie-consent.min.css",
+  "assets/css/accessibility.min.css",
   "assets/js/main.js",
+  "assets/js/main-home-bundle.min.js",
   "assets/js/modules/opening.js",
   "assets/js/modules/navigation.js",
   "assets/js/modules/helpers.js",
@@ -54,9 +61,13 @@ const STATIC_ASSETS = [
   "assets/js/auth.js",
   "assets/js/auth-novo.js",
   "assets/js/chatbot.js",
+  "assets/js/chatbot.min.js",
   "assets/js/cookie-consent.js",
+  "assets/js/cookie-consent.min.js",
   "assets/js/vlibras-init.js",
+  "assets/js/accessibility.min.js",
   "assets/js/pwa.js",
+  "assets/js/pwa.min.js",
   "assets/img/app-mark.png",
   "assets/img/apple-touch-icon.png",
   "assets/img/app-icon-192.png",
@@ -66,7 +77,17 @@ const STATIC_ASSETS = [
   "assets/img/pwa-screenshot-mobile.png",
   "assets/img/pwa-screenshot-wide.png",
   "assets/img/logo.png",
-  "assets/img/chat-bot-logo.png",
+  "assets/img/logo-header.png",
+  "assets/img/chat-bot-logo-small.png",
+  "assets/img/depoimentos/thumbs/ana-ribeiro.jpg",
+  "assets/img/depoimentos/thumbs/bruno-martins.jpg",
+  "assets/img/depoimentos/thumbs/carolina-lima.jpg",
+  "assets/img/depoimentos/thumbs/diego-souza.jpg",
+  "assets/img/depoimentos/thumbs/elisa-nogueira.jpg",
+  "assets/img/depoimentos/thumbs/felipe-azevedo.jpg",
+  "assets/img/depoimentos/thumbs/gabriela-rocha.jpg",
+  "assets/img/depoimentos/thumbs/helena-duarte.jpg",
+  "assets/img/depoimentos/thumbs/igor-almeida.jpg",
   "assets/img/phone-boot-leaf.png",
   "site.webmanifest"
 ];

@@ -30,7 +30,7 @@ $prefix = $pathPrefix ?? '';
 
         <nav class="footer-columns" aria-label="Links do rodapé">
           <div class="footer-col">
-            <h4>Produto</h4>
+            <h3>Produto</h3>
             <ul>
               <li><a href="<?= $prefix ?>index.php#recursos"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5Z"/><path d="M8 6h8"/><path d="M8 10h8"/></svg>Recursos</a></li>
               <li><a href="<?= $prefix ?>index.php#fluxo"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10a4 4 0 0 1 0 8H9a4 4 0 0 0 0 8h11"/><path d="M17 19h3v3"/></svg>Fluxo</a></li>
@@ -38,12 +38,12 @@ $prefix = $pathPrefix ?? '';
               <li><a href="<?= $prefix ?>traduzir-juridiques"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m16 16 3-8 5-2-4-4-2 5-8 3-2-2-5 5v5h5z"/><path d="M14 14 9 19"/></svg>Traduzir juridiquês</a></li>
               <li><a href="<?= $prefix ?>simplificar-documento-juridico"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>Simplificar documento</a></li>
               <li><a href="<?= $prefix ?>ajuda-juridica-online"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ajuda jurídica online</a></li>
-              <li><a href="<?= $prefix ?>blog"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M16 8h2"/><path d="M16 12h2"/><path d="M16 16h2"/><path d="M6 8h6v8H6z"/></svg>Blog</a></li>
+              <li><a href="<?= $prefix ?>blog/"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M16 8h2"/><path d="M16 12h2"/><path d="M16 16h2"/><path d="M6 8h6v8H6z"/></svg>Blog</a></li>
             </ul>
           </div>
 
           <div class="footer-col">
-            <h4>Plataforma</h4>
+            <h3>Plataforma</h3>
             <ul>
               <li><a href="<?= $prefix ?>login.html"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>Entrar</a></li>
               <li><a href="<?= $prefix ?>login.html?cadastro"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>Criar conta</a></li>
@@ -54,7 +54,7 @@ $prefix = $pathPrefix ?? '';
           </div>
 
           <div class="footer-col">
-            <h4>Legal</h4>
+            <h3>Legal</h3>
             <ul>
               <li><a href="<?= $prefix ?>termos"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg>Termos de Uso</a></li>
               <li><a href="<?= $prefix ?>privacidade"><svg class="footer-link-icon svg-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Privacidade</a></li>
