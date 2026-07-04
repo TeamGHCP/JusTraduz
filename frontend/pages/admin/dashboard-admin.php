@@ -289,19 +289,23 @@ $healthChecks = [
       </section>
 
       <section class="admin-alert-strip" data-tour-step="4" data-tour-title="Solicitações e casos" data-tour-description="Identifique casos críticos, sem responsável e compromissos próximos.">
-        <a class="admin-alert-tile" href="solicitacoes.php?prioridade=alta">
-          <span>Solicitações críticas</span>
+        <a class="admin-alert-tile admin-alert-critical" href="solicitacoes.php?prioridade=alta">
+          <?= icon_svg('case') ?>
+          <span>Críticas</span>
           <strong><?= e((string) $criticalCaseCount) ?></strong>
         </a>
-        <a class="admin-alert-tile" href="solicitacoes.php?status=aberto">
+        <a class="admin-alert-tile admin-alert-warning" href="solicitacoes.php?status=aberto">
+          <?= icon_svg('help') ?>
           <span>Sem responsável</span>
           <strong><?= e((string) $unassignedCaseCount) ?></strong>
         </a>
-        <a class="admin-alert-tile" href="../agenda.php">
+        <a class="admin-alert-tile admin-alert-info" href="../agenda.php">
+          <?= icon_svg('calendar') ?>
           <span>Agenda 7 dias</span>
           <strong><?= e((string) $upcomingAppointmentCount) ?></strong>
         </a>
-        <a class="admin-alert-tile" href="auditoria.php?action=failed">
+        <a class="admin-alert-tile admin-alert-security" href="auditoria.php?action=failed">
+          <?= icon_svg('shield') ?>
           <span>Falhas login 24h</span>
           <strong><?= e((string) $failedLoginCount) ?></strong>
         </a>

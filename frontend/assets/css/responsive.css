@@ -721,7 +721,6 @@ body {
 .admin-hero,
 .analysis-hero,
 .lawyer-directory-hero,
-.client-next-step,
 .command-card,
 .case-card-rich,
 .professional-case-card,
@@ -882,7 +881,6 @@ body {
   .analysis-hero,
   .lawyer-focus-panel,
   .lawyer-directory-hero,
-  .client-next-step,
   .professional-alert,
   .process-detail-hero {
     align-items: flex-start;
@@ -936,7 +934,6 @@ body {
   .notification-item,
   .professional-alert,
   .professional-list-item,
-  .client-next-step,
   .chat-context-head,
   .chat-case-bar,
   .chat-compose,

@@ -38,6 +38,7 @@ $quickLinks = [
         'href' => 'visualizar-documento.php#novo-documento',
         'icon' => 'upload',
         'action' => 'Enviar agora',
+        'tone' => 'primary',
     ],
     [
         'title' => 'Histórico',
@@ -45,6 +46,7 @@ $quickLinks = [
         'href' => 'visualizar-documento.php',
         'icon' => 'folder',
         'action' => 'Ver histórico',
+        'tone' => 'documents',
     ],
     [
         'title' => 'Pedir ajuda',
@@ -52,6 +54,7 @@ $quickLinks = [
         'href' => 'solicitar-ajuda.php',
         'icon' => 'help',
         'action' => 'Solicitar',
+        'tone' => 'warning',
     ],
     [
         'title' => 'Conversas',
@@ -59,6 +62,7 @@ $quickLinks = [
         'href' => 'chat.php',
         'icon' => 'chat',
         'action' => 'Abrir chat',
+        'tone' => 'info',
     ],
     [
         'title' => 'Agenda',
@@ -66,6 +70,7 @@ $quickLinks = [
         'href' => 'agenda.php',
         'icon' => 'calendar',
         'action' => 'Ver agenda',
+        'tone' => 'schedule',
     ],
     [
         'title' => 'Perfil',
@@ -73,52 +78,15 @@ $quickLinks = [
         'href' => 'perfil.php',
         'icon' => 'user',
         'action' => 'Editar perfil',
+        'tone' => 'account',
     ],
 ];
 
-if ($documentCount === 0) {
-    $nextStep = [
-        'badge' => 'Comece aqui',
-        'title' => 'Envie seu primeiro documento',
-        'description' => 'Suba um PDF ou imagem para receber resumo e próximos passos.',
-        'href' => 'visualizar-documento.php#novo-documento',
-        'action' => 'Enviar documento',
-        'icon' => 'upload',
-    ];
-} elseif ($pendingAnalysisCount > 0) {
-    $nextStep = [
-        'badge' => 'Aguardando análise',
-        'title' => $pendingAnalysisCount === 1 ? 'Há 1 documento sem análise' : 'Há ' . $pendingAnalysisCount . ' documentos sem análise',
-        'description' => 'Abra seus documentos e gere a análise por IA.',
-        'href' => 'visualizar-documento.php',
-        'action' => 'Ver documentos',
-        'icon' => 'chart',
-    ];
-} elseif ($activeCase) {
-    $nextStep = [
-        'badge' => 'Atendimento ativo',
-        'title' => 'Continue sua conversa',
-        'description' => 'Abra o chat para acompanhar respostas e próximos passos.',
-        'href' => 'chat.php?case_id=' . (int) $activeCase['id'],
-        'action' => 'Abrir chat',
-        'icon' => 'chat',
-    ];
-} else {
-    $nextStep = [
-        'badge' => 'Próximo passo',
-        'title' => 'Peça ajuda quando precisar',
-        'description' => 'Com a análise em mãos, abra uma solicitação quando precisar.',
-        'href' => 'solicitar-ajuda.php',
-        'action' => 'Pedir ajuda',
-        'icon' => 'help',
-    ];
-}
-
 $metricCards = [
-    ['label' => 'Documentos', 'value' => $documentCount, 'icon' => 'file', 'href' => 'visualizar-documento.php'],
-    ['label' => 'Análises feitas', 'value' => $analysisCount, 'icon' => 'chart', 'href' => 'visualizar-documento.php'],
-    ['label' => 'Pendentes de IA', 'value' => $pendingAnalysisCount, 'icon' => 'help', 'href' => 'visualizar-documento.php'],
-    ['label' => 'Casos ativos', 'value' => $caseCount, 'icon' => 'case', 'href' => 'acompanhar-solicitacoes.php'],
+    ['label' => 'Documentos', 'value' => $documentCount, 'icon' => 'file', 'href' => 'visualizar-documento.php', 'tone' => 'documents'],
+    ['label' => 'Análises', 'value' => $analysisCount, 'icon' => 'chart', 'href' => 'visualizar-documento.php', 'tone' => 'success'],
+    ['label' => 'IA pendente', 'value' => $pendingAnalysisCount, 'icon' => 'bell', 'href' => 'visualizar-documento.php', 'tone' => $pendingAnalysisCount > 0 ? 'warning' : 'success'],
+    ['label' => 'Casos ativos', 'value' => $caseCount, 'icon' => 'case', 'href' => 'acompanhar-solicitacoes.php', 'tone' => 'info'],
 ];
 ?>
 <!DOCTYPE html>
@@ -190,18 +158,9 @@ $metricCards = [
         </article>
       </section>
 
-      <section class="client-next-step" data-tour-step="4" data-tour-title="Próximo passo sugerido" data-tour-description="Este bloco destaca a ação mais útil para o momento da sua conta.">
-        <div class="client-next-step-copy">
-          <span class="badge badge-info"><?= e($nextStep['badge']) ?></span>
-          <h2><?= e($nextStep['title']) ?></h2>
-          <p><?= e($nextStep['description']) ?></p>
-        </div>
-        <a class="btn btn-primary" href="<?= e($nextStep['href']) ?>"><?= icon_svg($nextStep['icon']) ?> <?= e($nextStep['action']) ?></a>
-      </section>
-
-      <section class="grid grid-4 dashboard-metrics" data-tour-step="5" data-tour-title="Análises e pendências" data-tour-description="Estes indicadores mostram o que já foi analisado e o que ainda aguarda processamento.">
+      <section class="grid grid-4 dashboard-metrics" data-tour-step="4" data-tour-title="Análises e pendências" data-tour-description="Estes indicadores mostram o que já foi analisado e o que ainda aguarda processamento.">
         <?php foreach ($metricCards as $metric): ?>
-          <a class="stat-card dashboard-metric-link" href="<?= e($metric['href']) ?>">
+          <a class="stat-card dashboard-metric-link metric-tone-<?= e($metric['tone']) ?>" href="<?= e($metric['href']) ?>">
             <?= icon_svg($metric['icon']) ?>
             <span><?= e($metric['label']) ?></span>
             <strong><?= e((string) $metric['value']) ?></strong>
@@ -209,7 +168,7 @@ $metricCards = [
         <?php endforeach; ?>
       </section>
 
-      <section class="dash-section" data-tour-step="6" data-tour-title="Atalhos da rotina" data-tour-description="Use estes cartões para ir direto a documentos, atendimento, conversas, agenda e perfil sem depender do menu.">
+      <section class="dash-section" data-tour-step="5" data-tour-title="Atalhos da rotina" data-tour-description="Use estes cartões para ir direto a documentos, atendimento, conversas, agenda e perfil sem depender do menu.">
         <div class="dash-section-title">
           <div>
             <h2>Atalhos importantes <?= help_icon('Atalhos da dashboard', 'Use estes acessos para chegar rapidamente às principais áreas do JusTraduz.') ?></h2>
@@ -219,7 +178,7 @@ $metricCards = [
         <div class="grid grid-3 quick-actions-grid">
           <?php foreach ($quickLinks as $link): ?>
             <?php $isPriorityAction = in_array($link['href'], ['visualizar-documento.php#novo-documento', 'solicitar-ajuda.php', 'chat.php'], true); ?>
-            <article class="card quick-action-card<?= $isPriorityAction ? ' quick-action-card-priority' : '' ?>">
+            <article class="card quick-action-card quick-action-tone-<?= e($link['tone']) ?><?= $isPriorityAction ? ' quick-action-card-priority' : '' ?>">
               <?= icon_svg($link['icon']) ?>
               <h3><?= e($link['title']) ?></h3>
               <p class="text-muted"><?= e($link['description']) ?></p>

@@ -20,7 +20,6 @@
     const enhanceReveal = () => {
       const elements = Array.from(main.querySelectorAll([
         ".command-card",
-        ".client-next-step",
         ".stat-card",
         ".lawyer-summary-card",
         ".task-summary-card",
@@ -113,7 +112,6 @@
     };
 
     const listConfigs = [
-      [".quick-actions-grid", ".quick-action-card", "Filtrar atalhos"],
       [".case-board", ".case-card-rich", "Filtrar casos"],
       [".professional-card-grid", ".professional-case-card", "Filtrar casos"],
       [".lawyer-directory-grid", ".lawyer-directory-card", "Filtrar advogados"],

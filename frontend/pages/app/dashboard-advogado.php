@@ -217,22 +217,22 @@ $appointments = fetch_all(
       </section>
 
       <section class="lawyer-summary-grid" data-tour-step="3" data-tour-title="Prioridade e status" data-tour-description="Use os indicadores para identificar urgências, pendências e volume de trabalho.">
-        <article class="lawyer-summary-card">
+        <article class="lawyer-summary-card summary-tone-info">
           <?= icon_svg('case') ?>
           <span>Casos ativos</span>
           <strong><?= e((string) $assignedActiveCount) ?></strong>
         </article>
-        <article class="lawyer-summary-card">
+        <article class="lawyer-summary-card summary-tone-warning">
           <?= icon_svg('help') ?>
           <span>Fila aberta</span>
           <strong><?= e((string) $openCount) ?></strong>
         </article>
-        <article class="lawyer-summary-card">
+        <article class="lawyer-summary-card summary-tone-success">
           <?= icon_svg('check') ?>
           <span>Tarefas abertas</span>
           <strong><?= e((string) $taskCount) ?></strong>
         </article>
-        <article class="lawyer-summary-card">
+        <article class="lawyer-summary-card summary-tone-schedule">
           <?= icon_svg('calendar') ?>
           <span>Compromissos</span>
           <strong><?= e((string) $appointmentCount) ?></strong>
