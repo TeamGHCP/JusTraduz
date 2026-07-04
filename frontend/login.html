@@ -15,7 +15,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
-  <link rel="stylesheet" href="assets/css/auth-novo.css?v=lawyer-prefill-date-fix-1">
+  <link rel="stylesheet" href="assets/css/auth-novo.css?v=account-password-flow-1">
   <style>
     .auth-switch-page .auth-card .btn.btn-block {
       min-height: 48px !important;
@@ -125,6 +125,7 @@
           </select>
           <label class="jt-label" for="tipo">Tipo de conta</label>
           <small class="jt-error"></small>
+          <small class="field-help account-type-help" data-account-type-help>Cliente entra direto com CPF. Advogado informa OAB e aguarda validacao.</small>
         </div>
 
         <div class="field jt-field">
@@ -212,7 +213,7 @@
             <span class="auth-field-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
             </span>
-            <input class="input jt-input" type="password" id="cadastro-senha" name="senha" minlength="6" autocomplete="new-password" required>
+            <input class="input jt-input" type="password" id="cadastro-senha" name="senha" minlength="10" autocomplete="new-password" aria-describedby="password-rules" required>
             <label class="jt-label" for="cadastro-senha">Senha</label>
             <small class="jt-error"></small>
           </div>
@@ -221,10 +222,18 @@
             <span class="auth-field-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><path d="m9.5 16 1.8 1.8 3.7-4"/></svg>
             </span>
-            <input class="input jt-input" type="password" id="senha2" name="senha2" minlength="6" autocomplete="new-password" required>
+            <input class="input jt-input" type="password" id="senha2" name="senha2" minlength="10" autocomplete="new-password" required>
             <label class="jt-label" for="senha2">Confirmar senha</label>
             <small class="jt-error"></small>
           </div>
+        </div>
+
+        <div class="password-rules" id="password-rules" data-password-rules aria-live="polite">
+          <span data-password-rule="length">10 caracteres</span>
+          <span data-password-rule="upper">letra maiuscula</span>
+          <span data-password-rule="lower">letra minuscula</span>
+          <span data-password-rule="number">numero</span>
+          <span data-password-rule="special">caractere especial</span>
         </div>
 
         <label class="checkline">
@@ -330,7 +339,7 @@
 </main>
 
 <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
-<script src="assets/js/auth.js?v=lawyer-prefill-date-fix-1"></script>
+<script src="assets/js/auth.js?v=account-password-flow-1"></script>
 <script src="assets/js/auth-novo.js?v=opening-skip-1"></script>
 <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
   <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>

@@ -435,6 +435,51 @@ body {
   margin-top: 6px;
 }
 
+.account-type-help {
+  display: block;
+}
+
+.password-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: -2px;
+}
+
+.password-rules span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid rgba(137, 151, 174, .26);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .76);
+  color: #687792;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.password-rules span::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c4cddd;
+}
+
+.password-rules span.is-valid {
+  border-color: rgba(17, 138, 126, .28);
+  background: rgba(17, 138, 126, .08);
+  color: var(--teal-2);
+}
+
+.password-rules span.is-valid::before {
+  background: var(--teal);
+}
+
 .auth-note {
   padding: 10px 12px;
   border: 1px solid rgba(47, 95, 152, .18);

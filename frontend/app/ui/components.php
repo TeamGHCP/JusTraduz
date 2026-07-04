@@ -123,6 +123,7 @@ function render_sidebar(string $type, string $active, bool $isAdminPath = false)
     </button>
     <button type="button" class="sidebar-backdrop" data-sidebar-backdrop aria-label="Fechar menu lateral" tabindex="-1"></button>
     <script src="<?= e(sidebar_asset_path($isAdminPath)) ?>"></script>
+    <script src="<?= e(app_interactions_asset_path($isAdminPath)) ?>" defer></script>
     <script src="<?= e(theme_asset_path()) ?>" defer></script>
     <script src="<?= e(accessibility_asset_path($isAdminPath)) ?>" defer></script>
     <link rel="stylesheet" href="<?= e(context_help_asset_path($isAdminPath, 'css')) ?>">
@@ -403,6 +404,12 @@ function sidebar_asset_path(bool $isAdminPath): string
 {
     $path = $isAdminPath ? '../assets/js/sidebar.js' : 'assets/js/sidebar.js';
     return $path . '?v=sidebar-open-button-1';
+}
+
+function app_interactions_asset_path(bool $isAdminPath): string
+{
+    $path = $isAdminPath ? '../assets/js/app-interactions.js' : 'assets/js/app-interactions.js';
+    return $path . '?v=app-interactions-20260704-1';
 }
 
 function context_help_asset_path(bool $isAdminPath, string $type): string
