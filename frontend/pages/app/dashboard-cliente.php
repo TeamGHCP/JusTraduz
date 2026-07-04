@@ -34,42 +34,42 @@ $activeCase = fetch_one(
 $quickLinks = [
     [
         'title' => 'Enviar documento',
-        'description' => 'Faça upload e acompanhe a análise na página de documentos.',
+        'description' => 'Envie arquivos e acompanhe a análise.',
         'href' => 'visualizar-documento.php#novo-documento',
         'icon' => 'upload',
         'action' => 'Enviar agora',
     ],
     [
         'title' => 'Histórico',
-        'description' => 'Consulte seus envios, status e análises disponíveis.',
+        'description' => 'Veja envios, status e análises.',
         'href' => 'visualizar-documento.php',
         'icon' => 'folder',
         'action' => 'Ver histórico',
     ],
     [
         'title' => 'Pedir ajuda',
-        'description' => 'Abra uma solicitação quando precisar de orientação.',
+        'description' => 'Abra uma solicitação de orientação.',
         'href' => 'solicitar-ajuda.php',
         'icon' => 'help',
         'action' => 'Solicitar',
     ],
     [
         'title' => 'Conversas',
-        'description' => 'Acompanhe o chat dos seus casos em andamento.',
+        'description' => 'Acompanhe conversas dos casos.',
         'href' => 'chat.php',
         'icon' => 'chat',
         'action' => 'Abrir chat',
     ],
     [
         'title' => 'Agenda',
-        'description' => 'Veja compromissos e próximos atendimentos.',
+        'description' => 'Veja compromissos e atendimentos.',
         'href' => 'agenda.php',
         'icon' => 'calendar',
         'action' => 'Ver agenda',
     ],
     [
         'title' => 'Perfil',
-        'description' => 'Atualize seus dados e revise a segurança da conta.',
+        'description' => 'Atualize dados e segurança.',
         'href' => 'perfil.php',
         'icon' => 'user',
         'action' => 'Editar perfil',
@@ -80,7 +80,7 @@ if ($documentCount === 0) {
     $nextStep = [
         'badge' => 'Comece aqui',
         'title' => 'Envie seu primeiro documento',
-        'description' => 'Suba um PDF ou imagem para receber resumo, pontos de atenção e próximos passos em linguagem simples.',
+        'description' => 'Suba um PDF ou imagem para receber resumo e próximos passos.',
         'href' => 'visualizar-documento.php#novo-documento',
         'action' => 'Enviar documento',
         'icon' => 'upload',
@@ -89,7 +89,7 @@ if ($documentCount === 0) {
     $nextStep = [
         'badge' => 'Aguardando análise',
         'title' => $pendingAnalysisCount === 1 ? 'Há 1 documento sem análise' : 'Há ' . $pendingAnalysisCount . ' documentos sem análise',
-        'description' => 'Abra seus documentos e gere a análise por IA quando quiser transformar o conteúdo em explicação simples.',
+        'description' => 'Abra seus documentos e gere a análise por IA.',
         'href' => 'visualizar-documento.php',
         'action' => 'Ver documentos',
         'icon' => 'chart',
@@ -98,7 +98,7 @@ if ($documentCount === 0) {
     $nextStep = [
         'badge' => 'Atendimento ativo',
         'title' => 'Continue sua conversa',
-        'description' => 'Existe um atendimento em andamento. Abra o chat para acompanhar respostas e próximos passos.',
+        'description' => 'Abra o chat para acompanhar respostas e próximos passos.',
         'href' => 'chat.php?case_id=' . (int) $activeCase['id'],
         'action' => 'Abrir chat',
         'icon' => 'chat',
@@ -107,7 +107,7 @@ if ($documentCount === 0) {
     $nextStep = [
         'badge' => 'Próximo passo',
         'title' => 'Peça ajuda quando precisar',
-        'description' => 'Com a análise em mãos, você pode abrir uma solicitação e levar contexto para um profissional.',
+        'description' => 'Com a análise em mãos, abra uma solicitação quando precisar.',
         'href' => 'solicitar-ajuda.php',
         'action' => 'Pedir ajuda',
         'icon' => 'help',
@@ -146,13 +146,13 @@ $metricCards = [
     <?php render_sidebar('cliente', 'dashboard-cliente.php'); ?>
 
     <main class="app-main" data-tour-step="1" data-tour-title="Bem-vindo ao JusTraduz" data-tour-description="Esta é sua central para entender documentos e acompanhar ajuda jurídica com clareza.">
-      <?php render_topbar('Olá, ' . current_user_name(), 'Entenda documentos, peça ajuda e acompanhe seu atendimento.', current_user_name()); ?>
+      <?php render_topbar('Olá, ' . current_user_name(), 'Documentos, ajuda e atendimento em um só lugar.', current_user_name()); ?>
 
       <section class="client-command" data-tour-step="2" data-tour-title="Fluxo principal" data-tour-description="Envie documentos, acompanhe análises e peça ajuda jurídica quando precisar.">
         <article class="command-card command-card-primary" data-tour-step="3" data-tour-title="Enviar documento" data-tour-description="Comece por aqui para enviar contrato, notificação, imagem ou outro documento jurídico.">
           <span class="badge badge-info">Fluxo principal</span>
-          <h2>Envie um documento e transforme termos jurídicos em próximos passos.</h2>
-          <p>O JusTraduz organiza análise, solicitação, chat e agenda para você sair da dúvida com segurança.</p>
+          <h2>Envie um documento e veja próximos passos.</h2>
+          <p>Análise, solicitação, chat e agenda ficam organizados em um só fluxo.</p>
           <div class="form-actions">
             <a class="btn btn-primary" href="visualizar-documento.php#novo-documento"><?= icon_svg('upload') ?> Enviar documento</a>
             <a class="btn btn-outline" href="visualizar-documento.php"><?= icon_svg('file') ?> Ver documentos</a>
@@ -178,7 +178,8 @@ $metricCards = [
           <?php if ($activeCase): ?>
             <span class="badge badge-info"><?= e(status_label($activeCase['status'] ?? '')) ?></span>
             <strong><?= e($activeCase['titulo']) ?></strong>
-            <p><?= e((string) (int) ($activeCase['message_count'] ?? 0)) ?> mensagem(ns) neste atendimento.</p>
+            <?php $messageCount = (int) ($activeCase['message_count'] ?? 0); ?>
+            <p><?= e((string) $messageCount) ?> <?= $messageCount === 1 ? 'mensagem' : 'mensagens' ?> neste atendimento.</p>
             <a class="btn btn-soft btn-sm" href="chat.php?case_id=<?= (int) $activeCase['id'] ?>">Abrir chat</a>
           <?php else: ?>
             <span class="badge badge-warning">Sem caso ativo</span>
@@ -212,7 +213,7 @@ $metricCards = [
         <div class="dash-section-title">
           <div>
             <h2>Atalhos importantes <?= help_icon('Atalhos da dashboard', 'Use estes acessos para chegar rapidamente às principais áreas do JusTraduz.') ?></h2>
-            <p class="text-muted">Acesse documentos, atendimento, conversas e conta sem procurar no menu.</p>
+            <p class="text-muted">Acesse as principais áreas sem procurar no menu.</p>
           </div>
         </div>
         <div class="grid grid-3 quick-actions-grid">

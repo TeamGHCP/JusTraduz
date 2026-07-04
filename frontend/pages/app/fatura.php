@@ -350,7 +350,7 @@ if ($downloadMode) {
     <div class="doc-actions">
       <a href="<?= e(app_url('/frontend/perfil.php?tab=faturamento')) ?>">Voltar</a>
       <a href="<?= e(app_url('/frontend/fatura.php?id=' . $eventId . '&download=1')) ?>">Baixar PDF</a>
-      <button type="button" onclick="window.print()">Imprimir / salvar PDF</button>
+      <button type="button" data-print-page>Imprimir / salvar PDF</button>
     </div>
   <?php endif; ?>
 
@@ -416,5 +416,10 @@ if ($downloadMode) {
       Documento interno gerado a partir dos eventos de cobrança registrados no JusTraduz.
     </footer>
   </main>
+  <script>
+    document.querySelector('[data-print-page]')?.addEventListener('click', function () {
+      window.print();
+    });
+  </script>
 </body>
 </html>

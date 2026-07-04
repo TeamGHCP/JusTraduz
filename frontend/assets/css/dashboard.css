@@ -3766,42 +3766,6 @@ body.attachment-modal-open {
   margin-top: 10px;
 }
 
-.app-section-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 32px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--muted);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 900;
-  white-space: nowrap;
-  transition: border-color .16s ease, color .16s ease, background .16s ease, transform .16s ease;
-}
-
-.app-section-toggle:hover,
-.app-section-toggle:focus-visible {
-  border-color: color-mix(in srgb, var(--teal) 36%, var(--line-strong));
-  background: var(--surface-2);
-  color: var(--teal-2);
-}
-
-.dash-section.is-app-collapsed {
-  padding-bottom: 0;
-}
-
-.dash-section.is-app-collapsed > :not(.dash-section-title) {
-  display: none !important;
-}
-
-.dash-section.is-app-collapsed .dash-section-title {
-  margin-bottom: 0;
-}
-
 .app-table-hint {
   display: none;
   margin: 0 0 8px;

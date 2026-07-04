@@ -185,37 +185,6 @@
       });
     };
 
-    const enhanceSections = () => {
-      main.querySelectorAll(".dash-section").forEach((section) => {
-        if (section.dataset.appSectionReady === "true") {
-          return;
-        }
-
-        const title = section.querySelector(":scope > .dash-section-title");
-        const hasContent = Array.from(section.children).some((child) => child !== title);
-        if (!title || !hasContent) {
-          return;
-        }
-
-        section.dataset.appSectionReady = "true";
-
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "app-section-toggle";
-        button.setAttribute("aria-expanded", "true");
-        button.textContent = "Recolher";
-
-        title.appendChild(button);
-
-        button.addEventListener("click", () => {
-          const collapsed = !section.classList.contains("is-app-collapsed");
-          section.classList.toggle("is-app-collapsed", collapsed);
-          button.setAttribute("aria-expanded", String(!collapsed));
-          button.textContent = collapsed ? "Expandir" : "Recolher";
-        });
-      });
-    };
-
     const enhanceTables = () => {
       main.querySelectorAll(".table-wrap").forEach((wrap) => {
         if (wrap.dataset.appTableReady === "true") {
@@ -304,7 +273,6 @@
     enhanceReveal();
     enhanceCardClicks();
     enhanceLocalFilters();
-    enhanceSections();
     enhanceTables();
     enhanceShortcuts();
   };

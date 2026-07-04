@@ -201,13 +201,13 @@ $appointments = fetch_all(
     <?php render_sidebar('advogado', 'dashboard-advogado.php'); ?>
 
     <main class="app-main lawyer-dashboard" data-tour-step="1" data-tour-title="Visão geral do advogado" data-tour-description="Esta mesa reúne fila, casos, documentos, tarefas e agenda profissional.">
-      <?php render_topbar('Mesa do advogado', 'Fila, prioridades, documentos, tarefas e agenda em uma unica area de trabalho.', current_user_name()); ?>
+      <?php render_topbar('Mesa do advogado', 'Fila, prioridades, documentos, tarefas e agenda em uma única área.', current_user_name()); ?>
 
       <section class="lawyer-focus-panel" data-tour-step="2" data-tour-title="Prioridade do dia" data-tour-description="Comece pelos sinais que mais afetam atendimento, prazo e resposta ao cliente.">
         <div>
           <span class="badge <?= $highPriorityOpenCount > 0 ? 'badge-warning' : 'badge-info' ?>">Prioridade agora</span>
           <h2><?= $highPriorityOpenCount > 0 ? e((string) $highPriorityOpenCount) . ' casos de alta prioridade na fila' : 'Fila sob controle' ?></h2>
-          <p><?= $openCount > 0 ? e((string) $openCount) . ' solicitações aguardam aceite. Entre, escolha com critério e já deixe o próximo passo encaminhado.' : 'Nenhuma solicitação aberta no momento. Use a agenda e tarefas para manter os casos ativos andando.' ?></p>
+          <p><?= $openCount > 0 ? e((string) $openCount) . ' solicitações aguardam aceite. Priorize com critério.' : 'Nenhuma solicitação aberta. Use agenda e tarefas para manter casos ativos andando.' ?></p>
         </div>
         <div class="lawyer-focus-actions">
           <a class="btn btn-primary" href="acompanhar-solicitacoes.php?scope=abertos"><?= icon_svg('case') ?> Ver fila</a>
@@ -241,8 +241,8 @@ $appointments = fetch_all(
 
       <section class="dash-section" data-tour-step="4" data-tour-title="Fila de solicitações" data-tour-description="Aqui aparecem solicitações abertas, ordenadas por urgência e ainda sem responsável.">
         <div class="dash-section-title">
-          <h2>Fila para aceitar <?= help_icon('Fila para aceitar', 'Mostra solicitações sem responsável. Aceite apenas casos que você pode conduzir com segurança e disponibilidade.') ?></h2>
-          <span class="badge badge-warning">Ordenada por urgencia</span>
+          <h2>Fila para aceitar <?= help_icon('Fila para aceitar', 'Solicitações sem responsável. Aceite apenas o que puder conduzir com segurança.') ?></h2>
+          <span class="badge badge-warning">Ordenada por urgência</span>
         </div>
         <?php if (!$openCases): ?>
           <?= empty_state('Nenhuma solicitação aberta no momento.') ?>
@@ -288,11 +288,11 @@ $appointments = fetch_all(
 
       <section class="dash-section" data-tour-step="6" data-tour-title="Meus casos ativos" data-tour-description="Depois de aceitar um caso, acompanhe chat, tarefas, agenda e documentos ligados ao cliente.">
         <div class="dash-section-title">
-          <h2>Meus casos ativos <?= help_icon('Casos ativos', 'Acompanhe status, prioridade, tarefas, documentos e mensagens dos casos sob sua responsabilidade.') ?></h2>
+          <h2>Meus casos ativos <?= help_icon('Casos ativos', 'Status, prioridade, tarefas, documentos e mensagens dos seus casos.') ?></h2>
           <a class="btn btn-soft btn-sm" href="acompanhar-solicitacoes.php?scope=meus">Ver todos</a>
         </div>
         <?php if (!$assignedCases): ?>
-          <?= empty_state('Você ainda não possui casos ativos atribuidos.') ?>
+          <?= empty_state('Você ainda não possui casos ativos atribuídos.') ?>
         <?php else: ?>
           <div class="professional-card-grid">
             <?php foreach ($assignedCases as $case): ?>
@@ -336,7 +336,7 @@ $appointments = fetch_all(
       <section class="grid grid-2 professional-work-grid" data-tour-step="7" data-tour-title="Tarefas e agenda" data-tour-description="Organize os próximos passos dos casos e acompanhe compromissos futuros sem perder prazo.">
         <article class="dash-section">
           <div class="dash-section-title">
-            <h2>Proximas tarefas <?= help_icon('Tarefas', 'Registre próximos passos objetivos e evite incluir dados sensíveis desnecessários na descrição.') ?></h2>
+            <h2>Próximas tarefas <?= help_icon('Tarefas', 'Registre próximos passos objetivos e evite incluir dados sensíveis desnecessários na descrição.') ?></h2>
             <span class="badge badge-info"><?= e((string) $taskCount) ?> abertas</span>
           </div>
           <?php if (!$tasks): ?>

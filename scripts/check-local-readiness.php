@@ -2,8 +2,7 @@
 
 $root = dirname(__DIR__);
 
-require_once $root . '/backend/app/config/app.php';
-require_once $root . '/backend/app/controllers/HealthController.php';
+require_once $root . '/backend/app/support/autoload.php';
 
 $failures = [];
 $warnings = [];
