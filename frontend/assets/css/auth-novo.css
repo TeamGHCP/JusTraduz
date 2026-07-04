@@ -284,6 +284,31 @@ body {
   resize: vertical;
 }
 
+.jt-field .jt-input[type="date"] {
+  min-height: 54px;
+  padding-top: 22px;
+  padding-bottom: 7px;
+  line-height: 1.15;
+}
+
+.jt-field .jt-input[type="date"] ~ .jt-label {
+  top: 8px;
+  background: transparent;
+  color: var(--teal);
+  font-size: 11px;
+  transform: translateY(0);
+}
+
+.jt-field .jt-input[type="date"] ~ .jt-label .jt-label-char {
+  color: var(--teal);
+  transform: translateY(-30%);
+}
+
+.jt-field.has-error .jt-input[type="date"] ~ .jt-label,
+.jt-field.has-error .jt-input[type="date"] ~ .jt-label .jt-label-char {
+  color: var(--danger);
+}
+
 .jt-field .jt-input:hover {
   border-color: rgba(17, 138, 126, .45);
 }
@@ -472,6 +497,11 @@ body {
 .auth-cadastro-panel .jt-field .jt-input {
   min-height: 50px;
   padding-top: 17px;
+}
+
+.auth-cadastro-panel .jt-field .jt-input[type="date"] {
+  min-height: 54px;
+  padding-top: 22px;
 }
 
 .auth-cadastro-panel .password-field-wrap .jt-input {

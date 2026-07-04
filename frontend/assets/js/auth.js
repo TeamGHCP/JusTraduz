@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";
   const backendBase = `${appBasePath}/backend/public/index.php`;
   const backendRoute = (path) => `${backendBase}?rota=${encodeURIComponent(path)}`;
+  const params = new URLSearchParams(window.location.search);
   let csrfToken = "";
 
   function clearCookie(name) {
@@ -25,6 +26,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const ufInput = document.querySelector("[name='oab_uf']");
   const professionalNote = document.querySelector("[data-professional-note]");
   const alertBoxes = document.querySelectorAll("[data-auth-alert]");
+
+  if (typeSelect) {
+    const requestedType = String(params.get("tipo") || params.get("perfil") || "").toLowerCase();
+    const allowedTypes = Array.from(typeSelect.options).map((option) => option.value);
+
+    if (allowedTypes.includes(requestedType)) {
+      typeSelect.value = requestedType;
+    }
+  }
 
   function enhanceAnimatedLabels() {
     document.querySelectorAll(".auth-switch-page .jt-label").forEach((label) => {
@@ -489,7 +499,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  const params = new URLSearchParams(window.location.search);
   if (params.has("erro")) showMessage(params.get("erro"), "error");
   if (params.get("sucesso") === "conta_criada") {
     showMessage("Conta criada com sucesso. Entre para continuar.", "success");

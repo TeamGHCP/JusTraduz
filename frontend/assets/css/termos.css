@@ -160,10 +160,16 @@
   position: sticky;
   top: 86px;
   padding: 14px;
+  overflow: hidden;
   border: 1px solid #dfe7f0;
   border-radius: 8px;
   background: rgba(255, 255, 255, .94);
   box-shadow: 0 14px 34px rgba(23, 32, 51, .07);
+}
+
+.terms-modern-aside.is-enhanced {
+  display: grid;
+  gap: 8px;
 }
 
 .terms-progress {
@@ -181,6 +187,11 @@
   border-radius: inherit;
   background: linear-gradient(90deg, #118a7e, #16a79a);
   transition: width .18s ease;
+}
+
+.terms-nav-track {
+  display: grid;
+  gap: 4px;
 }
 
 .terms-modern-aside h2 {
@@ -217,9 +228,68 @@
   color: #0f766d;
 }
 
+.terms-modern-aside a[aria-current="true"] {
+  box-shadow: inset 0 0 0 1px rgba(17, 138, 126, .12);
+}
+
 .terms-modern-card {
   display: grid;
   gap: 10px;
+}
+
+.terms-modern-section-static:not(.how-step) {
+  position: relative;
+  padding: clamp(22px, 3vw, 34px);
+  border: 1px solid rgba(217, 225, 234, .94);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .98), rgba(248, 251, 255, .92)),
+    #ffffff;
+  box-shadow: 0 16px 38px rgba(23, 32, 51, .06);
+  scroll-margin-top: 98px;
+}
+
+.terms-modern-section-static:not(.how-step) h2 {
+  margin: 0 0 14px;
+  color: #172033;
+  font-size: clamp(23px, 2.7vw, 32px);
+  line-height: 1.16;
+}
+
+.terms-modern-section-static:not(.how-step) p,
+.terms-modern-section-static:not(.how-step) li {
+  color: #354158;
+  font-size: 16px;
+  line-height: 1.74;
+}
+
+.terms-modern-section-static:not(.how-step) p {
+  margin: 0;
+}
+
+.terms-modern-section-static:not(.how-step) p + p {
+  margin-top: 14px;
+}
+
+.terms-modern-section-static:not(.how-step) ul {
+  padding: 2px 0 0;
+  list-style: none;
+}
+
+.terms-modern-section-static:not(.how-step) li {
+  position: relative;
+  padding-left: 22px;
+}
+
+.terms-modern-section-static:not(.how-step) li::before {
+  content: "";
+  position: absolute;
+  top: .72em;
+  left: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #118a7e;
 }
 
 .terms-story-page .terms-modern-card,
@@ -251,6 +321,27 @@
     #ffffff;
   box-shadow: 0 18px 42px rgba(23, 32, 51, .07);
   scroll-margin-top: 98px;
+}
+
+.terms-interactive-ready .terms-observed-section {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity .42s ease,
+    transform .42s cubic-bezier(.16, 1, .3, 1),
+    border-color .2s ease,
+    box-shadow .2s ease;
+  transition-delay: var(--terms-section-delay, 0ms);
+}
+
+.terms-interactive-ready .terms-observed-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.terms-interactive-ready .terms-observed-section.is-current:not(.how-step-warning) {
+  border-color: rgba(17, 138, 126, .34);
+  box-shadow: 0 20px 46px rgba(17, 138, 126, .10);
 }
 
 .how-step::before {
@@ -495,7 +586,54 @@
   }
 
   .terms-modern-aside {
-    position: static;
+    position: sticky;
+    top: 64px;
+    z-index: 15;
+    margin-inline: -2px;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .terms-modern-aside h2 {
+    margin-bottom: 2px;
+  }
+
+  .terms-progress {
+    margin-bottom: 4px;
+  }
+
+  .terms-nav-track {
+    display: flex;
+    gap: 8px;
+    margin: 0 -4px;
+    padding: 0 4px 3px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .terms-nav-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .terms-modern-aside a {
+    flex: 0 0 auto;
+    min-height: 40px;
+    max-width: min(78vw, 280px);
+    padding: 9px 12px;
+    border-left: 0;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+
+  .terms-modern-aside a:hover,
+  .terms-modern-aside a.is-active {
+    transform: translateY(-1px);
+    border-bottom-color: #118a7e;
   }
 
   .terms-story-page .terms-modern-card,
@@ -512,7 +650,7 @@
 
 @media (max-width: 620px) {
   .terms-modern-hero {
-    min-height: calc(100svh - var(--terms-header-height));
+    min-height: auto;
     padding: clamp(42px, 10vw, 58px) 0 clamp(38px, 10vw, 54px);
   }
 
@@ -539,6 +677,7 @@
 
   .how-step {
     padding: 20px;
+    scroll-margin-top: 152px;
   }
 
   .how-step .contact-kicker {
@@ -553,6 +692,14 @@
 
   .terms-section-body {
     padding: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terms-interactive-ready .terms-observed-section {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 

@@ -38,7 +38,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </p>
 
         <div class="terms-hero-actions">
-          <a class="btn btn-primary home-btn-primary" href="login.html?cadastro">
+          <a class="btn btn-primary home-btn-primary" href="login.html?cadastro&tipo=advogado">
             <span class="home-btn-label">Cadastrar meu perfil</span>
             <span class="home-btn-icon" aria-hidden="true">
               <svg class="svg-icon" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
               <li><strong>Liberdade contratual:</strong> Toda a negociação de honorários e a execução técnica dos serviços ocorrem sob a total e exclusiva autonomia e responsabilidade do advogado parceiro e do cliente.</li>
             </ul>
             <div style="margin-top: 32px; display: flex; gap: 16px; flex-wrap: wrap;">
-              <a class="btn btn-primary" href="login.html?cadastro">Criar perfil de advogado</a>
+              <a class="btn btn-primary" href="login.html?cadastro&tipo=advogado">Criar perfil de advogado</a>
               <a class="btn btn-outline" href="como-funciona">Como funciona o fluxo</a>
             </div>
           </div>
