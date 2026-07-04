@@ -1,31 +1,30 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: justraduz_app
+    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
-      - .:/var/www/html/JusTraduz
+      - .:/var/www/html
     env_file:
       - backend/.env
     environment:
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASS=rootpassword
-      - DB_NAME=justraduz
-      - APP_BASE_PATH=JusTraduz
-      - APP_URL=http://localhost:8080/JusTraduz
-      - APP_PUBLIC_URL=http://localhost:8080/JusTraduz
-      - APP_ENV=local
-      - ASYNC_JOBS_ENABLED=true
-      - OCR_ENABLED=true
-      - OCR_TESSERACT_BINARY=/usr/bin/tesseract
-      - CLAMAV_BINARY=/usr/bin/clamscan
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: rootpassword
+      DB_NAME: justraduz
+      APP_BASE_PATH: ""
+      APP_URL: https://justraduz.tamanini.dev.br
+      APP_PUBLIC_URL: https://justraduz.tamanini.dev.br
+      APP_ENV: production
+      ASYNC_JOBS_ENABLED: "true"
+      OCR_ENABLED: "true"
+      OCR_TESSERACT_BINARY: /usr/bin/tesseract
+      CLAMAV_BINARY: /usr/bin/clamscan
     depends_on:
       - db
 
@@ -34,37 +33,43 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: justraduz_worker
+    restart: unless-stopped
+    working_dir: /var/www/html
     volumes:
-      - .:/var/www/html/JusTraduz
+      - .:/var/www/html
     env_file:
       - backend/.env
     environment:
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_USER=root
-      - DB_PASS=rootpassword
-      - DB_NAME=justraduz
-      - APP_BASE_PATH=JusTraduz
-      - APP_URL=http://localhost:8080/JusTraduz
-      - APP_PUBLIC_URL=http://localhost:8080/JusTraduz
-      - APP_ENV=local
-      - ASYNC_JOBS_ENABLED=true
-    command: bash -c "while true; do php scripts/run-jobs.php --escalate --finalize-deletions; sleep 10; done"
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASS: rootpassword
+      DB_NAME: justraduz
+      APP_BASE_PATH: ""
+      APP_URL: https://justraduz.tamanini.dev.br
+      APP_PUBLIC_URL: https://justraduz.tamanini.dev.br
+      APP_ENV: production
+      ASYNC_JOBS_ENABLED: "true"
+    command: >
+      bash -c "while true; do
+      php scripts/run-jobs.php --escalate --finalize-deletions;
+      sleep 10;
+      done"
     depends_on:
       - db
 
   db:
     image: mariadb:10.6
     container_name: justraduz_db
+    restart: unless-stopped
     ports:
       - "3307:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
-      - MYSQL_DATABASE=justraduz
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: justraduz
     volumes:
       - db_data:/var/lib/mysql
       - ./database/justraduz_completo_com_demo.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: always
 
 volumes:
   db_data:
