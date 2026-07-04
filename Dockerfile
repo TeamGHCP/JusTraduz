@@ -45,7 +45,7 @@ RUN printf '%s\n' \
     'rm -f /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf' \
     'sed -i "s/^Listen .*/Listen ${PORT}/" /etc/apache2/ports.conf' \
     'sed -i "s/<VirtualHost \*:[0-9][0-9]*/<VirtualHost *:${PORT}/" /etc/apache2/sites-available/000-default.conf' \
-    'sed -i "s#DocumentRoot /var/www/html#DocumentRoot /var/www/html/frontend#" /etc/apache2/sites-available/000-default.conf' \
+    'sed -i "s#DocumentRoot .*#DocumentRoot /var/www/html/frontend#" /etc/apache2/sites-available/000-default.conf' \
     'cat > /etc/apache2/conf-available/justraduz-root.conf <<EOF' \
     'DirectoryIndex index.php index.html' \
     'ServerName localhost' \
