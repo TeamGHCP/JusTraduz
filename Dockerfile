@@ -50,6 +50,7 @@ RUN printf '%s\n' \
     'DirectoryIndex index.php index.html' \
     'ServerName localhost' \
     'Alias /favicon.ico /var/www/html/frontend/assets/img/icon.ico' \
+    'Alias /frontend /var/www/html/frontend' \
     'Alias /backend/public /var/www/html/backend/public' \
     'AliasMatch ^/JusTraduz/frontend/(.*)$ /var/www/html/frontend/$1' \
     'AliasMatch ^/JusTraduz/backend/public/(.*)$ /var/www/html/backend/public/$1' \
