@@ -1,8 +1,7 @@
 <?php
 $pathPrefix = '';
-$publicPathPrefix = '/';
-$assetPrefix = '/';
 $activePage = 'seguranca-lgpd';
+require_once __DIR__ . '/' . $pathPrefix . 'includes/public-path.php';
 require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 ?>
 <!DOCTYPE html>
