@@ -140,7 +140,8 @@ function render_vlibras(): void
     }
 
     $rendered = true;
-    $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/');
+    $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+    $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') || str_starts_with($requestPath, '/admin/');
     $assetPrefix = $isAdminPath ? '../' : '';
     render_cookie_consent_assets($isAdminPath);
     ?>
@@ -250,7 +251,8 @@ function render_onboarding_assets(
     string $profile,
     bool $autoStart = true
 ): void {
-    $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/');
+    $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+    $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') || str_starts_with($requestPath, '/admin/');
     $assetPrefix = $isAdminPath ? '../' : '';
     $endpoint = static fn (string $route): string => app_url('/backend/public/index.php?rota=' . $route);
     $config = [
@@ -377,7 +379,8 @@ function current_user_photo_url(): string
         return $photoPath;
     }
 
-    $prefix = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') ? '../../' : '../';
+    $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+    $prefix = (str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') || str_starts_with($requestPath, '/admin/')) ? '../../' : '../';
     return $prefix . ltrim($photoPath, '/');
 }
 
@@ -395,8 +398,8 @@ function render_theme_toggle(): string
 
 function theme_asset_path(): string
 {
-    $script = $_SERVER['SCRIPT_NAME'] ?? '';
-    $path = str_contains($script, '/frontend/admin/') ? '../assets/js/theme.js' : 'assets/js/theme.js';
+    $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+    $path = (str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') || str_starts_with($requestPath, '/admin/')) ? '../assets/js/theme.js' : 'assets/js/theme.js';
     return $path . '?v=theme-slow-3';
 }
 

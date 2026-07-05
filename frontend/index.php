@@ -39,7 +39,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         "url": "https://justraduz.com.br",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://justraduz.com.br/frontend/assets/img/logo.png",
+          "url": "https://justraduz.com.br/assets/img/logo.png",
           "width": 512,
           "height": 512
         },
@@ -815,7 +815,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     <section id="seguranca" class="page-section home-security-section">
       <div class="container">
         <div class="section-head home-section-head">
-          <h2>Segurança como argumento de produto</h2>
+          <h2>Segurança como argumento do produto</h2>
           <p>O JusTraduz não substitui advogado. Ele organiza a compreensão inicial, registra consentimentos e mantém trilha de auditoria.</p>
         </div>
 
@@ -840,7 +840,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
           <div class="home-security-preview" aria-live="polite">
             <div class="home-security-preview-top">
-              <span data-security-preview-kicker>Proteção active</span>
+              <span data-security-preview-kicker>Proteção ativa</span>
               <strong data-security-preview-title>Consentimento antes do envio</strong>
             </div>
             <p data-security-preview-text>O usuário entende o uso da plataforma antes de enviar documentos, com regras visíveis e registro do aceite.</p>
@@ -931,7 +931,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     </section>
   </aside>
 
-  <script src="assets/js/main-home-bundle.min.js?v=pagespeed-visual-safe-20260703"></script>
+  <script src="assets/js/main-home-bundle.min.js?v=security-encoding-fix-1"></script>
   <script src="assets/js/chatbot.min.js?v=pagespeed-visual-safe-20260703"></script>
   <script src="assets/js/vlibras-init.js?v=2026.07.05-a11y-global-1" defer></script>
   <script src="assets/js/accessibility.js?v=2026.07.05-a11y-global-1"></script>

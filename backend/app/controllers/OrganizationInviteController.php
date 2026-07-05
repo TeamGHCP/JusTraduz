@@ -37,8 +37,8 @@ class OrganizationInviteController extends BaseController
             }
 
             $target = !empty($result['has_account'])
-                ? '/frontend/login.html?sucesso=' . urlencode('Entre para aceitar o convite do escritório.')
-                : '/frontend/login.html?cadastro&sucesso=' . urlencode('Crie sua conta para aceitar o convite do escritório.');
+                ? '/login.html?sucesso=' . urlencode('Entre para aceitar o convite do escritório.')
+                : '/login.html?cadastro&sucesso=' . urlencode('Crie sua conta para aceitar o convite do escritório.');
             $this->response->redirect(app_url($target));
         }
 

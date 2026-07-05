@@ -1,8 +1,8 @@
 Options -Indexes
 
-ErrorDocument 403 /JusTraduz/frontend/403.php
-ErrorDocument 404 /JusTraduz/frontend/404.php
-ErrorDocument 500 /JusTraduz/frontend/500.php
+ErrorDocument 403 /403.php
+ErrorDocument 404 /404.php
+ErrorDocument 500 /500.php
 
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
@@ -20,6 +20,8 @@ ErrorDocument 500 /JusTraduz/frontend/500.php
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteCond %{THE_REQUEST} \s/+frontend/?([^\s?]*) [NC]
+    RewriteRule ^frontend/?(.*)$ /$1 [R=301,L,QSA,NE]
     RewriteRule ^frontend/blog$ %{REQUEST_URI}/ [R=301,L,NE]
     RewriteRule ^blog$ %{REQUEST_URI}/ [R=301,L,NE]
     RewriteRule ^(?:database|docs|\.git)(?:/|$) - [F,L]
@@ -30,6 +32,12 @@ ErrorDocument 500 /JusTraduz/frontend/500.php
     RewriteRule ^(.+?)/?$ $1.html [L]
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^(.+?)/?$ $1.php [L]
+    RewriteCond %{DOCUMENT_ROOT}/frontend/$1.html -f
+    RewriteRule ^(.+?)/?$ frontend/$1.html [L]
+    RewriteCond %{DOCUMENT_ROOT}/frontend/$1.php -f
+    RewriteRule ^(.+?)/?$ frontend/$1.php [L]
+    RewriteCond %{DOCUMENT_ROOT}/frontend/$1 -f
+    RewriteRule ^(.+)$ frontend/$1 [L]
 </IfModule>
 
 # Compressao Gzip/Deflate
@@ -40,4 +48,3 @@ ErrorDocument 500 /JusTraduz/frontend/500.php
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/xml image/svg+xml
 </IfModule>
-

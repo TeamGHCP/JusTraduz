@@ -110,6 +110,6 @@ class ErrorHandler
             $base = substr($script, 0, $position);
         }
 
-        return rtrim($base, '/') . '/frontend/';
+        return rtrim($base, '/') . '/';
     }
 }

@@ -212,6 +212,10 @@ HTML;
 
         private function absoluteAppUrl(string $path): string
         {
+            if (str_starts_with($path, '/frontend/')) {
+                $path = substr($path, strlen('/frontend'));
+            }
+
             foreach (['APP_PUBLIC_URL', 'APP_URL'] as $key) {
                 $configured = $this->env($key);
                 if ($configured !== '' && preg_match('#^https?://#i', $configured)) {

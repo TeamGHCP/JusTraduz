@@ -8,8 +8,13 @@
 
 .contact-hero {
   position: relative;
+  display: grid;
+  align-items: center;
   overflow: hidden;
-  padding: clamp(64px, 9vw, 108px) 0 clamp(54px, 7vw, 86px);
+  min-height: calc(100vh - 68px);
+  min-height: calc(100svh - 68px);
+  height: auto;
+  padding: clamp(54px, 7vw, 84px) 0 clamp(50px, 7vw, 78px);
   border-bottom: 1px solid rgba(198, 209, 221, .74);
   background:
     radial-gradient(circle at 50% 46%, rgba(17, 138, 126, .10), transparent 30%),
@@ -684,4 +689,3 @@
     grid-template-columns: 1fr;
   }
 }
-

@@ -44,8 +44,8 @@ class DocumentController extends BaseController
         CsrfMiddleware::validate();
 
         $uploadRedirect = (string) $this->request->post('redirect_to', '') === 'documents'
-            ? '/frontend/visualizar-documento.php'
-            : '/frontend/dashboard-cliente.php';
+            ? '/visualizar-documento.php'
+            : '/dashboard-cliente.php';
 
         if (empty($_SESSION['logado']) || $_SESSION['tipo'] !== 'cliente') {
             $this->response->redirect(app_url('/frontend/login.html?erro=' . urlencode('Faça login como cliente para enviar documentos.')));

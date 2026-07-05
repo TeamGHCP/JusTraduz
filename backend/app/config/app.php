@@ -53,5 +53,8 @@ function app_base_path(): string
 function app_url(string $path = ''): string
 {
     $path = '/' . ltrim($path, '/');
+    if (str_starts_with($path, '/frontend/')) {
+        $path = substr($path, strlen('/frontend'));
+    }
     return app_base_path() . ($path === '/' ? '' : $path);
 }
