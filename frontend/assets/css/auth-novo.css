@@ -1525,3 +1525,36 @@ body {
     padding-right: 0;
   }
 }
+
+@supports (height: 100dvh) {
+  .auth-switch-page,
+  .auth-switch-page .auth-panel,
+  .auth-slider,
+  .auth-reset-page,
+  .auth-reset-page .auth-panel {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .auth-switch-page .cadastro-card {
+    max-height: calc(100dvh - 60px);
+  }
+
+  .auth-reset-page .auth-card {
+    max-height: calc(100dvh - 84px);
+  }
+
+  @media (max-width: 900px) {
+    .auth-switch-page,
+    .auth-reset-page {
+      height: auto;
+      min-height: 100dvh;
+    }
+
+    .auth-switch-page .auth-panel,
+    .auth-reset-page .auth-panel {
+      height: auto;
+      min-height: 100dvh;
+    }
+  }
+}

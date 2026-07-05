@@ -165,7 +165,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
     }
   </style>
   <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
-  <script src="assets/js/pwa.js" defer></script>
+  <script src="assets/js/pwa.js?v=2026.07.05-assets-v1" defer></script>
 </head>
 <body>
 <main class="auth-page auth-switch-page google-complete-switch preload" id="authPage">

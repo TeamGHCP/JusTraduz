@@ -74,7 +74,7 @@ foreach ($groups as $group => $prefixes) {
   <link rel="manifest" href="../site.webmanifest">
   <meta name="theme-color" content="#008f80">
   <link rel="stylesheet" href="../assets/css/style.css?v=2026.07.05-style-cache-1">
-  <script src="../assets/js/pwa.js" defer></script>
+  <script src="../assets/js/pwa.js?v=2026.07.05-assets-v1" defer></script>
 </head>
 <body>
   <div class="app-shell admin-shell">

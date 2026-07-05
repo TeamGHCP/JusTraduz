@@ -106,7 +106,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     })();
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style-home-bundle.min.css?v=pagespeed-visual-safe-20260703">
+  <link rel="stylesheet" href="assets/css/style-home-bundle.min.css?v=2026.07.05-assets-v1">
   <style>
     @media (max-width: 980px) {
       .home-page .home-hero {
@@ -229,8 +229,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       }
     }
   </style>
-  <script src="assets/js/cookie-consent.min.js?v=pagespeed-visual-safe-20260703"></script>
-  <script src="assets/js/pwa.min.js?v=pagespeed-visual-safe-20260703" defer></script>
+  <script src="assets/js/cookie-consent.min.js?v=2026.07.05-assets-v1"></script>
+  <script src="assets/js/pwa.min.js?v=2026.07.05-assets-v1" defer></script>
 </head>
 <body id="top" class="home-page has-opening-loader">
   <div class="jt-cinematic-loader" data-opening-loader aria-hidden="true">
@@ -931,9 +931,9 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
     </section>
   </aside>
 
-  <script src="assets/js/main-home-bundle.min.js?v=pagespeed-visual-safe-20260703"></script>
-  <script src="assets/js/chatbot.min.js?v=pagespeed-visual-safe-20260703"></script>
+  <script src="assets/js/main-home-bundle.min.js?v=2026.07.05-assets-v1"></script>
+  <script src="assets/js/chatbot.min.js?v=2026.07.05-assets-v1"></script>
   <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
-  <script src="assets/js/accessibility.min.js?v=pagespeed-visual-safe-20260703"></script>
+  <script src="assets/js/accessibility.min.js?v=2026.07.05-assets-v1"></script>
 </body>
 </html>
