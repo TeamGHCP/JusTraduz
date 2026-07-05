@@ -152,7 +152,7 @@ $helpUrl = $document ? 'solicitar-ajuda.php?document_id=' . (int) $document['id'
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.05-style-cache-1">
   <script src="assets/js/pwa.js" defer></script>
 </head>
 <body>

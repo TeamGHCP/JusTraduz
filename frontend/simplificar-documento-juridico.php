@@ -22,7 +22,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-feedback-stable-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.05-style-cache-1">
   <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
 <body class="seo-simplify-page terms-page-enhanced terms-story-page">

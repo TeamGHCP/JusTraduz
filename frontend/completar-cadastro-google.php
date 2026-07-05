@@ -25,7 +25,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.05-style-cache-1">
   <link rel="stylesheet" href="assets/css/auth-novo.css?v=custom-select-flow-8">
   <style>
     .auth-switch-page .auth-card .btn.btn-block {
