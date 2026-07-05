@@ -72,6 +72,6 @@ require_once __DIR__ . '/includes/seo.php';
       </aside>
     </section>
   </main>
-  <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
+  <script src="assets/js/accessibility.js?v=2026.07.05-a11y-global-1"></script>
 </body>
 </html>

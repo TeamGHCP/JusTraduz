@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justraduz-pwa-2026-07-05-assets-v1";
+const CACHE_VERSION = "justraduz-pwa-2026-07-05-a11y-v1";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "offline.html";
 const PUBLIC_PAGE_FALLBACKS = new Set([
@@ -48,8 +48,6 @@ const STATIC_ASSETS = [
   "assets/css/cookie-consent.min.css",
   "assets/css/accessibility.css",
   "assets/css/accessibility.min.css",
-  "assets/css/agenda.css",
-  "assets/css/onboarding.css",
   "assets/js/main.js",
   "assets/js/main-home-bundle.min.js",
   "assets/js/modules/opening.js",
@@ -61,8 +59,6 @@ const STATIC_ASSETS = [
   "assets/js/modules/tabs.js",
   "assets/js/modules/phone-demo.js",
   "assets/js/modules/security.js",
-  "assets/js/modules/terms-pages.js",
-  "assets/js/modules/blog-posts.js",
   "assets/js/auth.js",
   "assets/js/auth-novo.js",
   "assets/js/chatbot.js",
@@ -70,6 +66,7 @@ const STATIC_ASSETS = [
   "assets/js/cookie-consent.js",
   "assets/js/cookie-consent.min.js",
   "assets/js/vlibras-init.js",
+  "assets/js/accessibility.js",
   "assets/js/accessibility.min.js",
   "assets/js/pwa.js",
   "assets/js/pwa.min.js",

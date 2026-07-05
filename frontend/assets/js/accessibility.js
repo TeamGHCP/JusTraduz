@@ -105,6 +105,7 @@
   function makeSkipLink() {
     var main = document.querySelector('main');
     if (!main) return;
+    if (document.querySelector('.skip-link')) return;
     if (!main.id) main.id = 'conteudo-principal';
     main.setAttribute('tabindex', '-1');
     var link = document.createElement('a');
@@ -170,6 +171,10 @@
       var topWrapper = document.createElement('div');
       accessButton.setAttribute('vw-access-button', '');
       accessButton.className = 'active';
+      accessButton.setAttribute('role', 'button');
+      accessButton.setAttribute('tabindex', '0');
+      accessButton.setAttribute('aria-label', 'Abrir tradutor VLibras');
+      accessButton.setAttribute('title', 'Abrir tradutor VLibras');
       pluginWrapper.setAttribute('vw-plugin-wrapper', '');
       topWrapper.className = 'vw-plugin-top-wrapper';
       pluginWrapper.appendChild(topWrapper);
@@ -180,14 +185,27 @@
 
     function startWidget() {
       if (window.JusTraduzVlibrasStarted) return;
+      if (window.JusTraduzVlibrasStarting) {
+        startAttempts++;
+        if (startAttempts < 20) window.setTimeout(startWidget, 250);
+        return;
+      }
       if (!window.VLibras || !window.VLibras.Widget) {
         startAttempts++;
         if (startAttempts < 20) window.setTimeout(startWidget, 250);
         return;
       }
+      window.JusTraduzVlibrasStarting = true;
       window.JusTraduzVlibrasStarted = true;
-      new window.VLibras.Widget('https://vlibras.gov.br/app');
-      enforceVlibrasLayout();
+      try {
+        new window.VLibras.Widget('https://vlibras.gov.br/app');
+      } catch (error) {
+        window.JusTraduzVlibrasStarted = false;
+      } finally {
+        window.JusTraduzVlibrasStarting = false;
+        enforceVlibrasLayout();
+        bindVlibrasFallbackToggle();
+      }
     }
 
     if (window.VLibras && window.VLibras.Widget) {
@@ -237,6 +255,7 @@
       node.remove();
     });
     window.JusTraduzVlibrasStarted = false;
+    window.JusTraduzVlibrasStarting = false;
   }
 
   function normalizeVlibrasWidgets() {
@@ -296,10 +315,20 @@
     if (!button || button.dataset.justraduzVlibrasToggle === 'true') return;
 
     button.dataset.justraduzVlibrasToggle = 'true';
+    button.setAttribute('role', 'button');
+    button.setAttribute('tabindex', '0');
+    button.setAttribute('aria-label', 'Abrir tradutor VLibras');
+    button.setAttribute('title', 'Abrir tradutor VLibras');
     button.addEventListener('click', function () {
       window.setTimeout(function () {
         fitVlibrasWidget();
       }, 80);
+    });
+    button.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        button.click();
+      }
     });
   }
 
@@ -767,6 +796,7 @@
           if (!(node instanceof Element)) return;
           if (node.matches('[data-alert-auto-dismiss]')) bindAutoDismissAlert(node);
           node.querySelectorAll?.('[data-alert-auto-dismiss]').forEach(bindAutoDismissAlert);
+          enhanceMediaAndControls(node);
         });
       });
     }).observe(document.body, { childList: true, subtree: true });
@@ -774,7 +804,38 @@
 
   function accessibleName(field) {
     var label = field.id && document.querySelector('label[for="' + CSS.escape(field.id) + '"]');
-    return label ? label.textContent.trim() : (field.getAttribute('aria-label') || field.name || 'obrigatório');
+    if (label) return label.textContent.trim();
+    var labelledBy = field.getAttribute('aria-labelledby');
+    if (labelledBy) {
+      var text = labelledBy.split(/\s+/).map(function (id) {
+        var node = document.getElementById(id);
+        return node ? node.textContent.trim() : '';
+      }).filter(Boolean).join(' ');
+      if (text) return text;
+    }
+    return field.getAttribute('aria-label') || field.placeholder || field.name || 'obrigatório';
+  }
+
+  function enhanceMediaAndControls(root) {
+    var scope = root || document;
+    scope.querySelectorAll('img:not([alt])').forEach(function (image) {
+      image.setAttribute('alt', '');
+    });
+    scope.querySelectorAll('svg:not([aria-hidden]):not([role])').forEach(function (icon) {
+      if (!icon.closest('button, a, [role="button"]')) icon.setAttribute('aria-hidden', 'true');
+      icon.setAttribute('focusable', 'false');
+    });
+    scope.querySelectorAll('button, [role="button"]').forEach(function (button) {
+      if (button.disabled || button.getAttribute('aria-label') || button.getAttribute('aria-labelledby')) return;
+      var text = button.textContent.replace(/\s+/g, ' ').trim();
+      var title = button.getAttribute('title');
+      if (!text && title) button.setAttribute('aria-label', title);
+    });
+    scope.querySelectorAll('input, select, textarea').forEach(function (field) {
+      if (field.type === 'hidden' || field.getAttribute('aria-label') || field.getAttribute('aria-labelledby')) return;
+      if (field.id && document.querySelector('label[for="' + CSS.escape(field.id) + '"]')) return;
+      if (field.placeholder) field.setAttribute('aria-label', field.placeholder);
+    });
   }
 
   function enhanceLinksAndNavigation() {
@@ -825,20 +886,22 @@
     apply();
     makeSkipLink();
     buildLauncher();
+    ensureVlibras();
     enhanceTables();
     enhancePasswords();
     enhanceForms();
     enhanceAutoDismissAlerts();
     enhanceLinksAndNavigation();
+    enhanceMediaAndControls();
     document.addEventListener('keydown', trapDialogFocus);
     window.addEventListener('pagehide', function () { stopPageSpeech(false); });
     window.addEventListener('justraduz:cookie-consent-changed', function () {
       if (!canUseExternalAccessibility()) cleanupVlibras();
-      else if (panelBackdrop) ensureVlibras();
+      else ensureVlibras();
     });
+    window.addEventListener('justraduz:vlibras-request', ensureVlibras);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 }());
-

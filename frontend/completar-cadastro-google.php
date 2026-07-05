@@ -337,7 +337,7 @@ $errorMessage = trim((string) ($_GET['erro'] ?? ''));
 <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
 <script src="assets/js/auth.js?v=custom-select-flow-8"></script>
 <script src="assets/js/auth-novo.js?v=opening-skip-1"></script>
-<script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
-<script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+<script src="assets/js/accessibility.js?v=2026.07.05-a11y-global-1"></script>
+<script src="assets/js/vlibras-init.js?v=2026.07.05-a11y-global-1" defer></script>
 </body>
 </html>

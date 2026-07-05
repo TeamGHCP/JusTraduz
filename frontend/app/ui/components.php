@@ -145,12 +145,12 @@ function render_vlibras(): void
     render_cookie_consent_assets($isAdminPath);
     ?>
     <div vw class="enabled">
-      <div vw-access-button class="active"></div>
+      <div vw-access-button class="active" role="button" tabindex="0" aria-label="Abrir tradutor VLibras" title="Abrir tradutor VLibras"></div>
       <div vw-plugin-wrapper>
         <div class="vw-plugin-top-wrapper"></div>
       </div>
     </div>
-    <script src="<?= e($assetPrefix) ?>assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+    <script src="<?= e($assetPrefix) ?>assets/js/vlibras-init.js?v=2026.07.05-a11y-global-1" defer></script>
     <?php
 }
 
@@ -421,7 +421,7 @@ function context_help_asset_path(bool $isAdminPath, string $type): string
 function accessibility_asset_path(bool $isAdminPath): string
 {
     $path = $isAdminPath ? '../assets/js/accessibility.js' : 'assets/js/accessibility.js';
-    return $path . '?v=2026.07.02-vlibras-1';
+    return $path . '?v=2026.07.05-a11y-global-1';
 }
 
 function stat_card(string $label, $value, string $icon): string

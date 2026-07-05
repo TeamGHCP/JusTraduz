@@ -163,7 +163,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
   <script src="assets/js/main.js?v=2026.07.05-main-modules-1"></script>
-  <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
+  <script src="assets/js/accessibility.js?v=2026.07.05-a11y-global-1"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const links = Array.from(document.querySelectorAll("[data-terms-nav]"));
@@ -316,6 +316,6 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       updateFooterGate();
     });
   </script>
-  <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+  <script src="assets/js/vlibras-init.js?v=2026.07.05-a11y-global-1" defer></script>
 </body>
 </html>
