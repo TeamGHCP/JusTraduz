@@ -6,6 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: justraduz_app
+    restart: unless-stopped
     ports:
       - "80:80"
     volumes:
@@ -19,9 +20,9 @@ services:
       - DB_PASS=rootpassword
       - DB_NAME=justraduz
       - APP_BASE_PATH=
-      - APP_URL=http://100.31.83.245:8080
-      - APP_PUBLIC_URL=http://100.31.83.245:8080
-      - APP_ENV=local
+      - APP_URL=https://justraduz.tamanini.dev.br
+      - APP_PUBLIC_URL=https://justraduz.tamanini.dev.br
+      - APP_ENV=production
       - ASYNC_JOBS_ENABLED=true
       - OCR_ENABLED=true
       - OCR_TESSERACT_BINARY=/usr/bin/tesseract
@@ -34,8 +35,10 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: justraduz_worker
+    restart: unless-stopped
+    working_dir: /var/www/html
     volumes:
-      - .:/var/www/html/JusTraduz
+      - .:/var/www/html
     env_file:
       - backend/.env
     environment:
@@ -44,10 +47,10 @@ services:
       - DB_USER=root
       - DB_PASS=rootpassword
       - DB_NAME=justraduz
-      - APP_BASE_PATH=JusTraduz
-      - APP_URL=http://localhost:8080/JusTraduz
-      - APP_PUBLIC_URL=http://localhost:8080/JusTraduz
-      - APP_ENV=local
+      - APP_BASE_PATH=
+      - APP_URL=https://justraduz.tamanini.dev.br
+      - APP_PUBLIC_URL=https://justraduz.tamanini.dev.br
+      - APP_ENV=production
       - ASYNC_JOBS_ENABLED=true
     command: bash -c "while true; do php scripts/run-jobs.php --escalate --finalize-deletions; sleep 10; done"
     depends_on:
@@ -56,6 +59,7 @@ services:
   db:
     image: mariadb:10.6
     container_name: justraduz_db
+    restart: unless-stopped
     ports:
       - "3307:3306"
     environment:
@@ -64,7 +68,6 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./database/justraduz_completo_com_demo.sql:/docker-entrypoint-initdb.d/init.sql
-    restart: always
 
 volumes:
   db_data:

@@ -33,9 +33,9 @@ namespace App\Controllers {
                 $result = $registerService->registrar($this->request->all());
 
                 $successMsg = $result['success_message'];
-                $this->response->redirect(APP_URL . '/frontend/login.html?sucesso=' . urlencode($successMsg));
+                $this->response->redirect(APP_URL . '/login.html?sucesso=' . urlencode($successMsg));
             } catch (ValidationException $e) {
-                $this->response->redirectWithError(APP_URL . '/frontend/login.html?cadastro', $e->getMessage());
+                $this->response->redirectWithError(APP_URL . '/login.html?cadastro', $e->getMessage());
             }
         }
 
@@ -51,7 +51,7 @@ namespace App\Controllers {
 
                 if ($result['profile_pending']) {
                     $_SESSION['google_pending_user_id'] = (int) $result['user']['id'];
-                    $this->response->redirect(APP_URL . '/frontend/completar-cadastro-google.php');
+                    $this->response->redirect(APP_URL . '/completar-cadastro-google.php');
                     return;
                 }
 
@@ -63,11 +63,11 @@ namespace App\Controllers {
                 CsrfMiddleware::generateToken();
 
                 $destinos = [
-                    'advogado'   => '/frontend/dashboard-advogado.php',
-                    'admin'      => '/frontend/admin/dashboard-admin.php',
-                    'cliente'    => '/frontend/dashboard-cliente.php',
+                    'advogado'   => '/dashboard-advogado.php',
+                    'admin'      => '/admin/dashboard-admin.php',
+                    'cliente'    => '/dashboard-cliente.php',
                 ];
-                $destino = $destinos[$result['user']['tipo']] ?? '/frontend/dashboard-cliente.php';
+                $destino = $destinos[$result['user']['tipo']] ?? '/dashboard-cliente.php';
 
                 if ($result['invite_accepted']) {
                     $this->response->redirect(APP_URL . $destino . '?sucesso=' . urlencode('Convite aceito. Você agora faz parte do plano Escritório.'));
@@ -75,7 +75,7 @@ namespace App\Controllers {
                 }
                 $this->response->redirect(APP_URL . $destino);
             } catch (ValidationException $e) {
-                $this->response->redirectWithError(APP_URL . '/frontend/login.html', $e->getMessage());
+                $this->response->redirectWithError(APP_URL . '/login.html', $e->getMessage());
             }
         }
 
@@ -83,7 +83,7 @@ namespace App\Controllers {
         {
             $this->startSession();
             $oauthService = new OAuthService($this->pdo);
-            $frontUrl = APP_URL . '/frontend/login.html';
+            $frontUrl = APP_URL . '/login.html';
 
             if (!$oauthService->isConfigured()) {
                 $this->response->redirectWithError($frontUrl, 'Login com Google não configurado.');
@@ -101,7 +101,7 @@ namespace App\Controllers {
         public function googleCallback(): void
         {
             $this->startSession();
-            $frontUrl = APP_URL . '/frontend/login.html';
+            $frontUrl = APP_URL . '/login.html';
             $state = (string) ($_GET['state'] ?? '');
             $code = (string) ($_GET['code'] ?? '');
             $expectedState = (string) ($_SESSION['google_oauth_state'] ?? '');
@@ -124,7 +124,7 @@ namespace App\Controllers {
                 if ((int) ($usuario['profile_completed'] ?? 1) !== 1) {
                     $_SESSION['google_pending_user_id'] = (int) $usuario['id'];
                     $this->audit->log('auth.google_profile_required', 'user', (int) $usuario['id'], ['email' => $usuario['email'] ?? null]);
-                    $this->response->redirect(APP_URL . '/frontend/completar-cadastro-google.php');
+                    $this->response->redirect(APP_URL . '/completar-cadastro-google.php');
                     return;
                 }
 
@@ -145,10 +145,10 @@ namespace App\Controllers {
         {
             $this->startSession();
             $pendingUserId = (int) ($_SESSION['google_pending_user_id'] ?? 0);
-            $frontUrl = APP_URL . '/frontend/completar-cadastro-google.php';
+            $frontUrl = APP_URL . '/completar-cadastro-google.php';
 
             if ($pendingUserId <= 0) {
-                $this->response->redirectWithError(APP_URL . '/frontend/login.html', 'Sessao Google expirada. Entre com Google novamente.');
+                $this->response->redirectWithError(APP_URL . '/login.html', 'Sessao Google expirada. Entre com Google novamente.');
             }
 
             try {
@@ -158,7 +158,7 @@ namespace App\Controllers {
                 unset($_SESSION['google_pending_user_id']);
 
                 if ((string) ($usuario['oab_status'] ?? '') === 'pending') {
-                    $this->response->redirectWithSuccess(APP_URL . '/frontend/login.html', 'Cadastro recebido. Seu acesso profissional aguardará aprovação interna.');
+                    $this->response->redirectWithSuccess(APP_URL . '/login.html', 'Cadastro recebido. Seu acesso profissional aguardará aprovação interna.');
                     return;
                 }
 
@@ -192,7 +192,7 @@ namespace App\Controllers {
                 $this->audit->log('auth.force_logout', 'user', $userId);
             }
             $this->destroySessionCookies();
-            $this->response->redirect(APP_URL . '/frontend/login.html?erro=' . urlencode('Sua sessão foi encerrada por segurança.'));
+            $this->response->redirect(APP_URL . '/login.html?erro=' . urlencode('Sua sessão foi encerrada por segurança.'));
         }
 
         public function adminLogin(): void
@@ -212,9 +212,9 @@ namespace App\Controllers {
                 $_SESSION['logado'] = true;
                 CsrfMiddleware::generateToken();
 
-                $this->response->redirect(APP_URL . '/frontend/admin/dashboard-admin.php');
+                $this->response->redirect(APP_URL . '/admin/dashboard-admin.php');
             } catch (ValidationException $e) {
-                $this->response->redirectWithError(APP_URL . '/frontend/admin/login-admin.html', $e->getMessage());
+                $this->response->redirectWithError(APP_URL . '/admin/login-admin.html', $e->getMessage());
             }
         }
 
@@ -222,7 +222,7 @@ namespace App\Controllers {
         {
             $this->startSession();
             if (empty($_SESSION['logado'])) {
-                $this->response->redirect(APP_URL . '/frontend/login.html?erro=' . urlencode('Faça login para continuar.'));
+                $this->response->redirect(APP_URL . '/login.html?erro=' . urlencode('Faça login para continuar.'));
             }
 
             try {
@@ -239,9 +239,9 @@ namespace App\Controllers {
                     CsrfMiddleware::generateToken();
                 }
 
-                $this->response->redirect(APP_URL . '/frontend/perfil.php?sucesso=' . urlencode('Perfil atualizado.'));
+                $this->response->redirect(APP_URL . '/perfil.php?sucesso=' . urlencode('Perfil atualizado.'));
             } catch (ValidationException $e) {
-                $this->response->redirect(APP_URL . '/frontend/perfil.php?erro=' . urlencode($e->getMessage()));
+                $this->response->redirect(APP_URL . '/perfil.php?erro=' . urlencode($e->getMessage()));
             }
         }
 
@@ -249,7 +249,7 @@ namespace App\Controllers {
         {
             $action = (string) $this->request->post('acao', 'confirm_code');
             $email = (string) $this->request->post('email', '');
-            $frontUrl = APP_URL . '/frontend/recuperar-senha.html';
+            $frontUrl = APP_URL . '/recuperar-senha.html';
 
             try {
                 $resetService = new PasswordResetService($this->pdo);
@@ -264,7 +264,7 @@ namespace App\Controllers {
                 $senha2 = (string) $this->request->post('senha2', '');
 
                 $resetService->confirmResetCode($email, $codigo, $senha, $senha2);
-                $this->response->redirect(APP_URL . '/frontend/login.html?sucesso=' . urlencode('Senha atualizada. Entre com a nova senha.'));
+                $this->response->redirect(APP_URL . '/login.html?sucesso=' . urlencode('Senha atualizada. Entre com a nova senha.'));
             } catch (ValidationException $e) {
                 $this->response->redirectWithError($frontUrl, $e->getMessage());
             }
@@ -308,7 +308,7 @@ namespace App\Controllers {
                 $this->response->json([
                     'success' => true,
                     'message' => 'Senha atualizada com sucesso. Entre novamente com a nova senha.',
-                    'redirect' => APP_URL . '/frontend/login.html?sucesso=' . urlencode('Senha atualizada. Entre com a nova senha.'),
+                    'redirect' => APP_URL . '/login.html?sucesso=' . urlencode('Senha atualizada. Entre com a nova senha.'),
                 ]);
             } catch (ValidationException $e) {
                 $this->response->json(['success' => false, 'message' => $e->getMessage()], 422);
@@ -323,7 +323,7 @@ namespace App\Controllers {
                 $this->audit->log('auth.logout', 'user', $userId);
             }
             $this->destroySessionCookies();
-            $this->response->redirect(APP_URL . '/frontend/login.html');
+            $this->response->redirect(APP_URL . '/login.html');
         }
 
         private function signInUser(array $usuario): void
@@ -348,11 +348,11 @@ namespace App\Controllers {
         private function dashboardPathFor(string $tipo): string
         {
             $destinos = [
-                'advogado' => '/frontend/dashboard-advogado.php',
-                'admin'    => '/frontend/admin/dashboard-admin.php',
-                'cliente'  => '/frontend/dashboard-cliente.php',
+                'advogado' => '/dashboard-advogado.php',
+                'admin'    => '/admin/dashboard-admin.php',
+                'cliente'  => '/dashboard-cliente.php',
             ];
-            return $destinos[$tipo] ?? '/frontend/dashboard-cliente.php';
+            return $destinos[$tipo] ?? '/dashboard-cliente.php';
         }
 
         private function googleRedirectUri(): string
