@@ -201,7 +201,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
+  <script src="assets/js/main.js?v=2026.07.05-main-modules-1"></script>
   <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
