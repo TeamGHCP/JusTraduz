@@ -4,6 +4,12 @@
   gap: 16px;
 }
 
+:root[data-theme="dark"] .payment-step {
+  border-color: color-mix(in srgb, var(--teal) 48%, var(--line));
+  background: color-mix(in srgb, var(--teal) 18%, var(--surface-2));
+  color: var(--teal-2);
+}
+
 .payment-panel {
   display: grid;
   grid-template-columns: minmax(260px, .95fr) minmax(280px, 1fr) minmax(320px, 1.05fr);
@@ -2091,6 +2097,13 @@
   font-weight: 850;
 }
 
+:root[data-theme="dark"] .payment-hero-meta span:first-child,
+:root[data-theme="dark"] .payment-hero-meta span:last-child {
+  border-color: color-mix(in srgb, var(--teal) 42%, var(--line));
+  background: color-mix(in srgb, var(--teal) 16%, var(--surface-2));
+  color: var(--text);
+}
+
 .payment-hero-meta .svg-icon {
   width: 15px;
   height: 15px;
@@ -2535,4 +2548,3 @@
     grid-template-columns: 1fr;
   }
 }
-

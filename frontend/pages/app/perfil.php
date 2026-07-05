@@ -1,6 +1,8 @@
 <?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_login();
+require_once PROJECT_ROOT_PATH . '/backend/app/services/SubscriptionService.php';
+require_once FRONTEND_APP_PATH . '/support/billing_documents.php';
 
 $type = current_user_type();
 $hasAccountDeletionSchedule = database_table_has_column($pdo, 'users', 'deletion_requested_at')
@@ -60,6 +62,42 @@ $oabStatus = $isProfessional ? profile_oab_status_meta($user) : null;
 $deletionScheduledAt = trim((string) ($user['deletion_scheduled_at'] ?? ''));
 $hasDeletionScheduled = $deletionScheduledAt !== '';
 $deletionScheduledLabel = $hasDeletionScheduled ? date('d/m/Y H:i', strtotime($deletionScheduledAt)) : '';
+$activeProfileTab = (string) ($_GET['tab'] ?? 'conta');
+$allowedProfileTabs = ['conta', 'faturamento', 'seguranca', 'privacidade'];
+if (!in_array($activeProfileTab, $allowedProfileTabs, true)) {
+    $activeProfileTab = 'conta';
+}
+
+$subscriptionService = new SubscriptionService($pdo);
+$currentSubscription = in_array($type, ['cliente', 'advogado'], true)
+    ? $subscriptionService->currentForUser(current_user_id())
+    : null;
+$paymentEvents = [];
+if (database_table_exists($pdo, 'payment_events')) {
+    $stmt = $pdo->prepare(
+        'SELECT id, subscription_id, user_id, provider, provider_event_id, event_type, amount_cents, status, payload_json, processed_at, created_at
+         FROM payment_events
+         WHERE user_id = ?
+         ORDER BY COALESCE(processed_at, created_at) DESC, id DESC
+         LIMIT 8'
+    );
+    $stmt->execute([current_user_id()]);
+    $paymentEvents = $stmt->fetchAll();
+}
+
+$billingPlanName = $currentSubscription ? (string) ($currentSubscription['plan_name'] ?? 'Plano ativo') : 'Grátis';
+$billingCycle = (string) ($currentSubscription['billing_cycle'] ?? 'monthly');
+$freeBillingPlanSlugs = ['gratuito', 'free', 'profissional_basico', 'advogado_basico'];
+$currentBillingPlanSlug = (string) ($currentSubscription['plan_slug'] ?? '');
+$isFreeBillingPlan = !$currentSubscription || in_array($currentBillingPlanSlug, $freeBillingPlanSlugs, true);
+$billingPlansUrl = app_url('/frontend/subir-plano.php');
+$billingPlansCtaLabel = $isFreeBillingPlan ? 'Assinar planos' : 'Alterar plano';
+$billingPrice = 0;
+if ($currentSubscription) {
+    $billingPrice = (int) ($billingCycle === 'yearly'
+        ? ($currentSubscription['yearly_price_cents'] ?? 0)
+        : ($currentSubscription['monthly_price_cents'] ?? 0));
+}
 $profileTourKey = match ($type) {
     'advogado' => 'dashboard_advogado',
     'admin' => 'dashboard_admin',
@@ -83,7 +121,7 @@ $profileTourKey = match ($type) {
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.05-style-cache-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.05-billing-payment-dark-fix-1">
   <script src="assets/js/pwa.js?v=2026.07.05-assets-v1" defer></script>
 </head>
 <body>
@@ -116,6 +154,96 @@ $profileTourKey = match ($type) {
           <?php endif; ?>
         </aside>
         <div class="profile-main">
+          <nav class="profile-tabs" aria-label="Configurações da conta">
+            <a class="<?= $activeProfileTab === 'conta' ? 'active' : '' ?>" href="<?= e(app_url('/frontend/perfil.php?tab=conta')) ?>"><?= icon_svg('user') ?> Geral</a>
+            <a class="<?= $activeProfileTab === 'faturamento' ? 'active' : '' ?>" href="<?= e(app_url('/frontend/perfil.php?tab=faturamento')) ?>"><?= icon_svg('chart') ?> Faturamento</a>
+            <a class="<?= $activeProfileTab === 'seguranca' ? 'active' : '' ?>" href="<?= e(app_url('/frontend/perfil.php?tab=seguranca')) ?>"><?= icon_svg('shield') ?> Segurança</a>
+            <a class="<?= $activeProfileTab === 'privacidade' ? 'active' : '' ?>" href="<?= e(app_url('/frontend/perfil.php?tab=privacidade')) ?>"><?= icon_svg('download') ?> Dados</a>
+          </nav>
+
+          <?php if ($activeProfileTab === 'faturamento'): ?>
+            <section class="card profile-billing-card">
+              <div class="profile-billing-section">
+                <div>
+                  <h2>Cobrança</h2>
+                  <p class="text-muted">Plano, renovação e cancelamento da sua assinatura.</p>
+                </div>
+              </div>
+
+              <div class="profile-billing-plan">
+                <div>
+                  <h3><?= e($billingPlanName) ?></h3>
+                  <?php if ($currentSubscription): ?>
+                    <p><?= e($billingCycle === 'yearly' ? 'Cobrança anual' : 'Cobrança mensal') ?> · <?= e(billing_money($billingPrice)) ?></p>
+                    <p>Período atual até <?= e(billing_date((string) ($currentSubscription['current_period_end'] ?? ''))) ?></p>
+                  <?php else: ?>
+                    <p>Você está usando o modo gratuito. Assine um plano para liberar mais volume e prioridade.</p>
+                  <?php endif; ?>
+                </div>
+                <div class="profile-billing-actions">
+                  <a class="btn btn-primary" href="<?= e($billingPlansUrl) ?>"><?= icon_svg('sparkles') ?> <?= e($billingPlansCtaLabel) ?></a>
+                  <?php if ($currentSubscription && !$isFreeBillingPlan): ?>
+                    <form action="<?= e(app_url('/backend/public/index.php?rota=/billing/cancel')) ?>" method="post" data-billing-cancel-form>
+                      <?= csrf_input() ?>
+                      <button class="btn btn-outline" type="submit">Cancelar plano</button>
+                    </form>
+                  <?php endif; ?>
+                </div>
+              </div>
+
+              <div class="profile-billing-section">
+                <div>
+                  <h2>Histórico de faturas</h2>
+                  <p class="text-muted">Eventos recentes recebidos pelo checkout e pelo webhook.</p>
+                </div>
+              </div>
+
+              <div class="profile-billing-history">
+                <?php if (!$paymentEvents): ?>
+                  <p class="text-muted">Nenhuma cobrança registrada ainda.</p>
+                <?php endif; ?>
+                <?php foreach ($paymentEvents as $event): ?>
+                  <?php
+                    $eventId = (int) ($event['id'] ?? 0);
+                    $eventDate = (string) (($event['processed_at'] ?? '') ?: ($event['created_at'] ?? ''));
+                    [$statusLabel, $statusBadge] = billing_status_label((string) ($event['status'] ?? 'pending'));
+                    $eventTitle = billing_event_title((string) ($event['event_type'] ?? ''), (string) ($event['status'] ?? 'pending'));
+                    $eventMethod = billing_method_label($event);
+                    $eventCycle = billing_cycle_label($event);
+                    $eventAmount = billing_money((int) ($event['amount_cents'] ?? 0));
+                  ?>
+                  <div class="profile-billing-row">
+                    <span><?= e(billing_date($eventDate)) ?></span>
+                    <div class="profile-billing-row-main">
+                      <strong><?= e($eventTitle) ?></strong>
+                      <small><?= e($eventMethod) ?> · <?= e($eventCycle) ?></small>
+                    </div>
+                    <strong><?= e($eventAmount) ?></strong>
+                    <em class="badge <?= e($statusBadge) ?>"><?= e($statusLabel) ?></em>
+                    <button
+                      class="btn btn-outline profile-billing-view"
+                      type="button"
+                      data-billing-detail-open
+                      data-event-id="<?= e((string) $eventId) ?>"
+                      data-event-title="<?= e($eventTitle) ?>"
+                      data-event-date="<?= e(billing_datetime($eventDate)) ?>"
+                      data-event-amount="<?= e($eventAmount) ?>"
+                      data-event-status="<?= e($statusLabel) ?>"
+                      data-event-status-class="<?= e($statusBadge) ?>"
+                      data-event-method="<?= e($eventMethod) ?>"
+                      data-event-cycle="<?= e($eventCycle) ?>"
+                      data-event-provider="<?= e(ucfirst((string) ($event['provider'] ?? 'asaas'))) ?>"
+                      data-event-payment-id="<?= e((string) ($event['provider_event_id'] ?? '')) ?>"
+                      data-invoice-url="<?= e(app_url('/frontend/fatura.php?id=' . $eventId . '&download=1')) ?>"
+                      data-receipt-url="<?= e(app_url('/frontend/recibo.php?id=' . $eventId . '&download=1')) ?>"
+                    >Exibir</button>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </section>
+          <?php endif; ?>
+
+          <?php if ($activeProfileTab === 'conta'): ?>
           <form class="card auth-form" action="<?= e(app_url('/backend/public/index.php?rota=/profile/update')) ?>" method="post" enctype="multipart/form-data">
             <?= csrf_input() ?>
             <div class="field">
@@ -175,14 +303,18 @@ $profileTourKey = match ($type) {
               <?php endif; ?>
             </section>
           <?php endif; ?>
+          <?php endif; ?>
 
+          <?php if ($activeProfileTab === 'seguranca'): ?>
           <section class="card">
             <div class="dash-section-title"><h2>Segurança</h2></div>
             <div class="form-actions">
               <button class="btn btn-outline" type="button" data-password-modal-open><?= icon_svg('lock') ?> Redefinir senha</button>
             </div>
           </section>
+          <?php endif; ?>
 
+          <?php if ($activeProfileTab === 'privacidade'): ?>
           <section class="card">
             <div class="dash-section-title">
               <div>
@@ -220,7 +352,9 @@ $profileTourKey = match ($type) {
             </form>
             <?php endif; ?>
           </section>
+          <?php endif; ?>
 
+          <?php if ($activeProfileTab === 'conta'): ?>
           <section class="card">
             <div class="dash-section-title">
               <div>
@@ -233,8 +367,68 @@ $profileTourKey = match ($type) {
             </div>
             <p class="alert alert-success mt-12" data-tour-reset-message hidden></p>
           </section>
+          <?php endif; ?>
         </div>
       </section>
+
+      <div class="billing-cancel-modal" data-billing-cancel-modal hidden>
+        <section class="billing-cancel-dialog" role="alertdialog" aria-modal="true" aria-labelledby="billing-cancel-title" aria-describedby="billing-cancel-description">
+          <button class="billing-cancel-close" type="button" data-billing-cancel-close aria-label="Fechar">×</button>
+          <div class="billing-cancel-icon"><?= icon_svg('shield') ?></div>
+          <span class="pricing-kicker"><?= icon_svg('x') ?> Cancelamento</span>
+          <h2 id="billing-cancel-title">Cancelar seu plano atual?</h2>
+          <p id="billing-cancel-description">Ao confirmar, sua conta volta para o modo gratuito e os limites do plano deixam de ficar disponíveis.</p>
+          <div class="billing-cancel-plan">
+            <span>Plano atual</span>
+            <strong><?= e($billingPlanName) ?></strong>
+          </div>
+          <div class="billing-cancel-actions">
+            <button class="btn btn-outline" type="button" data-billing-cancel-close>Manter plano</button>
+            <button class="btn btn-primary billing-cancel-confirm" type="button" data-billing-cancel-confirm><?= icon_svg('x') ?> Cancelar plano</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="billing-detail-modal" data-billing-detail-modal hidden>
+        <section class="billing-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="billing-detail-title">
+          <button class="billing-cancel-close" type="button" data-billing-detail-close aria-label="Fechar">×</button>
+          <div class="billing-detail-receipt">
+            <div class="billing-detail-icon"><?= icon_svg('download') ?></div>
+            <span class="pricing-kicker">Documento fiscal</span>
+            <h2 id="billing-detail-title" data-billing-detail-title>Fatura</h2>
+            <strong data-billing-detail-amount>R$ 0,00</strong>
+            <em class="badge badge-info" data-billing-detail-status>Pendente</em>
+          </div>
+
+          <dl class="billing-detail-grid">
+            <div>
+              <dt>Data</dt>
+              <dd data-billing-detail-date>-</dd>
+            </div>
+            <div>
+              <dt>Método</dt>
+              <dd data-billing-detail-method>-</dd>
+            </div>
+            <div>
+              <dt>Ciclo</dt>
+              <dd data-billing-detail-cycle>-</dd>
+            </div>
+            <div>
+              <dt>Provedor</dt>
+              <dd data-billing-detail-provider>-</dd>
+            </div>
+            <div class="billing-detail-grid-wide">
+              <dt>Identificador do pagamento</dt>
+              <dd data-billing-detail-payment-id>-</dd>
+            </div>
+          </dl>
+
+          <div class="billing-detail-actions">
+            <a class="btn btn-outline" href="#" target="_blank" rel="noopener" data-billing-invoice-link><?= icon_svg('download') ?> Baixar fatura</a>
+            <a class="btn btn-primary" href="#" target="_blank" rel="noopener" data-billing-receipt-link><?= icon_svg('download') ?> Baixar recibo</a>
+          </div>
+        </section>
+      </div>
 
       <div class="profile-password-modal" data-profile-password-modal hidden>
         <section class="profile-password-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-password-title">
@@ -279,6 +473,7 @@ $profileTourKey = match ($type) {
   </div>
   <script src="assets/js/phone-mask.js?v=cpf-validator-1"></script>
   <script src="assets/js/profile-password.js"></script>
+  <script src="assets/js/profile-billing.js?v=billing-restored-20260704"></script>
   <script src="assets/js/confirm-actions.js"></script>
   <?php render_onboarding_assets($profileTourKey, '2026.06.11', $type, false); ?>
   <?php render_vlibras(); ?>
