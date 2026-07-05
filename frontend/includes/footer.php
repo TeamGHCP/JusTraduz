@@ -2,7 +2,7 @@
 /**
  * JusTraduz - Shared Footer Template
  */
-$prefix = $pathPrefix ?? '';
+$prefix = $publicPathPrefix ?? $pathPrefix ?? '';
 ?>
   <footer class="site-footer">
     <div class="container footer-shell">

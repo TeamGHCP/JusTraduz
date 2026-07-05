@@ -1,5 +1,7 @@
 <?php
 $pathPrefix = '../';
+$publicPathPrefix = '/';
+$assetPrefix = '/';
 $activePage = 'blog';
 require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 ?>
@@ -14,16 +16,16 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       'robots' => 'index, follow'
     ]);
   ?>
-  <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
-  <link rel="manifest" href="../site.webmanifest">
+  <link rel="icon" href="<?= $assetPrefix ?>assets/img/icon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="<?= $assetPrefix ?>assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="<?= $assetPrefix ?>site.webmanifest">
   <meta name="theme-color" content="#008f80">
   <meta name="application-name" content="JusTraduz">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/style.css?v=2026.07.02-vlibras-panel-1">
-  <script src="../assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
+  <link rel="stylesheet" href="<?= $assetPrefix ?>assets/css/style.css?v=2026.07.02-vlibras-panel-1">
+  <script src="<?= $assetPrefix ?>assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
 <body class="blog-post-page terms-page-enhanced">
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/header.php'; ?>
@@ -79,7 +81,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </ul>
 
         <p style="margin-top: 32px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
-          Decifrar esses termos no meio de parágrafos complexos é muito mais fácil usando a plataforma <a href="../index.php" style="color: var(--primary); font-weight: 600;">JusTraduz</a>. O explicador de cláusulas analisa os termos e exibe traduções didáticas lado a lado com o original de forma imediata.
+          Decifrar esses termos no meio de parágrafos complexos é muito mais fácil usando a plataforma <a href="<?= $publicPathPrefix ?>index.php" style="color: var(--primary); font-weight: 600;">JusTraduz</a>. O explicador de cláusulas analisa os termos e exibe traduções didáticas lado a lado com o original de forma imediata.
         </p>
 
         <div class="feedback-card" style="border-left: 4px solid var(--primary); background: rgba(0,143,128,0.03); padding: 24px; margin-top: 24px;">
@@ -90,8 +92,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </div>
 
         <div style="margin-top: 32px; display: flex; gap: 16px; flex-wrap: wrap;">
-          <a class="btn btn-primary" href="../login.html?cadastro">Enviar meu documento para IA</a>
-          <a class="btn btn-outline" href="index.php">Voltar ao Blog</a>
+          <a class="btn btn-primary" href="<?= $publicPathPrefix ?>login.html?cadastro">Enviar meu documento para IA</a>
+          <a class="btn btn-outline" href="<?= $publicPathPrefix ?>blog/">Voltar ao Blog</a>
         </div>
       </div>
     </article>
@@ -99,8 +101,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="../assets/js/main.js?v=mobile-menu-20260628"></script>
-  <script src="../assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
-  <script src="../assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+  <script src="<?= $assetPrefix ?>assets/js/main.js?v=mobile-menu-20260628"></script>
+  <script src="<?= $assetPrefix ?>assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
+  <script src="<?= $assetPrefix ?>assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
 </body>
 </html>

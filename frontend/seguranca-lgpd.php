@@ -1,5 +1,7 @@
 <?php
 $pathPrefix = '';
+$publicPathPrefix = '/';
+$assetPrefix = '/';
 $activePage = 'seguranca-lgpd';
 require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 ?>
@@ -14,16 +16,16 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       'robots' => 'index, follow'
     ]);
   ?>
-  <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
-  <link rel="manifest" href="site.webmanifest">
+  <link rel="icon" href="<?= $assetPrefix ?>assets/img/icon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="<?= $assetPrefix ?>assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="<?= $assetPrefix ?>site.webmanifest">
   <meta name="theme-color" content="#008f80">
   <meta name="application-name" content="JusTraduz">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
-  <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
+  <link rel="stylesheet" href="<?= $assetPrefix ?>assets/css/style.css?v=2026.07.02-vlibras-panel-1">
+  <script src="<?= $assetPrefix ?>assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
 <body class="seo-security-lgpd-page terms-page-enhanced">
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/header.php'; ?>
@@ -47,7 +49,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
               </svg>
             </span>
           </a>
-          <a class="btn btn-outline home-btn-outline" href="privacidade">Política de privacidade</a>
+          <a class="btn btn-outline home-btn-outline" href="<?= $publicPathPrefix ?>privacidade">Política de privacidade</a>
         </div>
       </div>
     </section>
@@ -107,8 +109,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
               Para exercer seus direitos como titular de dados (solicitar acesso, retificação, exclusão de dados ou esclarecer dúvidas sobre nossas práticas de conformidade), você pode entrar em contato com o nosso canal dedicado de privacidade pelo e-mail: <a href="mailto:contatoghcp@gmail.com">contatoghcp@gmail.com</a>.
             </p>
             <div style="margin-top: 32px; display: flex; gap: 16px; flex-wrap: wrap;">
-              <a class="btn btn-primary" href="login.html?cadastro">Começar com segurança</a>
-              <a class="btn btn-outline" href="como-funciona">Entender o fluxo</a>
+              <a class="btn btn-primary" href="<?= $publicPathPrefix ?>login.html?cadastro">Começar com segurança</a>
+              <a class="btn btn-outline" href="<?= $publicPathPrefix ?>como-funciona">Entender o fluxo</a>
             </div>
           </div>
         </article>
@@ -118,8 +120,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
-  <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
-  <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+  <script src="<?= $assetPrefix ?>assets/js/main.js?v=mobile-menu-20260628"></script>
+  <script src="<?= $assetPrefix ?>assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
+  <script src="<?= $assetPrefix ?>assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
 </body>
 </html>
