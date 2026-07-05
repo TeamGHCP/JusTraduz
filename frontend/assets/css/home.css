@@ -632,6 +632,253 @@
   line-height: 1.2;
 }
 
+.profile-billing-card {
+  display: grid;
+  gap: 16px;
+}
+
+.profile-billing-section {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.profile-billing-section h2,
+.billing-cancel-dialog h2,
+.billing-detail-dialog h2 {
+  margin: 0 0 4px;
+  color: var(--navy);
+}
+
+.profile-billing-plan {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.profile-billing-plan h3 {
+  margin: 0 0 5px;
+  color: var(--navy);
+}
+
+.profile-billing-plan p {
+  margin: 3px 0 0;
+  color: var(--muted);
+}
+
+.profile-billing-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-billing-history {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-billing-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) auto auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.profile-billing-row > span,
+.profile-billing-row-main small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.profile-billing-row-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.profile-billing-row-main strong {
+  color: var(--navy);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-billing-view {
+  min-height: 34px;
+  padding-inline: 12px;
+}
+
+.billing-cancel-modal,
+.billing-detail-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100030;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(9, 16, 28, .54);
+}
+
+.billing-cancel-modal[hidden],
+.billing-detail-modal[hidden] {
+  display: none;
+}
+
+.billing-cancel-dialog,
+.billing-detail-dialog {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .28);
+}
+
+.billing-cancel-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.billing-cancel-icon,
+.billing-detail-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--mint);
+  color: var(--teal);
+}
+
+.billing-cancel-plan,
+.billing-detail-receipt {
+  margin: 16px 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.billing-cancel-plan span,
+.billing-detail-grid dt {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.billing-cancel-plan strong,
+.billing-detail-grid dd,
+.billing-detail-receipt strong {
+  color: var(--navy);
+  font-weight: 850;
+}
+
+.billing-cancel-actions,
+.billing-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.billing-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.billing-detail-grid > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+
+.billing-detail-grid-wide {
+  grid-column: 1 / -1;
+}
+
+.billing-detail-grid dd {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
+
+body.has-modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .profile-billing-section {
+    display: grid;
+  }
+
+  .profile-billing-plan {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-billing-actions,
+  .billing-cancel-actions,
+  .billing-detail-actions {
+    justify-content: stretch;
+  }
+
+  .profile-billing-actions .btn,
+  .profile-billing-actions form,
+  .billing-cancel-actions .btn,
+  .billing-detail-actions .btn {
+    width: 100%;
+  }
+
+  .profile-billing-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .profile-billing-row > span,
+  .profile-billing-row-main,
+  .profile-billing-view {
+    grid-column: 1 / -1;
+  }
+
+  .profile-billing-view {
+    width: 100%;
+  }
+
+  .billing-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .profile-password-modal {
   position: fixed;
   inset: 0;

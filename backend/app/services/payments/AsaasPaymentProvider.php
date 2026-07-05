@@ -102,7 +102,24 @@ namespace App\Services\Payments {
                 $payload = array_merge($payload, $this->card->creditCardPayload($paymentData, $user));
             }
 
-            $subscription = $this->client->request('POST', '/subscriptions', $payload);
+            try {
+                $subscription = $this->client->request('POST', '/subscriptions', $payload);
+            } catch (RuntimeException $exception) {
+                if ($paymentMethod === 'pix' && $this->isPixSubscriptionNotAllowed($exception)) {
+                    return $this->createDetachedPixCheckout(
+                        $userId,
+                        $planId,
+                        $billingCycle,
+                        $amount,
+                        $customerId,
+                        $plan,
+                        $teamInvites,
+                        $externalReference
+                    );
+                }
+
+                throw $exception;
+            }
 
             $providerSubscriptionId = (string) ($subscription['id'] ?? '');
             if ($providerSubscriptionId === '') {
@@ -210,6 +227,9 @@ namespace App\Services\Payments {
                 ?? ''
             );
             $providerEventId = (string) ($payment['id'] ?? $subscriptionPayload['id'] ?? $payload['id'] ?? '');
+            if ($providerSubscriptionId === '' && $providerEventId !== '' && $this->pendingEventForProviderSubscription($providerEventId)) {
+                $providerSubscriptionId = $providerEventId;
+            }
             $amount = (int) round(((float) ($payment['value'] ?? $subscriptionPayload['value'] ?? 0)) * 100);
             $paymentStatus = $this->webhook->paymentStatusFromEvent($event);
 
@@ -299,7 +319,7 @@ namespace App\Services\Payments {
                 throw new RuntimeException('Cobrança Asaas não encontrada para este usuário.');
             }
 
-            $payment = $this->latestPaymentForSubscription($providerSubscriptionId);
+            $payment = $this->latestPaymentForCheckout($providerSubscriptionId, $pending);
             if (!$payment) {
                 return [
                     'ok' => true,
@@ -417,7 +437,7 @@ namespace App\Services\Payments {
             $remoteCanceled = false;
 
             if ((string) ($subscription['provider'] ?? '') === $this->name() && $providerSubscriptionId !== '') {
-                $this->client->request('DELETE', '/subscriptions/' . rawurlencode($providerSubscriptionId));
+                $this->deleteRemoteCheckout($providerSubscriptionId);
                 $remoteCanceled = true;
             }
 
@@ -513,6 +533,74 @@ namespace App\Services\Payments {
             return $this->client->request('GET', '/customers', ['limit' => 1]);
         }
 
+        private function createDetachedPixCheckout(
+            int $userId,
+            int $planId,
+            string $billingCycle,
+            int $amount,
+            string $customerId,
+            array $plan,
+            array $teamInvites,
+            string $externalReference
+        ): PaymentCheckoutResult {
+            $payment = $this->client->request('POST', '/payments', [
+                'customer' => $customerId,
+                'billingType' => 'PIX',
+                'value' => $amount / 100,
+                'dueDate' => date('Y-m-d'),
+                'description' => 'JusTraduz - Plano ' . (string) ($plan['name'] ?? ''),
+                'externalReference' => $externalReference,
+            ]);
+
+            $providerPaymentId = (string) ($payment['id'] ?? '');
+            if ($providerPaymentId === '') {
+                return PaymentCheckoutResult::error('Asaas não retornou o ID da cobrança Pix.');
+            }
+
+            $pixQrCode = $this->pix->pixQrCodeForPayment($providerPaymentId);
+            $redirectUrl = $this->webhook->checkoutUrlFromResponse($payment);
+            if ($redirectUrl === '') {
+                $redirectUrl = app_url('/frontend/pagamento-plano.php');
+            }
+
+            $this->recordPaymentEvent(null, $userId, 'subscription.created', $amount, 'pending', [
+                'source' => 'billing.detached_pix_checkout',
+                'checkout_kind' => 'detached_pix_payment',
+                'provider_subscription_id' => $providerPaymentId,
+                'provider_payment_id' => $providerPaymentId,
+                'provider_customer_id' => $customerId,
+                'plan_id' => $planId,
+                'billing_cycle' => $billingCycle,
+                'billing_type' => 'PIX',
+                'payment_method' => 'pix',
+                'team_invites' => $teamInvites,
+                'external_reference' => $externalReference,
+                'asaas_payment' => $payment,
+            ], $providerPaymentId);
+
+            return PaymentCheckoutResult::success($redirectUrl, null, [
+                'provider_subscription_id' => $providerPaymentId,
+                'provider_customer_id' => $customerId,
+                'provider_payment_id' => $providerPaymentId,
+                'amount_cents' => $amount,
+                'checkout_url' => $redirectUrl,
+                'asaas_payment_url' => $this->webhook->checkoutUrlFromResponse($payment),
+                'external_reference' => $externalReference,
+                'invoice_url' => (string) ($payment['invoiceUrl'] ?? ''),
+                'payment_link' => (string) ($payment['paymentLink'] ?? ''),
+                'due_date' => (string) ($payment['dueDate'] ?? ''),
+                'billing_type' => 'PIX',
+                'payment_method' => 'pix',
+                'payment_status' => $this->webhook->paymentStatusFromAsaasStatus((string) ($payment['status'] ?? '')),
+                'asaas_payment_status' => (string) ($payment['status'] ?? 'PENDING'),
+                'local_subscription_activated' => false,
+                'team_invites' => $teamInvites,
+                'team_invites_sent' => [],
+                'pix_qr_code' => $pixQrCode,
+                'checkout_kind' => 'detached_pix_payment',
+            ]);
+        }
+
         private function fetchUser(int $userId): ?array
         {
             $stmt = $this->pdo->prepare('SELECT id, nome, email, tipo, cpf, telefone FROM users WHERE id = ? LIMIT 1');
@@ -578,6 +666,39 @@ namespace App\Services\Payments {
             }
 
             return is_array($items[0] ?? null) ? $items[0] : [];
+        }
+
+        private function latestPaymentForCheckout(string $providerCheckoutId, array $pending): array
+        {
+            $payload = json_decode((string) ($pending['payload_json'] ?? ''), true);
+            if (is_array($payload) && (string) ($payload['checkout_kind'] ?? '') === 'detached_pix_payment') {
+                return $this->client->request('GET', '/payments/' . rawurlencode($providerCheckoutId));
+            }
+
+            return $this->latestPaymentForSubscription($providerCheckoutId);
+        }
+
+        private function deleteRemoteCheckout(string $providerCheckoutId): void
+        {
+            if ($this->isRemoteSubscriptionId($providerCheckoutId)) {
+                $this->client->request('DELETE', '/subscriptions/' . rawurlencode($providerCheckoutId));
+                return;
+            }
+
+            $this->client->request('DELETE', '/payments/' . rawurlencode($providerCheckoutId));
+        }
+
+        private function isRemoteSubscriptionId(string $providerCheckoutId): bool
+        {
+            return str_starts_with(trim($providerCheckoutId), 'sub_');
+        }
+
+        private function isPixSubscriptionNotAllowed(RuntimeException $exception): bool
+        {
+            $message = strtolower($exception->getMessage());
+
+            return str_contains($message, 'forma de pagamento')
+                && str_contains($message, 'assinatura');
         }
 
         private function normalizePaymentMethod(string $method): string
@@ -768,7 +889,7 @@ namespace App\Services\Payments {
                 && $previousProviderSubscriptionId !== $newProviderSubscriptionId
             ) {
                 try {
-                    $this->client->request('DELETE', '/subscriptions/' . rawurlencode($previousProviderSubscriptionId));
+                    $this->deleteRemoteCheckout($previousProviderSubscriptionId);
                     $remoteCanceled = true;
                 } catch (Throwable $exception) {
                     $remoteCancelError = $exception->getMessage();
