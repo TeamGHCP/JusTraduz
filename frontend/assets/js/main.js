@@ -12,6 +12,7 @@
     'feature-flow.js',
     'tabs.js',
     'terms-pages.js',
+    'blog-posts.js',
     'phone-demo.js',
     'security.js'
   ];
