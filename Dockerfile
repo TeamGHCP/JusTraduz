@@ -51,6 +51,7 @@ RUN printf '%s\n' \
     'ServerName localhost' \
     'Alias /favicon.ico /var/www/html/frontend/assets/img/icon.ico' \
     'Alias /backend/public /var/www/html/backend/public' \
+    'Alias /frontend /var/www/html/frontend' \
     'AliasMatch ^/JusTraduz/frontend/(.*)$ /var/www/html/frontend/$1' \
     'AliasMatch ^/JusTraduz/backend/public/(.*)$ /var/www/html/backend/public/$1' \
     '<Directory /var/www/html/frontend>' \
