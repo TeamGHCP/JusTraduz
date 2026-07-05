@@ -1,6 +1,7 @@
 <?php
 $pathPrefix = '../';
 $activePage = 'blog';
+require_once __DIR__ . '/' . $pathPrefix . 'includes/public-path.php';
 require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 ?>
 <!DOCTYPE html>
@@ -14,88 +15,125 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       'robots' => 'index, follow'
     ]);
   ?>
-  <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
-  <link rel="manifest" href="../site.webmanifest">
+  <link rel="icon" href="<?= $assetPrefix ?>assets/img/icon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="<?= $assetPrefix ?>assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="<?= $assetPrefix ?>site.webmanifest">
   <meta name="theme-color" content="#008f80">
   <meta name="application-name" content="JusTraduz">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/style.css?v=2026.07.02-vlibras-panel-1">
-  <script src="../assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
+  <link rel="stylesheet" href="<?= $assetPrefix ?>assets/css/style.css?v=2026.07.05-hero-first-view-1">
+  <script src="<?= $assetPrefix ?>assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
 <body class="blog-post-page terms-page-enhanced">
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/header.php'; ?>
 
   <main>
-    <article class="container" style="max-width: 800px; padding: 48px 16px 96px;">
-      <header style="margin-bottom: 32px; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 24px;">
-        <span style="font-size: 13px; text-transform: uppercase; color: var(--primary); font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Guia Prático</span>
-        <h1 style="font-size: clamp(28px, 5vw, 42px); line-height: 1.15; color: #172033; margin: 0 0 16px;">Como entender um contrato sem precisar de dicionário</h1>
-        <div style="display: flex; gap: 16px; font-size: 14px; color: rgba(0,0,0,0.56); flex-wrap: wrap;">
-          <span>Por: Time JusTraduz</span>
-          <span>•</span>
-          <span>Publicado em: 28 de Junho de 2026</span>
-        </div>
-      </header>
-
-      <div class="blog-post-content" style="font-size: 16px; line-height: 1.75; color: rgba(0,0,0,0.85); display: grid; gap: 24px;">
-        <p>
-          Assinar um contrato sem compreendê-lo totalmente é um dos maiores riscos que uma pessoa ou pequena empresa pode correr. No entanto, diante de páginas e mais páginas escritas com termos jurídicos confusos, muitos desistem de ler.
-        </p>
-        <p>
-          Neste guia prático, vamos mostrar que entender um contrato é mais simples do que parece se você focar nas seções certas.
-        </p>
-
-        <h2 style="font-size: 24px; color: #172033; margin-top: 16px; margin-bottom: 8px;">1. Identifique o Objeto do Contrato</h2>
-        <p>
-          A cláusula do <strong>"Objeto"</strong> é o coração do documento. Ela explica detalhadamente o que está sendo comprado, alugado ou prestado. Leia essa cláusula com atenção para garantir que o que foi prometido verbalmente esteja escrito de forma clara. Se houver divergência, o texto assinado é o que prevalecerá.
-        </p>
-
-        <h2 style="font-size: 24px; color: #172033; margin-top: 16px; margin-bottom: 8px;">2. Vigência e Renovação Automática</h2>
-        <p>
-          Muitos contratos de prestação de serviços possuem cláusulas de <strong>vigência com renovação automática</strong>. Se você não prestar atenção à data limite para manifestar o desinteresse na renovação, poderá ficar preso a um serviço indesejado por mais um ciclo inteiro.
-        </p>
-
-        <h2 style="font-size: 24px; color: #172033; margin-top: 16px; margin-bottom: 8px;">3. Cláusulas de Multa e Rescisão Antecipada</h2>
-        <p>
-          Esta é a seção que costuma gerar as maiores disputas. Verifique sempre:
-        </p>
-        <ul style="padding-left: 20px; display: grid; gap: 8px;">
-          <li>Qual o valor da multa se você decidir cancelar o contrato antes do término (rescisão antecipada)?</li>
-          <li>Existe um prazo de aviso prévio obrigatório (ex: avisar com 30 dias de antecedência)?</li>
-          <li>Quais são as penalidades se ocorrer atraso no pagamento (juros e mora)?</li>
-        </ul>
-
-        <h2 style="font-size: 24px; color: #172033; margin-top: 16px; margin-bottom: 8px;">4. Foro e Resolução de Conflitos</h2>
-        <p>
-          A cláusula de <strong>Foro</strong> estipula em qual cidade ou comarca qualquer disputa judicial deverá ser resolvida. Para negócios realizados de forma digital ou interestadual, certifique-se de que o foro eleito não seja em um estado muito distante, o que dificultaria imensamente a sua defesa em caso de processo.
-        </p>
-
-        <p style="margin-top: 32px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
-          Para simplificar esse trabalho de varredura e encontrar esses pontos em qualquer contrato de forma automática, você pode contar com o assistente do <a href="../index.php" style="color: var(--primary); font-weight: 600;">JusTraduz</a>. A nossa Inteligência Artificial analisa o arquivo PDF e separa o que importa em uma leitura descomplicada.
-        </p>
-
-        <div class="feedback-card" style="border-left: 4px solid var(--primary); background: rgba(0,143,128,0.03); padding: 24px; margin-top: 24px;">
-          <strong style="color: var(--primary); display: block; margin-bottom: 8px;">Aviso Informativo:</strong>
-          <p style="font-size: 14px; margin: 0; line-height: 1.6;">
-            A simplificação automática de contratos ajuda a compreender os termos contratuais, mas não constitui assessoria ou análise de legalidade. Recomendamos sempre buscar a assessoria direta de um advogado habilitado antes de assinar contratos de alta relevância ou valor financeiro elevado.
-          </p>
-        </div>
-
-        <div style="margin-top: 32px; display: flex; gap: 16px; flex-wrap: wrap;">
-          <a class="btn btn-primary" href="../login.html?cadastro">Enviar meu contrato</a>
-          <a class="btn btn-outline" href="index.php">Voltar ao Blog</a>
+    <section class="terms-modern-hero">
+      <div class="container terms-modern-hero-inner">
+        <span class="contact-kicker">Guia Prático</span>
+        <h1>Como entender um contrato sem precisar de dicionário</h1>
+        <p>Um roteiro direto para encontrar objeto, prazo, multa, foro e pontos de atenção antes de assinar qualquer documento importante.</p>
+        <div class="blog-meta-row">
+          <span>Time JusTraduz</span>
+          <span>28 de Junho de 2026</span>
+          <span>Checklist interativo</span>
         </div>
       </div>
-    </article>
+    </section>
+
+    <section class="terms-modern-content">
+      <div class="container terms-modern-grid">
+        <aside class="terms-modern-aside">
+          <h2>Neste guia</h2>
+          <a href="#antes" data-terms-nav>Antes de ler</a>
+          <a href="#objeto" data-terms-nav>Objeto</a>
+          <a href="#vigencia" data-terms-nav>Vigência</a>
+          <a href="#multa" data-terms-nav>Multas</a>
+          <a href="#foro" data-terms-nav>Foro</a>
+          <a href="#checklist" data-terms-nav>Checklist</a>
+        </aside>
+
+        <article class="terms-modern-card blog-post-content">
+          <section id="antes" class="terms-modern-section-static" data-copy-source>
+            <h2>Antes de ler: procure o que muda sua decisão</h2>
+            <p>Assinar um contrato sem compreendê-lo totalmente é um dos maiores riscos para uma pessoa ou pequena empresa. Em vez de tentar decorar termos jurídicos, leia procurando obrigação, prazo, valor, penalidade e saída.</p>
+            <div class="blog-highlight-grid">
+              <div class="blog-highlight-card"><strong>Obrigação</strong><span>O que cada parte precisa fazer.</span></div>
+              <div class="blog-highlight-card"><strong>Consequência</strong><span>O que acontece em atraso, descumprimento ou cancelamento.</span></div>
+              <div class="blog-highlight-card"><strong>Saída</strong><span>Como encerrar ou contestar sem surpresa.</span></div>
+            </div>
+            <button class="blog-copy-button" type="button" data-blog-copy>Copiar método</button>
+          </section>
+
+          <section id="objeto" class="terms-modern-section-static">
+            <h2>1. Identifique o objeto do contrato</h2>
+            <p>A cláusula do objeto explica o que está sendo comprado, alugado, contratado ou prestado. Leia essa parte para confirmar se o que foi prometido verbalmente está escrito de forma clara.</p>
+            <details class="blog-quick-details">
+              <summary>Sinal de alerta</summary>
+              <div><p>Objeto genérico demais, sem quantidade, prazo, escopo ou entrega esperada, costuma gerar disputa depois.</p></div>
+            </details>
+          </section>
+
+          <section id="vigencia" class="terms-modern-section-static">
+            <h2>2. Vigência e renovação automática</h2>
+            <p>Muitos contratos de prestação de serviços possuem vigência com renovação automática. Se você não observar a data limite para cancelar, pode ficar preso por mais um ciclo inteiro.</p>
+            <div class="blog-action-panel">
+              <h3>Pergunta essencial</h3>
+              <p>Até quando preciso avisar que não quero renovar?</p>
+            </div>
+          </section>
+
+          <section id="multa" class="terms-modern-section-static">
+            <h2>3. Multa e rescisão antecipada</h2>
+            <p>Essa é a parte que mais gera surpresa. Verifique qual é a multa de cancelamento, se existe aviso prévio obrigatório e quais juros aparecem em caso de atraso.</p>
+            <ul>
+              <li>Qual o valor da multa se eu cancelar antes do fim?</li>
+              <li>Preciso avisar com 30, 60 ou 90 dias?</li>
+              <li>Quais encargos aparecem se houver atraso?</li>
+            </ul>
+          </section>
+
+          <section id="foro" class="terms-modern-section-static">
+            <h2>4. Foro e resolução de conflitos</h2>
+            <p>A cláusula de foro define onde uma disputa judicial será resolvida. Em negócios digitais ou interestaduais, um foro distante pode dificultar sua defesa.</p>
+          </section>
+
+          <section id="checklist" class="terms-modern-section-static">
+            <h2>Checklist de leitura</h2>
+            <div class="blog-checklist" data-blog-checklist>
+              <div class="blog-checklist-head">
+                <strong>Progresso: <span data-blog-check-count>0/5</span></strong>
+                <span class="blog-pill">Marque enquanto lê</span>
+              </div>
+              <div class="blog-check-progress" aria-hidden="true"><span data-blog-check-progress></span></div>
+              <label><input type="checkbox"> Entendi o objeto e as entregas combinadas.</label>
+              <label><input type="checkbox"> Localizei prazo, vigência e regra de renovação.</label>
+              <label><input type="checkbox"> Conferi multa, juros, mora e aviso prévio.</label>
+              <label><input type="checkbox"> Encontrei foro ou forma de resolução de conflito.</label>
+              <label><input type="checkbox"> Separei dúvidas para revisar antes de assinar.</label>
+            </div>
+
+            <div class="feedback-card">
+              <strong>Aviso informativo</strong>
+              <p>A simplificação automática ajuda na compreensão, mas não substitui assessoria de advogado antes de assinar contratos relevantes.</p>
+            </div>
+
+            <div class="terms-hero-actions">
+              <a class="btn btn-primary" href="<?= $publicPathPrefix ?>login.html?cadastro">Enviar meu contrato</a>
+              <a class="btn btn-outline" href="<?= $publicPathPrefix ?>blog/">Voltar ao Blog</a>
+            </div>
+          </section>
+        </article>
+      </div>
+    </section>
   </main>
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="../assets/js/main.js?v=mobile-menu-20260628"></script>
-  <script src="../assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
-  <script src="../assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+  <script src="<?= $assetPrefix ?>assets/js/main.js?v=2026.07.05-main-modules-1"></script>
+  <script src="<?= $assetPrefix ?>assets/js/accessibility.js?v=2026.07.05-a11y-global-1"></script>
+  <script src="<?= $assetPrefix ?>assets/js/vlibras-init.js?v=2026.07.05-a11y-global-1" defer></script>
 </body>
 </html>

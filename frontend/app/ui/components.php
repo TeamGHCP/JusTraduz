@@ -123,6 +123,7 @@ function render_sidebar(string $type, string $active, bool $isAdminPath = false)
     </button>
     <button type="button" class="sidebar-backdrop" data-sidebar-backdrop aria-label="Fechar menu lateral" tabindex="-1"></button>
     <script src="<?= e(sidebar_asset_path($isAdminPath)) ?>"></script>
+    <script src="<?= e(app_interactions_asset_path($isAdminPath)) ?>" defer></script>
     <script src="<?= e(theme_asset_path()) ?>" defer></script>
     <script src="<?= e(accessibility_asset_path($isAdminPath)) ?>" defer></script>
     <link rel="stylesheet" href="<?= e(context_help_asset_path($isAdminPath, 'css')) ?>">
@@ -139,17 +140,18 @@ function render_vlibras(): void
     }
 
     $rendered = true;
-    $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/');
+    $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+    $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') || str_starts_with($requestPath, '/admin/');
     $assetPrefix = $isAdminPath ? '../' : '';
     render_cookie_consent_assets($isAdminPath);
     ?>
     <div vw class="enabled">
-      <div vw-access-button class="active"></div>
+      <div vw-access-button class="active" role="button" tabindex="0" aria-label="Abrir tradutor VLibras" title="Abrir tradutor VLibras"></div>
       <div vw-plugin-wrapper>
         <div class="vw-plugin-top-wrapper"></div>
       </div>
     </div>
-    <script src="<?= e($assetPrefix) ?>assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+    <script src="<?= e($assetPrefix) ?>assets/js/vlibras-init.js?v=2026.07.05-a11y-global-1" defer></script>
     <?php
 }
 
@@ -249,7 +251,8 @@ function render_onboarding_assets(
     string $profile,
     bool $autoStart = true
 ): void {
-    $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/');
+    $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+    $isAdminPath = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') || str_starts_with($requestPath, '/admin/');
     $assetPrefix = $isAdminPath ? '../' : '';
     $endpoint = static fn (string $route): string => app_url('/backend/public/index.php?rota=' . $route);
     $config = [
@@ -376,7 +379,8 @@ function current_user_photo_url(): string
         return $photoPath;
     }
 
-    $prefix = str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') ? '../../' : '../';
+    $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+    $prefix = (str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') || str_starts_with($requestPath, '/admin/')) ? '../../' : '../';
     return $prefix . ltrim($photoPath, '/');
 }
 
@@ -394,8 +398,8 @@ function render_theme_toggle(): string
 
 function theme_asset_path(): string
 {
-    $script = $_SERVER['SCRIPT_NAME'] ?? '';
-    $path = str_contains($script, '/frontend/admin/') ? '../assets/js/theme.js' : 'assets/js/theme.js';
+    $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH) ?: '';
+    $path = (str_contains($_SERVER['SCRIPT_NAME'] ?? '', '/frontend/admin/') || str_starts_with($requestPath, '/admin/')) ? '../assets/js/theme.js' : 'assets/js/theme.js';
     return $path . '?v=theme-slow-3';
 }
 
@@ -403,6 +407,12 @@ function sidebar_asset_path(bool $isAdminPath): string
 {
     $path = $isAdminPath ? '../assets/js/sidebar.js' : 'assets/js/sidebar.js';
     return $path . '?v=sidebar-open-button-1';
+}
+
+function app_interactions_asset_path(bool $isAdminPath): string
+{
+    $path = $isAdminPath ? '../assets/js/app-interactions.js' : 'assets/js/app-interactions.js';
+    return $path . '?v=app-interactions-20260704-1';
 }
 
 function context_help_asset_path(bool $isAdminPath, string $type): string
@@ -414,7 +424,7 @@ function context_help_asset_path(bool $isAdminPath, string $type): string
 function accessibility_asset_path(bool $isAdminPath): string
 {
     $path = $isAdminPath ? '../assets/js/accessibility.js' : 'assets/js/accessibility.js';
-    return $path . '?v=2026.07.02-vlibras-1';
+    return $path . '?v=2026.07.05-a11y-global-1';
 }
 
 function stat_card(string $label, $value, string $icon): string

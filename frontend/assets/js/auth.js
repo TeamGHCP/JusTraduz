@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const appBasePath = frontendIndex >= 0 ? window.location.pathname.slice(0, frontendIndex) : "";
   const backendBase = `${appBasePath}/backend/public/index.php`;
   const backendRoute = (path) => `${backendBase}?rota=${encodeURIComponent(path)}`;
+  const params = new URLSearchParams(window.location.search);
   let csrfToken = "";
 
   function clearCookie(name) {
@@ -24,7 +25,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const oabInput = document.querySelector("[name='inscricao']");
   const ufInput = document.querySelector("[name='oab_uf']");
   const professionalNote = document.querySelector("[data-professional-note]");
+  const accountTypeHelp = document.querySelector("[data-account-type-help]");
   const alertBoxes = document.querySelectorAll("[data-auth-alert]");
+  const passwordInput = document.querySelector("#cadastro-senha");
+  const passwordConfirmInput = document.querySelector("#senha2");
+  const passwordRules = document.querySelector("[data-password-rules]");
+
+  if (typeSelect) {
+    const requestedType = String(params.get("tipo") || params.get("perfil") || "").toLowerCase();
+    const allowedTypes = Array.from(typeSelect.options).map((option) => option.value);
+
+    if (allowedTypes.includes(requestedType)) {
+      typeSelect.value = requestedType;
+    }
+  }
 
   function enhanceAnimatedLabels() {
     document.querySelectorAll(".auth-switch-page .jt-label").forEach((label) => {
@@ -285,6 +299,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (cpfFields) cpfFields.hidden = !needsCpf;
     if (professionalNote) professionalNote.hidden = !needsOab;
+    if (accountTypeHelp) {
+      accountTypeHelp.textContent = needsOab
+        ? "Advogado informa OAB e UF. O acesso fica pendente ate validacao manual."
+        : "Cliente entra direto com CPF para identificar documentos e processos.";
+    }
     if (cpfInput) {
       cpfInput.toggleAttribute("required", needsCpf);
       cpfInput.value = needsCpf ? formatCpf(cpfInput.value) : "";
@@ -302,6 +321,48 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!needsOab) ufInput.value = "";
       ufInput.closest(".jt-field")?.classList.toggle("has-value", ufInput.value !== "");
     }
+  }
+
+  function passwordRuleState(value) {
+    return {
+      length: value.length >= 10,
+      upper: /[A-Z]/.test(value),
+      lower: /[a-z]/.test(value),
+      number: /[0-9]/.test(value),
+      special: /[^A-Za-z0-9]/.test(value),
+    };
+  }
+
+  function passwordValidationMessage(value) {
+    const state = passwordRuleState(value);
+    if (!state.length) return "Use pelo menos 10 caracteres.";
+    if (!state.upper) return "Adicione pelo menos uma letra maiuscula.";
+    if (!state.lower) return "Adicione pelo menos uma letra minuscula.";
+    if (!state.number) return "Adicione pelo menos um numero.";
+    if (!state.special) return "Adicione pelo menos um caractere especial, como ponto, hifen ou arroba.";
+    return "";
+  }
+
+  function syncPasswordRules() {
+    if (!passwordInput || !passwordRules) return;
+
+    const state = passwordRuleState(passwordInput.value);
+    Object.entries(state).forEach(([rule, isValid]) => {
+      const item = passwordRules.querySelector(`[data-password-rule="${rule}"]`);
+      item?.classList.toggle("is-valid", isValid);
+    });
+  }
+
+  function syncPasswordConfirmation() {
+    if (!passwordInput || !passwordConfirmInput || !passwordConfirmInput.value) return;
+
+    const wrapper = passwordConfirmInput.closest(".jt-field");
+    const error = wrapper?.querySelector(".jt-error");
+    const matches = passwordInput.value === passwordConfirmInput.value;
+
+    passwordConfirmInput.toggleAttribute("aria-invalid", !matches);
+    wrapper?.classList.toggle("has-error", !matches);
+    if (error) error.textContent = matches ? "" : "As senhas precisam ser iguais.";
   }
 
   function showMessage(message, kind) {
@@ -489,7 +550,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  const params = new URLSearchParams(window.location.search);
+  if (passwordInput) {
+    passwordInput.addEventListener("input", () => {
+      syncPasswordRules();
+      syncPasswordConfirmation();
+    });
+    syncPasswordRules();
+  }
+
+  if (passwordConfirmInput) {
+    passwordConfirmInput.addEventListener("input", syncPasswordConfirmation);
+  }
+
   if (params.has("erro")) showMessage(params.get("erro"), "error");
   if (params.get("sucesso") === "conta_criada") {
     showMessage("Conta criada com sucesso. Entre para continuar.", "success");
@@ -551,6 +623,18 @@ document.addEventListener("DOMContentLoaded", () => {
         senha2.setAttribute("aria-invalid", "true");
         senha2.focus();
         return;
+      }
+
+      if (senha) {
+        const passwordMessage = passwordValidationMessage(senha.value);
+        if (passwordMessage) {
+          showFormMessage(form, passwordMessage);
+          senha.setCustomValidity(passwordMessage);
+          markInvalidField(senha);
+          focusFieldControl(senha);
+          senha.addEventListener("input", () => senha.setCustomValidity(""), { once: true });
+          return;
+        }
       }
 
       if (formCpf?.required && !isValidCpf(formCpf.value)) {

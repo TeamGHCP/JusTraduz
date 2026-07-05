@@ -1,7 +1,7 @@
-@import url("./base.css?v=scroll-polish-1");
-@import url("./layout.css?v=footer-component-1");
-@import url("./components.css?v=client-polish-1");
-@import url("./auth.css");
+@import url("./base.css?v=2026.07.05-style-cache-1");
+@import url("./layout.css?v=2026.07.05-style-cache-1");
+@import url("./components.css?v=2026.07.05-style-cache-1");
+@import url("./auth.css?v=2026.07.05-style-cache-1");
 
 @import url("./dashboard.css?v=dark-ui-fixes-20260629");
 @import url("./home.css?v=billing-profile-restore-20260704");
@@ -13,6 +13,6 @@
 @import url("./errors.css?v=dark-ui-fixes-20260629");
 
 
-@import url("./responsive.css?v=global-mobile-pass-2");
-@import url("./accessibility.css?v=2026.07.02-vlibras-panel-1");
-@import url("./cookie-consent.css?v=2026.06.25-3");
+@import url("./responsive.css?v=2026.07.05-style-cache-1");
+@import url("./accessibility.css?v=2026.07.05-style-cache-1");
+@import url("./cookie-consent.css?v=2026.07.05-style-cache-1");

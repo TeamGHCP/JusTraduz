@@ -1,4 +1,4 @@
-const CACHE_VERSION = "justraduz-pwa-2026-07-03-cleanup-v1";
+const CACHE_VERSION = "justraduz-pwa-2026-07-05-a11y-v1";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "offline.html";
 const PUBLIC_PAGE_FALLBACKS = new Set([
@@ -46,6 +46,7 @@ const STATIC_ASSETS = [
   "assets/css/chatbot.min.css",
   "assets/css/cookie-consent.css",
   "assets/css/cookie-consent.min.css",
+  "assets/css/accessibility.css",
   "assets/css/accessibility.min.css",
   "assets/js/main.js",
   "assets/js/main-home-bundle.min.js",
@@ -65,6 +66,7 @@ const STATIC_ASSETS = [
   "assets/js/cookie-consent.js",
   "assets/js/cookie-consent.min.js",
   "assets/js/vlibras-init.js",
+  "assets/js/accessibility.js",
   "assets/js/accessibility.min.js",
   "assets/js/pwa.js",
   "assets/js/pwa.min.js",

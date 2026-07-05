@@ -98,28 +98,28 @@ $operationalRisks = [
     [
         'label' => 'OAB pendente',
         'value' => $pendingProfessionalCount,
-        'detail' => 'Profissional sem validação não entra no sistema completo.',
+        'detail' => 'Profissional sem validação segue limitado.',
         'href' => 'validar-oab.php',
         'level' => admin_risk_level($pendingProfessionalCount),
     ],
     [
         'label' => 'Casos sem responsável',
         'value' => $unassignedCaseCount,
-        'detail' => 'Fila aberta sem dono vira gargalo de atendimento.',
+        'detail' => 'Fila aberta sem dono vira gargalo.',
         'href' => 'solicitacoes.php?responsavel=sem',
         'level' => admin_risk_level($unassignedCaseCount),
     ],
     [
         'label' => 'Documentos sem IA',
         'value' => $pendingDocumentCount,
-        'detail' => 'Documento sem análise enfraquece a promessa central.',
+        'detail' => 'Documento sem análise reduz valor ao cliente.',
         'href' => 'documentos.php?analysis=pendente',
         'level' => admin_risk_level($pendingDocumentCount),
     ],
     [
         'label' => 'Falhas de login 24h',
         'value' => $failedLoginCount,
-        'detail' => 'Tentativas falhas precisam aparecer na auditoria.',
+        'detail' => 'Tentativas falhas exigem auditoria.',
         'href' => 'auditoria.php?severity=critical&action=login_failed',
         'level' => admin_risk_level($failedLoginCount),
     ],
@@ -258,21 +258,21 @@ $healthChecks = [
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="../assets/css/style.css?v=2026.07.02-vlibras-panel-1">
-  <script src="../assets/js/pwa.js" defer></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=2026.07.05-style-cache-1">
+  <script src="../assets/js/pwa.js?v=2026.07.05-assets-v1" defer></script>
 </head>
 <body data-tour-page="dashboard_admin">
   <div class="app-shell admin-shell">
     <?php render_sidebar('admin', 'dashboard-admin.php', true); ?>
 
     <main class="app-main" data-tour-step="1" data-tour-title="Visão administrativa" data-tour-description="Esta central reúne operação, risco, validação, auditoria e crescimento da plataforma.">
-      <?php render_topbar('Administração', 'Operação, risco e crescimento em tempo quase real.', current_user_name()); ?>
+      <?php render_topbar('Administração', 'Operação, risco e crescimento.', current_user_name()); ?>
 
       <section class="admin-hero admin-hero-ops" data-tour-step="2" data-tour-title="Indicadores de usuários" data-tour-description="Acompanhe clientes, profissionais ativos e pendências cadastrais.">
         <div>
           <span class="badge badge-info">Central SaaS</span>
           <h2>Comando da plataforma JusTraduz</h2>
-          <p>Monitore validações OAB, documentos com IA, solicitações críticas, agenda e auditoria em uma única tela operacional.</p>
+          <p>Monitore OAB, documentos, casos críticos, agenda e auditoria em uma tela.</p>
         </div>
         <div class="admin-hero-actions">
           <a class="btn btn-primary" href="validar-oab.php"><?= icon_svg('shield') ?> Revisar OAB</a>
@@ -289,19 +289,23 @@ $healthChecks = [
       </section>
 
       <section class="admin-alert-strip" data-tour-step="4" data-tour-title="Solicitações e casos" data-tour-description="Identifique casos críticos, sem responsável e compromissos próximos.">
-        <a class="admin-alert-tile" href="solicitacoes.php?prioridade=alta">
-          <span>Solicitações críticas</span>
+        <a class="admin-alert-tile admin-alert-critical" href="solicitacoes.php?prioridade=alta">
+          <?= icon_svg('case') ?>
+          <span>Críticas</span>
           <strong><?= e((string) $criticalCaseCount) ?></strong>
         </a>
-        <a class="admin-alert-tile" href="solicitacoes.php?status=aberto">
+        <a class="admin-alert-tile admin-alert-warning" href="solicitacoes.php?status=aberto">
+          <?= icon_svg('help') ?>
           <span>Sem responsável</span>
           <strong><?= e((string) $unassignedCaseCount) ?></strong>
         </a>
-        <a class="admin-alert-tile" href="../agenda.php">
+        <a class="admin-alert-tile admin-alert-info" href="../agenda.php">
+          <?= icon_svg('calendar') ?>
           <span>Agenda 7 dias</span>
           <strong><?= e((string) $upcomingAppointmentCount) ?></strong>
         </a>
-        <a class="admin-alert-tile" href="auditoria.php?action=failed">
+        <a class="admin-alert-tile admin-alert-security" href="auditoria.php?action=failed">
+          <?= icon_svg('shield') ?>
           <span>Falhas login 24h</span>
           <strong><?= e((string) $failedLoginCount) ?></strong>
         </a>
@@ -433,7 +437,7 @@ $healthChecks = [
                       <input type="hidden" name="user_id" value="<?= (int) $professional['id'] ?>">
                       <input type="hidden" name="action" value="reject">
                       <input type="hidden" name="justificativa" value="OAB reprovada na revisão manual administrativa.">
-                      <button class="btn btn-outline btn-sm" type="submit">Excluir</button>
+                      <button class="btn btn-outline btn-sm" type="submit">Reprovar</button>
                     </form>
                   </div>
                 </div>

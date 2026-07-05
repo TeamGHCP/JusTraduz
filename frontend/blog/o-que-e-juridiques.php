@@ -1,6 +1,7 @@
 <?php
 $pathPrefix = '../';
 $activePage = 'blog';
+require_once __DIR__ . '/' . $pathPrefix . 'includes/public-path.php';
 require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 ?>
 <!DOCTYPE html>
@@ -14,88 +15,116 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       'robots' => 'index, follow'
     ]);
   ?>
-  <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
-  <link rel="manifest" href="../site.webmanifest">
+  <link rel="icon" href="<?= $assetPrefix ?>assets/img/icon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="<?= $assetPrefix ?>assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="<?= $assetPrefix ?>site.webmanifest">
   <meta name="theme-color" content="#008f80">
   <meta name="application-name" content="JusTraduz">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../assets/css/style.css?v=2026.07.02-vlibras-panel-1">
-  <script src="../assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
+  <link rel="stylesheet" href="<?= $assetPrefix ?>assets/css/style.css?v=2026.07.05-hero-first-view-1">
+  <script src="<?= $assetPrefix ?>assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
 <body class="blog-post-page terms-page-enhanced">
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/header.php'; ?>
 
   <main>
-    <article class="container" style="max-width: 800px; padding: 48px 16px 96px;">
-      <header style="margin-bottom: 32px; border-bottom: 1px solid rgba(0,0,0,0.08); padding-bottom: 24px;">
-        <span style="font-size: 13px; text-transform: uppercase; color: var(--primary); font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 8px;">Dicionário Didático</span>
-        <h1 style="font-size: clamp(28px, 5vw, 42px); line-height: 1.15; color: #172033; margin: 0 0 16px;">O que é juridiquês e por que ele atrapalha a sua vida?</h1>
-        <div style="display: flex; gap: 16px; font-size: 14px; color: rgba(0,0,0,0.56); flex-wrap: wrap;">
-          <span>Por: Time JusTraduz</span>
-          <span>•</span>
-          <span>Publicado em: 28 de Junho de 2026</span>
-        </div>
-      </header>
-
-      <div class="blog-post-content" style="font-size: 16px; line-height: 1.75; color: rgba(0,0,0,0.85); display: grid; gap: 24px;">
-        <p>
-          Você já recebeu uma correspondência do tribunal ou foi assinar um contrato simples e se deparou com termos como <em>"adimplemento substancial"</em>, <em>"outorgante outorgado"</em> ou <em>"litisconsórcio passivo"</em>? Essa linguagem rebuscada e muitas vezes excessivamente formal é conhecida popularmente como <strong>"juridiquês"</strong>.
-        </p>
-
-        <h2 style="font-size: 24px; color: #172033; margin-top: 16px; margin-bottom: 8px;">A origem histórica da linguagem jurídica complexa</h2>
-        <p>
-          O juridiquês tem profundas raízes históricas. No Brasil, o ordenamento jurídico herdou muito da tradição do Direito Romano e das ordenações portuguesas coloniais. Por séculos, o domínio do latim e da linguagem técnica foi visto como um símbolo de prestígio social e autoridade dos operadores do direito.
-        </p>
-        <p>
-          Embora essa formalidade busque dar precisão técnica aos processos, o uso desmedido de arcaísmos e jargões fora dos autos judiciais isola o cidadão comum da compreensão de seus próprios direitos.
-        </p>
-
-        <h2 style="font-size: 24px; color: #172033; margin-top: 16px; margin-bottom: 8px;">Os impactos do juridiquês na sociedade</h2>
-        <p>
-          Quando as pessoas não conseguem ler um contrato de aluguel ou entender o prazo de uma notificação extrajudicial, elas enfrentam sérios problemas:
-        </p>
-        <ul style="padding-left: 20px; display: grid; gap: 8px;">
-          <li><strong>Assinaturas desinformadas:</strong> Aceitar cláusulas abusivas de multa ou renovação automática por não compreender o jargão.</li>
-          <li><strong>Ansiedade e medo:</strong> Notificações simples geram pânico desnecessário por parecerem ameaçadoras devido ao tom formal e técnico.</li>
-          <li><strong>Perda de prazos:</strong> Não identificar a data limite para responder a uma solicitação administrativa ou judicial.</li>
-        </ul>
-
-        <h2 style="font-size: 24px; color: #172033; margin-top: 16px; margin-bottom: 8px;">Como decifrar e ler documentos de forma simples?</h2>
-        <p>
-          A melhor maneira de combater o juridiquês é traduzindo-o. Ferramentas modernas e a inteligência artificial agora ajudam você a ler documentos de forma ativa. Em vez de ler todo o juridiquês de uma só vez:
-        </p>
-        <ol style="padding-left: 20px; display: grid; gap: 8px;">
-          <li>Divida o texto por parágrafos ou cláusulas menores.</li>
-          <li>Identifique quem são os atores (ex: quem é o "locatário" e o "locador").</li>
-          <li>Substitua os termos técnicos por sinônimos do dia a dia (ex: "adimplir" por "pagar").</li>
-        </ol>
-
-        <p style="margin-top: 32px; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 32px;">
-          Se você quer um jeito prático e automatizado para entender seus contratos ou notificações sem complicação, a plataforma <a href="../index.php" style="color: var(--primary); font-weight: 600;">JusTraduz</a> oferece uma IA especializada para traduzir o juridiquês das cláusulas de forma segura e rápida.
-        </p>
-
-        <div class="feedback-card" style="border-left: 4px solid var(--primary); background: rgba(0,143,128,0.03); padding: 24px; margin-top: 24px;">
-          <strong style="color: var(--primary); display: block; margin-bottom: 8px;">Aviso Informativo:</strong>
-          <p style="font-size: 14px; margin: 0; line-height: 1.6;">
-            Os conteúdos deste blog são puramente educacionais e informativos. Eles não constituem aconselhamento legal formal ou parecer técnico de advocacia. Sempre consulte um advogado qualificado para analisar o caso real e emitir orientações jurídicas seguras.
-          </p>
-        </div>
-
-        <div style="margin-top: 32px; display: flex; gap: 16px; flex-wrap: wrap;">
-          <a class="btn btn-primary" href="../login.html?cadastro">Criar conta e analisar documento</a>
-          <a class="btn btn-outline" href="index.php">Voltar ao Blog</a>
+    <section class="terms-modern-hero">
+      <div class="container terms-modern-hero-inner">
+        <span class="contact-kicker">Dicionário Didático</span>
+        <h1>O que é juridiquês e por que ele atrapalha a sua vida?</h1>
+        <p>Entenda por que a linguagem jurídica parece tão distante e veja caminhos práticos para transformar termos difíceis em decisões mais seguras.</p>
+        <div class="blog-meta-row">
+          <span>Time JusTraduz</span>
+          <span>28 de Junho de 2026</span>
+          <span>Leitura guiada</span>
         </div>
       </div>
-    </article>
+    </section>
+
+    <section class="terms-modern-content">
+      <div class="container terms-modern-grid">
+        <aside class="terms-modern-aside">
+          <h2>Neste artigo</h2>
+          <a href="#resumo" data-terms-nav>Resumo rápido</a>
+          <a href="#origem" data-terms-nav>Origem</a>
+          <a href="#impactos" data-terms-nav>Impactos</a>
+          <a href="#decifrar" data-terms-nav>Como decifrar</a>
+          <a href="#teste" data-terms-nav>Teste rápido</a>
+        </aside>
+
+        <article class="terms-modern-card blog-post-content">
+          <section id="resumo" class="terms-modern-section-static" data-copy-source>
+            <h2>Resumo rápido</h2>
+            <p>Juridiquês é o uso excessivo de formalidade, jargões e expressões técnicas em documentos, contratos e comunicações jurídicas. O problema não é a precisão: é quando a linguagem impede a pessoa de entender seus próprios direitos.</p>
+            <div class="blog-highlight-grid">
+              <div class="blog-highlight-card"><strong>O que é</strong><span>Termos técnicos usados sem tradução para o cotidiano.</span></div>
+              <div class="blog-highlight-card"><strong>Por que atrapalha</strong><span>Dificulta decisões sobre prazos, multas, obrigações e riscos.</span></div>
+              <div class="blog-highlight-card"><strong>Como resolver</strong><span>Ler por partes, identificar papéis e reescrever em português simples.</span></div>
+            </div>
+            <button class="blog-copy-button" type="button" data-blog-copy>Copiar resumo</button>
+          </section>
+
+          <section id="origem" class="terms-modern-section-static">
+            <h2>A origem histórica da linguagem jurídica complexa</h2>
+            <p>O juridiquês tem raízes históricas. No Brasil, o ordenamento jurídico herdou muito da tradição do Direito Romano e das ordenações portuguesas coloniais. Por séculos, o domínio do latim e da linguagem técnica foi visto como símbolo de prestígio e autoridade.</p>
+            <p>Embora a formalidade possa ajudar na precisão, o uso desmedido de arcaísmos e jargões fora dos autos judiciais afasta o cidadão comum da compreensão de seus próprios direitos.</p>
+          </section>
+
+          <section id="impactos" class="terms-modern-section-static">
+            <h2>Os impactos do juridiquês na sociedade</h2>
+            <p>Quando uma pessoa não entende um contrato, uma notificação ou um prazo, ela pode tomar decisões no escuro.</p>
+            <ul>
+              <li><strong>Assinaturas desinformadas:</strong> aceitar multas ou renovações sem entender o alcance da cláusula.</li>
+              <li><strong>Ansiedade e medo:</strong> comunicações simples parecem ameaçadoras por causa do tom formal.</li>
+              <li><strong>Perda de prazos:</strong> não identificar datas limite para responder ou contestar algo.</li>
+            </ul>
+          </section>
+
+          <section id="decifrar" class="terms-modern-section-static">
+            <h2>Como decifrar e ler documentos de forma simples?</h2>
+            <ol>
+              <li>Divida o texto por parágrafos ou cláusulas menores.</li>
+              <li>Identifique quem são os atores: locador, locatário, credor, devedor, autor ou réu.</li>
+              <li>Troque termos técnicos por palavras do dia a dia, como "adimplir" por "pagar".</li>
+            </ol>
+            <div class="blog-action-panel">
+              <h3>Atalho mental</h3>
+              <p>Se uma frase parece impossível, procure responder: quem faz o quê, até quando, sob qual consequência?</p>
+            </div>
+          </section>
+
+          <section id="teste" class="terms-modern-section-static">
+            <h2>Teste rápido</h2>
+            <details class="blog-quick-details">
+              <summary>O que significa "adimplemento" em português simples?</summary>
+              <div><p>Geralmente significa cumprir uma obrigação, especialmente pagar o que foi combinado.</p></div>
+            </details>
+            <details class="blog-quick-details">
+              <summary>Por que "outorgante" e "outorgado" confundem?</summary>
+              <div><p>Porque os nomes são parecidos. Outorgante dá poderes; outorgado recebe poderes.</p></div>
+            </details>
+
+            <div class="feedback-card">
+              <strong>Aviso informativo</strong>
+              <p>Os conteúdos deste blog são educacionais e não substituem orientação jurídica individual.</p>
+            </div>
+
+            <div class="terms-hero-actions">
+              <a class="btn btn-primary" href="<?= $publicPathPrefix ?>login.html?cadastro">Criar conta e analisar documento</a>
+              <a class="btn btn-outline" href="<?= $publicPathPrefix ?>blog/">Voltar ao Blog</a>
+            </div>
+          </section>
+        </article>
+      </div>
+    </section>
   </main>
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="../assets/js/main.js?v=mobile-menu-20260628"></script>
-  <script src="../assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
-  <script src="../assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+  <script src="<?= $assetPrefix ?>assets/js/main.js?v=2026.07.05-main-modules-1"></script>
+  <script src="<?= $assetPrefix ?>assets/js/accessibility.js?v=2026.07.05-a11y-global-1"></script>
+  <script src="<?= $assetPrefix ?>assets/js/vlibras-init.js?v=2026.07.05-a11y-global-1" defer></script>
 </body>
 </html>

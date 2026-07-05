@@ -1,6 +1,7 @@
 <?php
 $pathPrefix = '';
 $activePage = 'para-clientes';
+require_once __DIR__ . '/' . $pathPrefix . 'includes/public-path.php';
 require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 ?>
 <!DOCTYPE html>
@@ -14,16 +15,16 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
       'robots' => 'index, follow'
     ]);
   ?>
-  <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
-  <link rel="manifest" href="site.webmanifest">
+  <link rel="icon" href="<?= $assetPrefix ?>assets/img/icon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="<?= $assetPrefix ?>assets/img/apple-touch-icon.png">
+  <link rel="manifest" href="<?= $assetPrefix ?>site.webmanifest">
   <meta name="theme-color" content="#008f80">
   <meta name="application-name" content="JusTraduz">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.02-vlibras-panel-1">
-  <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
+  <link rel="stylesheet" href="<?= $assetPrefix ?>assets/css/style.css?v=2026.07.05-style-cache-1">
+  <script src="<?= $assetPrefix ?>assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
 <body class="seo-for-clients-page terms-page-enhanced">
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/header.php'; ?>
@@ -38,7 +39,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
         </p>
 
         <div class="terms-hero-actions">
-          <a class="btn btn-primary home-btn-primary" href="login.html?cadastro">
+          <a class="btn btn-primary home-btn-primary" href="<?= $publicPathPrefix ?>login.html?cadastro">
             <span class="home-btn-label">Criar conta grátis</span>
             <span class="home-btn-icon" aria-hidden="true">
               <svg class="svg-icon" viewBox="0 0 24 24">
@@ -104,8 +105,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
               </p>
             </div>
             <div style="margin-top: 32px; display: flex; gap: 16px; flex-wrap: wrap;">
-              <a class="btn btn-primary" href="login.html?cadastro">Criar minha conta</a>
-              <a class="btn btn-outline" href="como-funciona">Ver fluxo passo a passo</a>
+              <a class="btn btn-primary" href="<?= $publicPathPrefix ?>login.html?cadastro">Criar minha conta</a>
+              <a class="btn btn-outline" href="<?= $publicPathPrefix ?>como-funciona">Ver fluxo passo a passo</a>
             </div>
           </div>
         </article>
@@ -115,8 +116,8 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
 
   <?php require __DIR__ . '/' . $pathPrefix . 'includes/footer.php'; ?>
 
-  <script src="assets/js/main.js?v=mobile-menu-20260628"></script>
-  <script src="assets/js/accessibility.js?v=2026.07.02-vlibras-1"></script>
-  <script src="assets/js/vlibras-init.js?v=2026.07.02-vlibras-1" defer></script>
+  <script src="<?= $assetPrefix ?>assets/js/main.js?v=2026.07.05-main-modules-1"></script>
+  <script src="<?= $assetPrefix ?>assets/js/accessibility.js?v=2026.07.05-a11y-global-1"></script>
+  <script src="<?= $assetPrefix ?>assets/js/vlibras-init.js?v=2026.07.05-a11y-global-1" defer></script>
 </body>
 </html>

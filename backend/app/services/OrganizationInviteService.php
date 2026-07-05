@@ -489,6 +489,10 @@ HTML;
 
     private function absoluteAppUrl(string $path): string
     {
+        if (str_starts_with($path, '/frontend/')) {
+            $path = substr($path, strlen('/frontend'));
+        }
+
         $env = function_exists('database_env_values')
             ? database_env_values(dirname(__DIR__, 2) . '/.env')
             : [];

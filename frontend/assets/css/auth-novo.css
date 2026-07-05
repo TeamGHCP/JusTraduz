@@ -284,6 +284,31 @@ body {
   resize: vertical;
 }
 
+.jt-field .jt-input[type="date"] {
+  min-height: 54px;
+  padding-top: 22px;
+  padding-bottom: 7px;
+  line-height: 1.15;
+}
+
+.jt-field .jt-input[type="date"] ~ .jt-label {
+  top: 8px;
+  background: transparent;
+  color: var(--teal);
+  font-size: 11px;
+  transform: translateY(0);
+}
+
+.jt-field .jt-input[type="date"] ~ .jt-label .jt-label-char {
+  color: var(--teal);
+  transform: translateY(-30%);
+}
+
+.jt-field.has-error .jt-input[type="date"] ~ .jt-label,
+.jt-field.has-error .jt-input[type="date"] ~ .jt-label .jt-label-char {
+  color: var(--danger);
+}
+
 .jt-field .jt-input:hover {
   border-color: rgba(17, 138, 126, .45);
 }
@@ -410,6 +435,51 @@ body {
   margin-top: 6px;
 }
 
+.account-type-help {
+  display: block;
+}
+
+.password-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: -2px;
+}
+
+.password-rules span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 5px 9px;
+  border: 1px solid rgba(137, 151, 174, .26);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .76);
+  color: #687792;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.password-rules span::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c4cddd;
+}
+
+.password-rules span.is-valid {
+  border-color: rgba(17, 138, 126, .28);
+  background: rgba(17, 138, 126, .08);
+  color: var(--teal-2);
+}
+
+.password-rules span.is-valid::before {
+  background: var(--teal);
+}
+
 .auth-note {
   padding: 10px 12px;
   border: 1px solid rgba(47, 95, 152, .18);
@@ -472,6 +542,11 @@ body {
 .auth-cadastro-panel .jt-field .jt-input {
   min-height: 50px;
   padding-top: 17px;
+}
+
+.auth-cadastro-panel .jt-field .jt-input[type="date"] {
+  min-height: 54px;
+  padding-top: 22px;
 }
 
 .auth-cadastro-panel .password-field-wrap .jt-input {
@@ -1448,5 +1523,38 @@ body {
     max-height: none;
     overflow: visible;
     padding-right: 0;
+  }
+}
+
+@supports (height: 100dvh) {
+  .auth-switch-page,
+  .auth-switch-page .auth-panel,
+  .auth-slider,
+  .auth-reset-page,
+  .auth-reset-page .auth-panel {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .auth-switch-page .cadastro-card {
+    max-height: calc(100dvh - 60px);
+  }
+
+  .auth-reset-page .auth-card {
+    max-height: calc(100dvh - 84px);
+  }
+
+  @media (max-width: 900px) {
+    .auth-switch-page,
+    .auth-reset-page {
+      height: auto;
+      min-height: 100dvh;
+    }
+
+    .auth-switch-page .auth-panel,
+    .auth-reset-page .auth-panel {
+      height: auto;
+      min-height: 100dvh;
+    }
   }
 }

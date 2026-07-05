@@ -118,8 +118,8 @@ $infoCount = max(0, count($logs) - $criticalCount - $warningCount);
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
-  <link rel="stylesheet" href="../assets/css/style.css?v=2026.07.02-vlibras-panel-1">
-  <script src="../assets/js/pwa.js" defer></script>
+  <link rel="stylesheet" href="../assets/css/style.css?v=2026.07.05-style-cache-1">
+  <script src="../assets/js/pwa.js?v=2026.07.05-assets-v1" defer></script>
 </head>
 <body>
   <div class="app-shell admin-shell">

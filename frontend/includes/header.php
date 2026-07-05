@@ -2,13 +2,14 @@
 /**
  * JusTraduz - Shared Header Template
  */
-$prefix = $pathPrefix ?? '';
+$prefix = $publicPathPrefix ?? $pathPrefix ?? '';
+$assetPrefix = $assetPrefix ?? $prefix;
 $activePage = $activePage ?? '';
 ?>
   <header class="site-header home-header" data-site-header>
     <div class="container nav-bar">
       <a class="brand" href="<?= $prefix ?>index.php" aria-label="JusTraduz">
-        <img src="<?= $prefix ?>assets/img/logo-header.png" width="256" height="93" alt="JusTraduz">
+        <img src="<?= $assetPrefix ?>assets/img/logo-header.png" width="256" height="93" alt="JusTraduz">
       </a>
 
       <nav class="nav-links" aria-label="Menu principal">
