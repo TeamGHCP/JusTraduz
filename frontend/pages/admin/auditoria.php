@@ -2,6 +2,10 @@
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
 require_role(['admin']);
 
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 function audit_severity(string $action): string
 {
     if (str_contains($action, 'failed') || str_contains($action, 'error') || str_contains($action, 'delete')) {
@@ -51,9 +55,8 @@ function audit_pretty_details(?string $details): string
 $userId = (int) ($_GET['user_id'] ?? 0);
 $action = trim((string) ($_GET['action'] ?? ''));
 $entity = trim((string) ($_GET['entity_type'] ?? ''));
-$daté = trim((string) ($_GET['date'] ?? ''));
-$severityFilter = $_GET['severity'] ?? '';
 $date = trim((string) ($_GET['date'] ?? ''));
+$severityFilter = (string) ($_GET['severity'] ?? '');
 $where = [];
 $params = [];
 
@@ -72,7 +75,7 @@ if ($entity !== '') {
     $params[] = $entity;
 }
 
-if ($daté !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+if ($date !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
     $where[] = 'DATE(a.created_at) = ?';
     $params[] = $date;
 }
@@ -119,7 +122,107 @@ $infoCount = max(0, count($logs) - $criticalCount - $warningCount);
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="msapplication-TileColor" content="#008f80">
   <link rel="stylesheet" href="../assets/css/style.css?v=2026.07.05-style-cache-1">
-  <script src="../assets/js/pwa.js?v=2026.07.05-assets-v1" defer></script>
+  <style id="auditoria-force-visible-fix">
+    .admin-shell .dash-section,
+    .admin-shell .table-wrap,
+    .admin-shell .audit-table,
+    .admin-shell .audit-table thead,
+    .admin-shell .audit-table tbody,
+    .admin-shell .audit-table tr,
+    .admin-shell .audit-table th,
+    .admin-shell .audit-table td {
+      visibility: visible !important;
+      opacity: 1 !important;
+      max-height: none !important;
+    }
+
+    .admin-shell .dash-section {
+      display: block !important;
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    .admin-shell .table-wrap {
+      display: block !important;
+      width: 100% !important;
+      height: auto !important;
+      overflow-x: auto !important;
+      overflow-y: visible !important;
+    }
+
+    .admin-shell .audit-table {
+      display: table !important;
+      width: 100% !important;
+      min-width: 1120px !important;
+      table-layout: fixed !important;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .admin-shell .audit-table thead {
+      display: table-header-group !important;
+    }
+
+    .admin-shell .audit-table tbody {
+      display: table-row-group !important;
+    }
+
+    .admin-shell .audit-table tr {
+      display: table-row !important;
+    }
+
+    .admin-shell .audit-table th,
+    .admin-shell .audit-table td {
+      display: table-cell !important;
+      vertical-align: top !important;
+      overflow-wrap: anywhere !important;
+    }
+
+    .admin-shell .audit-json {
+      display: block !important;
+      max-width: 100% !important;
+      max-height: 180px !important;
+      overflow: auto !important;
+      margin: 0 !important;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+    }
+
+    .admin-shell .audit-filter-wide {
+      display: grid !important;
+      grid-template-columns: minmax(220px, 1.2fr) minmax(170px, .9fr) minmax(160px, .8fr) minmax(150px, .7fr) minmax(150px, .7fr);
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    .admin-shell .audit-filter-wide .form-actions {
+      display: flex !important;
+      gap: 10px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 1100px) {
+      .admin-shell .audit-filter-wide {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .admin-shell .audit-filter-wide {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-shell .audit-filter-wide .btn {
+        width: 100%;
+      }
+    }
+  </style>
+
+  <!-- PWA desativado nesta página administrativa dinâmica para evitar reload/cache do Service Worker. -->
 </head>
 <body>
   <div class="app-shell admin-shell">

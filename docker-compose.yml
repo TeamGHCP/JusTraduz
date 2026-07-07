@@ -12,6 +12,7 @@ services:
     env_file:
       - backend/.env
     environment:
+      - TZ=America/Sao_Paulo
       - DB_HOST=db
       - DB_PORT=3306
       - DB_USER=root
@@ -40,6 +41,7 @@ services:
     env_file:
       - backend/.env
     environment:
+      - TZ=America/Sao_Paulo
       - DB_HOST=db
       - DB_PORT=3306
       - DB_USER=root
@@ -61,6 +63,7 @@ services:
     ports:
       - "3307:3306"
     environment:
+      - TZ=America/Sao_Paulo
       - MYSQL_ROOT_PASSWORD=rootpassword
       - MYSQL_DATABASE=justraduz
     volumes:

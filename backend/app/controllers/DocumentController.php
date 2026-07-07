@@ -149,7 +149,7 @@ class DocumentController extends BaseController
             $textoExtraido = $this->extractWithOcrOrFallback($destination, $mime, $userId);
         }
 
-        $organizationId = $this->organizations->currentOrganizationId($userId);
+        $textoExtraido = $this->normalizeTextForDatabase($textoExtraido); $file['name'] = $this->normalizeTextForDatabase((string) $file['name']) ?? (string) $file['name']; $organizationId = $this->organizations->currentOrganizationId($userId);
         if (database_table_has_column($this->pdo, 'documents', 'organization_id')) {
             $stmt = $this->pdo->prepare(
                 'INSERT INTO documents (user_id, organization_id, nome_arquivo, tipo_arquivo, caminho, texto_extraido) VALUES (?, ?, ?, ?, ?, ?)'
@@ -614,4 +614,31 @@ class DocumentController extends BaseController
 
         return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
+
+    private function normalizeTextForDatabase(?string $value): ?string {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value === '') {
+            return '';
+        }
+
+        if (function_exists('mb_check_encoding') && !mb_check_encoding($value, 'UTF-8')) {
+            $converted = @mb_convert_encoding($value, 'UTF-8', 'Windows-1252, ISO-8859-1, UTF-8');
+            if (is_string($converted)) {
+                $value = $converted;
+            }
+        }
+
+        $clean = @iconv('UTF-8', 'UTF-8//IGNORE', $value);
+        if (is_string($clean)) {
+            $value = $clean;
+        }
+
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value) ?? $value;
+
+        return trim($value);
+    }
+
 }
