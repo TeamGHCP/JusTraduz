@@ -91,6 +91,136 @@
     });
   });
 
+  var pixForm = document.querySelector("[data-pix-generate-form]");
+  if (pixForm) {
+    var pixBody = document.querySelector("[data-pix-method-body]");
+    var pixCopy = document.querySelector("[data-pix-method-copy]");
+    var creditMethodBody = document.querySelector("[data-payment-method='credit-card'] .payment-method-body");
+    var statusLabel = document.querySelector("[data-payment-status-label]");
+    var confirmButton = document.querySelector("[data-payment-confirm-button]");
+    var actionsRoot = document.querySelector(".payment-actions");
+    var amountTargets = Array.prototype.slice.call(document.querySelectorAll("[data-payment-amount]"));
+
+    var formatMoney = function (amountCents) {
+      return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      }).format((amountCents || 0) / 100);
+    };
+
+    var buildPixBox = function (data) {
+      var amountText = formatMoney(data.amountCents || 0);
+      var qr = data.qrCode || "";
+      var code = data.pixCode || "";
+      var expiresAt = data.expiresAt || "";
+
+      return [
+        '<div class="payment-pix-box" data-pix-box>',
+        qr ? '<img src="' + qr + '" alt="QRCode Pix do pagamento" data-pix-image>' : "",
+        '<strong class="payment-pix-amount">' + amountText + '</strong>',
+        qr ? '<small class="payment-pix-caption">Escaneie com o app do seu banco</small>' : "",
+        code ? '<button type="button" class="payment-copy-button" data-copy-value="' + code.replace(/"/g, "&quot;") + '" data-copy-label="PIX copia e cola copiado">Copiar PIX copia e cola</button>' : "",
+        expiresAt ? '<small>Expira em ' + expiresAt + '</small>' : "",
+        data.providerCheckoutId ? '<small>Cobranca rastreavel: ' + data.providerCheckoutId + '</small>' : "",
+        '</div>'
+      ].join("");
+    };
+
+    var wireCopyButtons = function (root) {
+      root.querySelectorAll("[data-copy-value]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          var value = button.dataset.copyValue || "";
+          if (!value || !navigator.clipboard) {
+            return;
+          }
+
+          navigator.clipboard.writeText(value).then(function () {
+            var original = button.textContent;
+            button.textContent = button.dataset.copyLabel || "Copiado";
+            button.classList.add("is-copied");
+
+            window.setTimeout(function () {
+              button.textContent = original;
+              button.classList.remove("is-copied");
+            }, 1800);
+          });
+        });
+      });
+    };
+
+    pixForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      var submitButton = pixForm.querySelector("button[type='submit']");
+      var originalLabel = submitButton ? submitButton.innerHTML : "";
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "Gerando PIX...";
+      }
+
+      fetch(pixForm.action, {
+        method: "POST",
+        body: new FormData(pixForm),
+        headers: {
+          "Accept": "application/json"
+        },
+        credentials: "same-origin"
+      }).then(function (response) {
+        return response.json().catch(function () {
+          return { success: false, error: "Nao foi possivel gerar o PIX." };
+        });
+      }).then(function (data) {
+        if (!data || !data.success) {
+          throw new Error((data && data.error) || "Nao foi possivel gerar o PIX.");
+        }
+
+        document.querySelectorAll("[data-payment-method]").forEach(function (method) {
+          method.classList.remove("is-open");
+        });
+        var pixSection = pixForm.closest("[data-payment-method]");
+        if (pixSection) {
+          pixSection.classList.add("is-open");
+        }
+
+        if (pixCopy) {
+          pixCopy.textContent = "QRCode e copia e cola gerados com a sua chave PIX.";
+        }
+        if (statusLabel) {
+          statusLabel.textContent = "PIX gerado";
+        }
+        if (!confirmButton && actionsRoot) {
+          var syncForm = document.createElement("form");
+          syncForm.action = pixForm.action.replace("/api/payment/pix", "/billing/sync");
+          syncForm.method = "post";
+          syncForm.innerHTML = '<input type="hidden" name="_csrf" value="' + ((pixForm.querySelector("[name='_csrf']") || {}).value || "") + '"><button class="btn btn-primary" type="submit" data-payment-confirm-button>Confirmar pagamento</button>';
+          actionsRoot.insertBefore(syncForm, actionsRoot.firstChild);
+          confirmButton = syncForm.querySelector("[data-payment-confirm-button]");
+        }
+        if (confirmButton) {
+          confirmButton.textContent = "Confirmar pagamento";
+        }
+        amountTargets.forEach(function (target) {
+          target.textContent = formatMoney(data.amountCents || 0);
+        });
+
+        if (pixBody) {
+          pixBody.innerHTML = buildPixBox(data);
+          wireCopyButtons(pixBody);
+        }
+        if (creditMethodBody) {
+          creditMethodBody.innerHTML = '<p class="payment-method-note">Ja existe uma cobranca gerada. Cancele o pagamento atual para escolher cartao.</p>';
+        }
+      }).catch(function (error) {
+        window.alert(error.message || "Nao foi possivel gerar o PIX.");
+      }).finally(function () {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.innerHTML = originalLabel;
+        }
+      });
+    });
+  }
+
   var invitePanel = document.querySelector("[data-office-invite-panel]");
   if (invitePanel) {
     var inviteMin = parseInt(invitePanel.dataset.officeInviteMin || "0", 10);

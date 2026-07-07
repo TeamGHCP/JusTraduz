@@ -20,6 +20,94 @@ class BillingController extends BaseController
         $this->payments = PaymentProviderFactory::make($this->pdo, $this->subscriptions);
     }
 
+    public function createPixCheckout(): void
+    {
+        $this->startSession();
+        if (empty($_SESSION['logado'])) {
+            $this->response->json(['success' => false, 'error' => 'Faca login para finalizar seu pagamento.'], 401);
+            return;
+        }
+
+        if (!$this->canCurrentUserSubscribe()) {
+            $this->response->json(['success' => false, 'error' => $this->billingAccessMessage()], 403);
+            return;
+        }
+
+        $checkoutSession = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
+        $planId = (int) ($checkoutSession['plan_id'] ?? 0);
+        $cycle = (string) ($checkoutSession['billing_cycle'] ?? 'monthly');
+        if (!in_array($cycle, ['monthly', 'yearly'], true)) {
+            $cycle = 'monthly';
+        }
+
+        if (!$this->planExists($planId)) {
+            $this->response->json(['success' => false, 'error' => 'Plano invalido.'], 422);
+            return;
+        }
+
+        $provider = PaymentProviderFactory::makeNamed($this->pdo, $this->subscriptions, 'pix');
+
+        try {
+            $plan = $this->fetchPlan($planId);
+            if (!$plan) {
+                $this->response->json(['success' => false, 'error' => 'Plano invalido.'], 422);
+                return;
+            }
+
+            $paymentData = [
+                'method' => 'pix',
+                'remote_ip' => (string) ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'),
+                'team_invites' => (new OrganizationInviteService($this->pdo))->validateOfficeInviteRequest(
+                    $plan,
+                    $this->request->post('team_invites', [])
+                ),
+            ];
+            $checkout = $provider->createCheckout((int) $_SESSION['id'], $planId, $cycle, $paymentData);
+        } catch (Throwable $exception) {
+            $this->response->json(['success' => false, 'error' => $exception->getMessage()], 422);
+            return;
+        }
+
+        if (!$checkout->ok) {
+            $this->response->json(['success' => false, 'error' => $checkout->errorMessage ?: 'Nao foi possivel gerar o PIX.'], 422);
+            return;
+        }
+
+        $_SESSION['billing_checkout'] = [
+            'reference' => (string) ($checkoutSession['reference'] ?? bin2hex(random_bytes(12))),
+            'provider' => $provider->name(),
+            'plan_id' => $planId,
+            'billing_cycle' => $cycle,
+            'redirect_url' => $checkout->redirectUrl,
+            'metadata' => $checkout->metadata,
+            'created_at' => time(),
+            'status' => 'created',
+            'payment_method' => 'pix',
+            'team_invites' => (array) ($paymentData['team_invites'] ?? []),
+        ];
+
+        $this->audit->log('billing.pix_checkout_create', 'subscription', 0, [
+            'plan_id' => $planId,
+            'billing_cycle' => $cycle,
+            'provider' => $provider->name(),
+            'metadata' => $checkout->metadata,
+        ]);
+
+        $pixQrCode = is_array($checkout->metadata['pix_qr_code'] ?? null) ? $checkout->metadata['pix_qr_code'] : [];
+        $amountCents = (int) ($checkout->metadata['amount_cents'] ?? 0);
+
+        $this->response->json([
+            'success' => true,
+            'provider' => $provider->name(),
+            'amount' => round($amountCents / 100, 2),
+            'amountCents' => $amountCents,
+            'pixCode' => (string) ($pixQrCode['payload'] ?? ''),
+            'qrCode' => (string) ($pixQrCode['data_uri'] ?? ''),
+            'expiresAt' => (string) ($checkout->metadata['pix_expires_at'] ?? ''),
+            'providerCheckoutId' => (string) ($checkout->metadata['provider_subscription_id'] ?? ''),
+        ]);
+    }
+
     public function subscribe(): void
     {
         $this->startSession();
@@ -177,9 +265,10 @@ class BillingController extends BaseController
         $checkout = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
         $metadata = is_array($checkout['metadata'] ?? null) ? $checkout['metadata'] : [];
         $providerSubscriptionId = trim((string) ($metadata['provider_subscription_id'] ?? ''));
+        $provider = $this->providerForCheckout($checkout);
 
         try {
-            $result = $this->payments->cancelCheckout((int) $_SESSION['id'], $providerSubscriptionId);
+            $result = $provider->cancelCheckout((int) $_SESSION['id'], $providerSubscriptionId);
             $this->audit->log('billing.checkout_cancel', 'subscription', (int) ($result['subscription_id'] ?? 0), $result);
             unset($_SESSION['billing_checkout']);
 
@@ -234,9 +323,10 @@ class BillingController extends BaseController
         $userId = (int) $_SESSION['id'];
         $currentSubscription = $this->subscriptions->currentForUser($userId);
         $planName = trim((string) ($currentSubscription['plan_name'] ?? ''));
+        $provider = $this->providerForSubscription($currentSubscription);
 
         try {
-            $result = $this->payments->cancelSubscription($userId);
+            $result = $provider->cancelSubscription($userId);
             $this->audit->log('billing.subscription_cancel', 'subscription', (int) ($result['subscription_id'] ?? 0), $result);
         } catch (Throwable $exception) {
             $this->response->redirect(app_url('/frontend/perfil.php?tab=faturamento&erro=' . urlencode($exception->getMessage())));
@@ -263,29 +353,30 @@ class BillingController extends BaseController
         $metadata = is_array($checkout['metadata'] ?? null) ? $checkout['metadata'] : [];
         $providerSubscriptionId = trim((string) ($metadata['provider_subscription_id'] ?? ''));
         $providerPaymentId = trim((string) ($metadata['provider_payment_id'] ?? ''));
-        if (($checkout['provider'] ?? '') !== $this->payments->name() || $providerSubscriptionId === '') {
+        if ($providerSubscriptionId === '') {
             $this->response->redirect(app_url('/frontend/subir-plano.php?erro=' . urlencode('Nenhuma cobrança pendente foi encontrada.')));
         }
 
         $userId = (int) $_SESSION['id'];
+        $provider = $this->providerForCheckout($checkout);
 
         try {
-            if ($providerPaymentId !== '' && method_exists($this->payments, 'confirmSandboxPayment')) {
+            if ($providerPaymentId !== '' && method_exists($provider, 'confirmSandboxPayment')) {
                 try {
-                    $sandboxResult = $this->payments->confirmSandboxPayment($providerPaymentId);
+                    $sandboxResult = $provider->confirmSandboxPayment($providerPaymentId);
                     if (!empty($sandboxResult['sandbox_confirmed'])) {
                         $this->audit->log('billing.sandbox_payment_confirm', 'subscription', 0, $sandboxResult);
                     }
                 } catch (Throwable $sandboxException) {
                     $this->audit->log('billing.sandbox_payment_confirm_failed', 'subscription', 0, [
-                        'provider' => $this->payments->name(),
+                        'provider' => $provider->name(),
                         'provider_payment_id' => $providerPaymentId,
                         'error' => $sandboxException->getMessage(),
                     ]);
                 }
             }
 
-            $result = $this->payments->syncCheckoutPayment($userId, $providerSubscriptionId);
+            $result = $provider->syncCheckoutPayment($userId, $providerSubscriptionId);
             $this->audit->log('billing.checkout_sync', 'subscription', (int) ($result['subscription_id'] ?? 0), $result);
 
             if (($result['status'] ?? '') === 'paid') {
@@ -297,7 +388,7 @@ class BillingController extends BaseController
                     'billing_cycle' => (string) ($subscription['billing_cycle'] ?? $checkout['billing_cycle'] ?? 'monthly'),
                     'amount_cents' => (int) ($metadata['amount_cents'] ?? 0),
                     'subscription_id' => (int) ($result['subscription_id'] ?? $subscription['id'] ?? 0),
-                    'provider' => (string) ($result['provider'] ?? $this->payments->name()),
+                    'provider' => (string) ($result['provider'] ?? $provider->name()),
                     'provider_subscription_id' => $providerSubscriptionId,
                     'provider_payment_id' => (string) ($result['provider_payment_id'] ?? ''),
                     'previous_subscription_id' => (int) ($result['previous_subscription_id'] ?? 0),
@@ -314,6 +405,26 @@ class BillingController extends BaseController
         } catch (Throwable $exception) {
             $this->response->redirect(app_url('/frontend/pagamento-plano.php?erro=' . urlencode($exception->getMessage())));
         }
+    }
+
+    private function providerForCheckout(array $checkout): PaymentProviderInterface
+    {
+        $providerName = strtolower(trim((string) ($checkout['provider'] ?? '')));
+        if ($providerName === '') {
+            return $this->payments;
+        }
+
+        return PaymentProviderFactory::makeNamed($this->pdo, $this->subscriptions, $providerName);
+    }
+
+    private function providerForSubscription(?array $subscription): PaymentProviderInterface
+    {
+        $providerName = strtolower(trim((string) ($subscription['provider'] ?? '')));
+        if ($providerName === '') {
+            return $this->payments;
+        }
+
+        return PaymentProviderFactory::makeNamed($this->pdo, $this->subscriptions, $providerName);
     }
 
     private function headers(): array

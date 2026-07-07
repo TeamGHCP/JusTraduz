@@ -18,16 +18,18 @@ if (!in_array($type, ['cliente', 'advogado'], true)) {
 $billing = new SubscriptionService($pdo);
 $currentSubscription = $billing->currentForUser(current_user_id());
 $hasConfirmedPaymentPage = is_array($_SESSION['payment_confirmed'] ?? null);
-$hasActiveAsaasSubscription = $currentSubscription
+$activePaymentProvider = (string) ($currentSubscription['provider'] ?? '');
+$hasActivePaidSubscription = $currentSubscription
     && in_array((string) ($currentSubscription['status'] ?? ''), ['active', 'trialing'], true)
-    && (string) ($currentSubscription['provider'] ?? '') === 'asaas'
+    && in_array($activePaymentProvider, ['asaas', 'pix'], true)
     && trim((string) ($currentSubscription['provider_subscription_id'] ?? '')) !== '';
 
 $checkout = is_array($_SESSION['billing_checkout'] ?? null) ? $_SESSION['billing_checkout'] : [];
 $checkoutAge = time() - (int) ($checkout['created_at'] ?? 0);
 
-if (($checkout['provider'] ?? '') !== 'asaas' || $checkoutAge > 3600) {
-    if ($hasConfirmedPaymentPage || $hasActiveAsaasSubscription) {
+$checkoutProvider = (string) ($checkout['provider'] ?? '');
+if (!in_array($checkoutProvider, ['asaas', 'pix'], true) || $checkoutAge > 3600) {
+    if ($hasConfirmedPaymentPage || $hasActivePaidSubscription) {
         payment_redirect(app_url('/frontend/pagamento-confirmado.php'));
     }
 
@@ -47,17 +49,19 @@ $providerPaymentId = trim((string) ($metadata['provider_payment_id'] ?? ''));
 $externalReference = trim((string) ($metadata['external_reference'] ?? ''));
 $pixQrCode = is_array($metadata['pix_qr_code'] ?? null) ? $metadata['pix_qr_code'] : [];
 $pixImage = trim((string) ($pixQrCode['encoded_image'] ?? ''));
+$pixImageDataUri = trim((string) ($pixQrCode['data_uri'] ?? ''));
+$pixImageMime = trim((string) ($pixQrCode['mime_type'] ?? 'image/png'));
 $pixPayload = trim((string) ($pixQrCode['payload'] ?? ''));
-$pixExpiration = trim((string) ($pixQrCode['expiration_date'] ?? ''));
+$pixExpiration = trim((string) ($metadata['pix_expires_at'] ?? $pixQrCode['expiration_date'] ?? ''));
 $createdPaymentMethod = (string) ($metadata['payment_method'] ?? $checkout['payment_method'] ?? '');
-$isCheckoutCreated = $providerSubscriptionId !== '' && $payUrl !== '';
+$isCheckoutCreated = $providerSubscriptionId !== '' && ($payUrl !== '' || $createdPaymentMethod === 'pix');
 
 $checkoutUser = fetch_one($pdo, 'SELECT nome, email, cpf, telefone FROM users WHERE id = ? LIMIT 1', [current_user_id()]) ?: [];
 $isPlanActive = $currentSubscription
     && $isCheckoutCreated
     && (int) ($currentSubscription['plan_id'] ?? 0) === $planId
     && (string) ($currentSubscription['billing_cycle'] ?? 'monthly') === $billingCycle
-    && (string) ($currentSubscription['provider'] ?? '') === 'asaas'
+    && (string) ($currentSubscription['provider'] ?? '') === $checkoutProvider
     && trim((string) ($currentSubscription['provider_subscription_id'] ?? '')) === $providerSubscriptionId;
 $isPlanChange = $currentSubscription
     && !$isPlanActive
@@ -84,7 +88,7 @@ if ($isPlanActive) {
         'billing_cycle' => (string) ($currentSubscription['billing_cycle'] ?? $billingCycle),
         'amount_cents' => $amountCents,
         'subscription_id' => (int) ($currentSubscription['id'] ?? 0),
-        'provider' => (string) ($currentSubscription['provider'] ?? 'asaas'),
+        'provider' => (string) ($currentSubscription['provider'] ?? $checkoutProvider),
         'provider_subscription_id' => (string) ($currentSubscription['provider_subscription_id'] ?? $providerSubscriptionId),
         'provider_payment_id' => (string) ($metadata['provider_payment_id'] ?? ''),
         'team_invites_sent' => (array) ($metadata['team_invites_sent'] ?? []),
@@ -143,6 +147,7 @@ if ($pixExpiration !== '') {
     $expirationLabel = $expirationTimestamp ? date('d/m/Y H:i', $expirationTimestamp) : $pixExpiration;
 }
 $checkoutAction = app_url('/backend/public/index.php?rota=/billing/checkout');
+$pixCheckoutAction = app_url('/backend/public/index.php?rota=/api/payment/pix');
 $cancelCheckoutAction = app_url('/backend/public/index.php?rota=/billing/checkout/cancel');
 $holderName = payment_display((string) ($checkoutUser['nome'] ?? current_user_name()));
 $holderEmail = payment_display((string) ($checkoutUser['email'] ?? ''));
@@ -150,11 +155,16 @@ $holderCpf = preg_replace('/\D+/', '', (string) ($checkoutUser['cpf'] ?? '')) ?:
 $holderPhone = preg_replace('/\D+/', '', (string) ($checkoutUser['telefone'] ?? '')) ?: '';
 $currentPlanName = (string) ($currentSubscription['plan_name'] ?? '');
 $asaasEnvironmentLabel = payment_asaas_environment_label();
+$providerLabel = $checkoutProvider === 'pix' ? 'PIX JusTraduz' : $asaasEnvironmentLabel;
+$checkoutDescription = $checkoutProvider === 'pix'
+    ? 'Finalize sua assinatura com PIX direto para a chave cadastrada no JusTraduz.'
+    : 'Finalize sua assinatura com a cobranÃ§a criada pelo Asaas.';
+$statusLabel = $checkoutProvider === 'pix' ? 'PIX gerado' : 'Cobranca gerada';
 $isSandbox = (strpos(strtolower($asaasEnvironmentLabel), 'sandbox') !== false);
 $fallbackQrUrl = '';
-if ($pixImage === '' && $pixPaymentUrl !== '') {
+if ($checkoutProvider !== 'pix' && $pixImage === '' && $pixPaymentUrl !== '') {
     $fallbackQrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=250x250&chl=' . urlencode($pixPaymentUrl);
-} elseif ($isSandbox && $pixPaymentUrl !== '') {
+} elseif ($checkoutProvider !== 'pix' && $isSandbox && $pixPaymentUrl !== '') {
     $fallbackQrUrl = 'https://chart.googleapis.com/chart?cht=qr&chs=250x250&chl=' . urlencode($pixPaymentUrl);
 }
 $isOfficePlan = (string) ($plan['slug'] ?? '') === 'escritorio';
@@ -178,7 +188,7 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
     <?php render_sidebar($type, 'subir-plano.php'); ?>
 
     <main class="app-main">
-      <?php render_topbar('Pagamento do plano', 'Finalize sua assinatura com a cobrança criada pelo Asaas.', current_user_name()); ?>
+      <?php render_topbar('Pagamento do plano', $checkoutDescription, current_user_name()); ?>
 
       <section class="payment-page">
         <?php if ($isPlanChange): ?>
@@ -197,8 +207,8 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
 
           <div class="payment-hero-summary" aria-label="Resumo do pagamento">
             <span><?= e($cycleLabel) ?></span>
-            <strong><?= e(payment_money($amountCents)) ?><small><?= e($periodLabel) ?></small></strong>
-            <em><?= e($isCheckoutCreated ? 'Cobranca gerada' : 'Aguardando confirmacao') ?></em>
+            <strong><span data-payment-amount><?= e(payment_money($amountCents)) ?></span><small><?= e($periodLabel) ?></small></strong>
+            <em data-payment-status-label><?= e($isCheckoutCreated ? $statusLabel : 'Aguardando confirmacao') ?></em>
           </div>
 
           <div class="payment-hero-meta">
@@ -279,7 +289,7 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
                 <div><span>Vencimento</span><strong><?= e($dueLabel) ?></strong></div>
               <?php endif; ?>
               <?php if ($providerPaymentId !== ''): ?>
-                <div><span>ID Asaas</span><strong><?= e($providerPaymentId) ?></strong></div>
+                <div><span><?= e($checkoutProvider === 'pix' ? 'ID PIX' : 'ID Asaas') ?></span><strong><?= e($providerPaymentId) ?></strong></div>
               <?php endif; ?>
               <?php if ($externalReference !== ''): ?>
                 <div><span>Referência</span><strong><?= e($externalReference) ?></strong></div>
@@ -288,13 +298,13 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
 
             <div class="payment-total">
               <span>Total</span>
-              <strong><?= e(payment_money($amountCents)) ?><small><?= e($periodLabel) ?></small></strong>
+              <strong><span data-payment-amount><?= e(payment_money($amountCents)) ?></span><small><?= e($periodLabel) ?></small></strong>
             </div>
 
             <div class="payment-status-card">
-              <span class="badge badge-success"><?= e($asaasEnvironmentLabel) ?></span>
+              <span class="badge badge-success"><?= e($providerLabel) ?></span>
               <h3><?= $isPlanActive ? 'Pagamento confirmado' : 'Pagamento pendente' ?></h3>
-              <p><?= $isPlanActive ? 'A assinatura foi ativada no JusTraduz.' : ($isCheckoutCreated ? 'A cobrança existe no Asaas. Depois de pagar, use a verificação abaixo caso o webhook ainda não tenha atualizado automaticamente.' : 'A cobrança ainda não foi registrada no Asaas. Confirme os dados para gerar as opções de pagamento.') ?></p>
+              <p><?= $isPlanActive ? 'A assinatura foi ativada no JusTraduz.' : ($isCheckoutCreated ? ($checkoutProvider === 'pix' ? 'O PIX foi gerado com a chave configurada no JusTraduz. Depois de pagar, use a confirmacao manual abaixo.' : 'A cobrança existe no Asaas. Depois de pagar, use a verificação abaixo caso o webhook ainda não tenha atualizado automaticamente.') : ($checkoutProvider === 'pix' ? 'O PIX ainda nao foi gerado. Confirme os dados para montar o QR Code e o copia e cola.' : 'A cobrança ainda não foi registrada no Asaas. Confirme os dados para gerar as opções de pagamento.')) ?></p>
             </div>
           </section>
 
@@ -371,14 +381,14 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
                     <?= icon_svg('sparkles') ?>
                     <div>
                       <strong>PIX</strong>
-                      <span><?= $isCheckoutCreated && $createdPaymentMethod === 'pix' ? 'QRCode e copia e cola gerados pela Asaas.' : 'Gere o QR Code Pix sem sair do JusTraduz.' ?></span>
+                      <span data-pix-method-copy><?= $isCheckoutCreated && $createdPaymentMethod === 'pix' ? ($checkoutProvider === 'pix' ? 'QRCode e copia e cola gerados com a sua chave PIX.' : 'QRCode e copia e cola gerados pela Asaas.') : 'Gere o QR Code Pix sem sair do JusTraduz.' ?></span>
                     </div>
                   </button>
 
-                  <div class="payment-method-body">
+                  <div class="payment-method-body" data-pix-method-body>
                     <?php if ($isCheckoutCreated && $createdPaymentMethod === 'pix' && ($pixImage !== '' || $pixPayload !== '' || $fallbackQrUrl !== '')): ?>
-                      <div class="payment-pix-box">
-                        <?php if ($isSandbox): ?>
+                      <div class="payment-pix-box" data-pix-box>
+                        <?php if ($checkoutProvider !== 'pix' && $isSandbox): ?>
                           <div class="payment-sandbox-warning">
                             <strong><?= icon_svg('shield') ?> Ambiente de Testes (Sandbox)</strong><br>
                             Aplicativos de banco reais exibirão um <strong>erro ("Chave Pix não encontrada" ou similar)</strong> se você tentar escanear este QR Code.<br>
@@ -390,11 +400,14 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
                           </div>
                         <?php endif; ?>
 
-                        <?php if ($isSandbox && $fallbackQrUrl !== ''): ?>
+                        <?php if ($checkoutProvider !== 'pix' && $isSandbox && $fallbackQrUrl !== ''): ?>
                           <img src="<?= e($fallbackQrUrl) ?>" alt="QRCode da cobrança no Asaas">
                           <small class="payment-pix-caption">Escaneie com a <strong>câmera do celular</strong> para abrir o simulador do Asaas</small>
+                        <?php elseif ($pixImageDataUri !== ''): ?>
+                          <img src="<?= e($pixImageDataUri) ?>" alt="QRCode Pix do pagamento" data-pix-image>
+                          <small class="payment-pix-caption">Escaneie com o app do seu banco</small>
                         <?php elseif ($pixImage !== ''): ?>
-                          <img src="data:image/png;base64,<?= e($pixImage) ?>" alt="QRCode Pix do pagamento">
+                          <img src="data:<?= e($pixImageMime) ?>;base64,<?= e($pixImage) ?>" alt="QRCode Pix do pagamento" data-pix-image>
                           <small class="payment-pix-caption">Escaneie com o app do seu banco</small>
                         <?php elseif ($fallbackQrUrl !== ''): ?>
                           <img src="<?= e($fallbackQrUrl) ?>" alt="QRCode Pix do pagamento (Link)">
@@ -406,7 +419,7 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
                             <?= icon_svg('paperclip') ?> Copiar PIX copia e cola
                           </button>
                         <?php endif; ?>
-                        <?php if ($pixPaymentUrl !== ''): ?>
+                        <?php if ($checkoutProvider !== 'pix' && $pixPaymentUrl !== ''): ?>
                           <a class="payment-copy-button payment-asaas-link" href="<?= e($pixPaymentUrl) ?>" target="_blank" rel="noopener">
                             <?= icon_svg('shield') ?> Abrir cobrança no Asaas
                           </a>
@@ -421,9 +434,8 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
                     <?php elseif ($isCheckoutCreated): ?>
                       <p class="payment-method-note">Já existe uma cobrança gerada. Cancele o pagamento atual para escolher PIX.</p>
                     <?php else: ?>
-                      <form action="<?= e($checkoutAction) ?>" method="post">
+                      <form action="<?= e($pixCheckoutAction) ?>" method="post" data-pix-generate-form data-pix-endpoint="<?= e($pixCheckoutAction) ?>">
                         <?= csrf_input() ?>
-                        <input type="hidden" name="payment_method" value="pix">
                         <div data-office-invite-hidden></div>
                         <button class="payment-method-action" type="submit"><?= icon_svg('sparkles') ?> Gerar QR Code Pix</button>
                       </form>

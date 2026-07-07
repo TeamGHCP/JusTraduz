@@ -57,6 +57,7 @@ $internalRoutes = [
     ['POST', '/privacy/cancel-delete-account', 'PrivacyController', 'cancelAccountDeletion'],
     ['POST', '/billing/subscribe', 'BillingController', 'subscribe'],
     ['POST', '/billing/checkout', 'BillingController', 'checkout'],
+    ['POST', '/api/payment/pix', 'BillingController', 'createPixCheckout'],
     ['POST', '/billing/checkout/cancel', 'BillingController', 'cancelCheckout'],
     ['POST', '/billing/sync', 'BillingController', 'sync'],
     ['POST', '/billing/cancel', 'BillingController', 'cancel'],
