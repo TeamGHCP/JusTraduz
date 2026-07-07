@@ -115,6 +115,7 @@ spl_autoload_register(function ($class) {
         // Payments
         'AsaasPaymentProvider' => 'App\Services\Payments\AsaasPaymentProvider',
         'ManualPaymentProvider' => 'App\Services\Payments\ManualPaymentProvider',
+        'PixPaymentProvider' => 'App\Services\Payments\PixPaymentProvider',
         'PaymentCheckoutResult' => 'App\Services\Payments\PaymentCheckoutResult',
         'PaymentProviderFactory' => 'App\Services\Payments\PaymentProviderFactory',
         'PaymentProviderInterface' => 'App\Services\Payments\PaymentProviderInterface',

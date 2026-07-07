@@ -40,6 +40,7 @@ if ($amountCents <= 0) {
 $confirmedAt = (int) ($confirmation['confirmed_at'] ?? time());
 $providerPaymentId = trim((string) ($confirmation['provider_payment_id'] ?? ''));
 $providerSubscriptionId = trim((string) ($confirmation['provider_subscription_id'] ?? $subscription['provider_subscription_id'] ?? ''));
+$providerName = (string) ($confirmation['provider'] ?? $subscription['provider'] ?? '');
 $subscriptionId = (int) ($confirmation['subscription_id'] ?? $subscription['id'] ?? 0);
 $previousPlanName = trim((string) ($confirmation['previous_plan_name'] ?? ''));
 $teamInvitesSent = array_values(array_filter(array_map('strval', (array) ($confirmation['team_invites_sent'] ?? []))));
