@@ -56,5 +56,5 @@ php scripts\cleanup-orphan-storage.php --delete --confirm-reviewed-report --repo
 
 - Manter banco demo importavel.
 - Manter um PDF/DOCX local para upload.
-- Nao depender de Gemini, DataJud ou SMTP no fluxo principal.
+- Nao depender de Cloudflare AI, DataJud ou SMTP no fluxo principal.
 - Se uma API externa falhar, demonstrar os dados demo e explicar que integracoes externas ficam desativaveis por ambiente.

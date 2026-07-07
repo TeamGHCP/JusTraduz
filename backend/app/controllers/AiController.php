@@ -1,6 +1,5 @@
 <?php
 
-require_once dirname(__DIR__) . '/services/GeminiService.php';
 require_once dirname(__DIR__) . '/services/CloudflareAiService.php';
 require_once dirname(__DIR__) . '/services/AiRateLimiter.php';
 require_once dirname(__DIR__) . '/services/UsageLimiter.php';
@@ -59,13 +58,10 @@ class AiController
             }
         }
 
-        $provider = strtolower(CloudflareAiService::readConfigValue('AI_PROVIDER', 'gemini'));
-
         $localAnswer = null;
 
         if (
-            $provider !== 'cloudflare'
-            || $this->containsSensitiveData($message)
+            $this->containsSensitiveData($message)
             || $this->isLegalEmergency($this->normalizeText($message))
             || $this->isRestrictedLegalAdvice($this->normalizeText($message))
             || $this->isUnsafeRequest($this->normalizeText($message))
@@ -81,8 +77,8 @@ class AiController
             return;
         }
 
-        $gemini = $provider === 'cloudflare' ? new CloudflareAiService() : new GeminiService();
-        if (!$gemini->isConfigured()) {
+        $cloudflareAi = new CloudflareAiService();
+        if (!$cloudflareAi->isConfigured()) {
             $this->json([
                 'resposta' => $this->fallbackAnswer($message),
                 'modelo' => 'JusTraduz local',
@@ -90,7 +86,7 @@ class AiController
             return;
         }
 
-        $answer = $gemini->chat($message, $history);
+        $answer = $cloudflareAi->chat($message, $history);
         if ($answer === null || $answer === '') {
             $this->json([
                 'resposta' => $this->fallbackAnswer($message),
@@ -103,10 +99,10 @@ class AiController
 
         $this->json([
             'resposta' => $answer,
-            'modelo' => $gemini->modelName(),
+            'modelo' => $cloudflareAi->modelName(),
         ]);
         if ($usage !== null) {
-            $usage->record($userId, 'ai_chat', 1, null, ['model' => $gemini->modelName()]);
+            $usage->record($userId, 'ai_chat', 1, null, ['model' => $cloudflareAi->modelName()]);
         }
     }
 

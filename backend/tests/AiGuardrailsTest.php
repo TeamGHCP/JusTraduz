@@ -65,7 +65,8 @@ assertTrue(
     'Deveria orientar acompanhamento de solicita√ß√µes.'
 );
 
-$prompt = callPrivate(GeminiService::class, 'buildChatPrompt', ['Quero ajuda', []]);
+$aiInstance = new CloudflareAiService();
+$prompt = callPrivate($aiInstance, 'systemPrompt');
 $normalizedPrompt = normalizeTextForAssertions($prompt);
 assertTrue(str_contains($normalizedPrompt, 'nao calcule prazos processuais'), 'Prompt deve proibir c·lculo de prazos.');
 assertTrue(str_contains($normalizedPrompt, 'dados nao confiaveis'), 'Prompt deve tratar entrada como n„o confi·vel.');

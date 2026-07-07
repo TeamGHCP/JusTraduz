@@ -24,7 +24,7 @@ Todas usam a senha `Demo@2026!`.
 
 ## Plano B
 
-- Use o documento e as análises já gravadas no banco demo se Gemini ou internet falharem.
+- Use o documento e as análises já gravadas no banco demo se Cloudflare AI ou internet falharem.
 - Use os processos `datajud_demo` se o DataJud estiver indisponível.
 - Mostre o registro em `mail_logs` se o provedor SMTP atrasar o convite.
 - Mantenha os dashboards já autenticados em abas separadas antes de iniciar.

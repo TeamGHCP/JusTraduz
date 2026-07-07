@@ -105,7 +105,7 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
                 tradução e uso da plataforma. Ele não calcula prazos processuais, não avalia
                 chances de vitória, não define estratégia jurídica e não redige peças como
                 substituto de profissional habilitado. Parte do conteúdo pode ser processada
-                pelo Google Gemini, conforme descrito na Política de Privacidade.
+                pela Cloudflare AI, conforme descrito na Política de Privacidade.
               </p>
             </div>
           </details>

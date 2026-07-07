@@ -398,7 +398,7 @@ if (!function_exists('jt_jusia_attr')) {
 
     <div class="ai-chatbot-consent" data-ai-chatbot-consent>
       <strong>Antes de conversar</strong>
-      <p>Este chat usa inteligência artificial e pode enviar sua mensagem ao Google Gemini. Não informe nomes completos, CPF, dados de processos, documentos, senhas ou informações sigilosas.</p>
+      <p>Este chat usa inteligência artificial e pode enviar sua mensagem ao Cloudflare AI. Não informe nomes completos, CPF, dados de processos, documentos, senhas ou informações sigilosas.</p>
       <label>
         <input type="checkbox" data-ai-chatbot-age>
         <span>Confirmo que tenho 18 anos ou mais.</span>

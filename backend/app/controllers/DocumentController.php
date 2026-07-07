@@ -2,7 +2,7 @@
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
-require_once dirname(__DIR__) . '/services/GeminiService.php'; require_once dirname(__DIR__) . '/services/CloudflareAiService.php';
+require_once dirname(__DIR__) . '/services/CloudflareAiService.php';
 require_once dirname(__DIR__) . '/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
 require_once dirname(__DIR__) . '/services/OcrService.php';
@@ -248,7 +248,7 @@ class DocumentController extends BaseController
         $analysis = $this->generateAnalysisForUser($documentId, $absolutePath, $mime, $textoExtraido, (int) $document['user_id']);
 
         if (!$analysis) {
-            $this->response->redirect($redirect . '&erro=' . urlencode('Não foi possível gerar a análise por IA agora. Confira a chave/modelo da Gemini ou tente novamente.'));
+            $this->response->redirect($redirect . '&erro=' . urlencode('Não foi possível gerar a análise por IA agora. Confira as credenciais/modelo da Cloudflare AI ou tente novamente.'));
         }
 
         $this->saveAnalysis($documentId, $analysis);
@@ -337,8 +337,7 @@ class DocumentController extends BaseController
     }
 
     private function generateAnalysis(string $filePath, string $mime, ?string $textoExtraido): ?array {
-        $provider = strtolower(CloudflareAiService::readConfigValue('AI_PROVIDER', 'gemini'));
-        $ai = $provider === 'cloudflare' ? new CloudflareAiService() : new GeminiService();
+        $ai = new CloudflareAiService();
 
         $textoExtraido = trim((string) $textoExtraido);
 
@@ -346,23 +345,11 @@ class DocumentController extends BaseController
             $textoExtraido = '';
         }
 
-        if ($provider === 'cloudflare') {
-            if ($textoExtraido !== '') {
-                return $this->withAnalysisMetadata($ai, $ai->analyzeDocument($textoExtraido));
-            }
-
-            return $this->withAnalysisMetadata($ai, $ai->analyzeDocumentFile($filePath, $mime, $textoExtraido));
-        }
-
-        if (is_file($filePath) && GeminiService::isSupportedFileMime($mime)) {
-            return $this->withAnalysisMetadata($ai, $ai->analyzeDocumentFile($filePath, $mime, $textoExtraido));
-        }
-
         if ($textoExtraido !== '') {
             return $this->withAnalysisMetadata($ai, $ai->analyzeDocument($textoExtraido));
         }
 
-        return null;
+        return $this->withAnalysisMetadata($ai, $ai->analyzeDocumentFile($filePath, $mime, $textoExtraido));
     }
 
     public function processQueuedAnalysis(int $documentId): bool

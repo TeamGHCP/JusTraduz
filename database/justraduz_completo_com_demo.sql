@@ -774,8 +774,8 @@ VALUES
        'Esta analise e informativa e nao substitui orientacao juridica profissional.'
      ),
      88.5,
-     'gemini-2.5-flash',
-     '2026-06-06-document-v2',
+     'Cloudflare Workers AI - @cf/meta/llama-3.2-1b-instruct',
+     'cloudflare-document-v1',
      DATE_SUB(NOW(), INTERVAL 4 DAY));
 
 INSERT INTO cases
@@ -842,7 +842,7 @@ INSERT INTO audit_logs
     (user_id, action, entity_type, entity_id, details, ip_address, user_agent, created_at)
 VALUES
     (@cliente_id, 'document.upload', 'document', @doc1_id, JSON_OBJECT('nome_arquivo', 'notificacao-extrajudicial-demo.png', 'analysis_generated', true), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 4 DAY)),
-    (@cliente_id, 'document.analyze', 'document', @doc1_id, JSON_OBJECT('analysis_generated', true, 'model', 'gemini-2.5-flash'), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 4 DAY)),
+    (@cliente_id, 'document.analyze', 'document', @doc1_id, JSON_OBJECT('analysis_generated', true, 'model', 'Cloudflare Workers AI - @cf/meta/llama-3.2-1b-instruct'), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 4 DAY)),
     (@cliente_id, 'case.create', 'case', @case1_id, JSON_OBJECT('prioridade', 'alta', 'advogado_id', @advogado_id), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 3 DAY)),
     (@advogado_id, 'message.send', 'case', @case1_id, JSON_OBJECT('sender_id', @advogado_id), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 2 DAY)),
     (@admin_id, 'admin.professional_oab_approve', 'user', @advogado_id, JSON_OBJECT('status_anterior', 'pendente', 'status_novo', 'verificado'), '127.0.0.1', 'JusTraduz Demo', DATE_SUB(NOW(), INTERVAL 8 DAY)),

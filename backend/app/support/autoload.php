@@ -92,7 +92,6 @@ spl_autoload_register(function ($class) {
         'BillingEmailService' => 'App\Services\BillingEmailService',
         'DataJudService' => 'App\Services\DataJudService',
         'EscalationService' => 'App\Services\EscalationService',
-        'GeminiService' => 'App\Services\GeminiService',
         'GoogleOAuthService' => 'App\Services\GoogleOAuthService',
         'JobQueueService' => 'App\Services\JobQueueService',
         'MailerService' => 'App\Services\MailerService',

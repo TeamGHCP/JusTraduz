@@ -114,7 +114,7 @@ class AuditService
             'refresh_token',
             'id_token',
             'client_secret',
-            'gemini_api_key',
+            'cloudflare_api_token',
             'datajud_api_key',
         ];
 

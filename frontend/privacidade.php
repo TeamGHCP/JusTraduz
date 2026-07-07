@@ -114,9 +114,9 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
             </summary>
             <div class="terms-section-body">
               <p>
-                O JusTraduz utiliza o Google Gemini para algumas respostas e análises.
+                O JusTraduz utiliza o Cloudflare AI para algumas respostas e análises.
                 Mensagens, trechos de documentos e arquivos autorizados podem ser enviados
-                ao Google para processamento, inclusive em infraestrutura localizada fora
+                à Cloudflare para processamento, inclusive em infraestrutura localizada fora
                 do Brasil. O usuário não deve inserir no chat público CPF, senhas, números
                 de processo, dados bancários, nomes completos ou informações sigilosas.
               </p>

@@ -1,6 +1,6 @@
 <?php
 require_once dirname(__DIR__, 2) . '/app/bootstrap.php';
-require_once PROJECT_ROOT_PATH . '/backend/app/services/GeminiService.php';
+require_once PROJECT_ROOT_PATH . '/backend/app/services/CloudflareAiService.php';
 require_role(['admin']);
 
 function admin_percent(int $value, int $max): int
@@ -231,12 +231,12 @@ $recentAudit = fetch_all(
      LIMIT 6'
 );
 
-$geminiService = new GeminiService();
+$cloudflareAiService = new CloudflareAiService();
 $healthChecks = [
     ['label' => 'DataJud/CNJ', 'status' => $datajudConfigured ? 'ok' : 'warning', 'detail' => $datajudConfigured ? 'Chave configurada' : 'Chave opcional/ausente'],
     ['label' => 'Processos externos', 'status' => $externalProcessCount > 0 ? 'ok' : 'warning', 'detail' => $externalProcessCount > 0 ? $externalProcessCount . ' importado(s)' : 'Sem dados importados'],
     ['label' => 'Banco de dados', 'status' => 'ok', 'detail' => 'Conexão ativa'],
-    ['label' => 'Gemini', 'status' => $geminiService->isConfigured() ? 'ok' : 'warning', 'detail' => $geminiService->isConfigured() ? 'Chave configurada' : 'Chave ausente'],
+    ['label' => 'Cloudflare AI', 'status' => $cloudflareAiService->isConfigured() ? 'ok' : 'warning', 'detail' => $cloudflareAiService->isConfigured() ? 'Credenciais configuradas' : 'Credenciais ausentes'],
     ['label' => 'Auditoria', 'status' => 'ok', 'detail' => $recentAudit ? 'Eventos registrados' : 'Sem eventos recentes'],
     ['label' => 'OAB', 'status' => $pendingProfessionalCount > 0 ? 'warning' : 'ok', 'detail' => $pendingProfessionalCount > 0 ? $pendingProfessionalCount . ' pendência(s)' : 'Sem fila pendente'],
 ];

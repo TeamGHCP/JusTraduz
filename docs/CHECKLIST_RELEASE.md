@@ -18,7 +18,7 @@ Use este checklist somente antes de homologacao ou deploy real.
 - [ ] `APP_DEBUG=false`.
 - [ ] `APP_URL` e `HEALTHCHECK_URL` usando HTTPS em producao.
 - [ ] Limites `USAGE_DAILY_*`, `USAGE_MONTHLY_*` e `PUBLIC_API_RATE_LIMIT_PER_MINUTE` definidos.
-- [ ] Chaves Gemini/DataJud/Google/Asaas configuradas quando necessarias.
+- [ ] Chaves Cloudflare AI/DataJud/Google/Asaas configuradas quando necessarias.
 - [ ] SMTP real testado, ou `MAIL_LOG_ONLY=true` apenas em ambiente local/demo.
 
 ## Banco e storage

@@ -12,7 +12,7 @@ Esta e a lista unica de pendencias reais do JusTraduz. Itens ja implementados ou
 - Ensaiar Max Cliente, Max Advogado e Escritorio com dois advogados.
 - Ensaiar pagamento, convite por e-mail, cadastro/login e aceite no Escritorio.
 - Ensaiar fluxo principal: upload, analise/explicacao, solicitacao, chat, agenda, admin e LGPD.
-- Preparar plano B para falha de internet, Gemini, DataJud, OAB, Asaas ou SMTP.
+- Preparar plano B para falha de internet, Cloudflare AI, DataJud, OAB, Asaas ou SMTP.
 
 ## Producao ou homologacao real
 
@@ -20,7 +20,7 @@ Esta e a lista unica de pendencias reais do JusTraduz. Itens ja implementados ou
 - Usar HTTPS real em `APP_URL`, `APP_PUBLIC_URL` e `HEALTHCHECK_URL`.
 - Instalar certificado TLS e aplicar o modelo `docs/apache-justraduz-production.conf`.
 - Configurar SMTP real e validar entregabilidade.
-- Configurar Gemini, DataJud, Google OAuth, Asaas e demais integracoes externas somente quando forem usadas.
+- Configurar Cloudflare AI, DataJud, Google OAuth, Asaas e demais integracoes externas somente quando forem usadas.
 - Configurar monitoramento externo para `/backend/public/index.php?rota=/health`.
 - Definir `BACKUP_ENCRYPTION_PASSWORD`; ele e obrigatorio para backups criptografados.
 - Executar backup e restore em ambiente limpo, incluindo banco e storage.

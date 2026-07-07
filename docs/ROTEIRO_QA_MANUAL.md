@@ -72,7 +72,7 @@ Execute este roteiro antes da apresentação ou depois de mudança grande.
 
 ## Plano B para apresentação
 
-- [ ] Se Gemini/DataJud/SMTP falharem, demonstrar dados demo e explicar fallback.
+- [ ] Se Cloudflare AI/DataJud/SMTP falharem, demonstrar dados demo e explicar fallback.
 - [ ] Manter arquivo de exemplo local para upload.
 - [ ] Ter conta Cliente, Advogado e Admin já testadas.
 - [ ] Não depender de API externa para o roteiro principal.
