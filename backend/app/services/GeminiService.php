@@ -254,7 +254,17 @@ class GeminiService
             return null;
         }
 
-        $text = trim((string) ($data['candidates'][0]['content']['parts'][0]['text'] ?? ''));
+        $parts = $data['candidates'][0]['content']['parts'] ?? [];
+        $texts = [];
+        if (is_array($parts)) {
+            foreach ($parts as $part) {
+                if (is_array($part) && isset($part['text']) && is_string($part['text'])) {
+                    $texts[] = $part['text'];
+                }
+            }
+        }
+
+        $text = trim(implode('', $texts));
         if ($text === '') {
             $reason = (string) ($data['promptFeedback']['blockReason'] ?? $data['candidates'][0]['finishReason'] ?? '');
             $this->lastError = 'A Gemini não retornou conteúdo' . ($reason !== '' ? ' (' . $reason . ')' : '') . '.';

@@ -1,5 +1,9 @@
 <?php
 
+require_once dirname(__DIR__) . '/backend/app/config/app.php';
+require_once dirname(__DIR__) . '/backend/app/support/security.php';
+require_once dirname(__DIR__) . '/backend/app/support/session.php';
+require_once dirname(__DIR__) . '/backend/app/support/autoload.php';
 require_once dirname(__DIR__) . '/backend/app/config/database.php';
 require_once dirname(__DIR__) . '/backend/app/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/backend/app/controllers/DocumentController.php';
