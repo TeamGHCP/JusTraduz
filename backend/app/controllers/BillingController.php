@@ -45,7 +45,7 @@ class BillingController extends BaseController
             return;
         }
 
-        $provider = PaymentProviderFactory::make($this->pdo, $this->subscriptions);
+        $provider = PaymentProviderFactory::makeNamed($this->pdo, $this->subscriptions, 'pix');
 
         try {
             $plan = $this->fetchPlan($planId);
