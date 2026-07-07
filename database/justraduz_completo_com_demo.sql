@@ -575,7 +575,6 @@ USE justraduz;
 -- Nao use estas credenciais em producao.
 
 SET @demo_password_hash = '$2y$10$hRRLMod1YrVw5/JlfV2Oh.FRaeW0iADWX4ioRcoRYy3OzrSvarWI.';
-SET @pietro_password_hash = '$2y$10$El3sFk2bU3wRf18SlGfdBuTg/kqd6VcxuD/yiZ5hO0XvVqW9f8Bca';
 
 DROP TEMPORARY TABLE IF EXISTS tmp_demo_users;
 CREATE TEMPORARY TABLE tmp_demo_users (id INT PRIMARY KEY);
@@ -695,7 +694,6 @@ INSERT INTO users
     (nome, email, senha, tipo, telefone, cpf, oab, oab_uf, oab_status, oab_parametro, oab_verificado, oab_tipo, status_cna, cna_validado_em, cna_origem, cna_tentativas, status, created_at)
 VALUES
     ('Admin Demo', 'admin@justraduz.demo', @demo_password_hash, 'admin', '(11) 90000-0000', NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
-    ('Pietro Tamanini', 'pietro@tamanini.dev.br', @pietro_password_hash, 'admin', NULL, NULL, NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 12 DAY)),
     ('Carla Cliente Demo', 'cliente@justraduz.demo', @demo_password_hash, 'cliente', '(11) 91111-1111', '52998224725', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 10 DAY)),
     ('Bruno Cliente Demo', 'cliente2@justraduz.demo', @demo_password_hash, 'cliente', '(21) 92222-2222', '39053344705', NULL, NULL, NULL, NULL, FALSE, NULL, 'pendente', NULL, NULL, 0, 'ativo', DATE_SUB(NOW(), INTERVAL 9 DAY)),
     ('Dra. Marina Costa', 'advogado@justraduz.demo', @demo_password_hash, 'advogado', '(31) 93333-3333', NULL, '123456', 'SP', 'Validado manualmente pela administracao.', 'demo-advogado-123456-sp', TRUE, 'advogado', 'verificado', DATE_SUB(NOW(), INTERVAL 8 DAY), 'admin_manual', 1, 'ativo', DATE_SUB(NOW(), INTERVAL 8 DAY)),
