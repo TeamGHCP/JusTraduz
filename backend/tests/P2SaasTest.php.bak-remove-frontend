@@ -92,7 +92,7 @@ assertEquals('lawyer_required', $legacyClientResult['reason'] ?? '', 'Cliente na
 $checkout = $payments->createCheckout(1, 2, 'yearly');
 assertTrue($checkout->ok === true, 'Checkout manual deve concluir com sucesso.');
 assertTrue($checkout->subscriptionId !== null, 'Checkout manual deve retornar assinatura.');
-assertStringContains('/subir-plano.php', $checkout->redirectUrl, 'Checkout manual deve redirecionar para planos.');
+assertStringContains('/frontend/subir-plano.php', $checkout->redirectUrl, 'Checkout manual deve redirecionar para planos.');
 assertEquals(47900, (int) $pdo->query('SELECT COALESCE(SUM(amount_cents), 0) FROM payment_events WHERE status = "paid"')->fetchColumn(), 'Checkout manual deve registrar pagamento anual com desconto.');
 $latestNotification = (string) $pdo->query('SELECT mensagem FROM notifications WHERE user_id = 1 ORDER BY id DESC LIMIT 1')->fetchColumn();
 assertStringContains('Pagamento confirmado', $latestNotification, 'Checkout pago deve notificar o cliente.');
