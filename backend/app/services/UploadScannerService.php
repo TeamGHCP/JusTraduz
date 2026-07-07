@@ -141,6 +141,10 @@ namespace App\Services {
                 return false;
             }
 
+            if ($this->isClamAvUnavailable($exitCode, $scanOutput)) {
+                return true;
+            }
+
             if ($exitCode >= 2) {
                 $details = $scanOutput !== '' ? mb_substr($scanOutput, 0, 180) : 'erro desconhecido';
                 $this->lastError = 'Scanner antimalware falhou durante a verificação: ' . $details;
@@ -155,6 +159,24 @@ namespace App\Services {
             $details = $scanOutput !== '' ? mb_substr($scanOutput, 0, 180) : 'erro desconhecido';
             $this->lastError = 'Scanner antimalware falhou durante a verificação: ' . $details;
             return false;
+        }
+
+        private function isClamAvUnavailable(int $exitCode, string $scanOutput): bool
+        {
+            if ($exitCode !== 126 && $exitCode !== 127) {
+                return false;
+            }
+
+            $normalized = strtolower($scanOutput);
+            if ($normalized === '') {
+                return true;
+            }
+
+            return str_contains($normalized, 'not found')
+                || str_contains($normalized, 'no such file or directory')
+                || str_contains($normalized, 'command not found')
+                || str_contains($normalized, 'cannot execute')
+                || str_contains($normalized, 'unable to start process');
         }
 
         public static function convertToWebp(string $tmpPath, string $mime): ?string

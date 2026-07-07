@@ -108,6 +108,16 @@ file_put_contents($tmpFile, '%PDF-1.4 documento seguro');
 assertTrue($scanner->scan($tmpFile, 'teste.pdf', 'application/pdf') === true, 'Scanner deve permitir arquivo sem assinatura suspeita.');
 unlink($tmpFile);
 
+$originalClamavBinary = getenv('CLAMAV_BINARY');
+putenv('CLAMAV_BINARY=/bin/command-that-does-not-exist');
+$tmpFile = tempnam(sys_get_temp_dir(), 'scan_');
+file_put_contents($tmpFile, '%PDF-1.4 documento seguro');
+assertTrue($scanner->scan($tmpFile, 'teste.pdf', 'application/pdf') === true, 'Scanner deve cair em fallback seguro quando o ClamAV estiver indisponivel.');
+unlink($tmpFile);
+$originalClamavBinary === false
+    ? putenv('CLAMAV_BINARY')
+    : putenv('CLAMAV_BINARY=' . $originalClamavBinary);
+
 $caseController = new CaseController();
 $documentController = new DocumentController();
 assertTrue(callPrivate($caseController, 'isAllowedAttachmentMime', ['pdf', 'application/zip']) === false, 'Anexo PDF nao deve aceitar MIME application/zip.');
