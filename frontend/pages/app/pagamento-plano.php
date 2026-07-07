@@ -171,7 +171,7 @@ $officeInviteCount = min($officeInviteLimit, max($officeInviteMin, count($office
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pagamento do plano | JusTraduz</title>
   <link rel="icon" href="assets/img/icon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.05-style-cache-1">
+  <link rel="stylesheet" href="assets/css/style.css?v=2026.07.05-payment-meta-dark-1">
 </head>
 <body>
   <div class="app-shell">

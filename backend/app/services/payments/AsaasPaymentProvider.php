@@ -500,7 +500,7 @@ namespace App\Services\Payments {
 
             $remoteCanceled = false;
             if (!$local || (string) ($local['status'] ?? '') !== 'active') {
-                $this->client->request('DELETE', '/subscriptions/' . rawurlencode($providerSubscriptionId));
+                $this->deleteRemoteCheckout($providerSubscriptionId);
                 $remoteCanceled = true;
             }
 
@@ -543,14 +543,24 @@ namespace App\Services\Payments {
             array $teamInvites,
             string $externalReference
         ): PaymentCheckoutResult {
-            $payment = $this->client->request('POST', '/payments', [
-                'customer' => $customerId,
-                'billingType' => 'PIX',
-                'value' => $amount / 100,
-                'dueDate' => date('Y-m-d'),
-                'description' => 'JusTraduz - Plano ' . (string) ($plan['name'] ?? ''),
-                'externalReference' => $externalReference,
-            ]);
+            try {
+                $payment = $this->client->request('POST', '/payments', [
+                    'customer' => $customerId,
+                    'billingType' => 'PIX',
+                    'value' => $amount / 100,
+                    'dueDate' => date('Y-m-d'),
+                    'description' => 'JusTraduz - Plano ' . (string) ($plan['name'] ?? ''),
+                    'externalReference' => $externalReference,
+                ]);
+            } catch (RuntimeException $exception) {
+                if ($this->isPixAccountNotApproved($exception)) {
+                    return PaymentCheckoutResult::error(
+                        'Pix indisponível na conta Asaas atual. Complete a aprovação da conta Asaas para habilitar Pix ou finalize por cartão.'
+                    );
+                }
+
+                throw $exception;
+            }
 
             $providerPaymentId = (string) ($payment['id'] ?? '');
             if ($providerPaymentId === '') {
@@ -699,6 +709,15 @@ namespace App\Services\Payments {
 
             return str_contains($message, 'forma de pagamento')
                 && str_contains($message, 'assinatura');
+        }
+
+        private function isPixAccountNotApproved(RuntimeException $exception): bool
+        {
+            $message = strtolower($exception->getMessage());
+
+            return str_contains($message, 'pix')
+                && str_contains($message, 'conta')
+                && str_contains($message, 'aprovad');
         }
 
         private function normalizePaymentMethod(string $method): string

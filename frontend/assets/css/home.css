@@ -838,6 +838,69 @@ body.has-modal-open {
   overflow: hidden;
 }
 
+:root[data-theme="dark"] .profile-billing-card,
+:root[data-theme="dark"] .profile-billing-plan,
+:root[data-theme="dark"] .profile-billing-row,
+:root[data-theme="dark"] .billing-cancel-dialog,
+:root[data-theme="dark"] .billing-detail-dialog,
+:root[data-theme="dark"] .billing-cancel-plan,
+:root[data-theme="dark"] .billing-detail-receipt,
+:root[data-theme="dark"] .billing-detail-grid > div {
+  border-color: color-mix(in srgb, var(--teal) 28%, var(--line));
+  background: color-mix(in srgb, var(--surface-2) 88%, var(--teal) 6%);
+}
+
+:root[data-theme="dark"] .profile-billing-row {
+  grid-template-columns: 92px minmax(0, 1fr) auto auto auto;
+  min-width: 0;
+}
+
+:root[data-theme="dark"] .profile-billing-section h2,
+:root[data-theme="dark"] .profile-billing-plan h3,
+:root[data-theme="dark"] .profile-billing-row-main strong,
+:root[data-theme="dark"] .profile-billing-row > strong,
+:root[data-theme="dark"] .billing-cancel-dialog h2,
+:root[data-theme="dark"] .billing-detail-dialog h2,
+:root[data-theme="dark"] .billing-cancel-plan strong,
+:root[data-theme="dark"] .billing-detail-grid dd,
+:root[data-theme="dark"] .billing-detail-receipt strong {
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .profile-billing-plan p,
+:root[data-theme="dark"] .profile-billing-row > span,
+:root[data-theme="dark"] .profile-billing-row-main small,
+:root[data-theme="dark"] .billing-cancel-plan span,
+:root[data-theme="dark"] .billing-detail-grid dt {
+  color: color-mix(in srgb, var(--muted) 88%, white);
+}
+
+:root[data-theme="dark"] .billing-cancel-close,
+:root[data-theme="dark"] .billing-cancel-icon,
+:root[data-theme="dark"] .billing-detail-icon {
+  border-color: color-mix(in srgb, var(--teal) 32%, var(--line));
+  background: color-mix(in srgb, var(--teal) 14%, var(--surface-2));
+  color: var(--teal-2);
+}
+
+:root[data-theme="dark"] .profile-billing-actions .btn-outline,
+:root[data-theme="dark"] .profile-billing-view,
+:root[data-theme="dark"] .billing-cancel-actions .btn-outline,
+:root[data-theme="dark"] .billing-detail-actions .btn-outline {
+  border-color: color-mix(in srgb, var(--teal) 30%, var(--line));
+  background: color-mix(in srgb, var(--surface-2) 92%, var(--teal) 6%);
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .profile-billing-actions .btn-outline:hover,
+:root[data-theme="dark"] .profile-billing-view:hover,
+:root[data-theme="dark"] .billing-cancel-actions .btn-outline:hover,
+:root[data-theme="dark"] .billing-detail-actions .btn-outline:hover {
+  border-color: var(--teal);
+  background: color-mix(in srgb, var(--teal) 16%, var(--surface-2));
+  color: var(--teal-2);
+}
+
 @media (max-width: 760px) {
   .profile-billing-section {
     display: grid;
@@ -7032,4 +7095,3 @@ body.has-modal-open {
     animation: none;
   }
 }
-

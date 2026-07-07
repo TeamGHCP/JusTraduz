@@ -12,6 +12,7 @@ class GoogleOAuthService
 {
     private const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
     private const TOKEN_URL = 'https://oauth2.googleapis.com/token';
+    private const TOKEN_INFO_URL = 'https://oauth2.googleapis.com/tokeninfo';
     private const JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs';
     private const USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
 
@@ -32,6 +33,7 @@ class GoogleOAuthService
 
     public function authorizationUrl(string $redirectUri, string $state, string $nonce): string
     {
+        error_log('Google OAuth authorize redirect_uri=' . $redirectUri);
         return self::AUTH_URL . '?' . http_build_query([
             'client_id' => $this->clientId,
             'redirect_uri' => $redirectUri,
@@ -45,6 +47,7 @@ class GoogleOAuthService
 
     public function fetchToken(string $code, string $redirectUri): array
     {
+        error_log('Google OAuth token redirect_uri=' . $redirectUri);
         return $this->httpJson(self::TOKEN_URL, [
             'code' => $code,
             'client_id' => $this->clientId,
@@ -62,7 +65,18 @@ class GoogleOAuthService
             throw new RuntimeException('Token Google com assinatura inválida.');
         }
 
-        $this->verifySignature((string) $header['kid'], $signedData, $signature);
+        $signatureVerified = false;
+        try {
+            $signatureVerified = $this->verifySignature((string) $header['kid'], $signedData, $signature);
+        } catch (Throwable $e) {
+            $signatureVerified = false;
+            error_log('Google ID token local signature verification failed: ' . $e->getMessage());
+        }
+
+        if (!$signatureVerified) {
+            $tokenInfo = $this->httpJson(self::TOKEN_INFO_URL, ['id_token' => $idToken]);
+            $this->assertTokenInfo($tokenInfo);
+        }
 
         $issuer = (string) ($payload['iss'] ?? '');
         if (!in_array($issuer, ['https://accounts.google.com', 'accounts.google.com'], true)) {
@@ -89,7 +103,7 @@ class GoogleOAuthService
             throw new RuntimeException('Google não retornou um e-mail válido.');
         }
 
-        if (($payload['email_verified'] ?? false) !== true) {
+        if (!in_array($payload['email_verified'] ?? false, [true, 'true', '1', 1], true)) {
             throw new RuntimeException('E-mail Google ainda não verificado.');
         }
 
@@ -108,8 +122,12 @@ class GoogleOAuthService
         ]);
     }
 
-    private function verifySignature(string $kid, string $signedData, string $signature): void
+    private function verifySignature(string $kid, string $signedData, string $signature): bool
     {
+        if (!function_exists('openssl_verify') || !function_exists('openssl_x509_read') || !function_exists('openssl_pkey_get_public')) {
+            return false;
+        }
+
         $keys = $this->httpJson(self::JWKS_URL);
         foreach (($keys['keys'] ?? []) as $key) {
             if (($key['kid'] ?? '') !== $kid) {
@@ -125,11 +143,34 @@ class GoogleOAuthService
 
             $verified = openssl_verify($signedData, $signature, $publicKey, OPENSSL_ALGO_SHA256);
             if ($verified === 1) {
-                return;
+                return true;
             }
         }
 
-        throw new RuntimeException('Não foi possível validar a assinatura do Google.');
+        return false;
+    }
+
+    private function assertTokenInfo(array $tokenInfo): void
+    {
+        if (($tokenInfo['iss'] ?? '') !== 'https://accounts.google.com') {
+            throw new RuntimeException('Emissor Google inválido.');
+        }
+
+        if ((string) ($tokenInfo['aud'] ?? '') !== $this->clientId) {
+            throw new RuntimeException('Audiência Google inválida.');
+        }
+
+        if ((int) ($tokenInfo['exp'] ?? 0) < time()) {
+            throw new RuntimeException('Token Google expirado.');
+        }
+
+        if (!isset($tokenInfo['email']) || !filter_var((string) $tokenInfo['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException('Google não retornou um e-mail válido.');
+        }
+
+        if (!in_array($tokenInfo['email_verified'] ?? false, [true, 'true', '1', 1], true)) {
+            throw new RuntimeException('E-mail Google ainda não verificado.');
+        }
     }
 
     private function publicKeyFromCertificate(array $key)
@@ -280,6 +321,14 @@ class GoogleOAuthService
 
     private function httpJson(string $url, array $postFields = [], array $headers = ['Accept: application/json']): array
     {
+        $body = '';
+        $status = 0;
+        $error = '';
+
+        if ($postFields !== []) {
+            error_log('Google OAuth post=' . preg_replace('/client_secret=[^&]+/', 'client_secret=[redacted]', http_build_query($postFields, '', '&', PHP_QUERY_RFC3986)));
+        }
+
         if (function_exists('curl_init')) {
             $ch = curl_init($url);
             curl_setopt_array($ch, [
@@ -328,7 +377,21 @@ class GoogleOAuthService
         }
 
         if (!is_string($body) || $body === '' || $status < 200 || $status >= 300) {
-            throw new RuntimeException($error !== '' ? $error : 'Falha na comunicação com o Google.');
+            $details = [];
+            if ($error !== '') {
+                $details[] = $error;
+            }
+
+            if (is_string($body) && trim($body) !== '') {
+                $snippet = trim(preg_replace('/\s+/', ' ', $body) ?? $body);
+                $details[] = mb_substr($snippet, 0, 300);
+            }
+
+            if (($details === []) && is_string($body) && $body === '') {
+                $details[] = 'Resposta vazia do Google';
+            }
+
+            throw new RuntimeException($details !== [] ? implode(' | ', $details) : 'Falha na comunicação com o Google.');
         }
 
         $data = json_decode($body, true);

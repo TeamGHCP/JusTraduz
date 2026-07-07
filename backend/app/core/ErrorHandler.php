@@ -19,8 +19,7 @@ class ErrorHandler
         if ($e instanceof RedirectException) {
             $status = $e->getCode() ?: 302;
             header('Location: ' . $e->getUrl(), true, $status);
-            // Retorna ao dispatcher para que o fluxo seja controlado centralmente.
-            return;
+            exit;
         }
 
         error_log(sprintf("Uncaught exception: %s in %s:%d", $e->getMessage(), $e->getFile(), $e->getLine()));
