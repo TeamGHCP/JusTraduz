@@ -1,6 +1,7 @@
 <?php
 
 require_once dirname(__DIR__) . '/services/GeminiService.php';
+require_once dirname(__DIR__) . '/services/CloudflareAiService.php';
 require_once dirname(__DIR__) . '/services/AiRateLimiter.php';
 require_once dirname(__DIR__) . '/services/UsageLimiter.php';
 require_once dirname(__DIR__) . '/middlewares/CsrfMiddleware.php';
@@ -58,7 +59,20 @@ class AiController
             }
         }
 
-        $localAnswer = $this->answerLocalQuestion($message, $history);
+        $provider = strtolower(CloudflareAiService::readConfigValue('AI_PROVIDER', 'gemini'));
+
+        $localAnswer = null;
+
+        if (
+            $provider !== 'cloudflare'
+            || $this->containsSensitiveData($message)
+            || $this->isLegalEmergency($this->normalizeText($message))
+            || $this->isRestrictedLegalAdvice($this->normalizeText($message))
+            || $this->isUnsafeRequest($this->normalizeText($message))
+            || $this->isPromptInjection($this->normalizeText($message))
+        ) {
+            $localAnswer = $this->answerLocalQuestion($message, $history);
+        }
         if ($localAnswer !== null) {
             $this->json([
                 'resposta' => $localAnswer,
@@ -67,7 +81,7 @@ class AiController
             return;
         }
 
-        $gemini = new GeminiService();
+        $gemini = $provider === 'cloudflare' ? new CloudflareAiService() : new GeminiService();
         if (!$gemini->isConfigured()) {
             $this->json([
                 'resposta' => $this->fallbackAnswer($message),

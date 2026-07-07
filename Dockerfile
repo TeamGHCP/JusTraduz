@@ -2,6 +2,7 @@ FROM php:8.2-apache
 
 # Install system dependencies, ClamAV and Tesseract OCR with Portuguese support
 RUN apt-get update && apt-get install -y \
+ libcurl4-openssl-dev \
     clamav \
     tesseract-ocr \
     tesseract-ocr-por \
@@ -11,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 RUN freshclam || true
 
 # Install PDO MySQL extension
-RUN docker-php-ext-install pdo_mysql
+RUN docker-php-ext-install pdo_mysql curl
 
 # Copy application files into the web root
 COPY . /var/www/html

@@ -208,7 +208,7 @@ class GeminiService
             ],
             'generationConfig' => [
                 'temperature' => $jsonResponse ? 0.2 : 0.35,
-                'maxOutputTokens' => $jsonResponse ? 1200 : 700,
+                'maxOutputTokens' => $jsonResponse ? 1800 : 1600,
             ],
         ];
 

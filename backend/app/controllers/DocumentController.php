@@ -2,7 +2,7 @@
 
 require_once dirname(__DIR__) . '/core/BaseController.php';
 require_once dirname(__DIR__) . '/services/AuditService.php';
-require_once dirname(__DIR__) . '/services/GeminiService.php';
+require_once dirname(__DIR__) . '/services/GeminiService.php'; require_once dirname(__DIR__) . '/services/CloudflareAiService.php';
 require_once dirname(__DIR__) . '/services/JobQueueService.php';
 require_once dirname(__DIR__) . '/services/NotificationService.php';
 require_once dirname(__DIR__) . '/services/OcrService.php';
@@ -336,21 +336,30 @@ class DocumentController extends BaseController
         $this->response->redirect(app_url('/frontend/visualizar-documento.php?sucesso=' . urlencode('Documento excluído.')));
     }
 
-    private function generateAnalysis(string $filePath, string $mime, ?string $textoExtraido): ?array
-    {
-        $gemini = new GeminiService();
+    private function generateAnalysis(string $filePath, string $mime, ?string $textoExtraido): ?array {
+        $provider = strtolower(CloudflareAiService::readConfigValue('AI_PROVIDER', 'gemini'));
+        $ai = $provider === 'cloudflare' ? new CloudflareAiService() : new GeminiService();
+
         $textoExtraido = trim((string) $textoExtraido);
 
         if ($this->isExtractionFailure($textoExtraido)) {
             $textoExtraido = '';
         }
 
+        if ($provider === 'cloudflare') {
+            if ($textoExtraido !== '') {
+                return $this->withAnalysisMetadata($ai, $ai->analyzeDocument($textoExtraido));
+            }
+
+            return $this->withAnalysisMetadata($ai, $ai->analyzeDocumentFile($filePath, $mime, $textoExtraido));
+        }
+
         if (is_file($filePath) && GeminiService::isSupportedFileMime($mime)) {
-            return $this->withAnalysisMetadata($gemini, $gemini->analyzeDocumentFile($filePath, $mime, $textoExtraido));
+            return $this->withAnalysisMetadata($ai, $ai->analyzeDocumentFile($filePath, $mime, $textoExtraido));
         }
 
         if ($textoExtraido !== '') {
-            return $this->withAnalysisMetadata($gemini, $gemini->analyzeDocument($textoExtraido));
+            return $this->withAnalysisMetadata($ai, $ai->analyzeDocument($textoExtraido));
         }
 
         return null;
@@ -419,18 +428,21 @@ class DocumentController extends BaseController
         $stmt->execute([$documentId, $analysis['resumo'], $analysis['explicacao'], $analysis['confianca']]);
     }
 
-    private function withAnalysisMetadata(GeminiService $gemini, ?array $analysis): ?array
-    {
+    private function withAnalysisMetadata($ai, ?array $analysis): ?array {
         if (!$analysis) {
             $this->audit->log('document.ai_error', 'document', null, [
-                'model' => $gemini->modelName(),
-                'error' => $gemini->getLastError(),
+                'model' => method_exists($ai, 'modelName') ? $ai->modelName() : get_class($ai),
+                'error' => method_exists($ai, 'getLastError') ? $ai->getLastError() : null,
             ]);
+
             return null;
         }
 
-        $analysis['modelo'] = $gemini->modelName();
-        $analysis['prompt_versao'] = GeminiService::promptVersion();
+        $class = get_class($ai);
+
+        $analysis['modelo'] = method_exists($ai, 'modelName') ? $ai->modelName() : $class;
+        $analysis['prompt_versao'] = is_callable([$class, 'promptVersion']) ? $class::promptVersion() : 'unknown';
+
         return $analysis;
     }
 
