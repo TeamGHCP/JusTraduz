@@ -122,10 +122,17 @@ namespace App\Services {
                 return true;
             }
 
-            $timeout = max(1, (int) ($this->envValue('CLAMAV_TIMEOUT_SECONDS') ?: 15));
-            $result = ProcessRunnerService::run([$binary, '--no-summary', $path], $timeout);
+            if (str_contains($binary, DIRECTORY_SEPARATOR) && !is_executable($binary)) {
+                return true;
+            }
 
-            if ((int) $result['exit_code'] === 0) {
+            $timeout = max(1, (int) ($this->envValue('CLAMAV_TIMEOUT_SECONDS') ?: 15));
+            $command = escapeshellcmd($binary) . ' --no-summary --infected ' . escapeshellarg($path) . ' 2>&1';
+            $result = ProcessRunnerService::run(['/bin/sh', '-lc', $command], $timeout);
+            $scanOutput = trim((string) $result['stdout'] . PHP_EOL . (string) $result['stderr']);
+            $exitCode = (int) $result['exit_code'];
+
+            if ($exitCode === 0) {
                 return true;
             }
 
@@ -134,8 +141,19 @@ namespace App\Services {
                 return false;
             }
 
-            $details = trim((string) $result['stdout'] . ' ' . (string) $result['stderr']);
-            $this->lastError = 'Scanner antimalware reprovou o arquivo' . ($details !== '' ? ': ' . mb_substr($details, 0, 180) : '.');
+            if ($exitCode >= 2) {
+                $details = $scanOutput !== '' ? mb_substr($scanOutput, 0, 180) : 'erro desconhecido';
+                $this->lastError = 'Scanner antimalware falhou durante a verificação: ' . $details;
+                return false;
+            }
+
+            if ($exitCode === 1 || stripos($scanOutput, 'FOUND') !== false) {
+                $this->lastError = 'Scanner antimalware reprovou o arquivo: ameaça detectada.';
+                return false;
+            }
+
+            $details = $scanOutput !== '' ? mb_substr($scanOutput, 0, 180) : 'erro desconhecido';
+            $this->lastError = 'Scanner antimalware falhou durante a verificação: ' . $details;
             return false;
         }
 

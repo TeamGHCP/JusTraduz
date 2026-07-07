@@ -94,6 +94,10 @@ namespace App\Controllers {
 
             $_SESSION['google_oauth_state'] = $state;
             $_SESSION['google_oauth_nonce'] = $nonce;
+            $this->persistGoogleOAuthState($state, $nonce);
+            if (session_status() === PHP_SESSION_ACTIVE && !headers_sent()) {
+                session_write_close();
+            }
 
             $this->response->redirect($oauthService->getAuthorizationUrl($this->googleRedirectUri(), $state, $nonce));
         }
@@ -104,13 +108,53 @@ namespace App\Controllers {
             $frontUrl = APP_URL . '/login.html';
             $state = (string) ($_GET['state'] ?? '');
             $code = (string) ($_GET['code'] ?? '');
+            $codeFingerprint = $code !== '' ? hash('sha256', $code) : '';
+
+            // File-based lock to prevent duplicate processing of the same authorization code.
+            // Apache/browser sometimes sends the callback twice; Google only accepts each code once.
+            if ($codeFingerprint !== '') {
+                $lockDir = sys_get_temp_dir() . '/justraduz_oauth_locks';
+                if (!is_dir($lockDir)) {
+                    @mkdir($lockDir, 0700, true);
+                }
+                $lockFile = $lockDir . '/' . $codeFingerprint . '.lock';
+                $lockHandle = @fopen($lockFile, 'c');
+                if ($lockHandle && !flock($lockHandle, LOCK_EX | LOCK_NB)) {
+                    // Another request is already processing this code
+                    fclose($lockHandle);
+                    // Wait briefly for the first request to finish and redirect the user
+                    usleep(500000);
+                    $this->response->redirect(APP_URL . '/login.html');
+                }
+                // Lock acquired — this request will process the code.
+                // Clean up old lock files (non-blocking, best-effort)
+                if ($lockHandle) {
+                    register_shutdown_function(function () use ($lockHandle, $lockFile) {
+                        flock($lockHandle, LOCK_UN);
+                        fclose($lockHandle);
+                        @unlink($lockFile);
+                    });
+                }
+            }
+
             $expectedState = (string) ($_SESSION['google_oauth_state'] ?? '');
             $expectedNonce = (string) ($_SESSION['google_oauth_nonce'] ?? '');
+            $cookieState = (string) ($_COOKIE['google_oauth_state'] ?? '');
+            $cookieNonce = (string) ($_COOKIE['google_oauth_nonce'] ?? '');
 
             unset($_SESSION['google_oauth_state'], $_SESSION['google_oauth_nonce']);
+            $this->clearGoogleOAuthStateCookies();
 
             if (!empty($_GET['error'])) {
                 $this->response->redirectWithError($frontUrl, 'Login com Google cancelado ou recusado.');
+            }
+
+            if ($expectedState === '' && $cookieState !== '') {
+                $expectedState = $cookieState;
+            }
+
+            if ($expectedNonce === '' && $cookieNonce !== '') {
+                $expectedNonce = $cookieNonce;
             }
 
             if ($state === '' || $code === '' || $expectedState === '' || !hash_equals($expectedState, $state)) {
@@ -136,8 +180,20 @@ namespace App\Controllers {
             } catch (ValidationException $e) {
                 $this->response->redirectWithError($frontUrl, $e->getMessage());
             } catch (Throwable $e) {
-                error_log('Google OAuth error: ' . $e->getMessage());
-                $this->response->redirectWithError($frontUrl, 'Não foi possível entrar com Google agora.');
+                error_log(sprintf(
+                    'Google OAuth error [%s]: %s in %s:%d',
+                    $e::class,
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                ));
+
+                $message = 'Não foi possível entrar com Google agora.';
+                if (in_array(strtolower((string) getenv('APP_DEBUG')), ['1', 'true', 'yes'], true)) {
+                    $message = $e->getMessage() !== '' ? $e->getMessage() : $message;
+                }
+
+                $this->response->redirectWithError($frontUrl, $message);
             }
         }
 
@@ -370,6 +426,39 @@ namespace App\Controllers {
 
             $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
             return $scheme . '://' . $host . \app_url('/backend/public/index.php') . '?rota=/auth/google/callback';
+        }
+
+        private function persistGoogleOAuthState(string $state, string $nonce): void
+        {
+            $expires = time() + 600;
+            $params = [
+                'expires' => $expires,
+                'path' => '/',
+                'secure' => \security_is_https(),
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ];
+
+            setcookie('google_oauth_state', $state, $params);
+            setcookie('google_oauth_nonce', $nonce, $params);
+        }
+
+        private function clearGoogleOAuthStateCookies(): void
+        {
+            if (headers_sent()) {
+                return;
+            }
+
+            $params = [
+                'expires' => time() - 3600,
+                'path' => '/',
+                'secure' => \security_is_https(),
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ];
+
+            setcookie('google_oauth_state', '', $params);
+            setcookie('google_oauth_nonce', '', $params);
         }
 
         private function envValue(string $key): string

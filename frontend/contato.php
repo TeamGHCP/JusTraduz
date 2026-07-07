@@ -29,6 +29,179 @@ require_once __DIR__ . '/' . $pathPrefix . 'includes/seo.php';
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@600;700;800&family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= $assetPrefix ?>assets/css/style.css?v=2026.07.05-hero-first-view-1">
+  <style>
+    /* Ajuste local: contato em seções de tela cheia, sem depender de alterações globais. */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body.contact-page {
+      overflow-x: hidden;
+    }
+
+    .contact-page main {
+      overflow: visible;
+    }
+
+    .contact-page main > section {
+      position: relative;
+      isolation: isolate;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      padding-top: clamp(90px, 10vh, 132px);
+      padding-bottom: clamp(48px, 7vh, 96px);
+    }
+
+    .contact-page main > section > .container,
+    .contact-page .contact-hero-grid.container,
+    .contact-page .contact-compose-grid.container,
+    .contact-page .contact-trust-grid.container {
+      width: min(100% - 32px, var(--container, 1180px));
+      margin-inline: auto;
+    }
+
+    .contact-page .contact-hero,
+    .contact-page .contact-section,
+    .contact-page .contact-compose-section {
+      min-height: 100svh;
+    }
+
+    .contact-page .contact-trust-section,
+    .contact-page .contact-faq-section {
+      min-height: auto;
+    }
+
+    .contact-page .contact-hero {
+      padding-top: clamp(72px, 8vh, 108px);
+      padding-bottom: clamp(52px, 9vh, 120px);
+    }
+
+    .contact-page .contact-hero-grid {
+      min-height: auto;
+      align-items: center;
+    }
+
+    .contact-page .contact-hero-copy {
+      margin-top: clamp(-52px, -5vh, -16px);
+    }
+
+    .contact-page .contact-compose-grid,
+    .contact-page .contact-trust-grid,
+    .contact-page .contact-faq-section > .container {
+      min-height: auto;
+    }
+
+    .contact-page .contact-grid {
+      align-items: stretch;
+    }
+
+    .contact-page .contact-card {
+      min-height: clamp(270px, 34vh, 430px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .contact-page .contact-compose-grid {
+      align-items: center;
+    }
+
+    .contact-page .contact-trust-section {
+      padding-top: clamp(24px, 3vh, 40px);
+      padding-bottom: 18px;
+    }
+
+    .contact-page .contact-trust-grid {
+      align-items: stretch;
+    }
+
+    .contact-page .contact-trust-grid > div {
+      min-height: clamp(180px, 24vh, 290px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .contact-page .contact-faq-section {
+      min-height: calc(100svh - 240px);
+      padding-top: 18px;
+      padding-bottom: clamp(56px, 8vh, 90px);
+    }
+
+    .contact-page .contact-faq-section .section-head {
+      margin-bottom: clamp(24px, 4vh, 48px);
+    }
+
+    .contact-page .contact-faq {
+      width: min(920px, 100%);
+      margin-inline: auto;
+    }
+
+    @media (min-width: 900px) {
+      .contact-page main {
+        scroll-snap-type: y proximity;
+      }
+
+      .contact-page .contact-hero,
+      .contact-page .contact-section,
+      .contact-page .contact-compose-section {
+        scroll-snap-align: start;
+      }
+    }
+
+    @media (max-width: 899px) {
+      .contact-page main > section {
+        min-height: 100svh;
+        align-items: center;
+        padding-top: clamp(84px, 12vh, 116px);
+        padding-bottom: clamp(40px, 7vh, 72px);
+      }
+
+      .contact-page .contact-hero-copy {
+        margin-top: 0;
+      }
+
+      .contact-page .contact-card,
+      .contact-page .contact-trust-grid > div {
+        min-height: auto;
+      }
+
+      .contact-page .contact-trust-section,
+      .contact-page .contact-faq-section {
+        min-height: auto;
+      }
+
+      .contact-page .contact-faq-section {
+        padding-top: 20px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .contact-page main > section > .container,
+      .contact-page .contact-hero-grid.container,
+      .contact-page .contact-compose-grid.container,
+      .contact-page .contact-trust-grid.container {
+        width: min(100% - 24px, var(--container, 1180px));
+      }
+
+      .contact-page main > section {
+        padding-top: 88px;
+        padding-bottom: 44px;
+      }
+
+      .contact-page .contact-trust-section {
+        padding-top: 18px;
+        padding-bottom: 12px;
+      }
+
+      .contact-page .contact-faq-section {
+        padding-top: 12px;
+      }
+    }
+  </style>
   <script src="<?= $assetPrefix ?>assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
 </head>
 <body class="contact-page">

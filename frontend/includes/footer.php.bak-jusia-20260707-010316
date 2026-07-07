@@ -69,5 +69,3 @@ $prefix = $publicPathPrefix ?? $pathPrefix ?? '';
       </div>
     </div>
   </footer>
-
-<?php require_once __DIR__ . '/jusia-chatbot.php'; ?>
