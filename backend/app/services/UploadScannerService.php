@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Services {
-    use App\Services\ProcessRunnerService;
     use RuntimeException;
     use Throwable;
 
@@ -127,16 +126,22 @@ namespace App\Services {
             }
 
             $timeout = max(1, (int) ($this->envValue('CLAMAV_TIMEOUT_SECONDS') ?: 15));
+            $scanOutput = [];
+            $exitCode = 0;
+            $timeoutBinary = trim((string) shell_exec('command -v timeout 2>/dev/null'));
             $command = escapeshellcmd($binary) . ' --no-summary --infected ' . escapeshellarg($path) . ' 2>&1';
-            $result = ProcessRunnerService::run(['/bin/sh', '-lc', $command], $timeout);
-            $scanOutput = trim((string) $result['stdout'] . PHP_EOL . (string) $result['stderr']);
-            $exitCode = (int) $result['exit_code'];
+            if ($timeoutBinary !== '') {
+                exec(escapeshellcmd($timeoutBinary) . ' ' . $timeout . ' ' . $command, $scanOutput, $exitCode);
+            } else {
+                exec($command, $scanOutput, $exitCode);
+            }
+            $scanOutput = trim(implode("\n", $scanOutput));
 
             if ($exitCode === 0) {
                 return true;
             }
 
-            if (!empty($result['timed_out'])) {
+            if ($exitCode === 124) {
                 $this->lastError = 'Scanner antimalware excedeu o tempo limite.';
                 return false;
             }

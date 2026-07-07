@@ -44,6 +44,39 @@
   </style>
   <script src="assets/js/cookie-consent.js?v=2026.07.02-vlibras-1"></script>
   <script src="assets/js/pwa.js?v=2026.07.05-assets-v1" defer></script>
+
+<style id="login-jusia-button-index-override">
+  /* Login: botão do JusIA igual ao index.php */
+  .ai-chatbot-callout {
+    width: 62px !important;
+    height: 62px !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 18px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .ai-chatbot-callout-bubble {
+    display: none !important;
+  }
+
+  .ai-chatbot-callout-robot {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 16px !important;
+    object-fit: cover !important;
+    filter: drop-shadow(0 16px 26px rgba(15, 23, 42, .18)) !important;
+  }
+
+  .ai-chatbot.is-open .ai-chatbot-callout {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+</style>
+
 </head>
 <body>
 

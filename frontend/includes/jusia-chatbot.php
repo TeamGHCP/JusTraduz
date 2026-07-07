@@ -17,10 +17,10 @@ if (!function_exists('jt_jusia_attr')) {
 <style id="jusia-chatbot-global-css">
   .ai-chatbot {
     position: fixed;
-    right: clamp(14px, 2vw, 28px);
-    bottom: clamp(16px, 2.4vw, 30px);
+    right: 22px;
+    bottom: 22px;
     z-index: 99992;
-    font-family: Inter, Manrope, "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: Inter, system-ui, sans-serif;
   }
 
   .ai-chatbot-callout {
@@ -37,6 +37,8 @@ if (!function_exists('jt_jusia_attr')) {
     width: 54px;
     height: 54px;
     border-radius: 18px;
+    object-fit: cover;
+    flex: 0 0 auto;
     filter: drop-shadow(0 16px 26px rgba(15, 23, 42, .18));
   }
 
@@ -44,13 +46,16 @@ if (!function_exists('jt_jusia_attr')) {
     display: inline-flex;
     align-items: center;
     min-height: 42px;
-    padding: 0 16px;
+    padding: 0 18px;
     border-radius: 999px;
     background: #ffffff;
     color: #12213d;
+    font-size: 14px;
     font-weight: 800;
+    line-height: 1;
     box-shadow: 0 16px 38px rgba(15, 23, 42, .16);
     border: 1px solid rgba(15, 23, 42, .08);
+    white-space: nowrap;
   }
 
   .ai-chatbot-panel {
@@ -62,10 +67,10 @@ if (!function_exists('jt_jusia_attr')) {
     display: none;
     flex-direction: column;
     overflow: hidden;
-    border-radius: 26px;
+    border-radius: 28px;
     background: #ffffff;
     color: #12213d;
-    border: 1px solid rgba(15, 23, 42, .10);
+    border: 1px solid rgba(15, 23, 42, .08);
     box-shadow: 0 26px 70px rgba(15, 23, 42, .24);
   }
 
@@ -78,8 +83,9 @@ if (!function_exists('jt_jusia_attr')) {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 18px 18px 14px;
-    border-bottom: 1px solid rgba(15, 23, 42, .08);
+    padding: 18px;
+    background: #6b7280;
+    color: #ffffff;
   }
 
   .ai-chatbot-identity,
@@ -89,8 +95,8 @@ if (!function_exists('jt_jusia_attr')) {
     gap: 12px;
   }
 
-  .ai-chatbot-avatar img,
-  .ai-chatbot-avatar {
+  .ai-chatbot-avatar,
+  .ai-chatbot-avatar img {
     width: 38px;
     height: 38px;
     border-radius: 14px;
@@ -100,23 +106,27 @@ if (!function_exists('jt_jusia_attr')) {
   .ai-chatbot-identity span[id],
   .ai-chatbot-consent strong {
     display: block;
+    color: #ffffff;
+    font-size: 13px;
     font-weight: 900;
-    color: #10203d;
+    letter-spacing: .02em;
+    text-transform: uppercase;
   }
 
   .ai-chatbot-identity small,
   .ai-chatbot-consent small {
-    color: #64748b;
+    display: block;
+    color: rgba(255, 255, 255, .96);
+    font-size: 12px;
     font-weight: 700;
+    margin-top: 2px;
   }
 
   .ai-chatbot-close,
   .ai-chatbot-form button {
     border: 0;
     cursor: pointer;
-    border-radius: 14px;
-    background: #e8fbf7;
-    color: #008f80;
+    border-radius: 16px;
   }
 
   .ai-chatbot-close {
@@ -124,6 +134,9 @@ if (!function_exists('jt_jusia_attr')) {
     height: 40px;
     display: grid;
     place-items: center;
+    background: #e6f6f0;
+    color: #008f80;
+    flex: 0 0 auto;
   }
 
   .ai-chatbot-close .svg-icon,
@@ -142,10 +155,14 @@ if (!function_exists('jt_jusia_attr')) {
     padding: 18px;
   }
 
+  .ai-chatbot-consent {
+    background: linear-gradient(180deg, #eef6f4 0%, #f9fbfb 100%);
+  }
+
   .ai-chatbot-consent p,
   .ai-chatbot-message p {
     margin: 0;
-    color: #475569;
+    color: #546173;
     line-height: 1.55;
   }
 
@@ -183,14 +200,33 @@ if (!function_exists('jt_jusia_attr')) {
   .ai-chatbot-messages {
     overflow-y: auto;
     display: grid;
-    gap: 12px;
+    gap: 14px;
+    background: linear-gradient(180deg, #eef6f4 0%, #f9fbfb 100%);
+    scrollbar-width: thin;
+    scrollbar-color: #48b6a7 transparent;
+  }
+
+  .ai-chatbot-messages::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .ai-chatbot-messages::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .ai-chatbot-messages::-webkit-scrollbar-thumb {
+    background: #48b6a7;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
 
   .ai-chatbot-message p,
   .ai-chatbot-choice-content {
-    padding: 12px 14px;
-    border-radius: 16px;
-    background: #f4f7fb;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: #edf1f7;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .03);
   }
 
   .ai-chatbot-message-user {
@@ -205,18 +241,25 @@ if (!function_exists('jt_jusia_attr')) {
   .ai-chatbot-choice-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 10px;
+    gap: 10px;
+    margin-top: 12px;
   }
 
   .ai-chatbot-choice-list button {
-    border: 1px solid rgba(0, 143, 128, .22);
+    border: 1px solid rgba(0, 143, 128, .28);
     border-radius: 999px;
     background: #ffffff;
     color: #008f80;
     font-weight: 800;
-    padding: 8px 12px;
+    padding: 9px 14px;
     cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+  }
+
+  .ai-chatbot-choice-list button:hover {
+    background: #f3fffc;
+    box-shadow: 0 8px 18px rgba(0, 143, 128, .12);
+    transform: translateY(-1px);
   }
 
   .ai-chatbot-form {
@@ -233,10 +276,16 @@ if (!function_exists('jt_jusia_attr')) {
     min-height: 44px;
     max-height: 96px;
     resize: none;
-    border: 1px solid rgba(15, 23, 42, .14);
-    border-radius: 14px;
-    padding: 11px 12px;
+    border: 1px solid rgba(15, 23, 42, .12);
+    border-radius: 16px;
+    padding: 13px 14px;
     font: inherit;
+    color: #475569;
+    background: #ffffff;
+  }
+
+  .ai-chatbot-form textarea::placeholder {
+    color: #94a3b8;
   }
 
   .ai-chatbot-form button {
@@ -244,8 +293,9 @@ if (!function_exists('jt_jusia_attr')) {
     height: 44px;
     display: grid;
     place-items: center;
-    background: #008f80;
+    background: #7fcfbe;
     color: #ffffff;
+    flex: 0 0 auto;
   }
 
   .sr-only {
@@ -260,6 +310,12 @@ if (!function_exists('jt_jusia_attr')) {
     border: 0 !important;
   }
 
+  .ai-chatbot-consent[hidden],
+  .ai-chatbot-messages[hidden],
+  .ai-chatbot-form[hidden] {
+    display: none !important;
+  }
+
   @media (max-width: 640px) {
     .ai-chatbot {
       right: 14px;
@@ -267,7 +323,10 @@ if (!function_exists('jt_jusia_attr')) {
     }
 
     .ai-chatbot-callout-bubble {
-      display: none;
+      display: inline-flex;
+      min-height: 40px;
+      padding: 0 16px;
+      font-size: 13px;
     }
 
     .ai-chatbot-panel {
@@ -275,9 +334,40 @@ if (!function_exists('jt_jusia_attr')) {
       bottom: 68px;
       width: calc(100vw - 24px);
       max-height: calc(100svh - 96px);
-      border-radius: 22px;
+      border-radius: 24px;
     }
   }
+
+  /* Botão global igual ao index.php: somente o robô, sem pílula de texto */
+  .ai-chatbot-callout {
+    width: 62px !important;
+    height: 62px !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 18px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .ai-chatbot-callout-bubble {
+    display: none !important;
+  }
+
+  .ai-chatbot-callout-robot {
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 16px !important;
+    object-fit: cover !important;
+    filter: drop-shadow(0 16px 26px rgba(15, 23, 42, .18)) !important;
+  }
+
+  .ai-chatbot.is-open .ai-chatbot-callout {
+    opacity: 0;
+    pointer-events: none;
+  }
+
 </style>
 
 <aside class="ai-chatbot" data-ai-chatbot aria-label="Assistente virtual JusTraduz">

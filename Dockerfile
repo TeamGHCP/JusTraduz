@@ -41,6 +41,8 @@ RUN printf '%s\n' \
     ': "${PORT:=80}"' \
     ': "${APP_BASE_PATH:=}"' \
     'export APP_BASE_PATH' \
+    'mkdir -p /var/www/html/backend/storage /var/www/html/storage-private' \
+    'chown -R www-data:www-data /var/www/html/backend/storage /var/www/html/storage-private || true' \
     'rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf' \
     'rm -f /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf' \
     'sed -i "s/^Listen .*/Listen ${PORT}/" /etc/apache2/ports.conf' \
