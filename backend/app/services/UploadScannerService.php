@@ -121,19 +121,21 @@ namespace App\Services {
                 return true;
             }
 
-            if (str_contains($binary, DIRECTORY_SEPARATOR) && !is_executable($binary)) {
+            if ($this->looksLikeBinaryPath($binary) && !is_executable($binary)) {
                 return true;
             }
 
             $timeout = max(1, (int) ($this->envValue('CLAMAV_TIMEOUT_SECONDS') ?: 15));
             $scanOutput = [];
             $exitCode = 0;
-            $timeoutBinary = trim((string) shell_exec('command -v timeout 2>/dev/null'));
+            $timeoutBinary = PHP_OS_FAMILY === 'Windows'
+                ? ''
+                : trim((string) @shell_exec('command -v timeout 2>/dev/null'));
             $command = escapeshellcmd($binary) . ' --no-summary --infected ' . escapeshellarg($path) . ' 2>&1';
             if ($timeoutBinary !== '') {
-                exec(escapeshellcmd($timeoutBinary) . ' ' . $timeout . ' ' . $command, $scanOutput, $exitCode);
+                @exec(escapeshellcmd($timeoutBinary) . ' ' . $timeout . ' ' . $command, $scanOutput, $exitCode);
             } else {
-                exec($command, $scanOutput, $exitCode);
+                @exec($command, $scanOutput, $exitCode);
             }
             $scanOutput = trim(implode("\n", $scanOutput));
 
@@ -164,6 +166,13 @@ namespace App\Services {
             $details = $scanOutput !== '' ? mb_substr($scanOutput, 0, 180) : 'erro desconhecido';
             $this->lastError = 'Scanner antimalware falhou durante a verificação: ' . $details;
             return false;
+        }
+
+        private function looksLikeBinaryPath(string $binary): bool
+        {
+            return str_contains($binary, '/')
+                || str_contains($binary, '\\')
+                || preg_match('/^[A-Za-z]:[\\\\\\/]/', $binary) === 1;
         }
 
         private function isClamAvUnavailable(int $exitCode, string $scanOutput): bool

@@ -158,7 +158,7 @@ $asaasEnvironmentLabel = payment_asaas_environment_label();
 $providerLabel = $checkoutProvider === 'pix' ? 'PIX JusTraduz' : $asaasEnvironmentLabel;
 $checkoutDescription = $checkoutProvider === 'pix'
     ? 'Finalize sua assinatura com PIX direto para a chave cadastrada no JusTraduz.'
-    : 'Finalize sua assinatura com a cobranÃ§a criada pelo Asaas.';
+    : 'Finalize sua assinatura com a cobrança criada pelo Asaas.';
 $statusLabel = $checkoutProvider === 'pix' ? 'PIX gerado' : 'Cobranca gerada';
 $isSandbox = (strpos(strtolower($asaasEnvironmentLabel), 'sandbox') !== false);
 $fallbackQrUrl = '';
