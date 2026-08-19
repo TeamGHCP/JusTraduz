@@ -1426,6 +1426,31 @@ body {
   line-height: 1.7;
 }
 
+/* Trata o alinhamento da label e oculta/ajusta o texto nativo do input date */
+.google-complete-switch input[type="date"].jt-input {
+  padding-top: 18px;
+  padding-bottom: 6px;
+}
+
+/* Mantém a label fixa no topo para inputs de data ou quando houver valor/foco */
+.google-complete-switch .jt-field input[type="date"] ~ .jt-label,
+.google-complete-switch .jt-field input[type="date"]:focus ~ .jt-label,
+.google-complete-switch .jt-field input[type="date"]:valid ~ .jt-label {
+  top: 8px;
+  transform: translateY(0);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Opcional: Oculta a máscara dd/mm/aaaa padrão no Chrome/WebKit até o campo ser focado */
+.google-complete-switch input[type="date"]:invalid::-webkit-datetime-edit {
+  color: transparent;
+}
+.google-complete-switch input[type="date"]:focus::-webkit-datetime-edit,
+.google-complete-switch input[type="date"]:valid::-webkit-datetime-edit {
+  color: inherit;
+}
+
 @media (max-width: 900px) {
   .auth-reset-page {
     display: block;
@@ -1450,3 +1475,5 @@ body {
     padding-right: 0;
   }
 }
+
+
