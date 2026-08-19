@@ -477,6 +477,17 @@ class AsaasPaymentProvider implements PaymentProviderInterface
             $providerSubscriptionId
         );
 
+        if ($local) {
+            $stmt = $this->pdo->prepare(
+                "UPDATE subscriptions
+                 SET status = 'canceled',
+                     canceled_at = COALESCE(canceled_at, ?),
+                     updated_at = CURRENT_TIMESTAMP
+                 WHERE id = ?"
+            );
+            $stmt->execute([date('Y-m-d H:i:s'), (int) $local['id']]);
+        }
+
         return [
             'ok' => true,
             'provider' => $this->name(),

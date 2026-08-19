@@ -182,6 +182,7 @@ class BillingController extends BaseController
             $result = $this->payments->cancelCheckout((int) $_SESSION['id'], $providerSubscriptionId);
             $this->audit->log('billing.checkout_cancel', 'subscription', (int) ($result['subscription_id'] ?? 0), $result);
             unset($_SESSION['billing_checkout']);
+            unset($_SESSION['payment_confirmed']);
 
             $message = !empty($result['remote_canceled'])
                 ? 'Pagamento cancelado e cobrança removida no Asaas.'
